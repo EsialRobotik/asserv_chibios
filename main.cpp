@@ -85,9 +85,6 @@ QEIConfig qeicfg2 = {
 };
 
 
-/*
- * Application entry point.
- */
 int main(void) {
 
   /*

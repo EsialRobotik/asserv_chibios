@@ -59,12 +59,6 @@ void USBStream::sendFullBuffer()
 	if(m_currentPtr != NULL )
 	{
 		*m_currentPtr = m_currentStruct;
-
-//	constexpr int32_t linesize = 32;                /* in Cortex-M7 size of cache line is fixed to 8 words (32 bytes) */
-//	uint32_t flushStartAddr = ((uint32_t)m_currentPtr) & ~(linesize - 1);
-//	int32_t  flushSize = ((int32_t)m_currentPtr+sizeof(UsbStreamSample)) - flushStartAddr;
-//	SCB_CleanDCache_by_Addr( (uint32_t*)flushStartAddr, flushSize);
-
 		obqPostFullBuffer(&SDU1.obqueue, sizeof(UsbStreamSample));
 	}
 }
@@ -82,5 +76,4 @@ void USBStream::getEmptyBuffer()
 	{
 		m_currentPtr = NULL;
 	}
-
 }
