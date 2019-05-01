@@ -2,10 +2,32 @@
 #define USBSTREAM_SRC_DATASTREAMTYPE_H_
 
 #include <stdint.h>
-//#include <climits>
 
-#include "USBStreamType.h"
 
+typedef struct
+{
+	uint32_t synchro;
+	uint32_t timestamp;
+	float value1;
+	float value2;
+	float value3;
+	float value4;
+	float value5;
+	float value6;
+	float value7;
+	float value8;
+	float value9;
+	float value10;
+	float value11;
+	float value12;
+	float value13;
+	float value14;
+	float value15;
+	float value16;
+	float value17;
+	float value18;
+	float value19;
+}  __attribute__((packed)) UsbStreamSample;
 
 
 class USBStream {
@@ -18,7 +40,7 @@ public:
 	void* SendCurrentStream();
 
 
-	inline void setValue(float a) {m_currentStruct.tempPhaseA = a;}
+	inline void setSpeedRight(float speed) {m_currentStruct.value1 = speed;}
 
 private:
 	USBStream();

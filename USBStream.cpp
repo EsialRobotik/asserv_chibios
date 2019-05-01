@@ -2,10 +2,10 @@
 #include "usbcfg.h"
 #include <ch.h>
 #include <hal.h>
-#include <chprintf.h>
 #include "core_cm4.h"
+#include <cstring>
 
-const uint32_t synchroWord = 0xDEADBEEF;
+const uint32_t synchroWord = 0xCAFED00D;
 
 USBStream *USBStream::s_instance = NULL;
 USBStream::USBStream()
@@ -13,6 +13,7 @@ USBStream::USBStream()
 	m_currentPtr = NULL;
 	m_timestamp = 0;
 	m_bufferSize = 0;
+	std::memset(&m_currentStruct, 0, sizeof(m_currentStruct));
 }
 
 
