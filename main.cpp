@@ -16,12 +16,11 @@
 
 #include "ch.h"
 #include "hal.h"
-#include "rt_test_root.h"
-#include "oslib_test_root.h"
 #include "shell.h"
 #include <chprintf.h>
 #include "USBStream.hpp"
 #include "Vnh5019.h"
+#include "Encoders.h"
 
 #define ASSERV_THREAD_PERIOD_MS 2
 static THD_WORKING_AREA(waAsservThread, 512);
@@ -59,19 +58,6 @@ THD_WORKING_AREA(wa_shell, 512);
 
 
 
-QEIConfig qeicfg1 = {
-  QEI_MODE_QUADRATURE,
-  QEI_BOTH_EDGES,
-  QEI_DIRINV_FALSE,
-};
-
-QEIConfig qeicfg2 = {
-  QEI_MODE_QUADRATURE,
-  QEI_BOTH_EDGES,
-  QEI_DIRINV_FALSE,
-};
-
-
 int main(void)
 {
 
@@ -81,17 +67,11 @@ int main(void)
 	Vnh5019 motorController;
 	motorController.init();
 
-	// Encoder 1
-	palSetPadMode(GPIOA, 7, PAL_MODE_ALTERNATE(2)); //TIM3_chan2
-	palSetPadMode(GPIOC, 6, PAL_MODE_ALTERNATE(2)); //TIM3_chan1
-	qeiStart(&QEID3, &qeicfg1);
-	qeiEnable (&QEID3);
+	Encoders encoders;
+	encoders.init();
+	encoders.start();
 
-	// Encoder 2
-	palSetPadMode(GPIOA, 1, PAL_MODE_ALTERNATE(1)); //TIM2_chan1
-	palSetPadMode(GPIOA, 0, PAL_MODE_ALTERNATE(1)); //TIM2_chan2
-	qeiStart(&QEID2, &qeicfg2);
-	qeiEnable (&QEID2);
+
 
 	// USB FS
 	palSetPadMode(GPIOA, 12, PAL_MODE_ALTERNATE(10)); //USB D+
@@ -134,14 +114,12 @@ int main(void)
 
 	while (true)
 	{
-		int16_t qei2 = qeiGetCount(&QEID2);
-		int16_t qei3 = qeiGetCount(&QEID3);
-		qei_lld_set_count(&QEID2, 0);
-		qei_lld_set_count(&QEID3, 0);
+		int16_t qei1, qei2;
+		encoders.getValues(&qei1, &qei2);
 
 		void *ptr = USBStream::instance()->SendCurrentStream();
 
-//  chprintf(outputStream, "qei2 %d quei3 %d  ptr %x \r\n",  qei2, qei3, ptr);
+		chprintf(outputStream, "qei1 %d quei2 %d  \r\n",  qei1, qei2);
 
 		chThdSleepMilliseconds(750);
 	}

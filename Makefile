@@ -133,7 +133,8 @@ CSRC = $(ALLCSRC) \
 CPPSRC = $(ALLCPPSRC) \
        main.cpp \
        Vnh5019.cpp \
-       USBStream.cpp
+       USBStream.cpp \
+       Encoders.cpp
 
 # List ASM source files here.
 ASMSRC = $(ALLASMSRC)
