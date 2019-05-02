@@ -21,6 +21,7 @@
 #include "shell.h"
 #include <chprintf.h>
 #include "USBStream.hpp"
+#include "Vnh5019.h"
 
 #define ASSERV_THREAD_PERIOD_MS 2
 static THD_WORKING_AREA(waAsservThread, 512);
@@ -31,15 +32,9 @@ static THD_FUNCTION(AsservThread, arg)
 
 	systime_t time = chVTGetSystemTime();
 	time += TIME_MS2I(ASSERV_THREAD_PERIOD_MS);
-	static bool on=false;
 	while (true)
 	{
-		if(on)
-			palClearPad(GPIOA, GPIOA_LED_GREEN);
-		else
-		    palSetPad(GPIOA, GPIOA_LED_GREEN);
 
-		on=!on;
 		chThdSleepUntil(time);
 		time += TIME_MS2I(ASSERV_THREAD_PERIOD_MS);
 	}
@@ -52,9 +47,9 @@ static THD_FUNCTION(Thread1, arg) {
   (void)arg;
   chRegSetThreadName("blinker");
   while (true) {
-//    palClearPad(GPIOA, GPIOA_LED_GREEN);
+    palClearPad(GPIOA, GPIOA_LED_GREEN);
     chThdSleepMilliseconds(500);
-//    palSetPad(GPIOA, GPIOA_LED_GREEN);
+    palSetPad(GPIOA, GPIOA_LED_GREEN);
     chThdSleepMilliseconds(500);
   }
 }
@@ -63,33 +58,6 @@ static THD_FUNCTION(Thread1, arg) {
 THD_WORKING_AREA(wa_shell, 512);
 
 
-static PWMConfig pwmcfg = {
-   200000,
-   1000,
-   NULL,
-   {
-      {PWM_OUTPUT_DISABLED, NULL},
-      {PWM_OUTPUT_ACTIVE_HIGH, NULL},
-      {PWM_OUTPUT_DISABLED, NULL},
-      {PWM_OUTPUT_DISABLED, NULL}
-   },
-   0,
-   0
-};
-
-static PWMConfig pwmcfg2 = {
-   200000,
-   1000,
-   NULL,
-   {
-	  {PWM_OUTPUT_ACTIVE_HIGH, NULL},
-      {PWM_OUTPUT_DISABLED, NULL},
-      {PWM_OUTPUT_DISABLED, NULL},
-      {PWM_OUTPUT_DISABLED, NULL}
-   },
-   0,
-   0
-};
 
 QEIConfig qeicfg1 = {
   QEI_MODE_QUADRATURE,
@@ -110,25 +78,8 @@ int main(void)
 	halInit();
 	chSysInit();
 
-	// MOTOR 1 control
-	palSetPadMode(GPIOA, 10, PAL_MODE_OUTPUT_PUSHPULL);
-	palSetPadMode(GPIOB, 5, PAL_MODE_OUTPUT_PUSHPULL);
-	palClearPad(GPIOA, 10); //M1INA
-	palSetPad(GPIOB, 5); //M1INB
-
-	palSetPadMode(GPIOC, 7, PAL_MODE_ALTERNATE(3)); //TIM4_chan1
-	pwmStart(&PWMD8, &pwmcfg);
-	pwmEnableChannel(&PWMD8, 1, PWM_PERCENTAGE_TO_WIDTH(&PWMD8, 1000)); // 90% duty cycle
-
-	// MOTOR 2 control
-	palSetPadMode(GPIOA, 8, PAL_MODE_OUTPUT_PUSHPULL);
-	palSetPadMode(GPIOA, 9, PAL_MODE_OUTPUT_PUSHPULL);
-	palSetPad(GPIOA, 8); //M2INA
-	palClearPad(GPIOA, 9); //M2INB
-
-	palSetPadMode(GPIOB, 6, PAL_MODE_ALTERNATE(2)); //TIM4_chan1
-	pwmStart(&PWMD4, &pwmcfg2);
-	pwmEnableChannel(&PWMD4, 0, PWM_PERCENTAGE_TO_WIDTH(&PWMD4, 1000));
+	Vnh5019 motorController;
+	motorController.init();
 
 	// Encoder 1
 	palSetPadMode(GPIOA, 7, PAL_MODE_ALTERNATE(2)); //TIM3_chan2
@@ -173,6 +124,12 @@ int main(void)
 	chRegSetThreadNameX(shellThd, "shell");
 
 	chThdCreateStatic(waAsservThread, sizeof(waAsservThread), HIGHPRIO, AsservThread, NULL);
+
+
+//	motorController.setMotor1Speed(10);
+//	motorController.setMotor2Speed(-10);
+	motorController.setMotor1Speed(0);
+
 
 
 	while (true)
