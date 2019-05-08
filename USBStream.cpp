@@ -13,12 +13,16 @@ USBStream::USBStream()
 	m_currentPtr = NULL;
 	m_timestamp = 0;
 	m_bufferSize = 0;
-	std::memset(&m_currentStruct, 0, sizeof(m_currentStruct));
+	std::memset(&m_currentStruct, 0xFFFFFFFF, sizeof(m_currentStruct));
 }
 
 
 void USBStream::init()
 {
+	// USB FS
+	palSetPadMode(GPIOA, 12, PAL_MODE_ALTERNATE(10)); //USB D+
+	palSetPadMode(GPIOA, 11, PAL_MODE_ALTERNATE(10)); //USB D-
+
 	s_instance = new USBStream();
 
 
@@ -26,6 +30,7 @@ void USBStream::init()
 	 * Initializes a serial-over-USB CDC driver.
 	 */
 	sduObjectInit(&SDU1);
+	std::memset(SDU1.ob, 0x0F0F0F0F, sizeof(SDU1.ob));
 	sduStart(&SDU1, &serusbcfg);
 
 	/*
