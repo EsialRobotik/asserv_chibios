@@ -83,7 +83,7 @@ endif
 #
 
 # Define project name here
-PROJECT = ch
+PROJECT = asservNucleo
 
 # Target settings.
 MCU  = cortex-m4
@@ -134,7 +134,9 @@ CPPSRC = $(ALLCPPSRC) \
        main.cpp \
        Vnh5019.cpp \
        USBStream.cpp \
-       Encoders.cpp
+       Encoders.cpp \
+       AsservMain.cpp \
+       SpeedController.cpp 
 
 # List ASM source files here.
 ASMSRC = $(ALLASMSRC)

@@ -18,78 +18,50 @@
 #include "hal.h"
 #include "shell.h"
 #include <chprintf.h>
-#include "USBStream.hpp"
-#include "Vnh5019.h"
-#include "Encoders.h"
+#include <cstdlib>
+#include <cstring>
+#include "AsservMain.h"
 
-#define ASSERV_THREAD_PERIOD_MS 2
+
+AsservMain mainAsserv;
 static THD_WORKING_AREA(waAsservThread, 512);
 static THD_FUNCTION(AsservThread, arg)
 {
 	(void) arg;
 	chRegSetThreadName("AsservThread");
-
-	systime_t time = chVTGetSystemTime();
-	time += TIME_MS2I(ASSERV_THREAD_PERIOD_MS);
-	while (true)
-	{
-
-		chThdSleepUntil(time);
-		time += TIME_MS2I(ASSERV_THREAD_PERIOD_MS);
-	}
-}
-
-
-static THD_WORKING_AREA(waThread1, 128);
-static THD_FUNCTION(Thread1, arg) {
-
-  (void)arg;
-  chRegSetThreadName("blinker");
-  while (true) {
-    palClearPad(GPIOA, GPIOA_LED_GREEN);
-    chThdSleepMilliseconds(500);
-    palSetPad(GPIOA, GPIOA_LED_GREEN);
-    chThdSleepMilliseconds(500);
-  }
+	mainAsserv.init();
+	mainAsserv.mainLoop();
 }
 
 
 THD_WORKING_AREA(wa_shell, 512);
+void asservCommand(BaseSequentialStream *chp, int argc, char **argv);
 
-
-
+BaseSequentialStream *outputStream;
 int main(void)
 {
 
 	halInit();
 	chSysInit();
 
-	Vnh5019 motorController;
-	motorController.init();
-
-	Encoders encoders;
-	encoders.init();
-	encoders.start();
-
-
-
-	// USB FS
-	palSetPadMode(GPIOA, 12, PAL_MODE_ALTERNATE(10)); //USB D+
-	palSetPadMode(GPIOA, 11, PAL_MODE_ALTERNATE(10)); //USB D-
-	USBStream::init();
-
-	chThdCreateStatic(waThread1, sizeof(waThread1), NORMALPRIO, Thread1, NULL);
-
 	sdStart(&SD2, NULL);
 	shellInit();
 
-	BaseSequentialStream *outputStream =
+	outputStream =
 			reinterpret_cast<BaseSequentialStream*>(&SD2);
 
+	// Custom commands
+	const ShellCommand shellCommands[] = {
+	{
+		"asserv",
+		 &(asservCommand)
+	},
+	{nullptr, nullptr}
+	};
 	ShellConfig shellCfg =
 	{
 	/* sc_channel */outputStream,
-	/* sc_commands */NULL,
+	/* sc_commands */shellCommands,
 #if (SHELL_USE_HISTORY == TRUE)
 			/* sc_histbuf */histbuf,
 			/* sc_histsize */sizeof(histbuf),
@@ -108,19 +80,74 @@ int main(void)
 
 //	motorController.setMotor1Speed(10);
 //	motorController.setMotor2Speed(-10);
-	motorController.setMotor1Speed(0);
+//	motorController.setMotor1Speed(0);
 
 
-
+//	chThdSetPriority(LOWPRIO);
 	while (true)
 	{
-		int16_t qei1, qei2;
-		encoders.getValues(&qei1, &qei2);
-
-		void *ptr = USBStream::instance()->SendCurrentStream();
-
-		chprintf(outputStream, "qei1 %d quei2 %d  \r\n",  qei1, qei2);
-
-		chThdSleepMilliseconds(750);
+		palClearPad(GPIOA, GPIOA_LED_GREEN);
+		chThdSleepMilliseconds(250);
+		palSetPad(GPIOA, GPIOA_LED_GREEN);
+		chThdSleepMilliseconds(250);
 	}
+}
+
+
+void asservCommand(BaseSequentialStream *chp, int argc, char **argv)
+{
+	auto printUsage = []() {
+		chprintf(outputStream,"Usage :");
+		chprintf(outputStream," - asserv setspeed [r|l] [speed]\r\n");
+		chprintf(outputStream," - asserv speedstep [speed] [step time] \r\n");
+		chprintf(outputStream," - asserv speedcontrol [Kp] [Ki] \r\n");
+
+	};
+	(void) chp;
+
+	if (argc == 0) {
+		printUsage();
+		return;
+	}
+
+	if(!strcmp(argv[0], "setspeed"))
+	{
+		char side = *argv[1];
+		float   speedGoal = atof(argv[2]);
+		float speedGoalRight=0;
+		float speedGoalLeft=0;
+
+		if( side == 'r')
+			speedGoalRight = speedGoal;
+		else if( side == 'l')
+			speedGoalLeft = speedGoal;
+
+
+		chprintf(outputStream, "setting speed left %f right %f rad/s \r\n",speedGoalLeft,speedGoalRight);
+		mainAsserv.setMotorsSpeed(speedGoalLeft, speedGoalRight);
+	}
+	else if(!strcmp(argv[0], "speedstep"))
+	{
+		float   speedGoal = atof(argv[1]);
+		int time = atoi(argv[2]);
+		chprintf(outputStream, "setting speed %f rad/s for %d ms \r\n",speedGoal,time);
+		mainAsserv.setMotorsSpeed(speedGoal, speedGoal);
+		chThdSleepMilliseconds(time);
+		mainAsserv.setMotorsSpeed(0.0, 0.0);
+	}
+	else if(!strcmp(argv[0], "speedcontrol"))
+	{
+		float   Kp = atof(argv[1]);
+		float   Ki = atof(argv[2]);
+
+		chprintf(outputStream, "setting speed control Kp:%f Ki:%f \r\n",Kp,Ki);
+		mainAsserv.setGainForLeftSpeedController(Kp, Ki);
+		mainAsserv.setGainForRightSpeedController(Kp, Ki);
+
+	}
+	else
+	{
+		printUsage();
+	}
+
 }
