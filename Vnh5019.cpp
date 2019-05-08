@@ -30,8 +30,10 @@ static PWMConfig pwmcfg2 = {
    0
 };
 
-Vnh5019::Vnh5019()
+Vnh5019::Vnh5019(bool invertMotor1, bool invertMotor2)
 {
+	m_invertMotor1 = invertMotor1;
+	m_invertMotor2 = invertMotor2;
 }
 void Vnh5019::init()
 {
@@ -53,6 +55,9 @@ void Vnh5019::init()
 
 void Vnh5019::setMotor1Speed(float percentage)
 {
+	if(m_invertMotor1)
+		percentage = -percentage;
+
 	unsigned char reverse = 0;
 	if (percentage < 0)
 	{
@@ -84,6 +89,9 @@ void Vnh5019::setMotor1Speed(float percentage)
 
 void Vnh5019::setMotor2Speed(float percentage)
 {
+	if(m_invertMotor2)
+		percentage = -percentage;
+
 	unsigned char reverse = 0;
 	if (percentage < 0)
 	{
