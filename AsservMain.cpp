@@ -11,14 +11,15 @@
 
 #define M_PI 3.14159265358979323846
 
-#define ASSERV_THREAD_PERIOD_MS (2)
+#define ASSERV_THREAD_PERIOD_MS (1)
 #define ASSERV_THREAD_PERIOD_S (float(ASSERV_THREAD_PERIOD_MS)/1000.0)
 
 
 AsservMain::AsservMain():
 m_motorController(true,false),
-m_speedControllerRight(10, 3, 100, 23.0, 1.0/ASSERV_THREAD_PERIOD_S),
-m_speedControllerLeft(10, 3, 100, 23.0, 1.0/ASSERV_THREAD_PERIOD_S)
+m_encoders(true,true),
+m_speedControllerRight(15, 5, 100, 23.0, 100, 1.0/ASSERV_THREAD_PERIOD_S),
+m_speedControllerLeft(15, 5, 100, 23.0, 100, 1.0/ASSERV_THREAD_PERIOD_S)
 {
 }
 
@@ -55,7 +56,7 @@ void AsservMain::mainLoop()
 	{
 		int16_t m_encoderDeltaRight;
 		int16_t m_encoderDeltaLeft;
-		m_encoders.getValuesAndReset(&m_encoderDeltaRight, &m_encoderDeltaLeft);
+		m_encoders.getValuesAndReset(&m_encoderDeltaLeft, &m_encoderDeltaRight);
 
 		float estimatedSpeedRight = estimateSpeed(m_encoderDeltaRight);
 		float estimatedSpeedLeft = estimateSpeed(m_encoderDeltaLeft);
@@ -73,14 +74,9 @@ void AsservMain::mainLoop()
 		USBStream::instance()->setSpeedOutputRight(outputSpeedRight);
 		USBStream::instance()->setSpeedOutputLeft(outputSpeedLeft);
 		USBStream::instance()->setSpeedIntegratedOutputRight(m_speedControllerRight.getIntegratedOutput());
-		USBStream::instance()->setSpeedIntegratedOutputLeft(m_speedControllerRight.getIntegratedOutput());
+		USBStream::instance()->setSpeedIntegratedOutputLeft(m_speedControllerLeft.getIntegratedOutput());
 		USBStream::instance()->setLimitedSpeedGoalRight(m_speedControllerRight.getLimitedSpeedGoal());
 		USBStream::instance()->setLimitedSpeedGoalLeft(m_speedControllerLeft.getLimitedSpeedGoal());
-
-
-
-
-
 		USBStream::instance()->SendCurrentStream();
 
 		chThdSleepUntil(time);
