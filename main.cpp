@@ -103,8 +103,9 @@ void asservCommand(BaseSequentialStream *chp, int argc, char **argv)
 	auto printUsage = []() {
 		chprintf(outputStream,"Usage :");
 		chprintf(outputStream," - asserv setspeed [r|l] [speed]\r\n");
-		chprintf(outputStream," - asserv speedstep [speed] [step time] \r\n");
-		chprintf(outputStream," - asserv speedcontrol [Kp] [Ki] \r\n");
+		chprintf(outputStream," - asserv speedstep [r|l] [speed] [step time] \r\n");
+		chprintf(outputStream," - asserv speedstep2 [speed] [step time] \r\n");
+		chprintf(outputStream," - asserv speedcontrol [r|l] [Kp] [Ki] \r\n");
 
 	};
 	(void) chp;
@@ -121,33 +122,50 @@ void asservCommand(BaseSequentialStream *chp, int argc, char **argv)
 		float speedGoalRight=0;
 		float speedGoalLeft=0;
 
-		if( side == 'r')
-			speedGoalRight = speedGoal;
-		else if( side == 'l')
-			speedGoalLeft = speedGoal;
+		if( side == 'r') speedGoalRight = speedGoal;
+		else if( side == 'l') speedGoalLeft = speedGoal;
 
 
-		chprintf(outputStream, "setting speed left %f right %f rad/s \r\n",speedGoalLeft,speedGoalRight);
+		chprintf(outputStream, "setting speed left %.2f right %.2f rad/s \r\n",speedGoalLeft,speedGoalRight);
 		mainAsserv.setMotorsSpeed(speedGoalLeft, speedGoalRight);
 	}
 	else if(!strcmp(argv[0], "speedstep"))
 	{
+		char side = *argv[1];
+		float   speedGoal = atof(argv[2]);
+		float speedGoalRight = 0, speedGoalLeft = 0;
+		int time = atoi(argv[3]);
+		chprintf(outputStream, "setting speed %.2f rad/s for %d ms for side %c \r\n",speedGoal,time, side);
+
+		if( side == 'r') speedGoalRight = speedGoal;
+		else if( side == 'l') speedGoalLeft = speedGoal;
+
+		mainAsserv.setMotorsSpeed(speedGoalLeft, speedGoalRight);
+		chThdSleepMilliseconds(time);
+		mainAsserv.setMotorsSpeed(0.0, 0.0);
+	}
+	else if(!strcmp(argv[0], "speedstep2"))
+	{
 		float   speedGoal = atof(argv[1]);
 		int time = atoi(argv[2]);
-		chprintf(outputStream, "setting speed %f rad/s for %d ms \r\n",speedGoal,time);
+		chprintf(outputStream, "setting speed %.2f rad/s for %d ms for both side \r\n",speedGoal,time);
+
 		mainAsserv.setMotorsSpeed(speedGoal, speedGoal);
 		chThdSleepMilliseconds(time);
 		mainAsserv.setMotorsSpeed(0.0, 0.0);
 	}
 	else if(!strcmp(argv[0], "speedcontrol"))
 	{
-		float   Kp = atof(argv[1]);
-		float   Ki = atof(argv[2]);
+		char side = *argv[1];
+		float   Kp = atof(argv[2]);
+		float   Ki = atof(argv[3]);
 
-		chprintf(outputStream, "setting speed control Kp:%f Ki:%f \r\n",Kp,Ki);
-		mainAsserv.setGainForLeftSpeedController(Kp, Ki);
-		mainAsserv.setGainForRightSpeedController(Kp, Ki);
+		chprintf(outputStream, "setting speed control Kp:%.2f Ki:%.2f to side %c \r\n",Kp,Ki, side);
 
+		if( side == 'r')
+			mainAsserv.setGainForRightSpeedController(Kp, Ki);
+		else if( side == 'l')
+			mainAsserv.setGainForLeftSpeedController(Kp, Ki);
 	}
 	else
 	{
