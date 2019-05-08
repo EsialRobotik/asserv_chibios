@@ -10,7 +10,7 @@
 
 class SpeedController {
 public:
-	explicit SpeedController(float speedKp, float speedKi, float outputLimit, float maxInputSpeed, float measureFrequency);
+explicit SpeedController(float speedKp, float speedKi, float outputLimit, float maxInputSpeed, float maxDeltaConsign, float measureFrequency);
 	virtual ~SpeedController(){};
 
 	float update(float actualSpeed);

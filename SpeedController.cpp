@@ -7,7 +7,7 @@
 
 #include "SpeedController.h"
 
-SpeedController::SpeedController(float speedKp, float speedKi, float outputLimit, float maxInputSpeed, float measureFrequency)
+SpeedController::SpeedController(float speedKp, float speedKi, float outputLimit, float maxInputSpeed, float maxDeltaConsign, float measureFrequency)
 {
 	m_speedGoal = 0;
 	m_limitedSpeedGoal = 0;
@@ -17,7 +17,7 @@ SpeedController::SpeedController(float speedKp, float speedKi, float outputLimit
 	m_speedKi = speedKi;
 	m_outputLimit = outputLimit;
 	m_inputLimit = maxInputSpeed;
-	m_deltaConsignMax = 0.1;
+	m_deltaConsignMax = maxDeltaConsign;
 	m_measureFrequency = measureFrequency;
 }
 
@@ -29,6 +29,7 @@ float SpeedController::update(float actualSpeed)
 		m_limitedSpeedGoal = m_limitedSpeedGoalPrev+m_deltaConsignMax;
 	else if( m_speedGoal < (m_limitedSpeedGoalPrev-m_deltaConsignMax))
 		m_limitedSpeedGoal = m_limitedSpeedGoalPrev-m_deltaConsignMax;
+
 	m_limitedSpeedGoalPrev = m_limitedSpeedGoal;
 
 	float speedError = m_limitedSpeedGoal - actualSpeed;
@@ -52,14 +53,11 @@ float SpeedController::update(float actualSpeed)
 	}
 
 	if(limited)
-	{
 		m_integratedOutput *= 0.9;
-	}
 	else
-	{
 		m_integratedOutput +=  m_speedKi * speedError/m_measureFrequency;
-	}
-	// Anti Windup protection, probably useless with the saturation handling below..
+
+	// Anti Windup protection, probably useless with the saturation handled below..
 	if(m_integratedOutput > m_outputLimit)
 		m_integratedOutput = m_outputLimit;
 	else if(m_integratedOutput < -m_outputLimit)
@@ -75,6 +73,8 @@ void SpeedController::setSpeedGoal(float speed)
 	if(speed < -m_inputLimit)
 		speed = -m_inputLimit;
 
+	if(speed == 0.0)
+		resetIntegral();
 	m_speedGoal = speed;
 };
 
