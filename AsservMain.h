@@ -12,6 +12,7 @@
 #include "Vnh5019.h"
 #include "Encoders.h"
 #include "SpeedController.h"
+#include "Regulator.h"
 #include <cstdint>
 
 class AsservMain
@@ -29,15 +30,29 @@ public:
 	void setGainForRightSpeedController(float Kp, float Ki){m_speedControllerRight.setGains(Kp, Ki);};
 	void setGainForLeftSpeedController(float Kp, float Ki){m_speedControllerLeft.setGains(Kp, Ki);};
 
+	void setSpeedSlope(float slope){
+		m_speedControllerLeft.setSpeedSlope(slope);
+		m_speedControllerRight.setSpeedSlope(slope); }
 private:
 
 	float estimateSpeed(int16_t deltaCount);
+	float estimateDeltaAngle(int16_t deltaCountRight, int16_t deltaCountLeft );
+	float estimateDeltaDistance(int16_t deltaCountRight, int16_t deltaCountLeft );
+
 
 
 	Vnh5019 m_motorController;
 	Encoders m_encoders;
 	SpeedController m_speedControllerRight;
 	SpeedController m_speedControllerLeft;
+	Regulator m_angleRegulator;
+	Regulator m_distanceRegulator;
+
+	float m_encoderWheelsDistance_mm;
+	float m_encoderTicksByMeter;
+
+	float m_angleGoal;
+	float m_distanceGoal;
 };
 
 #endif /* ASSERVMAIN_H_ */

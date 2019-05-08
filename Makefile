@@ -136,7 +136,8 @@ CPPSRC = $(ALLCPPSRC) \
        USBStream.cpp \
        Encoders.cpp \
        AsservMain.cpp \
-       SpeedController.cpp 
+       SpeedController.cpp \
+       Regulator.cpp
 
 # List ASM source files here.
 ASMSRC = $(ALLASMSRC)

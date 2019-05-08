@@ -106,6 +106,8 @@ void asservCommand(BaseSequentialStream *chp, int argc, char **argv)
 		chprintf(outputStream," - asserv speedstep [r|l] [speed] [step time] \r\n");
 		chprintf(outputStream," - asserv speedstep2 [speed] [step time] \r\n");
 		chprintf(outputStream," - asserv speedcontrol [r|l] [Kp] [Ki] \r\n");
+		chprintf(outputStream," - asserv speedslope [r|l] delta_speed \r\n");
+
 
 	};
 	(void) chp;
@@ -166,6 +168,13 @@ void asservCommand(BaseSequentialStream *chp, int argc, char **argv)
 			mainAsserv.setGainForRightSpeedController(Kp, Ki);
 		else if( side == 'l')
 			mainAsserv.setGainForLeftSpeedController(Kp, Ki);
+	}
+	else if(!strcmp(argv[0], "speedslope"))
+	{
+		float   slope = atof(argv[1]);
+		chprintf(outputStream, "setting speed slope delta %.2f \r\n",slope);
+
+		mainAsserv.setSpeedSlope(slope);
 	}
 	else
 	{
