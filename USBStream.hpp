@@ -40,7 +40,23 @@ public:
 	void* SendCurrentStream();
 
 
-	inline void setSpeedRight(float speed) {m_currentStruct.value1 = speed;}
+	// Right motor speed control
+	inline void setSpeedGoalRight(float speed) {m_currentStruct.value1 = speed;}
+	inline void setSpeedEstimatedRight(float speed) {m_currentStruct.value2 = speed;}
+	inline void setSpeedOutputRight(float speed) {m_currentStruct.value3 = speed;}
+	inline void setSpeedIntegratedOutputRight(float speed) {m_currentStruct.value7 = speed;}
+	inline void setLimitedSpeedGoalRight(float speed) {m_currentStruct.value9 = speed;}
+
+	// Left motor speed control
+	inline void setSpeedGoalLeft(float speed) {m_currentStruct.value4 = speed;}
+	inline void setSpeedEstimatedLeft(float speed) {m_currentStruct.value5 = speed;}
+	inline void setSpeedOutputLeft(float speed) {m_currentStruct.value6 = speed;}
+	inline void setSpeedIntegratedOutputLeft(float speed) {m_currentStruct.value8 = speed;}
+	inline void setLimitedSpeedGoalLeft(float speed) {m_currentStruct.value10 = speed;}
+
+
+
+
 
 private:
 	USBStream();
