@@ -12,7 +12,7 @@
 class Encoders
 {
 public:
-	Encoders();
+	Encoders(bool invertEncoder1 = false, bool invertEncoder2 = false);
 	virtual ~Encoders();
 
 	void init();
@@ -23,6 +23,9 @@ public:
 	void getValues(int16_t *encoder1, int16_t *encoder2);
 	void getValuesAndReset(int16_t *encoder1, int16_t *encoder2);
 
+private:
+	bool m_invertEncoder1;
+	bool m_invertEncoder2;
 };
 
 #endif /* ENCODERS_H_ */

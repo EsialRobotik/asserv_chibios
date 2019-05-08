@@ -14,8 +14,10 @@ static QEIConfig qeicfg2 = {
   QEI_DIRINV_FALSE,
 };
 
-Encoders::Encoders()
+Encoders::Encoders(bool invertEncoder1, bool invertEncoder2)
 {
+	m_invertEncoder1 = invertEncoder1;
+	m_invertEncoder2 = invertEncoder2;
 }
 
 Encoders::~Encoders()
@@ -50,6 +52,10 @@ void Encoders::getValues(int16_t *encoder1, int16_t *encoder2)
 {
 	*encoder1 = qeiGetCount(&QEID2);
 	*encoder2 = qeiGetCount(&QEID3);
+	if(m_invertEncoder1)
+		*encoder1 = -*encoder1;
+	if(m_invertEncoder2)
+		*encoder2 = -*encoder2;
 }
 
 void Encoders::getValuesAndReset(int16_t *encoder1, int16_t *encoder2)
