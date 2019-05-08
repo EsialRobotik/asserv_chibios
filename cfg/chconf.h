@@ -31,6 +31,14 @@
 #define _CHIBIOS_RT_CONF_
 #define _CHIBIOS_RT_CONF_VER_6_0_
 
+
+/*
+ * User CUSTOM:
+ * 	by defining this value, shellconf.h will be loaded by the buildchain
+ */
+#define SHELL_CONFIG_FILE
+
+
 /*===========================================================================*/
 /**
  * @name System timers settings

@@ -35,6 +35,10 @@ static THD_FUNCTION(AsservThread, arg)
 
 
 THD_WORKING_AREA(wa_shell, 512);
+
+char history_buffer[SHELL_MAX_HIST_BUFF];
+char *completion_buffer[SHELL_MAX_COMPLETIONS];
+
 void asservCommand(BaseSequentialStream *chp, int argc, char **argv);
 
 BaseSequentialStream *outputStream;
@@ -63,8 +67,8 @@ int main(void)
 	/* sc_channel */outputStream,
 	/* sc_commands */shellCommands,
 #if (SHELL_USE_HISTORY == TRUE)
-			/* sc_histbuf */histbuf,
-			/* sc_histsize */sizeof(histbuf),
+			/* sc_histbuf */history_buffer,
+			/* sc_histsize */sizeof(history_buffer),
 #endif
 #if (SHELL_USE_COMPLETION == TRUE)
 			/* sc_completion */completion_buffer
