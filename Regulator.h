@@ -18,6 +18,9 @@ public:
 
 	float update(float goal, float feedback);
 
+	float getAccumulator(){ return m_accumulator;};
+
+
 private:
     double m_accumulator;
     float m_Kp;
