@@ -23,7 +23,9 @@
 #include "AsservMain.h"
 
 
-AsservMain mainAsserv;
+#define ENCODERS_WHEELS_RADIUS (47.2/2.0)
+
+AsservMain mainAsserv(ENCODERS_WHEELS_RADIUS);
 static THD_WORKING_AREA(waAsservThread, 512);
 static THD_FUNCTION(AsservThread, arg)
 {
@@ -81,10 +83,6 @@ int main(void)
 
 	chThdCreateStatic(waAsservThread, sizeof(waAsservThread), HIGHPRIO, AsservThread, NULL);
 
-
-//	motorController.setMotor1Speed(10);
-//	motorController.setMotor2Speed(-10);
-//	motorController.setMotor1Speed(0);
 
 
 //	chThdSetPriority(LOWPRIO);
