@@ -9,23 +9,29 @@
 #include "ch.h"
 #include "hal.h"
 
-#define M_PI 3.14159265358979323846
+#define M_PI (3.14159265358979323846)
+#define M_2PI (2.0*M_PI)
 
-#define ASSERV_THREAD_PERIOD_MS (1)
+
+#define ASSERV_THREAD_PERIOD_MS (5)
 #define ASSERV_THREAD_PERIOD_S (float(ASSERV_THREAD_PERIOD_MS)/1000.0)
+#define ASSERV_POSITION_DIVISOR (10)
 
 
-AsservMain::AsservMain():
-m_motorController(true,false),
-m_encoders(true,true),
-m_speedControllerRight(15, 5, 100, 23.0, 100, 1.0/ASSERV_THREAD_PERIOD_S),
-m_speedControllerLeft(15, 5, 100, 23.0, 100, 1.0/ASSERV_THREAD_PERIOD_S),
-m_angleRegulator(1),
+AsservMain::AsservMain(float wheelRadius_mm):
+m_motorController(false,true),
+m_encoders(true,true, 1 , 1),
+m_speedControllerRight(0.24, 0.22, 100, 1000, 100, 1.0/ASSERV_THREAD_PERIOD_S),
+m_speedControllerLeft(0.32, 0.22, 100, 1000, 100, 1.0/ASSERV_THREAD_PERIOD_S),
+m_angleRegulator(0.001),
 m_distanceRegulator(1)
 {
-	m_encoderWheelsDistance_mm = 1664;
+	m_encoderWheelsDistance_mm = 0.298;
+	m_encoderTicksBymm = 20340.05;
+	m_distanceByEncoderTurn_mm = M_2PI*wheelRadius_mm;
 	m_angleGoal=0;
 	m_distanceGoal = 0;
+	m_asservCounter = 0;
 }
 
 AsservMain::~AsservMain()
@@ -44,24 +50,25 @@ void AsservMain::init()
 
 float AsservMain::estimateSpeed(int16_t deltaCount)
 {
-	const float ticksByTurn = 1024;
+	const float ticksByTurn = 1024*4;
 	const float dt = ASSERV_THREAD_PERIOD_S;
 
-	float deltaAngleRadian = ((float)deltaCount/(float)ticksByTurn);
-	float speedRadian = deltaAngleRadian / dt;
-	return speedRadian;
+	float deltaAngle_nbTurn = ((float)deltaCount/(float)ticksByTurn);
+	float speed_nbTurnPerSec = deltaAngle_nbTurn / dt;
+
+	// Speed returned in mm/sec
+	return speed_nbTurnPerSec*m_distanceByEncoderTurn_mm;
 }
 
 float AsservMain::estimateDeltaAngle(int16_t deltaCountRight, int16_t deltaCountLeft )
 {
-	// In radian
-    return float(deltaCountRight-deltaCountLeft) * m_encoderWheelsDistance_mm;
+    return float(deltaCountRight-deltaCountLeft);
 }
 
 float AsservMain::estimateDeltaDistance(int16_t deltaCountRight, int16_t deltaCountLeft )
 {
-	// in Meter
-    return float(deltaCountRight+deltaCountLeft) * (1.0/2.0) * (1.0/m_encoderTicksByMeter);
+	// in mm
+    return float(deltaCountRight+deltaCountLeft) * (1.0/2.0) * (1.0/m_encoderTicksBymm);
 }
 
 void AsservMain::mainLoop()
@@ -72,20 +79,24 @@ void AsservMain::mainLoop()
 	{
 		int16_t m_encoderDeltaRight;
 		int16_t m_encoderDeltaLeft;
-		m_encoders.getValuesAndReset(&m_encoderDeltaLeft, &m_encoderDeltaRight);
+		m_encoders.getValuesAndReset(&m_encoderDeltaRight, &m_encoderDeltaLeft);
 
 		// angle regulation
 		float deltaAngle_radian = estimateDeltaAngle(m_encoderDeltaLeft, m_encoderDeltaRight);
 		float angleConsign = m_angleRegulator.update(m_angleGoal, deltaAngle_radian);
 
 		// distance regulation
-		float deltaDistance_m = estimateDeltaDistance(m_encoderDeltaLeft, m_encoderDeltaRight);
-		float distanceConsign = m_distanceRegulator.update(m_distanceGoal, deltaDistance_m);
+		float deltaDistance_mm = estimateDeltaDistance(m_encoderDeltaLeft, m_encoderDeltaRight);
+		float distanceConsign = m_distanceRegulator.update(m_distanceGoal, deltaDistance_mm);
 
-		// Compute speed consign
-		setMotorsSpeed(
-				distanceConsign - angleConsign,
-				distanceConsign + angleConsign);
+		// Compute speed consign every ASSERV_POSITION_DIVISOR
+		if( m_asservCounter == ASSERV_POSITION_DIVISOR)
+		{
+	//		setMotorsSpeed(
+	//				angleConsign,
+	//				-angleConsign);
+			m_asservCounter=0;
+		}
 
 		// Speed regulation
 		float estimatedSpeedRight = estimateSpeed(m_encoderDeltaRight);

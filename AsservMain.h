@@ -18,7 +18,7 @@
 class AsservMain
 {
 public:
-	AsservMain();
+	explicit AsservMain(float wheelRadius_mm);
 	virtual ~AsservMain();
 
 
@@ -49,10 +49,14 @@ private:
 	Regulator m_distanceRegulator;
 
 	float m_encoderWheelsDistance_mm;
-	float m_encoderTicksByMeter;
+	float m_encoderTicksBymm;
+	float m_distanceByEncoderTurn_mm;
+
 
 	float m_angleGoal;
 	float m_distanceGoal;
+
+	uint8_t m_asservCounter;
 };
 
 #endif /* ASSERVMAIN_H_ */
