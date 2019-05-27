@@ -54,8 +54,19 @@ public:
 	inline void setSpeedIntegratedOutputLeft(float speed) {m_currentStruct.value8 = speed;}
 	inline void setLimitedSpeedGoalLeft(float speed) {m_currentStruct.value10 = speed;}
 
+	// Angle regulator
+	inline void setAngleGoal(float goal) {m_currentStruct.value11 = goal;}
+	inline void setAngleAccumulator(float acc) {m_currentStruct.value12 = acc;}
+	inline void setAngleOutput(float output) {m_currentStruct.value13 = output;}
 
+	// Distance regulator
+	inline void setDistGoal(float goal) {m_currentStruct.value14 = goal;}
+	inline void setDistAccumulator(float acc) {m_currentStruct.value15 = acc;}
+	inline void setDistOutput(float output) {m_currentStruct.value16 = output;}
 
+	// Raw Encoder
+	inline void setRawEncoderDeltaRight(float delta) {m_currentStruct.value17 = delta;}
+	inline void setRawEncoderDeltaLeft(float delta) {m_currentStruct.value18 = delta;}
 
 
 private:
