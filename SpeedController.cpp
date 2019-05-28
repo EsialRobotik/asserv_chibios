@@ -6,6 +6,9 @@
  */
 
 #include "SpeedController.h"
+#include <cmath>
+#include <cstdlib>
+
 
 SpeedController::SpeedController(float speedKp, float speedKi, float outputLimit, float maxInputSpeed, float maxDeltaConsign, float measureFrequency)
 {
@@ -25,9 +28,10 @@ float SpeedController::update(float actualSpeed)
 {
 	float outputValue = 0;
 	m_limitedSpeedGoal = m_speedGoal;
-	if( m_speedGoal > (m_limitedSpeedGoalPrev+m_deltaConsignMax))
+
+	if( m_speedGoal > 0 && m_limitedSpeedGoal > ((m_limitedSpeedGoalPrev+m_deltaConsignMax)) )
 		m_limitedSpeedGoal = m_limitedSpeedGoalPrev+m_deltaConsignMax;
-	else if( m_speedGoal < (m_limitedSpeedGoalPrev-m_deltaConsignMax))
+	else if (m_speedGoal < 0 && m_limitedSpeedGoal < ((m_limitedSpeedGoalPrev-m_deltaConsignMax)) )
 		m_limitedSpeedGoal = m_limitedSpeedGoalPrev-m_deltaConsignMax;
 
 	m_limitedSpeedGoalPrev = m_limitedSpeedGoal;
@@ -53,10 +57,15 @@ float SpeedController::update(float actualSpeed)
 	}
 
 	if(limited)
+	{
 		m_integratedOutput *= 0.9;
+	}
 	else
+	{
 		m_integratedOutput +=  m_speedKi * speedError/m_measureFrequency;
-
+		if( std::fabs(speedError) < 0.01) // When the speed error is near zero (ie: speed goal is 0 and the robot doesn't move), unsature the integral
+			m_integratedOutput *= 0.95;
+	}
 	// Anti Windup protection, probably useless with the saturation handled below..
 	if(m_integratedOutput > m_outputLimit)
 		m_integratedOutput = m_outputLimit;

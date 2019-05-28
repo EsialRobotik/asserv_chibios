@@ -21,9 +21,9 @@
 AsservMain::AsservMain(float wheelRadius_mm):
 m_motorController(false,true),
 m_encoders(true,true, 1 , 1),
-m_speedControllerRight(0.24, 0.22, 100, 1000, 100, 1.0/ASSERV_THREAD_PERIOD_S),
-m_speedControllerLeft(0.32, 0.22, 100, 1000, 100, 1.0/ASSERV_THREAD_PERIOD_S),
-m_angleRegulator(0.1),
+m_speedControllerRight(0.25, 0.45, 100, 1000, 20, 1.0/ASSERV_THREAD_PERIOD_S),
+m_speedControllerLeft(0.25, 0.45 , 100, 1000, 20, 1.0/ASSERV_THREAD_PERIOD_S),
+m_angleRegulator(1100),
 m_distanceRegulator(0.1)
 {
 	m_encoderWheelsDistance_mm = 297;
@@ -33,7 +33,8 @@ m_distanceRegulator(0.1)
 	m_angleGoal=0;
 	m_distanceGoal = 0;
 	m_asservCounter = 0;
-	m_enableMotors = true;
+	m_enableMotors = false;
+	m_enablePolar = false;
 }
 
 AsservMain::~AsservMain()
@@ -64,6 +65,7 @@ float AsservMain::estimateSpeed(int16_t deltaCount)
 
 float AsservMain::estimateDeltaAngle(int16_t deltaCountRight, int16_t deltaCountLeft )
 {
+	// in rad
     return float(deltaCountRight-deltaCountLeft)  / m_encoderWheelsDistance_ticks ;
 }
 
@@ -92,7 +94,7 @@ void AsservMain::mainLoop()
 		float distanceConsign = m_distanceRegulator.update(m_distanceGoal, deltaDistance_mm);
 
 		// Compute speed consign every ASSERV_POSITION_DIVISOR
-		if( m_asservCounter == ASSERV_POSITION_DIVISOR)
+		if( m_asservCounter == ASSERV_POSITION_DIVISOR && m_enablePolar)
 		{
 			setMotorsSpeed(
 					angleConsign,
@@ -117,6 +119,8 @@ void AsservMain::mainLoop()
 			m_motorController.setMotor2Speed(0);
 			m_motorController.setMotor1Speed(0);
 		}
+
+
 		USBStream::instance()->setSpeedEstimatedRight(estimatedSpeedRight);
 		USBStream::instance()->setSpeedEstimatedLeft(estimatedSpeedLeft);
 		USBStream::instance()->setSpeedGoalRight(m_speedControllerRight.getSpeedGoal());
@@ -161,6 +165,11 @@ void AsservMain::enableMotors(bool enable)
 		m_speedControllerLeft.resetIntegral();
 		m_speedControllerRight.resetIntegral();
 	}
-};
+}
+
+void AsservMain::enablePolar(bool enable)
+{
+	m_enablePolar = enable;
+}
 
 

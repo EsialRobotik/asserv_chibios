@@ -101,6 +101,7 @@ void asservCommand(BaseSequentialStream *chp, int argc, char **argv)
 	auto printUsage = []() {
 		chprintf(outputStream,"Usage :");
 		chprintf(outputStream," - asserv enablemotor 0|1\r\n");
+		chprintf(outputStream," - asserv enablepolar 0|1\r\n");
 		chprintf(outputStream," ----- \r\n");
 		chprintf(outputStream," - asserv setspeed [r|l] [speed]\r\n");
 		chprintf(outputStream," - asserv speedstep [r|l] [speed] [step time] \r\n");
@@ -218,6 +219,13 @@ void asservCommand(BaseSequentialStream *chp, int argc, char **argv)
 		chprintf(outputStream, "%s motor output\r\n",(enable? "enabling" : "disabling"));
 
 		mainAsserv.enableMotors(enable);
+	}
+	else if(!strcmp(argv[0], "enablepolar"))
+	{
+		bool enable = !(atoi(argv[1]) == 0);
+		chprintf(outputStream, "%s polar control\r\n",(enable? "enabling" : "disabling"));
+
+		mainAsserv.enablePolar(enable);
 	}
 	else
 	{
