@@ -15,7 +15,7 @@
 
 #define ASSERV_THREAD_PERIOD_MS (5)
 #define ASSERV_THREAD_PERIOD_S (float(ASSERV_THREAD_PERIOD_MS)/1000.0)
-#define ASSERV_POSITION_DIVISOR (10)
+#define ASSERV_POSITION_DIVISOR (5)
 
 
 AsservMain::AsservMain(float wheelRadius_mm):
@@ -23,15 +23,17 @@ m_motorController(false,true),
 m_encoders(true,true, 1 , 1),
 m_speedControllerRight(0.24, 0.22, 100, 1000, 100, 1.0/ASSERV_THREAD_PERIOD_S),
 m_speedControllerLeft(0.32, 0.22, 100, 1000, 100, 1.0/ASSERV_THREAD_PERIOD_S),
-m_angleRegulator(0.001),
-m_distanceRegulator(1)
+m_angleRegulator(0.1),
+m_distanceRegulator(0.1)
 {
-	m_encoderWheelsDistance_mm = 0.298;
-	m_encoderTicksBymm = 20340.05;
+	m_encoderWheelsDistance_mm = 297;
 	m_distanceByEncoderTurn_mm = M_2PI*wheelRadius_mm;
+	m_encodermmByTicks = m_distanceByEncoderTurn_mm/4096.0;
+	m_encoderWheelsDistance_ticks = m_encoderWheelsDistance_mm / m_encodermmByTicks;
 	m_angleGoal=0;
 	m_distanceGoal = 0;
 	m_asservCounter = 0;
+	m_enableMotors = true;
 }
 
 AsservMain::~AsservMain()
@@ -62,13 +64,13 @@ float AsservMain::estimateSpeed(int16_t deltaCount)
 
 float AsservMain::estimateDeltaAngle(int16_t deltaCountRight, int16_t deltaCountLeft )
 {
-    return float(deltaCountRight-deltaCountLeft);
+    return float(deltaCountRight-deltaCountLeft)  / m_encoderWheelsDistance_ticks ;
 }
 
 float AsservMain::estimateDeltaDistance(int16_t deltaCountRight, int16_t deltaCountLeft )
 {
 	// in mm
-    return float(deltaCountRight+deltaCountLeft) * (1.0/2.0) * (1.0/m_encoderTicksBymm);
+    return float(deltaCountRight+deltaCountLeft) * (1.0/2.0) * m_encodermmByTicks;
 }
 
 void AsservMain::mainLoop()
@@ -92,9 +94,9 @@ void AsservMain::mainLoop()
 		// Compute speed consign every ASSERV_POSITION_DIVISOR
 		if( m_asservCounter == ASSERV_POSITION_DIVISOR)
 		{
-	//		setMotorsSpeed(
-	//				angleConsign,
-	//				-angleConsign);
+			setMotorsSpeed(
+					angleConsign,
+					-angleConsign);
 			m_asservCounter=0;
 		}
 
@@ -105,9 +107,16 @@ void AsservMain::mainLoop()
 		float outputSpeedRight = m_speedControllerRight.update(estimatedSpeedRight);
 		float outputSpeedLeft = m_speedControllerLeft.update(estimatedSpeedLeft);
 
-		m_motorController.setMotor2Speed(outputSpeedRight);
-		m_motorController.setMotor1Speed(outputSpeedLeft);
-
+		if(m_enableMotors)
+		{
+			m_motorController.setMotor2Speed(outputSpeedRight);
+			m_motorController.setMotor1Speed(outputSpeedLeft);
+		}
+		else
+		{
+			m_motorController.setMotor2Speed(0);
+			m_motorController.setMotor1Speed(0);
+		}
 		USBStream::instance()->setSpeedEstimatedRight(estimatedSpeedRight);
 		USBStream::instance()->setSpeedEstimatedLeft(estimatedSpeedLeft);
 		USBStream::instance()->setSpeedGoalRight(m_speedControllerRight.getSpeedGoal());
@@ -118,8 +127,20 @@ void AsservMain::mainLoop()
 		USBStream::instance()->setSpeedIntegratedOutputLeft(m_speedControllerLeft.getIntegratedOutput());
 		USBStream::instance()->setLimitedSpeedGoalRight(m_speedControllerRight.getLimitedSpeedGoal());
 		USBStream::instance()->setLimitedSpeedGoalLeft(m_speedControllerLeft.getLimitedSpeedGoal());
+
+		USBStream::instance()->setAngleGoal(m_angleGoal);
+		USBStream::instance()->setAngleAccumulator(m_angleRegulator.getAccumulator());
+		USBStream::instance()->setAngleOutput(angleConsign);
+
+
+		USBStream::instance()->setDistGoal(m_distanceGoal);
+		USBStream::instance()->setDistAccumulator(m_distanceRegulator.getAccumulator());
+		USBStream::instance()->setDistOutput(distanceConsign);
+
+
 		USBStream::instance()->SendCurrentStream();
 
+		m_asservCounter++;
 		chThdSleepUntil(time);
 		time += TIME_MS2I(ASSERV_THREAD_PERIOD_MS);
 	}
@@ -130,4 +151,16 @@ void AsservMain::setMotorsSpeed(float motorLeft, float motorRight)
 	m_speedControllerRight.setSpeedGoal(motorRight);
 	m_speedControllerLeft.setSpeedGoal(motorLeft);
 }
+
+void AsservMain::enableMotors(bool enable)
+{
+	m_enableMotors = enable;
+	if(enable)
+	{
+		// In this case, reseting integrators are useful ...
+		m_speedControllerLeft.resetIntegral();
+		m_speedControllerRight.resetIntegral();
+	}
+};
+
 

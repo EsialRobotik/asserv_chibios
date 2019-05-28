@@ -20,6 +20,9 @@ public:
 
 	float getAccumulator(){ return m_accumulator;};
 
+	void setGain(float Kp){ m_Kp = Kp;}
+
+	void reset(){m_accumulator = 0;};
 
 private:
     double m_accumulator;

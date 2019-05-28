@@ -100,13 +100,20 @@ void asservCommand(BaseSequentialStream *chp, int argc, char **argv)
 {
 	auto printUsage = []() {
 		chprintf(outputStream,"Usage :");
+		chprintf(outputStream," - asserv enablemotor 0|1\r\n");
+		chprintf(outputStream," ----- \r\n");
 		chprintf(outputStream," - asserv setspeed [r|l] [speed]\r\n");
 		chprintf(outputStream," - asserv speedstep [r|l] [speed] [step time] \r\n");
 		chprintf(outputStream," - asserv speedstep2 [speed] [step time] \r\n");
 		chprintf(outputStream," - asserv speedcontrol [r|l] [Kp] [Ki] \r\n");
 		chprintf(outputStream," - asserv speedslope [r|l] delta_speed \r\n");
-
-
+		chprintf(outputStream," ----- \r\n");
+		chprintf(outputStream," - asserv setangle angle_rad \r\n");
+		chprintf(outputStream," - asserv anglereset\r\n");
+		chprintf(outputStream," - asserv anglecontrol Kp\r\n");
+		chprintf(outputStream," ----- \r\n");
+		chprintf(outputStream," - asserv setdist mm \r\n");
+		chprintf(outputStream," - asserv distreset\r\n");
 	};
 	(void) chp;
 
@@ -173,6 +180,44 @@ void asservCommand(BaseSequentialStream *chp, int argc, char **argv)
 		chprintf(outputStream, "setting speed slope delta %.2f \r\n",slope);
 
 		mainAsserv.setSpeedSlope(slope);
+	}
+	else if(!strcmp(argv[0], "setangle"))
+	{
+		float   angle = atof(argv[1]);
+		chprintf(outputStream, "setting angle goal to %.2frad \r\n",angle);
+
+		mainAsserv.setAngleGoal(angle);
+	}
+	else if(!strcmp(argv[0], "anglereset"))
+	{
+		chprintf(outputStream, "Reseting angle accumulator \r\n");
+		mainAsserv.resetAngleAccumulator();
+	}
+	else if(!strcmp(argv[0], "distreset"))
+	{
+		chprintf(outputStream, "Reseting distance accumulator \r\n");
+		mainAsserv.resetDistAccumulator();
+	}
+	else if(!strcmp(argv[0], "setdist"))
+	{
+		float   dist = atof(argv[1]);
+		chprintf(outputStream, "setting distance goal to %.2fmm \r\n",dist);
+
+		mainAsserv.setDistanceGoal(dist);
+	}
+	else if(!strcmp(argv[0], "anglecontrol"))
+	{
+		float   Kp = atof(argv[1]);
+		chprintf(outputStream, "setting angle Kp to %.2f \r\n",Kp);
+
+		mainAsserv.setGainForAngleRegulator(Kp);
+	}
+	else if(!strcmp(argv[0], "enablemotor"))
+	{
+		bool enable = !(atoi(argv[1]) == 0);
+		chprintf(outputStream, "%s motor output\r\n",(enable? "enabling" : "disabling"));
+
+		mainAsserv.enableMotors(enable);
 	}
 	else
 	{

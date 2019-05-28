@@ -23,9 +23,9 @@ explicit SpeedController(float speedKp, float speedKi, float outputLimit, float 
 	float getIntegratedOutput(){return m_integratedOutput;};
 
 	void setSpeedSlope(float slope){m_deltaConsignMax =slope;};
+	void resetIntegral() {m_integratedOutput = 0;};
 
 private:
-	void resetIntegral() {m_integratedOutput = 0;};
 
 
 	float m_speedGoal;

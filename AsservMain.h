@@ -33,6 +33,17 @@ public:
 	void setSpeedSlope(float slope){
 		m_speedControllerLeft.setSpeedSlope(slope);
 		m_speedControllerRight.setSpeedSlope(slope); }
+
+	void setAngleGoal(float goal_rad){ m_angleGoal = goal_rad*m_encoderWheelsDistance_mm;}
+	void setDistanceGoal(float goal_mm){ m_distanceGoal = goal_mm;}
+
+	void resetAngleAccumulator(){m_angleRegulator.reset();}
+	void resetDistAccumulator(){m_distanceRegulator.reset();}
+
+
+	void setGainForAngleRegulator(float Kp){ m_angleRegulator.setGain(Kp); };
+
+	void enableMotors(bool enable);
 private:
 
 	float estimateSpeed(int16_t deltaCount);
@@ -49,7 +60,8 @@ private:
 	Regulator m_distanceRegulator;
 
 	float m_encoderWheelsDistance_mm;
-	float m_encoderTicksBymm;
+	float m_encoderWheelsDistance_ticks;
+	float m_encodermmByTicks;
 	float m_distanceByEncoderTurn_mm;
 
 
@@ -57,6 +69,8 @@ private:
 	float m_distanceGoal;
 
 	uint8_t m_asservCounter;
+
+	bool m_enableMotors;
 };
 
 #endif /* ASSERVMAIN_H_ */
