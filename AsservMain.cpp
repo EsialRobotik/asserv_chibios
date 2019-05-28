@@ -21,10 +21,10 @@
 AsservMain::AsservMain(float wheelRadius_mm):
 m_motorController(false,true),
 m_encoders(true,true, 1 , 1),
-m_speedControllerRight(0.25, 0.45, 100, 1000, 20, 1.0/ASSERV_THREAD_PERIOD_S),
-m_speedControllerLeft(0.25, 0.45 , 100, 1000, 20, 1.0/ASSERV_THREAD_PERIOD_S),
+m_speedControllerRight(0.25, 0.45, 100, 1000, 30, 1.0/ASSERV_THREAD_PERIOD_S),
+m_speedControllerLeft(0.25, 0.45 , 100, 1000, 30, 1.0/ASSERV_THREAD_PERIOD_S),
 m_angleRegulator(1100),
-m_distanceRegulator(0.1)
+m_distanceRegulator(10)
 {
 	m_encoderWheelsDistance_mm = 297;
 	m_distanceByEncoderTurn_mm = M_2PI*wheelRadius_mm;
@@ -33,8 +33,8 @@ m_distanceRegulator(0.1)
 	m_angleGoal=0;
 	m_distanceGoal = 0;
 	m_asservCounter = 0;
-	m_enableMotors = false;
-	m_enablePolar = false;
+	m_enableMotors = true;
+	m_enablePolar = true;
 }
 
 AsservMain::~AsservMain()
@@ -97,8 +97,8 @@ void AsservMain::mainLoop()
 		if( m_asservCounter == ASSERV_POSITION_DIVISOR && m_enablePolar)
 		{
 			setMotorsSpeed(
-					angleConsign,
-					-angleConsign);
+					distanceConsign+angleConsign,
+					distanceConsign-angleConsign);
 			m_asservCounter=0;
 		}
 

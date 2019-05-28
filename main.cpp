@@ -107,7 +107,7 @@ void asservCommand(BaseSequentialStream *chp, int argc, char **argv)
 		chprintf(outputStream," - asserv speedstep [r|l] [speed] [step time] \r\n");
 		chprintf(outputStream," - asserv speedstep2 [speed] [step time] \r\n");
 		chprintf(outputStream," - asserv speedcontrol [r|l] [Kp] [Ki] \r\n");
-		chprintf(outputStream," - asserv speedslope [r|l] delta_speed \r\n");
+		chprintf(outputStream," - asserv speedslope delta_speed \r\n");
 		chprintf(outputStream," ----- \r\n");
 		chprintf(outputStream," - asserv setangle angle_rad \r\n");
 		chprintf(outputStream," - asserv anglereset\r\n");
@@ -115,6 +115,8 @@ void asservCommand(BaseSequentialStream *chp, int argc, char **argv)
 		chprintf(outputStream," ----- \r\n");
 		chprintf(outputStream," - asserv setdist mm \r\n");
 		chprintf(outputStream," - asserv distreset\r\n");
+		chprintf(outputStream," - asserv distcontrol Kp\r\n");
+
 	};
 	(void) chp;
 
@@ -212,6 +214,13 @@ void asservCommand(BaseSequentialStream *chp, int argc, char **argv)
 		chprintf(outputStream, "setting angle Kp to %.2f \r\n",Kp);
 
 		mainAsserv.setGainForAngleRegulator(Kp);
+	}
+	else if(!strcmp(argv[0], "distcontrol"))
+	{
+		float   Kp = atof(argv[1]);
+		chprintf(outputStream, "setting dist Kp to %.2f \r\n",Kp);
+
+		mainAsserv.setGainForDistRegulator(Kp);
 	}
 	else if(!strcmp(argv[0], "enablemotor"))
 	{

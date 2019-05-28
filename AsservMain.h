@@ -42,6 +42,8 @@ public:
 
 
 	void setGainForAngleRegulator(float Kp){ m_angleRegulator.setGain(Kp); };
+	void setGainForDistRegulator(float Kp){ m_distanceRegulator.setGain(Kp); };
+
 
 	void enableMotors(bool enable);
 	void enablePolar(bool enable);
