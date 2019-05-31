@@ -27,6 +27,10 @@ typedef struct
 	float value17;
 	float value18;
 	float value19;
+	float value20;
+	float value21;
+	float value22;
+	float value23;
 }  __attribute__((packed)) UsbStreamSample;
 
 
@@ -67,6 +71,11 @@ public:
 	// Raw Encoder
 	inline void setRawEncoderDeltaRight(float delta) {m_currentStruct.value17 = delta;}
 	inline void setRawEncoderDeltaLeft(float delta) {m_currentStruct.value18 = delta;}
+
+	// Odometrie
+	inline void setOdoX(float x) {m_currentStruct.value19 = x;}
+	inline void setOdoY(float y) {m_currentStruct.value20 = y;}
+	inline void setOdoTheta(float theta) {m_currentStruct.value21 = theta;}
 
 
 private:

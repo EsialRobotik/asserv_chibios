@@ -5,7 +5,7 @@
 
 # Compiler options here.
 ifeq ($(USE_OPT),)
-  USE_OPT = -Og -g -ggdb -fomit-frame-pointer -falign-functions=16
+  USE_OPT = -Og -g -ggdb -fomit-frame-pointer -falign-functions=16 -lm
 endif
 
 # C specific options here (added to USE_OPT).
@@ -137,7 +137,8 @@ CPPSRC = $(ALLCPPSRC) \
        Encoders.cpp \
        AsservMain.cpp \
        SpeedController.cpp \
-       Regulator.cpp
+       Regulator.cpp \
+       Odometrie.cpp
 
 # List ASM source files here.
 ASMSRC = $(ALLASMSRC)

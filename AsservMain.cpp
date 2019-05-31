@@ -18,22 +18,23 @@
 #define ASSERV_POSITION_DIVISOR (5)
 
 
-AsservMain::AsservMain(float wheelRadius_mm):
+AsservMain::AsservMain(float wheelRadius_mm, float encoderWheelsDistance_mm):
 m_motorController(false,true),
 m_encoders(true,true, 1 , 1),
+m_odometrie(encoderWheelsDistance_mm),
 m_speedControllerRight(0.25, 0.45, 100, 1000, 30, 1.0/ASSERV_THREAD_PERIOD_S),
 m_speedControllerLeft(0.25, 0.45 , 100, 1000, 30, 1.0/ASSERV_THREAD_PERIOD_S),
 m_angleRegulator(1100),
 m_distanceRegulator(10)
 {
-	m_encoderWheelsDistance_mm = 297;
+	m_encoderWheelsDistance_mm = encoderWheelsDistance_mm;
 	m_distanceByEncoderTurn_mm = M_2PI*wheelRadius_mm;
 	m_encodermmByTicks = m_distanceByEncoderTurn_mm/4096.0;
 	m_encoderWheelsDistance_ticks = m_encoderWheelsDistance_mm / m_encodermmByTicks;
 	m_angleGoal=0;
 	m_distanceGoal = 0;
 	m_asservCounter = 0;
-	m_enableMotors = true;
+	m_enableMotors = false;
 	m_enablePolar = true;
 }
 
@@ -102,6 +103,11 @@ void AsservMain::mainLoop()
 			m_asservCounter=0;
 		}
 
+		m_odometrie.refresh(
+				m_encoderDeltaRight*m_encodermmByTicks,
+				m_encoderDeltaLeft*m_encodermmByTicks);
+
+
 		// Speed regulation
 		float estimatedSpeedRight = estimateSpeed(m_encoderDeltaRight);
 		float estimatedSpeedLeft = estimateSpeed(m_encoderDeltaLeft);
@@ -141,6 +147,9 @@ void AsservMain::mainLoop()
 		USBStream::instance()->setDistAccumulator(m_distanceRegulator.getAccumulator());
 		USBStream::instance()->setDistOutput(distanceConsign);
 
+		USBStream::instance()->setOdoX(m_odometrie.getX());
+		USBStream::instance()->setOdoY(m_odometrie.getY());
+		USBStream::instance()->setOdoTheta(m_odometrie.getTheta());
 
 		USBStream::instance()->SendCurrentStream();
 

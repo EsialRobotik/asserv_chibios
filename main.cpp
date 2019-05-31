@@ -24,8 +24,11 @@
 
 
 #define ENCODERS_WHEELS_RADIUS (47.2/2.0)
+#define ENCODERS_WHEELS_DISTANCE_MM (297)
 
-AsservMain mainAsserv(ENCODERS_WHEELS_RADIUS);
+
+
+AsservMain mainAsserv(ENCODERS_WHEELS_RADIUS, ENCODERS_WHEELS_DISTANCE_MM);
 static THD_WORKING_AREA(waAsservThread, 512);
 static THD_FUNCTION(AsservThread, arg)
 {

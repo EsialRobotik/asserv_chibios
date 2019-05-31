@@ -13,12 +13,13 @@
 #include "Encoders.h"
 #include "SpeedController.h"
 #include "Regulator.h"
+#include "Odometrie.h"
 #include <cstdint>
 
 class AsservMain
 {
 public:
-	explicit AsservMain(float wheelRadius_mm);
+	explicit AsservMain(float wheelRadius_mm, float encoderWheelsDistance_mm);
 	virtual ~AsservMain();
 
 
@@ -57,6 +58,7 @@ private:
 
 	Vnh5019 m_motorController;
 	Encoders m_encoders;
+	Odometrie m_odometrie;
 	SpeedController m_speedControllerRight;
 	SpeedController m_speedControllerLeft;
 	Regulator m_angleRegulator;
