@@ -16,10 +16,13 @@
 #include "Odometrie.h"
 #include <cstdint>
 
+class CommandManager;
+
+
 class AsservMain
 {
 public:
-	explicit AsservMain(float wheelRadius_mm, float encoderWheelsDistance_mm);
+	explicit AsservMain(float wheelRadius_mm, float encoderWheelsDistance_mm, CommandManager *commandManager);
 	virtual ~AsservMain();
 
 
@@ -34,9 +37,6 @@ public:
 	void setSpeedSlope(float slope){
 		m_speedControllerLeft.setSpeedSlope(slope);
 		m_speedControllerRight.setSpeedSlope(slope); }
-
-	void setAngleGoal(float goal_rad){ m_angleGoal = goal_rad;}
-	void setDistanceGoal(float goal_mm){ m_distanceGoal = goal_mm;}
 
 	void resetAngleAccumulator(){m_angleRegulator.reset();}
 	void resetDistAccumulator(){m_distanceRegulator.reset();}
@@ -63,15 +63,12 @@ private:
 	SpeedController m_speedControllerLeft;
 	Regulator m_angleRegulator;
 	Regulator m_distanceRegulator;
+	CommandManager *m_commandManager;
 
 	float m_encoderWheelsDistance_mm;
 	float m_encoderWheelsDistance_ticks;
 	float m_encodermmByTicks;
 	float m_distanceByEncoderTurn_mm;
-
-
-	float m_angleGoal;
-	float m_distanceGoal;
 
 	uint8_t m_asservCounter;
 

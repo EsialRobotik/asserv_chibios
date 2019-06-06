@@ -21,14 +21,21 @@
 #include <cstdlib>
 #include <cstring>
 #include "AsservMain.h"
+#include "commandManager/CommandManager.h"
+
+
+#ifndef M_PI
+#define M_PI (3.14159265358979323846)
+#endif
+
 
 
 #define ENCODERS_WHEELS_RADIUS (47.2/2.0)
 #define ENCODERS_WHEELS_DISTANCE_MM (297)
 
+CommandManager commandManager;
 
-
-AsservMain mainAsserv(ENCODERS_WHEELS_RADIUS, ENCODERS_WHEELS_DISTANCE_MM);
+AsservMain mainAsserv(ENCODERS_WHEELS_RADIUS, ENCODERS_WHEELS_DISTANCE_MM, &commandManager);
 static THD_WORKING_AREA(waAsservThread, 512);
 static THD_FUNCTION(AsservThread, arg)
 {
@@ -112,13 +119,16 @@ void asservCommand(BaseSequentialStream *chp, int argc, char **argv)
 		chprintf(outputStream," - asserv speedcontrol [r|l] [Kp] [Ki] \r\n");
 		chprintf(outputStream," - asserv speedslope delta_speed \r\n");
 		chprintf(outputStream," ----- \r\n");
-		chprintf(outputStream," - asserv setangle angle_rad \r\n");
+		chprintf(outputStream," - asserv addangle angle_rad \r\n");
 		chprintf(outputStream," - asserv anglereset\r\n");
 		chprintf(outputStream," - asserv anglecontrol Kp\r\n");
 		chprintf(outputStream," ----- \r\n");
-		chprintf(outputStream," - asserv setdist mm \r\n");
+		chprintf(outputStream," - asserv adddist mm \r\n");
 		chprintf(outputStream," - asserv distreset\r\n");
 		chprintf(outputStream," - asserv distcontrol Kp\r\n");
+		chprintf(outputStream," ----- \r\n");
+		chprintf(outputStream," - asserv zob\r\n");
+
 
 	};
 	(void) chp;
@@ -187,12 +197,12 @@ void asservCommand(BaseSequentialStream *chp, int argc, char **argv)
 
 		mainAsserv.setSpeedSlope(slope);
 	}
-	else if(!strcmp(argv[0], "setangle"))
+	else if(!strcmp(argv[0], "addangle"))
 	{
 		float   angle = atof(argv[1]);
-		chprintf(outputStream, "setting angle goal to %.2frad \r\n",angle);
+		chprintf(outputStream, "Adding angle %.2frad \r\n",angle);
 
-		mainAsserv.setAngleGoal(angle);
+		commandManager.addTurn(angle);
 	}
 	else if(!strcmp(argv[0], "anglereset"))
 	{
@@ -204,12 +214,12 @@ void asservCommand(BaseSequentialStream *chp, int argc, char **argv)
 		chprintf(outputStream, "Reseting distance accumulator \r\n");
 		mainAsserv.resetDistAccumulator();
 	}
-	else if(!strcmp(argv[0], "setdist"))
+	else if(!strcmp(argv[0], "adddist"))
 	{
 		float   dist = atof(argv[1]);
-		chprintf(outputStream, "setting distance goal to %.2fmm \r\n",dist);
+		chprintf(outputStream, "Adding distance %.2fmm \r\n",dist);
 
-		mainAsserv.setDistanceGoal(dist);
+		commandManager.addStraightLine(dist);
 	}
 	else if(!strcmp(argv[0], "anglecontrol"))
 	{
@@ -238,6 +248,24 @@ void asservCommand(BaseSequentialStream *chp, int argc, char **argv)
 		chprintf(outputStream, "%s polar control\r\n",(enable? "enabling" : "disabling"));
 
 		mainAsserv.enablePolar(enable);
+	}
+	else if(!strcmp(argv[0], "zob"))
+	{
+//		commandManager.addStraightLine(400);
+//		commandManager.addTurn(-M_PI/2);
+//		commandManager.addStraightLine(200);
+//		commandManager.addTurn(-M_PI/2);
+//		commandManager.addStraightLine(400);
+//		commandManager.addTurn(-M_PI/2);
+//		commandManager.addStraightLine(200);
+//		commandManager.addTurn(-M_PI/2);
+
+//		commandManager.addGoTo(400,0);
+//		commandManager.addGoTo(400,200);
+		commandManager.addGoTo(100,100);
+//		commandManager.addGoTo(0,0);
+
+
 	}
 	else
 	{

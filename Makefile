@@ -138,7 +138,10 @@ CPPSRC = $(ALLCPPSRC) \
        AsservMain.cpp \
        SpeedController.cpp \
        Regulator.cpp \
-       Odometrie.cpp
+       Odometrie.cpp \
+       commandManager/CommandManager.cpp \
+       commandManager/CMDList/CMDList.cpp
+    
 
 # List ASM source files here.
 ASMSRC = $(ALLASMSRC)
