@@ -24,9 +24,12 @@ public:
 
 	void reset(){m_accumulator = 0;};
 
+	float getError(){ return m_error;};
+
 private:
     double m_accumulator;
     float m_Kp;
+    float m_error;
 
 };
 
