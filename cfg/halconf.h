@@ -551,7 +551,9 @@
 #endif
 
 
+#if !defined(CHPRINTF_USE_FLOAT)
 #define CHPRINTF_USE_FLOAT 1
+#endif
 
 
 #endif /* HALCONF_H */
