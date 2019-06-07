@@ -8,7 +8,6 @@
 #ifndef ASSERVMAIN_H_
 #define ASSERVMAIN_H_
 
-#include "USBStream.hpp"
 #include "Vnh5019.h"
 #include "Encoders.h"
 #include "SpeedController.h"

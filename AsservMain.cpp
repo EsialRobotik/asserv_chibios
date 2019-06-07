@@ -9,6 +9,8 @@
 #include "ch.h"
 #include "hal.h"
 #include "commandManager/CommandManager.h"
+#include "USBStream.hpp"
+
 
 #ifndef M_PI
 #define M_PI (3.14159265358979323846)
@@ -22,14 +24,16 @@
 #define ASSERV_POSITION_DIVISOR (5)
 
 
+#define SPEED_REG_MAX_INPUT_SPEED (500)
+
 AsservMain::AsservMain(float wheelRadius_mm, float encoderWheelsDistance_mm, CommandManager *commandManager):
 m_motorController(true,false),
 m_encoders(false,false, 1 , 1),
 m_odometrie(encoderWheelsDistance_mm),
-m_speedControllerRight(0.25, 0.45, 100, 1000, 30, 1.0/ASSERV_THREAD_PERIOD_S),
-m_speedControllerLeft(0.25, 0.45 , 100, 1000, 30, 1.0/ASSERV_THREAD_PERIOD_S),
-m_angleRegulator(1100),
-m_distanceRegulator(10)
+m_speedControllerRight(0.25, 0.45, 100, SPEED_REG_MAX_INPUT_SPEED, 1000, 1.0/ASSERV_THREAD_PERIOD_S),
+m_speedControllerLeft(0.25, 0.45 , 100, SPEED_REG_MAX_INPUT_SPEED, 1000, 1.0/ASSERV_THREAD_PERIOD_S),
+m_angleRegulator(1400, SPEED_REG_MAX_INPUT_SPEED),
+m_distanceRegulator(9, SPEED_REG_MAX_INPUT_SPEED)
 {
 	m_commandManager = commandManager;
 	m_encoderWheelsDistance_mm = encoderWheelsDistance_mm;
@@ -41,7 +45,6 @@ m_distanceRegulator(10)
 	m_enablePolar = true;
 	commandManager->setAngleRegulator(&m_angleRegulator);
 	commandManager->setDistanceRegulator(&m_distanceRegulator);
-
 }
 
 AsservMain::~AsservMain()
@@ -98,22 +101,25 @@ void AsservMain::mainLoop()
 				m_encoderDeltaLeft*m_encodermmByTicks);
 
 
-		// Feedbacks estimations
+		// Feedbacks estimations & update
 		float deltaAngle_radian = estimateDeltaAngle(m_encoderDeltaRight, m_encoderDeltaLeft);
 		float deltaDistance_mm = estimateDeltaDistance(m_encoderDeltaRight, m_encoderDeltaLeft);
+
+		m_angleRegulator.updateFeedback( deltaAngle_radian);
+		m_distanceRegulator.updateFeedback( deltaDistance_mm);
+
 
 		// Compute speed consign every ASSERV_POSITION_DIVISOR
 		if( m_asservCounter == ASSERV_POSITION_DIVISOR && m_enablePolar)
 		{
 			m_commandManager->perform(m_odometrie.getX(), m_odometrie.getY(), m_odometrie.getTheta() );
-		}
 
-		float angleConsign = m_angleRegulator.update( m_commandManager->getAngleGoal(), deltaAngle_radian);
-		float distanceConsign = m_distanceRegulator.update( m_commandManager->getDistanceGoal(), deltaDistance_mm);
+			float angleConsign = m_angleRegulator.updateOutput( m_commandManager->getAngleGoal());
+			float distanceConsign = m_distanceRegulator.updateOutput( m_commandManager->getDistanceGoal());
 
-			// Compute speed consign every ASSERV_POSITION_DIVISOR
-		if( m_asservCounter == ASSERV_POSITION_DIVISOR && m_enablePolar)
-		{
+			USBStream::instance()->setAngleOutput(angleConsign);
+			USBStream::instance()->setDistOutput(distanceConsign);
+
 			setMotorsSpeed(
 					distanceConsign-angleConsign,
 					distanceConsign+angleConsign);
@@ -151,17 +157,17 @@ void AsservMain::mainLoop()
 
 		USBStream::instance()->setAngleGoal(m_commandManager->getAngleGoal());
 		USBStream::instance()->setAngleAccumulator(m_angleRegulator.getAccumulator());
-		USBStream::instance()->setAngleOutput(angleConsign);
 
 		USBStream::instance()->setDistGoal(m_commandManager->getDistanceGoal() );
 		USBStream::instance()->setDistAccumulator(m_distanceRegulator.getAccumulator());
-		USBStream::instance()->setDistOutput(distanceConsign);
 
 		USBStream::instance()->setOdoX(m_odometrie.getX());
 		USBStream::instance()->setOdoY(m_odometrie.getY());
 		USBStream::instance()->setOdoTheta(m_odometrie.getTheta());
 
-		USBStream::instance()->fill();
+		USBStream::instance()->setRawEncoderDeltaLeft(1664);
+		USBStream::instance()->setRawEncoderDeltaRight(51);
+
 		USBStream::instance()->SendCurrentStream();
 
 		m_asservCounter++;

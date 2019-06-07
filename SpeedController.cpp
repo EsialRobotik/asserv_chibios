@@ -63,7 +63,7 @@ float SpeedController::update(float actualSpeed)
 	else
 	{
 		m_integratedOutput +=  m_speedKi * speedError/m_measureFrequency;
-		if( std::fabs(speedError) < 0.01) // When the speed error is near zero (ie: speed goal is 0 and the robot doesn't move), unsature the integral
+		if( std::fabs(speedError) < 0.1) // When the speed error is near zero (ie: speed goal is 0 and the robot doesn't move), unsature the integral
 			m_integratedOutput *= 0.95;
 	}
 	// Anti Windup protection, probably useless with the saturation handled below..
