@@ -42,8 +42,7 @@ private:
 
     float m_gotoAngleThreshold;
 
-    float m_gotoEnchainSpeed;
-    bool m_gotoEnchainStarted;
+    float m_gotoNextConsignDist;
 
     float m_angleRegulatorConsign;
     float m_distRegulatorConsign;
@@ -52,7 +51,7 @@ private:
     int lastStatus;
 
     bool isGoalReach();
-    bool areRampsFinished();
+    bool areRampsFinished(float X_mm, float Y_mm);
 
     float computeDeltaTheta(float deltaX, float deltaY, float theta_rad); // Calcul de l'angle à parcourir
     float computeDeltaDist(float deltaX, float deltaY); // Calcul de la distance à parcourir

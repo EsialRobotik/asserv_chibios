@@ -127,7 +127,8 @@ void asservCommand(BaseSequentialStream *chp, int argc, char **argv)
 		chprintf(outputStream," - asserv distreset\r\n");
 		chprintf(outputStream," - asserv distcontrol Kp\r\n");
 		chprintf(outputStream," ----- \r\n");
-		chprintf(outputStream," - asserv zob\r\n");
+		chprintf(outputStream," - asserv goto\r\n");
+		chprintf(outputStream," - asserv goto2\r\n");
 
 
 	};
@@ -249,22 +250,35 @@ void asservCommand(BaseSequentialStream *chp, int argc, char **argv)
 
 		mainAsserv.enablePolar(enable);
 	}
-	else if(!strcmp(argv[0], "zob"))
+	else if(!strcmp(argv[0], "goto"))
 	{
-//		commandManager.addStraightLine(400);
-//		commandManager.addTurn(-M_PI/2);
-//		commandManager.addStraightLine(200);
-//		commandManager.addTurn(-M_PI/2);
-//		commandManager.addStraightLine(400);
-//		commandManager.addTurn(-M_PI/2);
-//		commandManager.addStraightLine(200);
-//		commandManager.addTurn(-M_PI/2);
+		commandManager.addGoTo(450,0);
+		commandManager.addGoTo(450,-800);
+		commandManager.addGoTo(100, -800);
+		commandManager.addGoTo(100, 0);
+		commandManager.addGoToAngle(450,0);
 
-//		commandManager.addGoTo(400,0);
-//		commandManager.addGoTo(400,200);
-		commandManager.addGoTo(100,100);
-//		commandManager.addGoTo(0,0);
+	}
+	else if(!strcmp(argv[0], "goto2"))
+	{
+//		commandManager.addGoToEnchainement(450,-200);
+//		commandManager.addGoToEnchainement(450,-600);
+//		commandManager.addGoToEnchainement(300,-400);
+//		commandManager.addGoTo(150,0);
 
+
+		commandManager.addGoToEnchainement(365,-270);
+		commandManager.addGoToEnchainement(550,-385);
+		commandManager.addGoToEnchainement(490,-590);
+		commandManager.addGoToEnchainement(295,-720);
+		commandManager.addGoToEnchainement(180,-1000);
+		commandManager.addGoToEnchainement(390,-1100);
+		commandManager.addGoToEnchainement(550,-900);
+		commandManager.addGoToEnchainement(395,-630);
+		commandManager.addGoToEnchainement(300,-440);
+		commandManager.addGoTo(300,-250);
+		commandManager.addGoToAngle(1000,-250);
+		commandManager.addStraightLine(-200);
 
 	}
 	else

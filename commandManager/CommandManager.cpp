@@ -29,9 +29,8 @@ liste()
     m_arrivalDistSpeedThreshold = 1;
     m_angleRegulatorConsign = 0;
     m_distRegulatorConsign = 0;
-    m_gotoAngleThreshold = M_PI/8; // TODO: ce truc depend de si on est en goto ou gotoEnchain
-    m_gotoEnchainSpeed = 120;
-    m_gotoEnchainStarted = false;
+    m_gotoAngleThreshold = M_PI/8;
+    m_gotoNextConsignDist = 50;
 }
 
 CommandManager::~CommandManager()
@@ -74,7 +73,7 @@ bool CommandManager::addGoToAngle(float posXInmm, float posYInmm)
  */
 void CommandManager::perform(float X_mm, float Y_mm, float theta_rad)
 {
-    if (!areRampsFinished())
+    if (!areRampsFinished(X_mm, Y_mm))
     {
 
         if (currCMD.type == CMD_GO || currCMD.type == CMD_TURN) {  // On avance ou on tourne sur place
@@ -115,7 +114,6 @@ void CommandManager::perform(float X_mm, float Y_mm, float theta_rad)
         } else if (currCMD.type == CMD_GOTO) {   // On appel computeGoTo qui se débrouille pour aller en (x,y)
             computeGoTo(X_mm, Y_mm, theta_rad);
         } else if (currCMD.type == CMD_GOTOENCHAIN) {
-        	m_gotoEnchainStarted = false;
             computeEnchainement(X_mm, Y_mm, theta_rad); //On va tenter d'enchainer la consigne suivante
         } else if (currCMD.type == CMD_GOTOANGLE) { // On appel computeGoToAngle qui se débrouille pour s'aligner avec (x,y)
             computeGoToAngle(X_mm, Y_mm, theta_rad);
@@ -215,11 +213,53 @@ float CommandManager::computeDeltaDist(float deltaX, float deltaY)
 
 void CommandManager::computeEnchainement(float X_mm, float Y_mm, float theta_rad)
 {
-	USBStream::instance()->setXGoal(currCMD.value);
-	USBStream::instance()->setYGoal(currCMD.secValue);
+	float X_goto = currCMD.value;
+	float Y_goto = currCMD.secValue;
 
-    float deltaX = currCMD.value - X_mm; // Différence entre la cible et le robot selon X
-    float deltaY = currCMD.secValue - Y_mm;  // Différence entre la cible et le robot selon Y
+	float X_goal = X_goto;
+	float Y_goal = Y_goto;
+
+	/*
+	 * En dynamique, la consigne  est l'intersection entre une ligne qui part du centre du robot vers le prochain goto
+     *    et un cercle de rayon m_gotoNextConsignDist centré sur le robot.
+     *  Sauf si la distance entre le robot et la prochaine consigne est inférieur a m_gotoNextConsignDist
+     *  	(ce cas de figure arrive quand il n'y a plus d'autres consignes a enchainer )
+	 */
+	if(computeDeltaDist(X_goto-X_mm, Y_goto-Y_mm) > m_gotoNextConsignDist)
+	{
+		float angle = M_PI/2;
+
+		if ((X_goto - X_mm) != 0) // with an angle of M_PI/2 an divide by zero will occur. So handle this special case.
+		{
+			// Find a linear function that go from the current position to goal ...
+			float slope = (Y_goto - Y_mm) / (X_goto - X_mm); // offset of the function is useless
+
+			// ... then find the angle between the previous linear function and a linear function y=0x+X_mm (parallel to the x abscissa)
+			// see https://fr.wikipedia.org/wiki/Propri%C3%A9t%C3%A9s_m%C3%A9triques_des_droites_et_des_plans#Angles_de_deux_droites
+			angle = atan(abs(slope));
+		}
+
+		// Correct the angle if we are in the left side of the trigonometric circle
+		if(X_mm > X_goto)
+			angle = M_PI - angle;
+		// Correct the sign of the angle if we are in the ]-Pi;0[ side of the trigonometric circle
+		if(Y_mm > Y_goto)
+			angle = -angle;
+
+		// Then find a (x,y) point that will be our current goal
+		X_goal = X_mm + cosf(angle)*m_gotoNextConsignDist;
+		Y_goal = Y_mm + sinf(angle)*m_gotoNextConsignDist;
+	}
+
+//	chprintf(outputStream, "gt(%.2f, %.2f) r(%.2f, %.2f) go(%.2f, %.2f)\r\n",X_goto, Y_goto, X_mm, Y_mm,X_goal, Y_goal);
+
+	USBStream::instance()->setXGoal(X_goal);
+	USBStream::instance()->setYGoal(Y_goal);
+
+
+	// Finally, apply some simple GOTO command
+    float deltaX = X_goal - X_mm; // Différence entre la cible et le robot selon X
+    float deltaY = Y_goal - Y_mm;  // Différence entre la cible et le robot selon Y
 
     // Valeur absolue de la distance à parcourir en allant tout droit pour atteindre la consigne
     float deltaDist = computeDeltaDist(deltaX, deltaY);
@@ -240,7 +280,7 @@ bool CommandManager::isGoalReach()
 				;
 }
 
-bool CommandManager::areRampsFinished()
+bool CommandManager::areRampsFinished(float X_mm, float Y_mm)
 {
 
     if (currCMD.type!= CMD_GOTOENCHAIN)
@@ -251,14 +291,18 @@ bool CommandManager::areRampsFinished()
     {
         if (nextCMD.type == CMD_GOTO || nextCMD.type == CMD_GOTOENCHAIN)
         {
-			if( m_distance_regulator->getOutput() > m_gotoEnchainSpeed)
-				m_gotoEnchainStarted = true;
+        	/* Si la prochaine consigne est enchainable, la consigne suivante
+        	 *  est l'intersection entre une ligne qui part du centre du robot vers le prochain goto
+        	 *    et un cercle de rayon m_gotoNextConsignDist centré sur le robot.
+        	 *
+        	 * Donc ici, si la distance vers le prochain point est plus petite que le rayon m_gotoNextConsignDist
+        	 * 	 on enchaine sur la commande suivante...
+        	 */
+        	 float deltaX = currCMD.value - X_mm; // Différence entre la cible et le robot selon X
+        	 float deltaY = currCMD.secValue - Y_mm;  // Différence entre la cible et le robot selon Y
 
-
-			// L'idée est de donner une vitesse de passage sur les points,
-			// 	lorsqu'on ralentie en dessous de la vitesse de passage, il est temps d'enchainer la prochaine commande
-			// 	Par contre, au démarrage de la commande, la vitesse est forcement
-			return m_gotoEnchainStarted && (m_distance_regulator->getOutput() < m_gotoEnchainSpeed);
+        	 float deltaDist = computeDeltaDist(deltaX, deltaY);
+        	 return (deltaDist < m_gotoNextConsignDist );
         }
         else
         	return isGoalReach(); // Si la consigne suivante n'est pas enchainable, il faut vraiment atteindre la consigne..

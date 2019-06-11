@@ -77,6 +77,11 @@ public:
 	inline void setOdoY(float y) {m_currentStruct.value20 = y;}
 	inline void setOdoTheta(float theta) {m_currentStruct.value21 = theta;}
 
+	// Command Manager
+	inline void setXGoal(float x) {m_currentStruct.value22 = x;}
+	inline void setYGoal(float y) {m_currentStruct.value23 = y;}
+
+
 
 private:
 	USBStream();
