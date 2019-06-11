@@ -9,7 +9,7 @@
 #include "ch.h"
 #include "hal.h"
 #include "commandManager/CommandManager.h"
-#include "USBStream.hpp"
+#include "USBStream.h"
 
 
 #ifndef M_PI

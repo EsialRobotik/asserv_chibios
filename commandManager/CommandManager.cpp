@@ -1,12 +1,12 @@
 #include "CommandManager.h"
 #include <math.h>
-#include "USBStream.hpp"
 #include "ch.h"
 #include "hal.h"
 #include "shell.h"
 #include <chprintf.h>
 #include <cstdlib>
 #include <cstring>
+#include "../USBStream.h"
 
 extern BaseSequentialStream *outputStream;
 

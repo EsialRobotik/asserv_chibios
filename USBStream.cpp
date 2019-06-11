@@ -1,4 +1,5 @@
-#include "USBStream.hpp"
+#include "USBStream.h"
+
 #include "usbcfg.h"
 #include <ch.h>
 #include <hal.h>
