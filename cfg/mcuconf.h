@@ -358,15 +358,7 @@
  */
 #define STM32_WDG_USE_IWDG                  FALSE
 
-/*
- * QEI driver system settings.
- */
-#define STM32_QEI_USE_TIM1                FALSE
-#define STM32_QEI_USE_TIM2                TRUE
-#define STM32_QEI_USE_TIM3                TRUE
-#define STM32_QEI_TIM1_IRQ_PRIORITY         3
-#define STM32_QEI_TIM2_IRQ_PRIORITY         3
-#define STM32_QEI_TIM3_IRQ_PRIORITY         3
+#include "mcuconf_community.h"
 
 
 #endif /* MCUCONF_H */

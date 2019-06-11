@@ -29,7 +29,8 @@
 #define HALCONF_H
 
 #define _CHIBIOS_HAL_CONF_
-#define _CHIBIOS_HAL_CONF_VER_7_0_
+#define _CHIBIOS_HAL_CONF_VER_7_1_
+
 
 #include "mcuconf.h"
 
@@ -524,36 +525,12 @@
 
 
 
-/**
- * @brief   Enables the QEI subsystem.
- */
-#if !defined(HAL_USE_QEI) || defined(__DOXYGEN__)
-#define HAL_USE_QEI                 TRUE
-#endif
-
-
-/*===========================================================================*/
-/* QEI driver related settings.                                              */
-/*===========================================================================*/
-
-/**
- * @brief   Enables discard of overlow
- */
-#if !defined(QEI_USE_OVERFLOW_DISCARD) || defined(__DOXYGEN__)
-#define QEI_USE_OVERFLOW_DISCARD    FALSE
-#endif
-
-/**
- * @brief   Enables min max of overlow
- */
-#if !defined(QEI_USE_OVERFLOW_MINMAX) || defined(__DOXYGEN__)
-#define QEI_USE_OVERFLOW_MINMAX     FALSE
-#endif
-
-
 #if !defined(CHPRINTF_USE_FLOAT)
 #define CHPRINTF_USE_FLOAT 1
 #endif
+
+#include "halconf_community.h"
+
 
 
 #endif /* HALCONF_H */

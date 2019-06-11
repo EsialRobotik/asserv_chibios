@@ -1,5 +1,4 @@
 build/*
-ChibiOS
 .cproject
 .dep
 .project
