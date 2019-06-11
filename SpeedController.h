@@ -1,10 +1,3 @@
-/*
- * SpeedController.h
- *
- *  Created on: 29 avr. 2019
- *      Author: jeff
- */
-
 #ifndef SRC_SPEEDCONTROLLER_H_
 #define SRC_SPEEDCONTROLLER_H_
 

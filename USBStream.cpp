@@ -1,5 +1,4 @@
 #include "USBStream.h"
-
 #include "usbcfg.h"
 #include <ch.h>
 #include <hal.h>
@@ -66,6 +65,11 @@ void USBStream::sendFullBuffer()
 {
 	if(m_currentPtr != NULL )
 	{
+		/*
+		 * DIRTY HACK !!
+		 *   as uart over usb doesn't seems to like zeros,
+		 *   	replace them by NaN that will be replace by zeros in Plotjuggler
+		 */
 		float *ptr = &(m_currentStruct.value1);
 		while(ptr <= &(m_currentStruct.value23))
 		{

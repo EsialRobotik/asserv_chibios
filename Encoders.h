@@ -1,10 +1,3 @@
-/*
- * Encoders.h
- *
- *  Created on: 2 mai 2019
- *      Author: jeff
- */
-
 #ifndef ENCODERS_H_
 #define ENCODERS_H_
 #include <cstdint>

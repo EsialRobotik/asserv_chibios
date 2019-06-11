@@ -1,10 +1,3 @@
-/*
- * SpeedController.cpp
- *
- *  Created on: 29 avr. 2019
- *      Author: jeff
- */
-
 #include "SpeedController.h"
 #include <cmath>
 #include <cstdlib>

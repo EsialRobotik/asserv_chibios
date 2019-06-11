@@ -1,10 +1,3 @@
-/*
- * AsservMain.cpp
- *
- *  Created on: 4 mai 2019
- *      Author: jeff
- */
-
 #include "AsservMain.h"
 #include "ch.h"
 #include "hal.h"

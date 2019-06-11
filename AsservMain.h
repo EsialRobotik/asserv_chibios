@@ -1,10 +1,3 @@
-/*
- * AsservMain.h
- *
- *  Created on: 4 mai 2019
- *      Author: jeff
- */
-
 #ifndef ASSERVMAIN_H_
 #define ASSERVMAIN_H_
 

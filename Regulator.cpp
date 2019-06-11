@@ -1,10 +1,3 @@
-/*
- * Regulator.cpp
- *
- *  Created on: 8 mai 2019
- *      Author: jeff
- */
-
 #include "Regulator.h"
 
 Regulator::Regulator(float Kp, float max_output)

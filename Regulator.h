@@ -1,10 +1,3 @@
-/*
- * Regulator.h
- *
- *  Created on: 8 mai 2019
- *      Author: jeff
- */
-
 #ifndef REGULATOR_H_
 #define REGULATOR_H_
 
