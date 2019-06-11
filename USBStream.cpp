@@ -4,6 +4,7 @@
 #include <hal.h>
 #include "core_cm4.h"
 #include <cstring>
+#include <cmath>
 
 const uint32_t synchroWord = 0xCAFED00D;
 
@@ -64,6 +65,13 @@ void USBStream::sendFullBuffer()
 {
 	if(m_currentPtr != NULL )
 	{
+		float *ptr = &(m_currentStruct.value1);
+		while(ptr <= &(m_currentStruct.value23))
+		{
+			if(*ptr == 0)
+				*ptr = NAN;
+			ptr++;
+		}
 		*m_currentPtr = m_currentStruct;
 		obqPostFullBuffer(&SDU1.obqueue, sizeof(UsbStreamSample));
 	}
