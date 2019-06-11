@@ -29,7 +29,7 @@
 AsservMain::AsservMain(float wheelRadius_mm, float encoderWheelsDistance_mm, CommandManager *commandManager):
 m_motorController(true,false),
 m_encoders(false,false, 1 , 1),
-m_odometrie(encoderWheelsDistance_mm),
+m_odometrie(encoderWheelsDistance_mm, 100.0, -250.0),
 m_speedControllerRight(0.25, 0.45, 100, SPEED_REG_MAX_INPUT_SPEED, 1000, 1.0/ASSERV_THREAD_PERIOD_S),
 m_speedControllerLeft(0.25, 0.45 , 100, SPEED_REG_MAX_INPUT_SPEED, 1000, 1.0/ASSERV_THREAD_PERIOD_S),
 m_angleRegulator(1400, SPEED_REG_MAX_INPUT_SPEED),

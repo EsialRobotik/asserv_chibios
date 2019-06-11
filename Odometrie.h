@@ -7,7 +7,7 @@ class Odometrie
 {
 
 public:
-    explicit Odometrie(float encoderWheelsDistance_mm);
+    explicit Odometrie(float encoderWheelsDistance_mm, float initialX = 0, float initialY = 0);
     ~Odometrie(){};
 
     // Reset de la position du robot

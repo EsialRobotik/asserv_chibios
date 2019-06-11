@@ -5,13 +5,13 @@ using namespace std;
 #define M_PI (3.14159265358979323846)
 
 
-Odometrie::Odometrie(float encoderWheelsDistance_mm )
+Odometrie::Odometrie(float encoderWheelsDistance_mm, float initialX, float initialY )
 {
 	m_encoderWheelsDistance_mm = encoderWheelsDistance_mm;
 
     // Initialisation de la position
-	m_x = 0;
-	m_y = 0;
+	m_x = initialX;
+	m_y = initialY;
 	m_theta = 0;
 }
 
