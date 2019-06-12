@@ -3,13 +3,8 @@
 #include "hal.h"
 #include "commandManager/CommandManager.h"
 #include "USBStream.h"
+#include "util/constants.h"
 
-
-#ifndef M_PI
-#define M_PI (3.14159265358979323846)
-#endif
-
-#define M_2PI (2.0*M_PI)
 
 
 #define ASSERV_THREAD_PERIOD_MS (5)

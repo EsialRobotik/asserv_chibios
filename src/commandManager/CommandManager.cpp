@@ -2,6 +2,8 @@
 #include <math.h>
 #include "ch.h"
 #include "hal.h"
+#include "util/constants.h"
+
 #include "shell.h"
 #include <chprintf.h>
 #include <cstdlib>
@@ -9,11 +11,6 @@
 #include "../USBStream.h"
 
 extern BaseSequentialStream *outputStream;
-
-//GDI
-#ifndef M_PI
-#define M_PI (3.14159265358979323846)
-#endif
 
 CommandManager::CommandManager():
 liste()

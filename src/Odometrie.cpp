@@ -1,8 +1,6 @@
 #include "Odometrie.h"
 #include <math.h>
-using namespace std;
-
-#define M_PI (3.14159265358979323846)
+#include "util/constants.h"
 
 
 Odometrie::Odometrie(float encoderWheelsDistance_mm, float initialX, float initialY )

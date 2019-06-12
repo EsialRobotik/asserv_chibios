@@ -24,12 +24,6 @@
 #include "commandManager/CommandManager.h"
 
 
-#ifndef M_PI
-#define M_PI (3.14159265358979323846)
-#endif
-
-
-
 #define ENCODERS_WHEELS_RADIUS (47.2/2.0)
 #define ENCODERS_WHEELS_DISTANCE_MM (297)
 
