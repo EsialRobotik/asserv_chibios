@@ -94,6 +94,7 @@ CHIBIOS_CONTRIB = ./ChibiOS-Contrib/
 CONFDIR  := ./cfg
 BUILDDIR := ./build
 DEPDIR   := ./.dep
+SRCDIR   := ./src
 
 # Licensing files.
 include $(CHIBIOS)/os/license/license.mk
@@ -125,23 +126,23 @@ LDSCRIPT= $(STARTUPLD)/STM32F446xE.ld
 # C sources that can be compiled in ARM or THUMB mode depending on the global
 # setting.
 CSRC = $(ALLCSRC) \
-       usbcfg.c \
+       $(SRCDIR)/usbcfg.c \
        $(CHIBIOS)/os/various/syscalls.c \
        $(TESTSRC) 
 
 # C++ sources that can be compiled in ARM or THUMB mode depending on the global
 # setting.
 CPPSRC = $(ALLCPPSRC) \
-       main.cpp \
-       Vnh5019.cpp \
-       USBStream.cpp \
-       Encoders.cpp \
-       AsservMain.cpp \
-       SpeedController.cpp \
-       Regulator.cpp \
-       Odometrie.cpp \
-       commandManager/CommandManager.cpp \
-       commandManager/CMDList/CMDList.cpp
+       $(SRCDIR)/main.cpp \
+       $(SRCDIR)/Vnh5019.cpp \
+       $(SRCDIR)/USBStream.cpp \
+       $(SRCDIR)/Encoders.cpp \
+       $(SRCDIR)/AsservMain.cpp \
+       $(SRCDIR)/SpeedController.cpp \
+       $(SRCDIR)/Regulator.cpp \
+       $(SRCDIR)/Odometrie.cpp \
+       $(SRCDIR)/commandManager/CommandManager.cpp \
+       $(SRCDIR)/commandManager/CMDList/CMDList.cpp
     
 
 # List ASM source files here.
@@ -151,7 +152,7 @@ ASMSRC = $(ALLASMSRC)
 ASMXSRC = $(ALLXASMSRC)
 
 # Inclusion directories.
-INCDIR = $(CONFDIR) $(ALLINC) $(TESTINC) $(CHIBIOS_CONTRIB)/os/various
+INCDIR = $(CONFDIR) $(ALLINC) $(TESTINC) $(CHIBIOS_CONTRIB)/os/various $(SRCDIR)
 
 # Define C warning options here.
 CWARN = -Wall -Wextra -Wundef -Wstrict-prototypes
