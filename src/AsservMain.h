@@ -1,24 +1,24 @@
 #ifndef ASSERVMAIN_H_
 #define ASSERVMAIN_H_
 
-#include "Vnh5019.h"
-#include "Encoders.h"
+#include "motorController/MotorController.h"
 #include "SpeedController.h"
 #include "Regulator.h"
 #include <cstdint>
-#include "Odometry.h"
 
 class CommandManager;
-
+class Encoders;
+class Odometry;
 
 class AsservMain
 {
 public:
-	explicit AsservMain(float wheelRadius_mm, float encoderWheelsDistance_mm, CommandManager *commandManager);
-	virtual ~AsservMain();
+	explicit AsservMain(float wheelRadius_mm, float encoderWheelsDistance_mm,
+			CommandManager &commandManager, MotorController &motorController, Encoders &encoders, Odometry &odometrie,
+			Regulator &angleRegulator, Regulator &distanceRegulator,
+			SpeedController &speedControllerRight, SpeedController &speedControllerLeft );
+	virtual ~AsservMain(){};
 
-
-	void init();
 	void mainLoop();
 
 	void setMotorsSpeed(float motorLeft, float motorRight);
@@ -48,16 +48,15 @@ private:
 
 
 
-	Vnh5019 m_motorController;
-	Encoders m_encoders;
-	Odometry m_odometrie;
-	SpeedController m_speedControllerRight;
-	SpeedController m_speedControllerLeft;
-	Regulator m_angleRegulator;
-	Regulator m_distanceRegulator;
-	CommandManager *m_commandManager;
+	MotorController &m_motorController;
+	Encoders &m_encoders;
+	Odometry &m_odometry;
+	SpeedController &m_speedControllerRight;
+	SpeedController &m_speedControllerLeft;
+	Regulator &m_angleRegulator;
+	Regulator &m_distanceRegulator;
+	CommandManager &m_commandManager;
 
-	float m_encoderWheelsDistance_mm;
 	float m_encoderWheelsDistance_ticks;
 	float m_encodermmByTicks;
 	float m_distanceByEncoderTurn_mm;

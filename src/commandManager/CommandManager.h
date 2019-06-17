@@ -8,11 +8,8 @@ class CommandManager
 {
 
 public:
-    CommandManager();
+   explicit CommandManager(const Regulator &angle_regulator, const Regulator &distance_regulator);
     ~CommandManager();
-
-    void setAngleRegulator(const Regulator *angle_regulator){m_angle_regulator=angle_regulator;};
-    void setDistanceRegulator( const Regulator *distance_regulator){m_distance_regulator=distance_regulator;};
 
     /*
      * Commandes ajoutables a la liste des consignes du robot
@@ -42,8 +39,8 @@ private:
 
 
 
-    const Regulator *m_angle_regulator;
-    const Regulator *m_distance_regulator;
+    const Regulator &m_angle_regulator;
+    const Regulator &m_distance_regulator;
 
     float m_arrivalAngleThreshold;
     float m_arrivalDistanceThreshold;

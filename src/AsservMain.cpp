@@ -4,6 +4,8 @@
 #include "commandManager/CommandManager.h"
 #include "USBStream.h"
 #include "util/constants.h"
+#include "Encoders.h"
+#include "Odometry.h"
 
 
 
@@ -11,41 +13,25 @@
 #define ASSERV_THREAD_PERIOD_S (float(ASSERV_THREAD_PERIOD_MS)/1000.0)
 #define ASSERV_POSITION_DIVISOR (5)
 
-
-#define SPEED_REG_MAX_INPUT_SPEED (500)
-
-AsservMain::AsservMain(float wheelRadius_mm, float encoderWheelsDistance_mm, CommandManager *commandManager):
-m_motorController(true,false),
-m_encoders(false,false, 1 , 1),
-m_odometrie(encoderWheelsDistance_mm, 100.0, -250.0),
-m_speedControllerRight(0.25, 0.45, 100, SPEED_REG_MAX_INPUT_SPEED, 1000, 1.0/ASSERV_THREAD_PERIOD_S),
-m_speedControllerLeft(0.25, 0.45 , 100, SPEED_REG_MAX_INPUT_SPEED, 1000, 1.0/ASSERV_THREAD_PERIOD_S),
-m_angleRegulator(1400, SPEED_REG_MAX_INPUT_SPEED),
-m_distanceRegulator(9, SPEED_REG_MAX_INPUT_SPEED)
+AsservMain::AsservMain(float wheelRadius_mm, float encoderWheelsDistance_mm,
+		CommandManager &commandManager, MotorController &motorController, Encoders &encoders, Odometry &odometrie,
+		Regulator &angleRegulator, Regulator &distanceRegulator,
+		SpeedController &speedControllerRight, SpeedController &speedControllerLeft ):
+m_motorController(motorController),
+m_encoders(encoders),
+m_odometry(odometrie),
+m_speedControllerRight(speedControllerRight),
+m_speedControllerLeft(speedControllerLeft),
+m_angleRegulator(angleRegulator),
+m_distanceRegulator(distanceRegulator),
+m_commandManager(commandManager)
 {
-	m_commandManager = commandManager;
-	m_encoderWheelsDistance_mm = encoderWheelsDistance_mm;
 	m_distanceByEncoderTurn_mm = M_2PI*wheelRadius_mm;
 	m_encodermmByTicks = m_distanceByEncoderTurn_mm/4096.0;
 	m_encoderWheelsDistance_ticks = encoderWheelsDistance_mm / m_encodermmByTicks;
 	m_asservCounter = 0;
 	m_enableMotors = true;
 	m_enablePolar = true;
-	commandManager->setAngleRegulator(&m_angleRegulator);
-	commandManager->setDistanceRegulator(&m_distanceRegulator);
-}
-
-AsservMain::~AsservMain()
-{
-}
-
-
-void AsservMain::init()
-{
-	m_motorController.init();
-	m_encoders.init();
-	m_encoders.start();
-	USBStream::init();
 }
 
 
@@ -84,7 +70,7 @@ void AsservMain::mainLoop()
 		m_encoders.getValuesAndReset(&m_encoderDeltaRight, &m_encoderDeltaLeft);
 
 		// Mise à jour de la position en polaire
-		m_odometrie.refresh(
+		m_odometry.refresh(
 				m_encoderDeltaRight*m_encodermmByTicks,
 				m_encoderDeltaLeft*m_encodermmByTicks);
 
@@ -103,10 +89,10 @@ void AsservMain::mainLoop()
 		 */
 		if( m_asservCounter == ASSERV_POSITION_DIVISOR && m_enablePolar)
 		{
-			m_commandManager->update( m_odometrie.getX(), m_odometrie.getY(), m_odometrie.getTheta() );
+			m_commandManager.update( m_odometry.getX(), m_odometry.getY(), m_odometry.getTheta() );
 
-			float angleConsign = m_angleRegulator.updateOutput( m_commandManager->getAngleGoal());
-			float distanceConsign = m_distanceRegulator.updateOutput( m_commandManager->getDistanceGoal());
+			float angleConsign = m_angleRegulator.updateOutput( m_commandManager.getAngleGoal());
+			float distanceConsign = m_distanceRegulator.updateOutput( m_commandManager.getDistanceGoal());
 
 			USBStream::instance()->setAngleOutput(angleConsign);
 			USBStream::instance()->setDistOutput(distanceConsign);
@@ -146,15 +132,15 @@ void AsservMain::mainLoop()
 		USBStream::instance()->setLimitedSpeedGoalRight(m_speedControllerRight.getLimitedSpeedGoal());
 		USBStream::instance()->setLimitedSpeedGoalLeft(m_speedControllerLeft.getLimitedSpeedGoal());
 
-		USBStream::instance()->setAngleGoal(m_commandManager->getAngleGoal());
+		USBStream::instance()->setAngleGoal(m_commandManager.getAngleGoal());
 		USBStream::instance()->setAngleAccumulator(m_angleRegulator.getAccumulator());
 
-		USBStream::instance()->setDistGoal(m_commandManager->getDistanceGoal() );
+		USBStream::instance()->setDistGoal(m_commandManager.getDistanceGoal() );
 		USBStream::instance()->setDistAccumulator(m_distanceRegulator.getAccumulator());
 
-		USBStream::instance()->setOdoX(m_odometrie.getX());
-		USBStream::instance()->setOdoY(m_odometrie.getY());
-		USBStream::instance()->setOdoTheta(m_odometrie.getTheta());
+		USBStream::instance()->setOdoX(m_odometry.getX());
+		USBStream::instance()->setOdoY(m_odometry.getY());
+		USBStream::instance()->setOdoTheta(m_odometry.getTheta());
 
 		USBStream::instance()->setRawEncoderDeltaLeft(1664);
 		USBStream::instance()->setRawEncoderDeltaRight(51);

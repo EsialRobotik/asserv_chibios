@@ -1,19 +1,3 @@
-/*
-    ChibiOS - Copyright (C) 2006..2018 Giovanni Di Sirio
-
-    Licensed under the Apache License, Version 2.0 (the "License");
-    you may not use this file except in compliance with the License.
-    You may obtain a copy of the License at
-
-        http://www.apache.org/licenses/LICENSE-2.0
-
-    Unless required by applicable law or agreed to in writing, software
-    distributed under the License is distributed on an "AS IS" BASIS,
-    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-    See the License for the specific language governing permissions and
-    limitations under the License.
-*/
-
 #include "ch.h"
 #include "hal.h"
 #include "shell.h"
@@ -22,20 +6,49 @@
 #include <cstring>
 #include "AsservMain.h"
 #include "commandManager/CommandManager.h"
+#include "motorController/Vnh5019.h"
+#include "Encoders.h"
+#include "Odometry.h"
+#include "USBStream.h"
+
 
 
 #define ENCODERS_WHEELS_RADIUS (47.2/2.0)
 #define ENCODERS_WHEELS_DISTANCE_MM (297)
+#define SPEED_REG_MAX_INPUT_SPEED (500)
 
-CommandManager commandManager;
+#define ASSERV_THREAD_PERIOD_MS (5)
+#define ASSERV_THREAD_PERIOD_S (float(ASSERV_THREAD_PERIOD_MS)/1000.0)
 
-AsservMain mainAsserv(ENCODERS_WHEELS_RADIUS, ENCODERS_WHEELS_DISTANCE_MM, &commandManager);
+
+
+
+Encoders encoders(false,false, 1 , 1);
+Vnh5019 Vnh5019MotorController(true,false);
+Regulator angleRegulator(1400, SPEED_REG_MAX_INPUT_SPEED);
+Regulator distanceRegulator(9, SPEED_REG_MAX_INPUT_SPEED);
+Odometry odometry(ENCODERS_WHEELS_DISTANCE_MM, 100.0, -250.0);
+SpeedController speedControllerRight(0.25, 0.45, 100, SPEED_REG_MAX_INPUT_SPEED, 1000, 1.0/ASSERV_THREAD_PERIOD_S);
+SpeedController speedControllerLeft(0.25, 0.45 , 100, SPEED_REG_MAX_INPUT_SPEED, 1000, 1.0/ASSERV_THREAD_PERIOD_S);
+
+CommandManager commandManager(angleRegulator, distanceRegulator);
+
+AsservMain mainAsserv(ENCODERS_WHEELS_RADIUS, ENCODERS_WHEELS_DISTANCE_MM,
+		commandManager, Vnh5019MotorController, encoders, odometry,
+		angleRegulator, distanceRegulator,
+		speedControllerRight, speedControllerLeft);
+
 static THD_WORKING_AREA(waAsservThread, 512);
 static THD_FUNCTION(AsservThread, arg)
 {
 	(void) arg;
 	chRegSetThreadName("AsservThread");
-	mainAsserv.init();
+
+	Vnh5019MotorController.init();
+	encoders.init();
+	encoders.start();
+	USBStream::init();
+
 	mainAsserv.mainLoop();
 }
 

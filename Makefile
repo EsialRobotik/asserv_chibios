@@ -134,7 +134,7 @@ CSRC = $(ALLCSRC) \
 # setting.
 CPPSRC = $(ALLCPPSRC) \
        $(SRCDIR)/main.cpp \
-       $(SRCDIR)/Vnh5019.cpp \
+       $(SRCDIR)/motorController/Vnh5019.cpp \
        $(SRCDIR)/USBStream.cpp \
        $(SRCDIR)/Encoders.cpp \
        $(SRCDIR)/AsservMain.cpp \

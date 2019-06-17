@@ -6,14 +6,12 @@
 #include "util/constants.h"
 #include "USBStream.h"
 
-CommandManager::CommandManager():
-liste()
+CommandManager::CommandManager(const Regulator &angle_regulator, const Regulator &distance_regulator):
+liste(), m_angle_regulator(angle_regulator), m_distance_regulator(distance_regulator)
 {
     currCMD.type = CMD_NULL;
     nextCMD.type = CMD_NULL;
     lastStatus = 2;
-    m_angle_regulator = 0;
-    m_distance_regulator = 0;
     m_arrivalAngleThreshold = 0.1;
     m_arrivalDistanceThreshold = 1;
     m_arrivalAngleSpeedThreshold = 0.01;
@@ -139,14 +137,14 @@ void CommandManager::computeGoTo(float X_mm, float Y_mm, float theta_rad)
 
     if (deltaDist < 50/*Config::returnThreshold*/)
     {
-    	m_distRegulatorConsign = projectedDist + m_distance_regulator->getAccumulator();
+    	m_distRegulatorConsign = projectedDist + m_distance_regulator.getAccumulator();
     }
     else
     {
-        m_angleRegulatorConsign = deltaTheta + m_angle_regulator->getAccumulator();
+        m_angleRegulatorConsign = deltaTheta + m_angle_regulator.getAccumulator();
 
         if (fabs(deltaTheta) < m_gotoAngleThreshold)
-        	m_distRegulatorConsign = deltaDist + m_distance_regulator->getAccumulator();
+        	m_distRegulatorConsign = deltaDist + m_distance_regulator.getAccumulator();
     }
 }
 
@@ -162,7 +160,7 @@ void CommandManager::computeGoToAngle(float X_mm, float Y_mm, float theta_rad)
     // Angle à parcourir
     float deltaTheta = computeDeltaTheta(deltaX, deltaY, theta_rad);
 
-    m_angleRegulatorConsign = deltaTheta + m_angle_regulator->getAccumulator();
+    m_angleRegulatorConsign = deltaTheta + m_angle_regulator.getAccumulator();
 }
 
 /*
@@ -256,14 +254,14 @@ void CommandManager::computeEnchainement(float X_mm, float Y_mm, float theta_rad
     // La différence entre le thetaCible (= cap à atteindre) et le theta (= cap actuel du robot) donne l'angle à parcourir
     float deltaTheta = computeDeltaTheta(deltaX, deltaY, theta_rad);
 
-	m_angleRegulatorConsign = deltaTheta + m_angle_regulator->getAccumulator();
-	m_distRegulatorConsign = deltaDist + m_distance_regulator->getAccumulator();
+	m_angleRegulatorConsign = deltaTheta + m_angle_regulator.getAccumulator();
+	m_distRegulatorConsign = deltaDist + m_distance_regulator.getAccumulator();
 }
 
 bool CommandManager::isGoalReach()
 {
-	return 			fabs(m_angle_regulator->getError()) <= m_arrivalAngleThreshold
-    			&& 	fabs(m_distance_regulator->getError()) <= m_arrivalDistanceThreshold
+	return 			fabs(m_angle_regulator.getError()) <= m_arrivalAngleThreshold
+    			&& 	fabs(m_distance_regulator.getError()) <= m_arrivalDistanceThreshold
 //				&&  fabs(m_lastDistanceSpeed) <= m_arrivalDistSpeedThreshold
 //    			&& 	fabs(m_lastAngleSpeed) <= m_arrivalAngleSpeedThreshold
 				;
