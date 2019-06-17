@@ -5,8 +5,8 @@
 #include "Encoders.h"
 #include "SpeedController.h"
 #include "Regulator.h"
-#include "Odometrie.h"
 #include <cstdint>
+#include "Odometry.h"
 
 class CommandManager;
 
@@ -50,7 +50,7 @@ private:
 
 	Vnh5019 m_motorController;
 	Encoders m_encoders;
-	Odometrie m_odometrie;
+	Odometry m_odometrie;
 	SpeedController m_speedControllerRight;
 	SpeedController m_speedControllerLeft;
 	Regulator m_angleRegulator;

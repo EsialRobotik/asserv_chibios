@@ -1,16 +1,10 @@
 #include "CommandManager.h"
+#include <stdlib.h>
 #include <math.h>
 #include "ch.h"
 #include "hal.h"
 #include "util/constants.h"
-
-#include "shell.h"
-#include <chprintf.h>
-#include <cstdlib>
-#include <cstring>
-#include "../USBStream.h"
-
-extern BaseSequentialStream *outputStream;
+#include "USBStream.h"
 
 CommandManager::CommandManager():
 liste()
@@ -68,7 +62,7 @@ bool CommandManager::addGoToAngle(float posXInmm, float posYInmm)
 /*
  * Fonction de mise a jour...
  */
-void CommandManager::perform(float X_mm, float Y_mm, float theta_rad)
+void CommandManager::update(float X_mm, float Y_mm, float theta_rad)
 {
     if (!areRampsFinished(X_mm, Y_mm))
     {
@@ -247,8 +241,6 @@ void CommandManager::computeEnchainement(float X_mm, float Y_mm, float theta_rad
 		X_goal = X_mm + cosf(angle)*m_gotoNextConsignDist;
 		Y_goal = Y_mm + sinf(angle)*m_gotoNextConsignDist;
 	}
-
-//	chprintf(outputStream, "gt(%.2f, %.2f) r(%.2f, %.2f) go(%.2f, %.2f)\r\n",X_goto, Y_goto, X_mm, Y_mm,X_goal, Y_goal);
 
 	USBStream::instance()->setXGoal(X_goal);
 	USBStream::instance()->setYGoal(Y_goal);

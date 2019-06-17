@@ -31,12 +31,12 @@ float SpeedController::update(float actualSpeed)
 
 	float speedError = m_limitedSpeedGoal - actualSpeed;
 
-	// Speed controller is PI only
+	// Regulateur en vitesse : un PI
 	outputValue = speedError*m_speedKp;
 	outputValue += m_integratedOutput;
 
 
-	// Bound output value to correct value
+	// On limite la sortie entre -m_outputLimit et m_outputLimit...
 	bool limited = false;
 	if (outputValue > m_outputLimit)
 	{
@@ -49,17 +49,19 @@ float SpeedController::update(float actualSpeed)
 		limited = true;
 	}
 
-	if(limited)
+
+	if(limited) // .. Si la sortie est limité, on désature l'intégrale
 	{
 		m_integratedOutput *= 0.9;
 	}
-	else
+	else	// .. Sinon, on integre l'erreur
 	{
 		m_integratedOutput +=  m_speedKi * speedError/m_measureFrequency;
-		if( std::fabs(speedError) < 0.1) // When the speed error is near zero (ie: speed goal is 0 and the robot doesn't move), unsature the integral
+		if( std::fabs(speedError) < 0.1) // Quand l'erreur de vitesse est proche de zero(ie: consigne à 0 et le robot ne bouge pas..), on désature l'intégrale
 			m_integratedOutput *= 0.95;
 	}
-	// Anti Windup protection, probably useless with the saturation handled below..
+
+	// Protection antiWindup, surement inutile avec la désaturation au dessus, mais on garde ceinture & bretelles !
 	if(m_integratedOutput > m_outputLimit)
 		m_integratedOutput = m_outputLimit;
 	else if(m_integratedOutput < -m_outputLimit)

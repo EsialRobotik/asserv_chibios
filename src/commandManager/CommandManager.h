@@ -14,14 +14,24 @@ public:
     void setAngleRegulator(const Regulator *angle_regulator){m_angle_regulator=angle_regulator;};
     void setDistanceRegulator( const Regulator *distance_regulator){m_distance_regulator=distance_regulator;};
 
+    /*
+     * Commandes ajoutables a la liste des consignes du robot
+     */
     bool addStraightLine(float valueInmm);
     bool addTurn(float angleInDeg);
     bool addGoTo(float posXInmm, float posYInmm);
     bool addGoToEnchainement(float posXInmm, float posYInmm);
     bool addGoToAngle(float posXInmm, float posYInmm);
 
+    /*
+     * Mise à jour des consignes de sorties en fonction
+     * 	de la nouvelle position du robot
+     */
+    void update(float X_mm, float Y_mm, float theta_rad);
 
-    void perform(float X_mm, float Y_mm, float theta_rad);
+    /*
+     * Sorties du commandManager
+     */
     float getDistanceGoal(){ return m_distRegulatorConsign;}
     float getAngleGoal(){ return m_angleRegulatorConsign;}
 
@@ -55,10 +65,9 @@ private:
 
     float computeDeltaTheta(float deltaX, float deltaY, float theta_rad); // Calcul de l'angle à parcourir
     float computeDeltaDist(float deltaX, float deltaY); // Calcul de la distance à parcourir
-    // GoTo là où on veut
     void computeGoTo(float X_mm, float Y_mm, float theta_rad);
     void computeGoToAngle(float deltaX, float deltaY, float theta_rad);
-    void computeEnchainement(float X_mm, float Y_mm, float theta_rad); // Tentative d'enchainement
+    void computeEnchainement(float X_mm, float Y_mm, float theta_rad);
 };
 
 #endif

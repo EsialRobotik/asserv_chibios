@@ -57,19 +57,19 @@ float AsservMain::estimateSpeed(int16_t deltaCount)
 	float deltaAngle_nbTurn = ((float)deltaCount/(float)ticksByTurn);
 	float speed_nbTurnPerSec = deltaAngle_nbTurn / dt;
 
-	// Speed returned in mm/sec
+	// vitesse en mm/sec
 	return speed_nbTurnPerSec*m_distanceByEncoderTurn_mm;
 }
 
 float AsservMain::estimateDeltaAngle(int16_t deltaCountRight, int16_t deltaCountLeft )
 {
-	// in rad
+	// en rad
     return float(deltaCountRight-deltaCountLeft)  / m_encoderWheelsDistance_ticks ;
 }
 
 float AsservMain::estimateDeltaDistance(int16_t deltaCountRight, int16_t deltaCountLeft )
 {
-	// in mm
+	// en mm
     return float(deltaCountRight+deltaCountLeft) * (1.0/2.0) * m_encodermmByTicks;
 }
 
@@ -83,13 +83,13 @@ void AsservMain::mainLoop()
 		int16_t m_encoderDeltaLeft;
 		m_encoders.getValuesAndReset(&m_encoderDeltaRight, &m_encoderDeltaLeft);
 
-		// polar position update
+		// Mise à jour de la position en polaire
 		m_odometrie.refresh(
 				m_encoderDeltaRight*m_encodermmByTicks,
 				m_encoderDeltaLeft*m_encodermmByTicks);
 
 
-		// Feedbacks estimations & update
+		// Estimation & mise à jour des feedbacks
 		float deltaAngle_radian = estimateDeltaAngle(m_encoderDeltaRight, m_encoderDeltaLeft);
 		float deltaDistance_mm = estimateDeltaDistance(m_encoderDeltaRight, m_encoderDeltaLeft);
 
@@ -97,10 +97,13 @@ void AsservMain::mainLoop()
 		m_distanceRegulator.updateFeedback( deltaDistance_mm);
 
 
-		// Compute speed consign every ASSERV_POSITION_DIVISOR
+		/* Calculer une nouvelle consigne de vitesse a chaque  ASSERV_POSITION_DIVISOR tour de boucle
+		 * L'asserv en vitesse étant commandé par l'asserv en position, on laisse qq'e tours de boucle
+		 * à l'asserv en vitesse pour atteindre sa consigne.
+		 */
 		if( m_asservCounter == ASSERV_POSITION_DIVISOR && m_enablePolar)
 		{
-			m_commandManager->perform(m_odometrie.getX(), m_odometrie.getY(), m_odometrie.getTheta() );
+			m_commandManager->update( m_odometrie.getX(), m_odometrie.getY(), m_odometrie.getTheta() );
 
 			float angleConsign = m_angleRegulator.updateOutput( m_commandManager->getAngleGoal());
 			float distanceConsign = m_distanceRegulator.updateOutput( m_commandManager->getDistanceGoal());
@@ -114,7 +117,7 @@ void AsservMain::mainLoop()
 			m_asservCounter=0;
 		}
 
-		// Speed regulation
+		// Regulation en vitesse
 		float estimatedSpeedRight = estimateSpeed(m_encoderDeltaRight);
 		float estimatedSpeedLeft = estimateSpeed(m_encoderDeltaLeft);
 
@@ -175,7 +178,7 @@ void AsservMain::enableMotors(bool enable)
 	m_enableMotors = enable;
 	if(enable)
 	{
-		// In this case, reseting integrators are useful ...
+		// Ici, il faut reset les intégrateurs des asserv en vitesse
 		m_speedControllerLeft.resetIntegral();
 		m_speedControllerRight.resetIntegral();
 	}

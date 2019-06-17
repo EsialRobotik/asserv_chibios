@@ -15,6 +15,10 @@ void Regulator::updateFeedback(float feedback)
 }
 
 
+/*
+ * Regulator proportionnel 'simple'
+ */
+
 float Regulator::updateOutput(float goal)
 {
 	m_error = goal-m_accumulator;
