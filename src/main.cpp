@@ -33,7 +33,7 @@ SpeedController speedControllerLeft(0.25, 0.45 , 100, SPEED_REG_MAX_INPUT_SPEED,
 
 CommandManager commandManager(angleRegulator, distanceRegulator);
 
-AsservMain mainAsserv(ENCODERS_WHEELS_RADIUS, ENCODERS_WHEELS_DISTANCE_MM,
+AsservMain mainAsserv(ENCODERS_WHEELS_RADIUS, ENCODERS_WHEELS_DISTANCE_MM, 1024*4,
 		commandManager, Vnh5019MotorController, encoders, odometry,
 		angleRegulator, distanceRegulator,
 		speedControllerRight, speedControllerLeft);

@@ -13,7 +13,7 @@ class Odometry;
 class AsservMain
 {
 public:
-	explicit AsservMain(float wheelRadius_mm, float encoderWheelsDistance_mm,
+	explicit AsservMain(float wheelRadius_mm, float encoderWheelsDistance_mm, float encodersTicksByTurn,
 			CommandManager &commandManager, MotorController &motorController, Encoders &encoders, Odometry &odometrie,
 			Regulator &angleRegulator, Regulator &distanceRegulator,
 			SpeedController &speedControllerRight, SpeedController &speedControllerLeft );
@@ -57,9 +57,12 @@ private:
 	Regulator &m_distanceRegulator;
 	CommandManager &m_commandManager;
 
-	float m_encoderWheelsDistance_ticks;
-	float m_encodermmByTicks;
-	float m_distanceByEncoderTurn_mm;
+
+	const float m_distanceByEncoderTurn_mm;
+	const float m_encodersTicksByTurn;
+	const float m_encoderWheelsDistance_ticks;
+	const float m_encodermmByTicks;
+
 
 	uint8_t m_asservCounter;
 

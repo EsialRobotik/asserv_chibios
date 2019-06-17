@@ -13,7 +13,7 @@
 #define ASSERV_THREAD_PERIOD_S (float(ASSERV_THREAD_PERIOD_MS)/1000.0)
 #define ASSERV_POSITION_DIVISOR (5)
 
-AsservMain::AsservMain(float wheelRadius_mm, float encoderWheelsDistance_mm,
+AsservMain::AsservMain(float wheelRadius_mm, float encoderWheelsDistance_mm, float encodersTicksByTurn,
 		CommandManager &commandManager, MotorController &motorController, Encoders &encoders, Odometry &odometrie,
 		Regulator &angleRegulator, Regulator &distanceRegulator,
 		SpeedController &speedControllerRight, SpeedController &speedControllerLeft ):
@@ -24,11 +24,12 @@ m_speedControllerRight(speedControllerRight),
 m_speedControllerLeft(speedControllerLeft),
 m_angleRegulator(angleRegulator),
 m_distanceRegulator(distanceRegulator),
-m_commandManager(commandManager)
+m_commandManager(commandManager),
+m_distanceByEncoderTurn_mm(M_2PI*wheelRadius_mm),
+m_encodersTicksByTurn(encodersTicksByTurn),
+m_encoderWheelsDistance_ticks(encoderWheelsDistance_mm / m_encodermmByTicks),
+m_encodermmByTicks(m_distanceByEncoderTurn_mm/m_encodersTicksByTurn)
 {
-	m_distanceByEncoderTurn_mm = M_2PI*wheelRadius_mm;
-	m_encodermmByTicks = m_distanceByEncoderTurn_mm/4096.0;
-	m_encoderWheelsDistance_ticks = encoderWheelsDistance_mm / m_encodermmByTicks;
 	m_asservCounter = 0;
 	m_enableMotors = true;
 	m_enablePolar = true;
@@ -37,10 +38,9 @@ m_commandManager(commandManager)
 
 float AsservMain::estimateSpeed(int16_t deltaCount)
 {
-	const float ticksByTurn = 1024*4;
 	const float dt = ASSERV_THREAD_PERIOD_S;
 
-	float deltaAngle_nbTurn = ((float)deltaCount/(float)ticksByTurn);
+	float deltaAngle_nbTurn = ((float)deltaCount/m_encodersTicksByTurn);
 	float speed_nbTurnPerSec = deltaAngle_nbTurn / dt;
 
 	// vitesse en mm/sec
