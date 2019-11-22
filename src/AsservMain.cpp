@@ -27,8 +27,8 @@ m_distanceRegulator(distanceRegulator),
 m_commandManager(commandManager),
 m_distanceByEncoderTurn_mm(M_2PI*wheelRadius_mm),
 m_encodersTicksByTurn(encodersTicksByTurn),
-m_encoderWheelsDistance_ticks(encoderWheelsDistance_mm / m_encodermmByTicks),
-m_encodermmByTicks(m_distanceByEncoderTurn_mm/m_encodersTicksByTurn)
+m_encodermmByTicks(m_distanceByEncoderTurn_mm/m_encodersTicksByTurn),
+m_encoderWheelsDistance_ticks(encoderWheelsDistance_mm / m_encodermmByTicks)
 {
 	m_asservCounter = 0;
 	m_enableMotors = true;

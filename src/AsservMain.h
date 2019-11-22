@@ -60,8 +60,8 @@ private:
 
 	const float m_distanceByEncoderTurn_mm;
 	const float m_encodersTicksByTurn;
-	const float m_encoderWheelsDistance_ticks;
 	const float m_encodermmByTicks;
+	const float m_encoderWheelsDistance_ticks;
 
 
 	uint8_t m_asservCounter;
