@@ -2,17 +2,28 @@
 #include "ch.h"
 #include "hal.h"
 
-static QEIConfig qeicfg1 = {
-  QEI_MODE_QUADRATURE,
-  QEI_BOTH_EDGES,
-  QEI_DIRINV_FALSE,
+__extension__ static QEIConfig qeicfg1 = {
+		.mode = QEI_MODE_QUADRATURE,
+		.resolution = QEI_BOTH_EDGES,
+		.dirinv = QEI_DIRINV_FALSE,
+		.overflow = QEI_OVERFLOW_WRAP,
+		.min = 0,
+		.max = 0,
+		.notify_cb = nullptr,
+		.overflow_cb = nullptr
 };
 
 static QEIConfig qeicfg2 = {
-  QEI_MODE_QUADRATURE,
-  QEI_BOTH_EDGES,
-  QEI_DIRINV_FALSE,
+		.mode = QEI_MODE_QUADRATURE,
+		.resolution = QEI_BOTH_EDGES,
+		.dirinv = QEI_DIRINV_FALSE,
+		.overflow = QEI_OVERFLOW_WRAP,
+		.min = 0,
+		.max = 0,
+		.notify_cb = nullptr,
+		.overflow_cb = nullptr
 };
+
 
 Encoders::Encoders(bool invertEncoder1, bool invertEncoder2, float encoder1Ratio, float encoder2Ratio)
 {
