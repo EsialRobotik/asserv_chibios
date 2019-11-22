@@ -203,6 +203,9 @@ include $(RULESPATH)/rules.mk
 # Custom rules
 #
 
+flash : all
+	openocd -c "tcl_port disabled" -c "telnet_port disabled" -c "source [find board/st_nucleo_f4.cfg]" -c "stm32f4x.cpu configure -rtos ChibiOS" -c "init" -c "reset halt" -c "flash write_image erase unlock $(BUILDDIR)/$(PROJECT).elf" -c "verify_image $(BUILDDIR)/$(PROJECT).elf" -c "reset run" -c "shutdown"
+
 #
 # Custom rules
 ##############################################################################
