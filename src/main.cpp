@@ -10,6 +10,7 @@
 #include "Encoders.h"
 #include "Odometry.h"
 #include "USBStream.h"
+#include "SlopeFilter.h"
 
 
 
@@ -20,7 +21,8 @@
 #define ASSERV_THREAD_PERIOD_MS (5)
 #define ASSERV_THREAD_PERIOD_S (float(ASSERV_THREAD_PERIOD_MS)/1000.0)
 
-
+#define DIST_REGULATOR_MAX_DELTA 1000
+#define ANGLE_REGULATOR_MAX_DELTA 1000
 
 
 Encoders encoders(false,false, 1 , 1);
@@ -28,14 +30,18 @@ Vnh5019 Vnh5019MotorController(true,false);
 Regulator angleRegulator(1400, SPEED_REG_MAX_INPUT_SPEED);
 Regulator distanceRegulator(9, SPEED_REG_MAX_INPUT_SPEED);
 Odometry odometry(ENCODERS_WHEELS_DISTANCE_MM, 100.0, -250.0);
-SpeedController speedControllerRight(0.25, 0.45, 100, SPEED_REG_MAX_INPUT_SPEED, 1000, 1.0/ASSERV_THREAD_PERIOD_S);
-SpeedController speedControllerLeft(0.25, 0.45 , 100, SPEED_REG_MAX_INPUT_SPEED, 1000, 1.0/ASSERV_THREAD_PERIOD_S);
+SpeedController speedControllerRight(0.25, 0.45, 100, SPEED_REG_MAX_INPUT_SPEED, 1.0/ASSERV_THREAD_PERIOD_S);
+SpeedController speedControllerLeft(0.25, 0.45 , 100, SPEED_REG_MAX_INPUT_SPEED, 1.0/ASSERV_THREAD_PERIOD_S);
+
+SlopeFilter angleSlopeFilter(ANGLE_REGULATOR_MAX_DELTA);
+SlopeFilter distSlopeFilter(DIST_REGULATOR_MAX_DELTA);
 
 CommandManager commandManager(angleRegulator, distanceRegulator);
 
 AsservMain mainAsserv(ENCODERS_WHEELS_RADIUS, ENCODERS_WHEELS_DISTANCE_MM, 1024*4,
 		commandManager, Vnh5019MotorController, encoders, odometry,
 		angleRegulator, distanceRegulator,
+		angleSlopeFilter, distSlopeFilter,
 		speedControllerRight, speedControllerLeft);
 
 static THD_WORKING_AREA(waAsservThread, 512);
@@ -119,21 +125,21 @@ void asservCommand(BaseSequentialStream *chp, int argc, char **argv)
 		chprintf(outputStream,"Usage :");
 		chprintf(outputStream," - asserv enablemotor 0|1\r\n");
 		chprintf(outputStream," - asserv enablepolar 0|1\r\n");
-		chprintf(outputStream," ----- \r\n");
-		chprintf(outputStream," - asserv setspeed [r|l] [speed]\r\n");
-		chprintf(outputStream," - asserv speedstep [r|l] [speed] [step time] \r\n");
-		chprintf(outputStream," - asserv speedstep2 [speed] [step time] \r\n");
+		chprintf(outputStream," -------------- \r\n");
+		chprintf(outputStream," - asserv setspeed [speed]\r\n");
+		chprintf(outputStream," - asserv speedstep [speed] [step time] \r\n");
 		chprintf(outputStream," - asserv speedcontrol [r|l] [Kp] [Ki] \r\n");
-		chprintf(outputStream," - asserv speedslope delta_speed \r\n");
-		chprintf(outputStream," ----- \r\n");
+		chprintf(outputStream," - asserv angleSlope delta_speed \r\n");
+		chprintf(outputStream," - asserv distSlope delta_speed \r\n");
+		chprintf(outputStream," ------------------- \r\n");
 		chprintf(outputStream," - asserv addangle angle_rad \r\n");
 		chprintf(outputStream," - asserv anglereset\r\n");
 		chprintf(outputStream," - asserv anglecontrol Kp\r\n");
-		chprintf(outputStream," ----- \r\n");
+		chprintf(outputStream," ------------------- \r\n");
 		chprintf(outputStream," - asserv adddist mm \r\n");
 		chprintf(outputStream," - asserv distreset\r\n");
 		chprintf(outputStream," - asserv distcontrol Kp\r\n");
-		chprintf(outputStream," ----- \r\n");
+		chprintf(outputStream," -------------- \r\n");
 		chprintf(outputStream," - asserv goto\r\n");
 		chprintf(outputStream," - asserv goto2\r\n");
 
@@ -148,42 +154,20 @@ void asservCommand(BaseSequentialStream *chp, int argc, char **argv)
 
 	if(!strcmp(argv[0], "setspeed"))
 	{
-		char side = *argv[1];
-		float   speedGoal = atof(argv[2]);
-		float speedGoalRight=0;
-		float speedGoalLeft=0;
+		float speedGoal = atof(argv[1]);
 
-		if( side == 'r') speedGoalRight = speedGoal;
-		else if( side == 'l') speedGoalLeft = speedGoal;
-
-
-		chprintf(outputStream, "setting speed left %.2f right %.2f rad/s \r\n",speedGoalLeft,speedGoalRight);
-		mainAsserv.setMotorsSpeed(speedGoalLeft, speedGoalRight);
+		chprintf(outputStream, "setting distance regulator speed %.2f rad/s \r\n", speedGoal);
+		mainAsserv.setRegulatorsSpeed(speedGoal, 0);
 	}
 	else if(!strcmp(argv[0], "speedstep"))
 	{
-		char side = *argv[1];
-		float   speedGoal = atof(argv[2]);
-		float speedGoalRight = 0, speedGoalLeft = 0;
-		int time = atoi(argv[3]);
-		chprintf(outputStream, "setting speed %.2f rad/s for %d ms for side %c \r\n",speedGoal,time, side);
-
-		if( side == 'r') speedGoalRight = speedGoal;
-		else if( side == 'l') speedGoalLeft = speedGoal;
-
-		mainAsserv.setMotorsSpeed(speedGoalLeft, speedGoalRight);
-		chThdSleepMilliseconds(time);
-		mainAsserv.setMotorsSpeed(0.0, 0.0);
-	}
-	else if(!strcmp(argv[0], "speedstep2"))
-	{
-		float   speedGoal = atof(argv[1]);
+		float speedGoal = atof(argv[1]);
 		int time = atoi(argv[2]);
-		chprintf(outputStream, "setting speed %.2f rad/s for %d ms for both side \r\n",speedGoal,time);
+		chprintf(outputStream, "setting distance regulator speed %.2f rad/s for %d ms\r\n",speedGoal,time);
 
-		mainAsserv.setMotorsSpeed(speedGoal, speedGoal);
+		mainAsserv.setRegulatorsSpeed(speedGoal, 0);
 		chThdSleepMilliseconds(time);
-		mainAsserv.setMotorsSpeed(0.0, 0.0);
+		mainAsserv.setRegulatorsSpeed(0, 0);
 	}
 	else if(!strcmp(argv[0], "speedcontrol"))
 	{
@@ -198,12 +182,19 @@ void asservCommand(BaseSequentialStream *chp, int argc, char **argv)
 		else if( side == 'l')
 			mainAsserv.setGainForLeftSpeedController(Kp, Ki);
 	}
-	else if(!strcmp(argv[0], "speedslope"))
+	else if(!strcmp(argv[0], "angleSlope"))
 	{
 		float   slope = atof(argv[1]);
-		chprintf(outputStream, "setting speed slope delta %.2f \r\n",slope);
+		chprintf(outputStream, "setting angle slope delta %.2f \r\n",slope);
 
-		mainAsserv.setSpeedSlope(slope);
+		mainAsserv.setAngleSlope(slope);
+	}
+	else if(!strcmp(argv[0], "distSlope"))
+	{
+		float   slope = atof(argv[1]);
+		chprintf(outputStream, "setting distance slope delta %.2f \r\n",slope);
+
+		mainAsserv.setDistSlope(slope);
 	}
 	else if(!strcmp(argv[0], "addangle"))
 	{

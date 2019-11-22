@@ -139,6 +139,7 @@ CPPSRC = $(ALLCPPSRC) \
        $(SRCDIR)/Encoders.cpp \
        $(SRCDIR)/AsservMain.cpp \
        $(SRCDIR)/SpeedController.cpp \
+       $(SRCDIR)/SlopeFilter.cpp \
        $(SRCDIR)/Regulator.cpp \
        $(SRCDIR)/Odometry.cpp \
        $(SRCDIR)/commandManager/CommandManager.cpp \

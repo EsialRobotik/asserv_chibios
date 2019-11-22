@@ -64,24 +64,24 @@ public:
 	inline void setSpeedEstimatedRight(float speed) { setValue( &m_currentStruct.value2, speed); }
 	inline void setSpeedOutputRight(float speed) { setValue( &m_currentStruct.value3, speed); }
 	inline void setSpeedIntegratedOutputRight(float speed) { setValue( &m_currentStruct.value7, speed); }
-	inline void setLimitedSpeedGoalRight(float speed) { setValue( &m_currentStruct.value9, speed); }
 
 	// Left motor speed control
 	inline void setSpeedGoalLeft(float speed) { setValue( &m_currentStruct.value4, speed); }
 	inline void setSpeedEstimatedLeft(float speed) { setValue( &m_currentStruct.value5, speed); }
 	inline void setSpeedOutputLeft(float speed) { setValue( &m_currentStruct.value6, speed); }
 	inline void setSpeedIntegratedOutputLeft(float speed) { setValue( &m_currentStruct.value8, speed); }
-	inline void setLimitedSpeedGoalLeft(float speed) { setValue( &m_currentStruct.value10, speed); }
 
 	// Angle regulator
 	inline void setAngleGoal(float goal) { setValue( &m_currentStruct.value11, goal); }
 	inline void setAngleAccumulator(float acc) { setValue( &m_currentStruct.value12, acc); }
 	inline void setAngleOutput(float output) { setValue( &m_currentStruct.value13, output); }
+	inline void setAngleOutputLimited(float output) { setValue( &m_currentStruct.value9, output); }
 
 	// Distance regulator
 	inline void setDistGoal(float goal) { setValue( &m_currentStruct.value14, goal); }
 	inline void setDistAccumulator(float acc) { setValue( &m_currentStruct.value15, acc); }
 	inline void setDistOutput(float output) { setValue( &m_currentStruct.value16, output); }
+	inline void setDistOutputLimited(float output) { setValue( &m_currentStruct.value10, output); }
 
 	// Raw Encoder
 	inline void setRawEncoderDeltaRight(float delta) { setValue( &m_currentStruct.value17, delta); }

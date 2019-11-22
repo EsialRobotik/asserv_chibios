@@ -6,7 +6,7 @@
 #include "util/constants.h"
 #include "Encoders.h"
 #include "Odometry.h"
-
+#include "SlopeFilter.h"
 
 
 #define ASSERV_THREAD_PERIOD_MS (5)
@@ -16,6 +16,7 @@
 AsservMain::AsservMain(float wheelRadius_mm, float encoderWheelsDistance_mm, float encodersTicksByTurn,
 		CommandManager &commandManager, MotorController &motorController, Encoders &encoders, Odometry &odometrie,
 		Regulator &angleRegulator, Regulator &distanceRegulator,
+		SlopeFilter &angleRegulatorSlopeFilter, SlopeFilter &distanceRegulatorSlopeFilter,
 		SpeedController &speedControllerRight, SpeedController &speedControllerLeft ):
 m_motorController(motorController),
 m_encoders(encoders),
@@ -24,6 +25,8 @@ m_speedControllerRight(speedControllerRight),
 m_speedControllerLeft(speedControllerLeft),
 m_angleRegulator(angleRegulator),
 m_distanceRegulator(distanceRegulator),
+m_angleRegulatorSlopeFilter(angleRegulatorSlopeFilter),
+m_distanceRegulatorSlopeFilter(distanceRegulatorSlopeFilter),
 m_commandManager(commandManager),
 m_distanceByEncoderTurn_mm(M_2PI*wheelRadius_mm),
 m_encodersTicksByTurn(encodersTicksByTurn),
@@ -31,6 +34,10 @@ m_encodermmByTicks(m_distanceByEncoderTurn_mm/m_encodersTicksByTurn),
 m_encoderWheelsDistance_ticks(encoderWheelsDistance_mm / m_encodermmByTicks)
 {
 	m_asservCounter = 0;
+	m_distRegulatorOutputSpeedConsign = 0;
+	m_angleRegulatorOutputSpeedConsign = 0;
+	m_distSpeedLimited = 0;
+	m_angleSpeedLimited = 0;
 	m_enableMotors = true;
 	m_enablePolar = true;
 }
@@ -94,18 +101,24 @@ void AsservMain::mainLoop()
 			float angleConsign = m_angleRegulator.updateOutput( m_commandManager.getAngleGoal());
 			float distanceConsign = m_distanceRegulator.updateOutput( m_commandManager.getDistanceGoal());
 
-			USBStream::instance()->setAngleOutput(angleConsign);
-			USBStream::instance()->setDistOutput(distanceConsign);
+			setRegulatorsSpeed(distanceConsign, angleConsign);
 
-			setMotorsSpeed(
-					distanceConsign-angleConsign,
-					distanceConsign+angleConsign);
 			m_asservCounter=0;
 		}
 
-		// Regulation en vitesse
+		/*
+		 * Regulation en vitesse
+		 */
 		float estimatedSpeedRight = estimateSpeed(m_encoderDeltaRight);
 		float estimatedSpeedLeft = estimateSpeed(m_encoderDeltaLeft);
+
+		// On limite l'acceleration sur la sortie du regulateur de distance et d'angle
+		m_distSpeedLimited = m_distanceRegulatorSlopeFilter.filter(ASSERV_THREAD_PERIOD_S, m_distRegulatorOutputSpeedConsign);
+		m_angleSpeedLimited = m_angleRegulatorSlopeFilter.filter(ASSERV_THREAD_PERIOD_S, m_angleRegulatorOutputSpeedConsign);
+
+		// Mise à jour des consignes en vitesse avec acceleration limitée
+		m_speedControllerRight.setSpeedGoal(m_distSpeedLimited+m_angleSpeedLimited);
+		m_speedControllerLeft.setSpeedGoal(m_distSpeedLimited-m_angleSpeedLimited);
 
 		float outputSpeedRight = m_speedControllerRight.update(estimatedSpeedRight);
 		float outputSpeedLeft = m_speedControllerLeft.update(estimatedSpeedLeft);
@@ -129,14 +142,18 @@ void AsservMain::mainLoop()
 		USBStream::instance()->setSpeedOutputLeft(outputSpeedLeft);
 		USBStream::instance()->setSpeedIntegratedOutputRight(m_speedControllerRight.getIntegratedOutput());
 		USBStream::instance()->setSpeedIntegratedOutputLeft(m_speedControllerLeft.getIntegratedOutput());
-		USBStream::instance()->setLimitedSpeedGoalRight(m_speedControllerRight.getLimitedSpeedGoal());
-		USBStream::instance()->setLimitedSpeedGoalLeft(m_speedControllerLeft.getLimitedSpeedGoal());
+
 
 		USBStream::instance()->setAngleGoal(m_commandManager.getAngleGoal());
 		USBStream::instance()->setAngleAccumulator(m_angleRegulator.getAccumulator());
+		USBStream::instance()->setAngleOutput(m_angleRegulatorOutputSpeedConsign);
+		USBStream::instance()->setAngleOutputLimited(m_angleSpeedLimited);
+
 
 		USBStream::instance()->setDistGoal(m_commandManager.getDistanceGoal() );
 		USBStream::instance()->setDistAccumulator(m_distanceRegulator.getAccumulator());
+		USBStream::instance()->setDistOutput(m_distRegulatorOutputSpeedConsign);
+		USBStream::instance()->setDistOutputLimited(m_distSpeedLimited);
 
 		USBStream::instance()->setOdoX(m_odometry.getX());
 		USBStream::instance()->setOdoY(m_odometry.getY());
@@ -153,10 +170,10 @@ void AsservMain::mainLoop()
 	}
 }
 
-void AsservMain::setMotorsSpeed(float motorLeft, float motorRight)
+void AsservMain::setRegulatorsSpeed(float distSpeed, float angleSpeed)
 {
-	m_speedControllerRight.setSpeedGoal(motorRight);
-	m_speedControllerLeft.setSpeedGoal(motorLeft);
+	m_distRegulatorOutputSpeedConsign = distSpeed;
+	m_angleRegulatorOutputSpeedConsign = angleSpeed;
 }
 
 void AsservMain::enableMotors(bool enable)
@@ -173,6 +190,16 @@ void AsservMain::enableMotors(bool enable)
 void AsservMain::enablePolar(bool enable)
 {
 	m_enablePolar = enable;
+}
+
+void AsservMain::setDistSlope(float slope)
+{
+	m_distanceRegulatorSlopeFilter.setSlope(slope);
+}
+
+void AsservMain::setAngleSlope(float slope)
+{
+	m_angleRegulatorSlopeFilter.setSlope(slope);
 }
 
 
