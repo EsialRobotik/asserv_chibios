@@ -31,7 +31,7 @@ make
 
 ## Lancer
 
-~~ Pour le moment, il suffit de copier build/asservNucleo.bin dans le dossier de la carte, mais un flash via openocd est dans les tuyaux... ~~
+~~Pour le moment, il suffit de copier build/asservNucleo.bin dans le dossier de la carte, mais un flash via openocd est dans les tuyaux...~~	
 
 ```
 make flash
