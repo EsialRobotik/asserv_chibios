@@ -11,11 +11,19 @@ L'idée ici était de faire un asserv pour un robot de coupe de france de roboti
 ## Avant de compiler
 
 Mon asserv utilise ChibiOS comme OS temps réel, c'est un sous module du repo qu'il faut initialiser après le clone :
+
 ```
 git submodule update --init
 ```
 
-### compiler
+Le compilateur arm-none-eabi est nécessaire pour la compilation et openocd pour flasher la carte:
+
+```
+ sudo apt install openocd binutils-arm-none-eabi gcc-arm-none-eabi libnewlib-arm-none-eabi libstdc++-arm-none-eabi-newlib
+```
+
+
+## compiler
 
 ```
 make
@@ -23,4 +31,8 @@ make
 
 ## Lancer
 
-Pour le moment, il suffit de copier build/asservNucleo.bin dans le dossier de la carte, mais un flash via openocd est dans les tuyaux...
+~~ Pour le moment, il suffit de copier build/asservNucleo.bin dans le dossier de la carte, mais un flash via openocd est dans les tuyaux... ~~
+
+```
+make flash
+```
