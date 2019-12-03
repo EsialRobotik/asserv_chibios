@@ -1,14 +1,68 @@
 @startuml
-actor Foo1
-boundary Foo2
-control Foo3
-entity Foo4
-database Foo5
-collections Foo6
-Foo1 -> Foo2 : To boundary
-Foo1 -> Foo3 : To control
-Foo1 -> Foo4 : To entity
-Foo1 -> Foo5 : To database
-Foo1 -> Foo6 : To collections
+interface MotorController {
+void setMotor1Speed(float percentage)
+void setMotor2Speed(float percentage)
+}
 
+interface Encoders {
+void init()
+void start()
+void stop()
+void getValuesAndReset(int16_t *encoder1, int16_t *encoder2);
+}
+
+
+class AsservMain
+note left : Cette classe est au centre de l'asserv, c'est le chef d'orchestre du système.
+
+class SlopeFilter {
+float filter(float dt, float value)
+void setSlope(float slope)
+}
+Note bottom : Permet de limiter la "pente" des consignes en \nsortie des Regulator( et donc de limiter l'acceleration )
+
+
+class Odometry {
+void refresh(float encoderDeltaRight_mm, float encoderDeltaLeft_mm)
+float getX()
+float getY()
+float getTheta()
+}
+
+class Regulator {
+void updateFeedback(float feedback)
+float updateOutput(float goal)
+}
+
+class SpeedController {
+void setSpeedGoal(float speed)
+float update(float actualSpeed)
+}
+
+class CommandManager {
+.. Utilisé par AsservMain ..
+void update(float X_mm, float Y_mm, float theta_rad)
+float getDistanceGoal()
+float getAngleGoal()
+
+.. Utilisé par le thread recuperant les commandes ..
+bool addStraightLine(float valueInmm)
+bool addTurn(float angleInDeg)
+bool addGoTo(float posXInmm, float posYInmm)
+bool addGoToEnchainement(float posXInmm, float posYInmm)
+bool addGoToAngle(float posXInmm, float posYInmm)
+}
+
+AsservMain --> MotorController
+MotorController <|-- Vnh5019
+MotorController <|-- Md22
+
+AsservMain --> Encoders
+Encoders <|-- xxxQuadratureEncoder
+
+AsservMain -up-> Odometry
+AsservMain --> "2" SpeedController : Un par côté du robot
+AsservMain --> "2" Regulator : Pour le contrôle en cap et distance
+AsservMain --> "2" SlopeFilter
+AsservMain -up-> CommandManager
 @enduml
