@@ -1,0 +1,33 @@
+@startuml
+(*) --> "Lecture des Codeurs"
+"Lecture des Codeurs" --> [delta codeur droit\net gauche] "Update de la position (x,y,theta) \npar Odometrie"
+"Update de la position (x,y,theta) \npar Odometrie" --> ===B2===
+"Lecture des Codeurs" --> [delta codeur droit\net gauche]"update feedback \nregulateur angle"
+"Lecture des Codeurs" --> [delta codeur droit\net gauche]"update feedback \nRegulateur distance"
+"update feedback \nregulateur angle" --> ===B2===
+"update feedback \nRegulateur distance" --> ===B2===
+
+if "Run asserv position" then
+  -->[Oui] "update consignes \nCommandManager"
+  "update consignes \nCommandManager" --> [consigne \nen distance] "Regulateur distance"
+  --> [consigne \nen vitesse] ===B4===
+  "update consignes \nCommandManager" --> [consigne \nen angle] "Regulateur angle"
+  --> [consigne \nen vitesse] ===B4===
+else
+  ->[Non] ===B4===
+endif
+
+===B4===  --> [delta codeur droit\net droite] "estimation vitesse droite"
+===B4===  --> [delta codeur droit\net gauche] "estimation vitesse gauche"
+===B4===  --> [consigne \nen distance] "Limite pente consigne en vitesse"
+===B4===  --> [consigne \nen angle] "Limite pente consigne en angle"
+"Limite pente consigne en vitesse" --> [consigne en \ndistance limitée] "Mix consigne en distance et angle"
+"Limite pente consigne en angle" --> [consigne en \nangle limitée] "Mix consigne en distance et angle"
+"Mix consigne en distance et angle" --> [consigne vitesse\ngauche] "update controlleur vitesse gauche"
+"estimation vitesse gauche" --> [vitesse gauche] "update controlleur vitesse gauche"
+"Mix consigne en distance et angle" --> [consigne vitesse\ndroit] "update controlleur vitesse droite"
+"estimation vitesse droite" --> [vitesse droite] "update controlleur vitesse droite"
+
+"update controlleur vitesse gauche" --> [consigne puissance\nmoteur gauche] "Controlleur moteur"
+"update controlleur vitesse droite" --> [consigne puissance\nmoteur droit] "Controlleur moteur"
+@enduml
