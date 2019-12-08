@@ -13,7 +13,7 @@ public:
 	void stop();
 
 
-	void getValuesAndReset(int16_t *encoder1, int16_t *encoder2);
+	void getValuesAndReset(int16_t *encoder1, int16_t *encoder2, float *encoder1Delta, float *encoder2Delta);
 
 private:
 	bool m_invertEncoder1;
