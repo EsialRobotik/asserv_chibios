@@ -19,7 +19,7 @@ git submodule update --init
 Le compilateur arm-none-eabi est nécessaire pour la compilation et openocd pour flasher la carte:
 
 ```
- sudo apt install openocd binutils-arm-none-eabi gcc-arm-none-eabi libnewlib-arm-none-eabi libstdc++-arm-none-eabi-newlib
+ sudo apt install openocd binutils-arm-none-eabi gcc-arm-none-eabi libnewlib-arm-none-eabi libstdc++-arm-none-eabi-newlib gdb-multiarch
 ```
 
 
@@ -36,3 +36,17 @@ make
 ```
 make flash
 ```
+
+## Debugger
+
+D'abord, on lance le programme en mode débug avec la commande : 
+```
+make debug
+```
+
+Puis, __dans un autre shell__ , on lance le débugger comme suit : 
+```
+gdb-multiarch build/asservNucleo.elf  -ex "target remote :3333"
+```
+
+Ensuite, c'est du gdb classique en shell.... 
