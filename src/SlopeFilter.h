@@ -1,7 +1,8 @@
 #ifndef SRC_SLOPE_FILTER_H_
 #define SRC_SLOPE_FILTER_H_
 
-class SlopeFilter {
+class SlopeFilter
+{
 public:
 explicit SlopeFilter(float maxSlope);
 	virtual ~SlopeFilter(){};
