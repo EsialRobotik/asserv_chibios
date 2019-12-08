@@ -5,6 +5,7 @@
 #include "SpeedController.h"
 #include "Regulator.h"
 #include <cstdint>
+#include "Pll.h"
 
 class CommandManager;
 class Encoders;
@@ -41,7 +42,7 @@ public:
 	void enablePolar(bool enable);
 private:
 
-	float estimateSpeed(int16_t deltaCount);
+	float convertSpeedTommSec(float speed_ticksPerSec);
 	float estimateDeltaAngle(int16_t deltaCountRight, int16_t deltaCountLeft );
 	float estimateDeltaDistance(int16_t deltaCountRight, int16_t deltaCountLeft );
 
@@ -57,6 +58,8 @@ private:
 	SlopeFilter &m_angleRegulatorSlopeFilter;
 	SlopeFilter &m_distanceRegulatorSlopeFilter;
 	CommandManager &m_commandManager;
+	Pll m_pllRight;
+	Pll m_pllLeft;
 
 
 	const float m_distanceByEncoderTurn_mm;

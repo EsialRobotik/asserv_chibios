@@ -141,10 +141,11 @@ CPPSRC = $(ALLCPPSRC) \
        $(SRCDIR)/AsservMain.cpp \
        $(SRCDIR)/SpeedController.cpp \
        $(SRCDIR)/SlopeFilter.cpp \
+       $(SRCDIR)/Pll.cpp \
        $(SRCDIR)/Regulator.cpp \
        $(SRCDIR)/Odometry.cpp \
        $(SRCDIR)/commandManager/CommandManager.cpp \
-       $(SRCDIR)/commandManager/CMDList/CMDList.cpp
+       $(SRCDIR)/commandManager/CMDList/CMDList.cpp 
     
 
 # List ASM source files here.
@@ -207,6 +208,9 @@ include $(RULESPATH)/rules.mk
 
 flash : all
 	openocd -c "tcl_port disabled" -c "telnet_port disabled" -c "source [find board/st_nucleo_f4.cfg]" -c "stm32f4x.cpu configure -rtos ChibiOS" -c "init" -c "reset halt" -c "flash write_image erase unlock $(BUILDDIR)/$(PROJECT).elf" -c "verify_image $(BUILDDIR)/$(PROJECT).elf" -c "reset run" -c "shutdown"
+
+debug : all
+	openocd -c "tcl_port disabled" -c "telnet_port disabled" -c "source [find board/st_nucleo_f4.cfg]" -c "stm32f4x.cpu configure -rtos ChibiOS" -c "init" -c "reset halt" -c "flash write_image erase unlock $(BUILDDIR)/$(PROJECT).elf" -c "verify_image $(BUILDDIR)/$(PROJECT).elf" -c "reset halt"
 
 #
 # Custom rules

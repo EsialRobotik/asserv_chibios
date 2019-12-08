@@ -7,9 +7,11 @@
 #include "Encoders.h"
 #include "Odometry.h"
 #include "SlopeFilter.h"
+#include <chprintf.h>
 
 
-#define ASSERV_THREAD_PERIOD_MS (5)
+
+#define ASSERV_THREAD_PERIOD_MS (2)
 #define ASSERV_THREAD_PERIOD_S (float(ASSERV_THREAD_PERIOD_MS)/1000.0)
 #define ASSERV_POSITION_DIVISOR (5)
 
@@ -28,6 +30,8 @@ m_distanceRegulator(distanceRegulator),
 m_angleRegulatorSlopeFilter(angleRegulatorSlopeFilter),
 m_distanceRegulatorSlopeFilter(distanceRegulatorSlopeFilter),
 m_commandManager(commandManager),
+m_pllRight(250),
+m_pllLeft(250),
 m_distanceByEncoderTurn_mm(M_2PI*wheelRadius_mm),
 m_encodersTicksByTurn(encodersTicksByTurn),
 m_encodermmByTicks(m_distanceByEncoderTurn_mm/m_encodersTicksByTurn),
@@ -42,13 +46,9 @@ m_encoderWheelsDistance_ticks(encoderWheelsDistance_mm / m_encodermmByTicks)
 	m_enablePolar = true;
 }
 
-
-float AsservMain::estimateSpeed(int16_t deltaCount)
+float AsservMain::convertSpeedTommSec(float speed_ticksPerSec)
 {
-	const float dt = ASSERV_THREAD_PERIOD_S;
-
-	float deltaAngle_nbTurn = ((float)deltaCount/m_encodersTicksByTurn);
-	float speed_nbTurnPerSec = deltaAngle_nbTurn / dt;
+	float speed_nbTurnPerSec = speed_ticksPerSec / m_encodersTicksByTurn;
 
 	// vitesse en mm/sec
 	return speed_nbTurnPerSec*m_distanceByEncoderTurn_mm;
@@ -72,19 +72,19 @@ void AsservMain::mainLoop()
 	time += TIME_MS2I(ASSERV_THREAD_PERIOD_MS);
 	while (true)
 	{
-		int16_t m_encoderDeltaRight;
-		int16_t m_encoderDeltaLeft;
-		m_encoders.getValuesAndReset(&m_encoderDeltaRight, &m_encoderDeltaLeft);
+		int16_t encoderDeltaRight;
+		int16_t encoderDeltaLeft;
+		m_encoders.getValuesAndReset(&encoderDeltaRight, &encoderDeltaLeft);
 
 		// Mise à jour de la position en polaire
 		m_odometry.refresh(
-				m_encoderDeltaRight*m_encodermmByTicks,
-				m_encoderDeltaLeft*m_encodermmByTicks);
+				encoderDeltaRight*m_encodermmByTicks,
+				encoderDeltaLeft*m_encodermmByTicks);
 
 
 		// Estimation & mise à jour des feedbacks
-		float deltaAngle_radian = estimateDeltaAngle(m_encoderDeltaRight, m_encoderDeltaLeft);
-		float deltaDistance_mm = estimateDeltaDistance(m_encoderDeltaRight, m_encoderDeltaLeft);
+		float deltaAngle_radian = estimateDeltaAngle(encoderDeltaRight, encoderDeltaLeft);
+		float deltaDistance_mm = estimateDeltaDistance(encoderDeltaRight, encoderDeltaLeft);
 
 		m_angleRegulator.updateFeedback( deltaAngle_radian);
 		m_distanceRegulator.updateFeedback( deltaDistance_mm);
@@ -109,8 +109,11 @@ void AsservMain::mainLoop()
 		/*
 		 * Regulation en vitesse
 		 */
-		float estimatedSpeedRight = estimateSpeed(m_encoderDeltaRight);
-		float estimatedSpeedLeft = estimateSpeed(m_encoderDeltaLeft);
+		m_pllRight.update(encoderDeltaRight, ASSERV_THREAD_PERIOD_S );
+		float estimatedSpeedRight = convertSpeedTommSec(m_pllRight.getSpeed());
+
+		m_pllLeft.update(encoderDeltaLeft, ASSERV_THREAD_PERIOD_S );
+		float estimatedSpeedLeft = convertSpeedTommSec(m_pllLeft.getSpeed());
 
 		// On limite l'acceleration sur la sortie du regulateur de distance et d'angle
 		m_distSpeedLimited = m_distanceRegulatorSlopeFilter.filter(ASSERV_THREAD_PERIOD_S, m_distRegulatorOutputSpeedConsign);
@@ -159,12 +162,13 @@ void AsservMain::mainLoop()
 		USBStream::instance()->setOdoY(m_odometry.getY());
 		USBStream::instance()->setOdoTheta(m_odometry.getTheta());
 
-		USBStream::instance()->setRawEncoderDeltaLeft(1664);
-		USBStream::instance()->setRawEncoderDeltaRight(51);
+		USBStream::instance()->setRawEncoderDeltaLeft((float)encoderDeltaLeft);
+		USBStream::instance()->setRawEncoderDeltaRight((float)encoderDeltaRight);
 
 		USBStream::instance()->SendCurrentStream();
 
 		m_asservCounter++;
+
 		chThdSleepUntil(time);
 		time += TIME_MS2I(ASSERV_THREAD_PERIOD_MS);
 	}
