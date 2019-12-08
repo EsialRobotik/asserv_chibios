@@ -15,7 +15,8 @@ class Pll;
 class AsservMain
 {
 public:
-	explicit AsservMain(float wheelRadius_mm, float encoderWheelsDistance_mm, float encodersTicksByTurn,
+	explicit AsservMain(uint16_t loopFrequency, uint16_t speedPositionLoopDivisor,
+			float wheelRadius_mm, float encoderWheelsDistance_mm, float encodersTicksByTurn,
 			CommandManager &commandManager, MotorController &motorController, Encoders &encoders, Odometry &odometrie,
 			Regulator &angleRegulator, Regulator &distanceRegulator,
 			SlopeFilter &angleRegulatorSlopeFilter, SlopeFilter &distanceRegulatorSlopeFilter,
@@ -57,6 +58,9 @@ private:
 	const float m_encodermmByTicks;
 	const float m_encoderWheelsDistance_ticks;
 
+	const uint16_t m_loopFrequency;
+	const float m_loopPeriod;
+	const uint16_t m_speedPositionLoopDivisor;
 	uint8_t m_asservCounter;
 
 	float m_distRegulatorOutputSpeedConsign;

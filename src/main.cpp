@@ -14,35 +14,50 @@
 #include "Pll.h"
 
 
-#define ASSERV_THREAD_FREQUENCY (200)
+#define ASSERV_THREAD_FREQUENCY (500)
 #define ASSERV_THREAD_PERIOD_S (1.0/ASSERV_THREAD_FREQUENCY)
+#define ASSERV_POSITION_DIVISOR (5)
 
 #define ENCODERS_WHEELS_RADIUS (47.2/2.0)
 #define ENCODERS_WHEELS_DISTANCE_MM (297)
 #define ENCODERS_TICKS_BY_TURN (1024*4)
-#define SPEED_REG_MAX_INPUT_SPEED (500)
 
-#define DIST_REGULATOR_MAX_DELTA 1000
-#define ANGLE_REGULATOR_MAX_DELTA 1000
+#define MAX_SPEED (500)
+
+#define DIST_REGULATOR_KP (9)
+#define DIST_REGULATOR_MAX_DELTA (1000)
+#define ANGLE_REGULATOR_KP (1400)
+#define ANGLE_REGULATOR_MAX_DELTA (1000)
+
+#define SPEED_CONTROLLER_RIGHT_KP (0.25)
+#define SPEED_CONTROLLER_RIGHT_KI (0.45)
+#define SPEED_CONTROLLER_LEFT_KP (0.25)
+#define SPEED_CONTROLLER_LEFT_KI (0.45)
+
+#define PLL_BANDWIDTH (250)
 
 
 QuadratureEncoder encoders(false,false, 1 , 1);
 Vnh5019 Vnh5019MotorController(true,false);
-Regulator angleRegulator(1400, SPEED_REG_MAX_INPUT_SPEED);
-Regulator distanceRegulator(9, SPEED_REG_MAX_INPUT_SPEED);
-Odometry odometry(ENCODERS_WHEELS_DISTANCE_MM, 100.0, -250.0);
-SpeedController speedControllerRight(0.25, 0.45, 100, SPEED_REG_MAX_INPUT_SPEED, ASSERV_THREAD_FREQUENCY);
-SpeedController speedControllerLeft(0.25, 0.45 , 100, SPEED_REG_MAX_INPUT_SPEED, ASSERV_THREAD_FREQUENCY);
 
-Pll rightPll(250);
-Pll leftPll(250);
+Regulator angleRegulator(ANGLE_REGULATOR_KP, MAX_SPEED);
+Regulator distanceRegulator(DIST_REGULATOR_KP, MAX_SPEED);
+
+Odometry odometry(ENCODERS_WHEELS_DISTANCE_MM, 0, 0);
+
+SpeedController speedControllerRight(SPEED_CONTROLLER_RIGHT_KP, SPEED_CONTROLLER_RIGHT_KI, 100, MAX_SPEED, ASSERV_THREAD_FREQUENCY);
+SpeedController speedControllerLeft(SPEED_CONTROLLER_LEFT_KP, SPEED_CONTROLLER_LEFT_KI, 100, MAX_SPEED, ASSERV_THREAD_FREQUENCY);
+
+Pll rightPll(PLL_BANDWIDTH);
+Pll leftPll(PLL_BANDWIDTH);
 
 SlopeFilter angleSlopeFilter(ANGLE_REGULATOR_MAX_DELTA);
 SlopeFilter distSlopeFilter(DIST_REGULATOR_MAX_DELTA);
 
 CommandManager commandManager(angleRegulator, distanceRegulator);
 
-AsservMain mainAsserv(ENCODERS_WHEELS_RADIUS, ENCODERS_WHEELS_DISTANCE_MM, ENCODERS_TICKS_BY_TURN,
+AsservMain mainAsserv(ASSERV_THREAD_FREQUENCY, ASSERV_POSITION_DIVISOR,
+		ENCODERS_WHEELS_RADIUS, ENCODERS_WHEELS_DISTANCE_MM, ENCODERS_TICKS_BY_TURN,
 		commandManager, Vnh5019MotorController, encoders, odometry,
 		angleRegulator, distanceRegulator,
 		angleSlopeFilter, distSlopeFilter,

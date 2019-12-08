@@ -9,11 +9,11 @@ public:
 	QuadratureEncoder(bool invertEncoder1 = false, bool invertEncoder2 = false, float encoder1Ratio=1, float encoder2Ratio=1);
 	virtual ~QuadratureEncoder();
 
-	virtual void init();
-	virtual void start();
-	virtual void stop();
+	void init();
+	void start();
+	void stop();
 
-	virtual void getValuesAndReset(int16_t *encoder1, int16_t *encoder2);
+	virtual void getValuesAndReset(int16_t *encoderRight, int16_t *encoderLeft);
 
 private:
 	bool m_invertEncoder1;

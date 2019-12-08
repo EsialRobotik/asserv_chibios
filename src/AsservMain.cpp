@@ -11,12 +11,8 @@
 #include "Encoders/Encoder.h"
 
 
-
-#define ASSERV_THREAD_PERIOD_MS (2)
-#define ASSERV_THREAD_PERIOD_S (float(ASSERV_THREAD_PERIOD_MS)/1000.0)
-#define ASSERV_POSITION_DIVISOR (5)
-
-AsservMain::AsservMain(float wheelRadius_mm, float encoderWheelsDistance_mm, float encodersTicksByTurn,
+AsservMain::AsservMain(uint16_t loopFrequency, uint16_t speedPositionLoopDivisor,
+		float wheelRadius_mm, float encoderWheelsDistance_mm, float encodersTicksByTurn,
 		CommandManager &commandManager, MotorController &motorController, Encoders &encoders, Odometry &odometrie,
 		Regulator &angleRegulator, Regulator &distanceRegulator,
 		SlopeFilter &angleRegulatorSlopeFilter, SlopeFilter &distanceRegulatorSlopeFilter,
@@ -38,7 +34,10 @@ m_pllLeft(leftPll),
 m_distanceByEncoderTurn_mm(M_2PI*wheelRadius_mm),
 m_encodersTicksByTurn(encodersTicksByTurn),
 m_encodermmByTicks(m_distanceByEncoderTurn_mm/m_encodersTicksByTurn),
-m_encoderWheelsDistance_ticks(encoderWheelsDistance_mm / m_encodermmByTicks)
+m_encoderWheelsDistance_ticks(encoderWheelsDistance_mm / m_encodermmByTicks),
+m_loopFrequency(loopFrequency),
+m_loopPeriod(1.0/float(loopFrequency)),
+m_speedPositionLoopDivisor(speedPositionLoopDivisor)
 {
 	m_asservCounter = 0;
 	m_distRegulatorOutputSpeedConsign = 0;
@@ -71,8 +70,9 @@ float AsservMain::estimateDeltaDistance(int16_t deltaCountRight, int16_t deltaCo
 
 void AsservMain::mainLoop()
 {
+	const time_conv_t loopPeriod_ms = (m_loopPeriod*1000.0);
 	systime_t time = chVTGetSystemTime();
-	time += TIME_MS2I(ASSERV_THREAD_PERIOD_MS);
+	time += TIME_MS2I(loopPeriod_ms);
 	while (true)
 	{
 		int16_t encoderDeltaRight;
@@ -97,7 +97,7 @@ void AsservMain::mainLoop()
 		 * L'asserv en vitesse étant commandé par l'asserv en position, on laisse qq'e tours de boucle
 		 * à l'asserv en vitesse pour atteindre sa consigne.
 		 */
-		if( m_asservCounter == ASSERV_POSITION_DIVISOR && m_enablePolar)
+		if( m_asservCounter == m_speedPositionLoopDivisor && m_enablePolar)
 		{
 			m_commandManager.update( m_odometry.getX(), m_odometry.getY(), m_odometry.getTheta() );
 
@@ -112,15 +112,15 @@ void AsservMain::mainLoop()
 		/*
 		 * Regulation en vitesse
 		 */
-		m_pllRight.update(encoderDeltaRight, ASSERV_THREAD_PERIOD_S );
+		m_pllRight.update(encoderDeltaRight, m_loopPeriod );
 		float estimatedSpeedRight = convertSpeedTommSec(m_pllRight.getSpeed());
 
-		m_pllLeft.update(encoderDeltaLeft, ASSERV_THREAD_PERIOD_S );
+		m_pllLeft.update(encoderDeltaLeft, m_loopPeriod );
 		float estimatedSpeedLeft = convertSpeedTommSec(m_pllLeft.getSpeed());
 
 		// On limite l'acceleration sur la sortie du regulateur de distance et d'angle
-		m_distSpeedLimited = m_distanceRegulatorSlopeFilter.filter(ASSERV_THREAD_PERIOD_S, m_distRegulatorOutputSpeedConsign);
-		m_angleSpeedLimited = m_angleRegulatorSlopeFilter.filter(ASSERV_THREAD_PERIOD_S, m_angleRegulatorOutputSpeedConsign);
+		m_distSpeedLimited = m_distanceRegulatorSlopeFilter.filter(m_loopPeriod, m_distRegulatorOutputSpeedConsign);
+		m_angleSpeedLimited = m_angleRegulatorSlopeFilter.filter(m_loopPeriod, m_angleRegulatorOutputSpeedConsign);
 
 		// Mise à jour des consignes en vitesse avec acceleration limitée
 		m_speedControllerRight.setSpeedGoal(m_distSpeedLimited+m_angleSpeedLimited);
@@ -173,7 +173,7 @@ void AsservMain::mainLoop()
 		m_asservCounter++;
 
 		chThdSleepUntil(time);
-		time += TIME_MS2I(ASSERV_THREAD_PERIOD_MS);
+		time += TIME_MS2I(loopPeriod_ms);
 	}
 }
 
