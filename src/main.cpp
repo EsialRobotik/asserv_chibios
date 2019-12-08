@@ -14,12 +14,13 @@
 #include "Pll.h"
 
 
-#define ENCODERS_WHEELS_RADIUS (47.2/2.0)
-#define ENCODERS_WHEELS_DISTANCE_MM (297)
-#define SPEED_REG_MAX_INPUT_SPEED (500)
-
 #define ASSERV_THREAD_FREQUENCY (200)
 #define ASSERV_THREAD_PERIOD_S (1.0/ASSERV_THREAD_FREQUENCY)
+
+#define ENCODERS_WHEELS_RADIUS (47.2/2.0)
+#define ENCODERS_WHEELS_DISTANCE_MM (297)
+#define ENCODERS_TICKS_BY_TURN (1024*4)
+#define SPEED_REG_MAX_INPUT_SPEED (500)
 
 #define DIST_REGULATOR_MAX_DELTA 1000
 #define ANGLE_REGULATOR_MAX_DELTA 1000
@@ -30,8 +31,8 @@ Vnh5019 Vnh5019MotorController(true,false);
 Regulator angleRegulator(1400, SPEED_REG_MAX_INPUT_SPEED);
 Regulator distanceRegulator(9, SPEED_REG_MAX_INPUT_SPEED);
 Odometry odometry(ENCODERS_WHEELS_DISTANCE_MM, 100.0, -250.0);
-SpeedController speedControllerRight(0.25, 0.45, 100, SPEED_REG_MAX_INPUT_SPEED, 1.0/ASSERV_THREAD_PERIOD_S);
-SpeedController speedControllerLeft(0.25, 0.45 , 100, SPEED_REG_MAX_INPUT_SPEED, 1.0/ASSERV_THREAD_PERIOD_S);
+SpeedController speedControllerRight(0.25, 0.45, 100, SPEED_REG_MAX_INPUT_SPEED, ASSERV_THREAD_FREQUENCY);
+SpeedController speedControllerLeft(0.25, 0.45 , 100, SPEED_REG_MAX_INPUT_SPEED, ASSERV_THREAD_FREQUENCY);
 
 Pll rightPll(250);
 Pll leftPll(250);
@@ -41,7 +42,7 @@ SlopeFilter distSlopeFilter(DIST_REGULATOR_MAX_DELTA);
 
 CommandManager commandManager(angleRegulator, distanceRegulator);
 
-AsservMain mainAsserv(ENCODERS_WHEELS_RADIUS, ENCODERS_WHEELS_DISTANCE_MM, 1024*4,
+AsservMain mainAsserv(ENCODERS_WHEELS_RADIUS, ENCODERS_WHEELS_DISTANCE_MM, ENCODERS_TICKS_BY_TURN,
 		commandManager, Vnh5019MotorController, encoders, odometry,
 		angleRegulator, distanceRegulator,
 		angleSlopeFilter, distSlopeFilter,
@@ -182,23 +183,23 @@ void asservCommand(BaseSequentialStream *chp, int argc, char **argv)
 		chprintf(outputStream, "setting speed control Kp:%.2f Ki:%.2f to side %c \r\n",Kp,Ki, side);
 
 		if( side == 'r')
-			mainAsserv.setGainForRightSpeedController(Kp, Ki);
+			speedControllerRight.setGains(Kp, Ki);
 		else if( side == 'l')
-			mainAsserv.setGainForLeftSpeedController(Kp, Ki);
+			speedControllerLeft.setGains(Kp, Ki);
 	}
 	else if(!strcmp(argv[0], "angleSlope"))
 	{
 		float   slope = atof(argv[1]);
 		chprintf(outputStream, "setting angle slope delta %.2f \r\n",slope);
 
-		mainAsserv.setAngleSlope(slope);
+		angleSlopeFilter.setSlope(slope);
 	}
 	else if(!strcmp(argv[0], "distSlope"))
 	{
 		float   slope = atof(argv[1]);
 		chprintf(outputStream, "setting distance slope delta %.2f \r\n",slope);
 
-		mainAsserv.setDistSlope(slope);
+		distSlopeFilter.setSlope(slope);
 	}
 	else if(!strcmp(argv[0], "addangle"))
 	{
@@ -210,12 +211,12 @@ void asservCommand(BaseSequentialStream *chp, int argc, char **argv)
 	else if(!strcmp(argv[0], "anglereset"))
 	{
 		chprintf(outputStream, "Reseting angle accumulator \r\n");
-		mainAsserv.resetAngleAccumulator();
+		angleRegulator.reset();
 	}
 	else if(!strcmp(argv[0], "distreset"))
 	{
 		chprintf(outputStream, "Reseting distance accumulator \r\n");
-		mainAsserv.resetDistAccumulator();
+		distanceRegulator.reset();
 	}
 	else if(!strcmp(argv[0], "adddist"))
 	{
@@ -229,14 +230,14 @@ void asservCommand(BaseSequentialStream *chp, int argc, char **argv)
 		float   Kp = atof(argv[1]);
 		chprintf(outputStream, "setting angle Kp to %.2f \r\n",Kp);
 
-		mainAsserv.setGainForAngleRegulator(Kp);
+		angleRegulator.setGain(Kp);
 	}
 	else if(!strcmp(argv[0], "distcontrol"))
 	{
 		float   Kp = atof(argv[1]);
 		chprintf(outputStream, "setting dist Kp to %.2f \r\n",Kp);
 
-		mainAsserv.setGainForDistRegulator(Kp);
+		distanceRegulator.setGain(Kp);
 	}
 	else if(!strcmp(argv[0], "enablemotor"))
 	{

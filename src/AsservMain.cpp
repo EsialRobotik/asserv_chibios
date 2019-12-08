@@ -199,14 +199,4 @@ void AsservMain::enablePolar(bool enable)
 	m_enablePolar = enable;
 }
 
-void AsservMain::setDistSlope(float slope)
-{
-	m_distanceRegulatorSlopeFilter.setSlope(slope);
-}
-
-void AsservMain::setAngleSlope(float slope)
-{
-	m_angleRegulatorSlopeFilter.setSlope(slope);
-}
-
 

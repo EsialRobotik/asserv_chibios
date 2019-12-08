@@ -28,18 +28,6 @@ public:
 
 	void setRegulatorsSpeed(float distSpeed, float angleSpeed);
 
-	void setGainForRightSpeedController(float Kp, float Ki){m_speedControllerRight.setGains(Kp, Ki);};
-	void setGainForLeftSpeedController(float Kp, float Ki){m_speedControllerLeft.setGains(Kp, Ki);};
-
-	void setDistSlope(float slope);
-	void setAngleSlope(float slope);
-
-	void resetAngleAccumulator(){m_angleRegulator.reset();}
-	void resetDistAccumulator(){m_distanceRegulator.reset();}
-
-	void setGainForAngleRegulator(float Kp){ m_angleRegulator.setGain(Kp); };
-	void setGainForDistRegulator(float Kp){ m_distanceRegulator.setGain(Kp); };
-
 	void enableMotors(bool enable);
 	void enablePolar(bool enable);
 private:
