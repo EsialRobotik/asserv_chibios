@@ -127,6 +127,7 @@ LDSCRIPT= $(STARTUPLD)/STM32F446xE.ld
 # setting.
 CSRC = $(ALLCSRC) \
        $(SRCDIR)/usbcfg.c \
+       $(SRCDIR)/exceptionVectors.c \
        $(CHIBIOS)/os/various/syscalls.c \
        $(TESTSRC) 
 
