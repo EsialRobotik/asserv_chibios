@@ -137,7 +137,7 @@ CPPSRC = $(ALLCPPSRC) \
        $(SRCDIR)/main.cpp \
        $(SRCDIR)/motorController/Vnh5019.cpp \
        $(SRCDIR)/USBStream.cpp \
-       $(SRCDIR)/Encoders.cpp \
+       $(SRCDIR)/Encoders/QuadratureEncoder.cpp \
        $(SRCDIR)/AsservMain.cpp \
        $(SRCDIR)/SpeedController.cpp \
        $(SRCDIR)/SlopeFilter.cpp \

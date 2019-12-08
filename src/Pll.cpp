@@ -9,6 +9,9 @@ Pll::Pll(float bandwidth)
 	m_count = 0;
 }
 
+// Voir ce thread pour plus de détails sur le fonctionnement
+// https://discourse.odriverobotics.com/t/rotor-encoder-pll-and-velocity/224
+
 void Pll::update(int16_t deltaTicks, float deltaT)
 {
 	// Prediction

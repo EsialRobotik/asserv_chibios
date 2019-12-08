@@ -4,10 +4,11 @@
 #include "commandManager/CommandManager.h"
 #include "USBStream.h"
 #include "util/constants.h"
-#include "Encoders.h"
 #include "Odometry.h"
 #include "SlopeFilter.h"
+#include "Pll.h"
 #include <chprintf.h>
+#include "Encoders/Encoder.h"
 
 
 
@@ -19,7 +20,9 @@ AsservMain::AsservMain(float wheelRadius_mm, float encoderWheelsDistance_mm, flo
 		CommandManager &commandManager, MotorController &motorController, Encoders &encoders, Odometry &odometrie,
 		Regulator &angleRegulator, Regulator &distanceRegulator,
 		SlopeFilter &angleRegulatorSlopeFilter, SlopeFilter &distanceRegulatorSlopeFilter,
-		SpeedController &speedControllerRight, SpeedController &speedControllerLeft ):
+		SpeedController &speedControllerRight, SpeedController &speedControllerLeft,
+		Pll &rightPll, Pll &leftPll):
+
 m_motorController(motorController),
 m_encoders(encoders),
 m_odometry(odometrie),
@@ -30,8 +33,8 @@ m_distanceRegulator(distanceRegulator),
 m_angleRegulatorSlopeFilter(angleRegulatorSlopeFilter),
 m_distanceRegulatorSlopeFilter(distanceRegulatorSlopeFilter),
 m_commandManager(commandManager),
-m_pllRight(250),
-m_pllLeft(250),
+m_pllRight(rightPll),
+m_pllLeft(leftPll),
 m_distanceByEncoderTurn_mm(M_2PI*wheelRadius_mm),
 m_encodersTicksByTurn(encodersTicksByTurn),
 m_encodermmByTicks(m_distanceByEncoderTurn_mm/m_encodersTicksByTurn),

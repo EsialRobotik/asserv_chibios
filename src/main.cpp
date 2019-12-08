@@ -6,32 +6,35 @@
 #include <cstring>
 #include "AsservMain.h"
 #include "commandManager/CommandManager.h"
+#include "Encoders/QuadratureEncoder.h"
 #include "motorController/Vnh5019.h"
-#include "Encoders.h"
 #include "Odometry.h"
 #include "USBStream.h"
 #include "SlopeFilter.h"
-
+#include "Pll.h"
 
 
 #define ENCODERS_WHEELS_RADIUS (47.2/2.0)
 #define ENCODERS_WHEELS_DISTANCE_MM (297)
 #define SPEED_REG_MAX_INPUT_SPEED (500)
 
-#define ASSERV_THREAD_PERIOD_MS (5)
-#define ASSERV_THREAD_PERIOD_S (float(ASSERV_THREAD_PERIOD_MS)/1000.0)
+#define ASSERV_THREAD_FREQUENCY (200)
+#define ASSERV_THREAD_PERIOD_S (1.0/ASSERV_THREAD_FREQUENCY)
 
 #define DIST_REGULATOR_MAX_DELTA 1000
 #define ANGLE_REGULATOR_MAX_DELTA 1000
 
 
-Encoders encoders(false,false, 1 , 1);
+QuadratureEncoder encoders(false,false, 1 , 1);
 Vnh5019 Vnh5019MotorController(true,false);
 Regulator angleRegulator(1400, SPEED_REG_MAX_INPUT_SPEED);
 Regulator distanceRegulator(9, SPEED_REG_MAX_INPUT_SPEED);
 Odometry odometry(ENCODERS_WHEELS_DISTANCE_MM, 100.0, -250.0);
 SpeedController speedControllerRight(0.25, 0.45, 100, SPEED_REG_MAX_INPUT_SPEED, 1.0/ASSERV_THREAD_PERIOD_S);
 SpeedController speedControllerLeft(0.25, 0.45 , 100, SPEED_REG_MAX_INPUT_SPEED, 1.0/ASSERV_THREAD_PERIOD_S);
+
+Pll rightPll(250);
+Pll leftPll(250);
 
 SlopeFilter angleSlopeFilter(ANGLE_REGULATOR_MAX_DELTA);
 SlopeFilter distSlopeFilter(DIST_REGULATOR_MAX_DELTA);
@@ -42,7 +45,8 @@ AsservMain mainAsserv(ENCODERS_WHEELS_RADIUS, ENCODERS_WHEELS_DISTANCE_MM, 1024*
 		commandManager, Vnh5019MotorController, encoders, odometry,
 		angleRegulator, distanceRegulator,
 		angleSlopeFilter, distSlopeFilter,
-		speedControllerRight, speedControllerLeft);
+		speedControllerRight, speedControllerLeft,
+		rightPll, leftPll);
 
 static THD_WORKING_AREA(waAsservThread, 512);
 static THD_FUNCTION(AsservThread, arg)

@@ -5,12 +5,12 @@
 #include "SpeedController.h"
 #include "Regulator.h"
 #include <cstdint>
-#include "Pll.h"
 
 class CommandManager;
 class Encoders;
 class Odometry;
 class SlopeFilter;
+class Pll;
 
 class AsservMain
 {
@@ -19,7 +19,9 @@ public:
 			CommandManager &commandManager, MotorController &motorController, Encoders &encoders, Odometry &odometrie,
 			Regulator &angleRegulator, Regulator &distanceRegulator,
 			SlopeFilter &angleRegulatorSlopeFilter, SlopeFilter &distanceRegulatorSlopeFilter,
-			SpeedController &speedControllerRight, SpeedController &speedControllerLeft );
+			SpeedController &speedControllerRight, SpeedController &speedControllerLeft,
+			Pll &rightPll, Pll &leftPll);
+
 	virtual ~AsservMain(){};
 
 	void mainLoop();
@@ -58,8 +60,8 @@ private:
 	SlopeFilter &m_angleRegulatorSlopeFilter;
 	SlopeFilter &m_distanceRegulatorSlopeFilter;
 	CommandManager &m_commandManager;
-	Pll m_pllRight;
-	Pll m_pllLeft;
+	Pll &m_pllRight;
+	Pll &m_pllLeft;
 
 
 	const float m_distanceByEncoderTurn_mm;
