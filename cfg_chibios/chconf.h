@@ -32,7 +32,7 @@
 #define _CHIBIOS_RT_CONF_VER_6_0_
 
 
-#include "../src/exceptionVectors.h"
+#include "../src/util/exceptionVectors.h"
 
 #if !defined(CHPRINTF_USE_FLOAT)
 #define CHPRINTF_USE_FLOAT TRUE

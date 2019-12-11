@@ -42,9 +42,9 @@ int CMDList::size()
 }
 
 
-CMD CMDList::dequeue()
+cmd_t CMDList::dequeue()
 {
-    CMD res;
+    cmd_t res;
     res.type = CMD_NULL;
 
     if (!full && nextFreePos == headPos) {

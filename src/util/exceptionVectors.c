@@ -160,3 +160,9 @@ void dbg_assert(const char* const assertion, const char* const file, const unsig
 
     chSysHalt(func);
 }
+
+// Permet aussi de lier le assert de la libc a l'assert de chibiOs
+void __assert_func(const char * assertion, const char * file, unsigned int line, const char * function)
+{
+	dbg_assert(assertion, file, line, function, "\n");
+}

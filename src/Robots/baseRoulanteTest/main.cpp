@@ -4,6 +4,8 @@
 #include <chprintf.h>
 #include <cstdlib>
 #include <cstring>
+
+#include "util/chibiOsAllocatorWrapper.h"
 #include "AsservMain.h"
 #include "commandManager/CommandManager.h"
 #include "Encoders/QuadratureEncoder.h"
@@ -127,6 +129,7 @@ int main(void)
 	chThdCreateStatic(waAsservThread, sizeof(waAsservThread), HIGHPRIO, AsservThread, NULL);
 
 
+	deactivateHeapAllocation();
 
 //	chThdSetPriority(LOWPRIO);
 	while (true)

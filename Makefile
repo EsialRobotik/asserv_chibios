@@ -137,7 +137,7 @@ endif
 # setting.
 CSRC = $(ALLCSRC) \
        $(SRCDIR)/usbcfg.c \
-       $(SRCDIR)/exceptionVectors.c \
+       $(SRCDIR)/util/exceptionVectors.c \
        $(CHIBIOS)/os/various/syscalls.c \
        $(TESTSRC) 
 
@@ -155,7 +155,8 @@ CPPSRC = $(ALLCPPSRC) \
        $(SRCDIR)/Regulator.cpp \
        $(SRCDIR)/Odometry.cpp \
        $(SRCDIR)/commandManager/CommandManager.cpp \
-       $(SRCDIR)/commandManager/CMDList/CMDList.cpp 
+       $(SRCDIR)/commandManager/CMDList/CMDList.cpp \
+       $(SRCDIR)/util/chibiOsAllocatorWrapper.cpp
     
 
 # List ASM source files here.

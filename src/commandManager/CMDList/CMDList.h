@@ -21,7 +21,7 @@ typedef struct CMD_struct {
     typeCMD type;
     float value;
     float secValue;
-} CMD;
+} cmd_t;
 
 class CMDList
 {
@@ -29,12 +29,12 @@ public:
     CMDList();
     CMDList(int capacity); //GDI
     bool enqueue(typeCMD cmd , float val, float val2 = 0);
-    CMD dequeue();
+    cmd_t dequeue();
     int size();
     ~CMDList();
 
 private:
-    CMD list[CAPACITY];
+    cmd_t list[CAPACITY];
     int nextFreePos;
     int headPos;
     bool full;
