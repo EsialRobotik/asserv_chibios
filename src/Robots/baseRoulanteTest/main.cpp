@@ -4,7 +4,7 @@
 #include <chprintf.h>
 #include <cstdlib>
 #include <cstring>
-
+#include "util/constants.h"
 #include "util/chibiOsAllocatorWrapper.h"
 #include "AsservMain.h"
 #include "commandManager/CommandManager.h"
@@ -39,6 +39,14 @@
 #define PLL_BANDWIDTH (250)
 
 
+#define COMMAND_MANAGER_ARRIVAL_ANGLE_THRESHOLD_RAD (0.1)
+#define COMMAND_MANAGER_ARRIVAL_DISTANCE_THRESHOLD_mm (1)
+#define COMMAND_MANAGER_GOTO_ANGLE_THRESHOLD_RAD (M_PI/8)
+#define COMMAND_MANAGER_GOTO_CHAIN_NEXT_CMD_DIST_mm (50)
+
+
+
+
 QuadratureEncoder encoders(false,false, 1 , 1);
 Vnh5019 Vnh5019MotorController(true,false);
 
@@ -56,7 +64,9 @@ Pll leftPll(PLL_BANDWIDTH);
 SlopeFilter angleSlopeFilter(ANGLE_REGULATOR_MAX_DELTA);
 SlopeFilter distSlopeFilter(DIST_REGULATOR_MAX_DELTA);
 
-CommandManager commandManager(angleRegulator, distanceRegulator);
+CommandManager commandManager(COMMAND_MANAGER_ARRIVAL_ANGLE_THRESHOLD_RAD, COMMAND_MANAGER_ARRIVAL_DISTANCE_THRESHOLD_mm,
+		COMMAND_MANAGER_GOTO_ANGLE_THRESHOLD_RAD, COMMAND_MANAGER_GOTO_CHAIN_NEXT_CMD_DIST_mm,
+		angleRegulator, distanceRegulator);
 
 AsservMain mainAsserv(ASSERV_THREAD_FREQUENCY, ASSERV_POSITION_DIVISOR,
 		ENCODERS_WHEELS_RADIUS, ENCODERS_WHEELS_DISTANCE_MM, ENCODERS_TICKS_BY_TURN,

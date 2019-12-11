@@ -6,20 +6,20 @@
 #include "util/constants.h"
 #include "USBStream.h"
 
-CommandManager::CommandManager(const Regulator &angle_regulator, const Regulator &distance_regulator):
+CommandManager::CommandManager(float arrivalAngleThreshold_rad, float arrivalDistanceThreshold_mm,
+		float gotoAngleThreshold_rad, float gotoNextConsignDist_mm,
+		const Regulator &angle_regulator, const Regulator &distance_regulator):
 liste(), m_angle_regulator(angle_regulator), m_distance_regulator(distance_regulator)
 {
 	m_emergencyStop = false;
     currCMD.type = CMD_NULL;
     nextCMD.type = CMD_NULL;
-    m_arrivalAngleThreshold = 0.1;
-    m_arrivalDistanceThreshold = 1;
-    m_arrivalAngleSpeedThreshold = 0.01;
-    m_arrivalDistSpeedThreshold = 1;
+    m_arrivalAngleThreshold_rad = arrivalAngleThreshold_rad;
+    m_arrivalDistanceThreshold_mm = arrivalDistanceThreshold_mm;
+    m_gotoAngleThreshold_rad = gotoAngleThreshold_rad;
+    m_gotoNextConsignDist_mm = gotoNextConsignDist_mm;
     m_angleRegulatorConsign = 0;
-    m_distRegulatorConsign = 0;
-    m_gotoAngleThreshold = M_PI/8;
-    m_gotoNextConsignDist = 50;
+	m_distRegulatorConsign = 0;
 }
 
 CommandManager::~CommandManager()
@@ -163,7 +163,7 @@ void CommandManager::computeGoTo(float X_mm, float Y_mm, float theta_rad)
     {
         m_angleRegulatorConsign = deltaTheta + m_angle_regulator.getAccumulator();
 
-        if (fabs(deltaTheta) < m_gotoAngleThreshold)
+        if (fabs(deltaTheta) < m_gotoAngleThreshold_rad)
         	m_distRegulatorConsign = deltaDist + m_distance_regulator.getAccumulator();
     }
 }
@@ -234,7 +234,7 @@ void CommandManager::computeEnchainement(float X_mm, float Y_mm, float theta_rad
      *  Sauf si la distance entre le robot et la prochaine consigne est inférieur a m_gotoNextConsignDist
      *  	(ce cas de figure arrive quand il n'y a plus d'autres consignes a enchainer )
 	 */
-	if(computeDeltaDist(X_goto-X_mm, Y_goto-Y_mm) > m_gotoNextConsignDist)
+	if(computeDeltaDist(X_goto-X_mm, Y_goto-Y_mm) > m_gotoNextConsignDist_mm)
 	{
 		float angle = M_PI/2;
 
@@ -256,8 +256,8 @@ void CommandManager::computeEnchainement(float X_mm, float Y_mm, float theta_rad
 			angle = -angle;
 
 		// Then find a (x,y) point that will be our current goal
-		X_goal = X_mm + cosf(angle)*m_gotoNextConsignDist;
-		Y_goal = Y_mm + sinf(angle)*m_gotoNextConsignDist;
+		X_goal = X_mm + cosf(angle)*m_gotoNextConsignDist_mm;
+		Y_goal = Y_mm + sinf(angle)*m_gotoNextConsignDist_mm;
 	}
 
 	USBStream::instance()->setXGoal(X_goal);
@@ -280,11 +280,8 @@ void CommandManager::computeEnchainement(float X_mm, float Y_mm, float theta_rad
 
 bool CommandManager::isGoalReach()
 {
-	return 			fabs(m_angle_regulator.getError()) <= m_arrivalAngleThreshold
-    			&& 	fabs(m_distance_regulator.getError()) <= m_arrivalDistanceThreshold
-//				&&  fabs(m_lastDistanceSpeed) <= m_arrivalDistSpeedThreshold
-//    			&& 	fabs(m_lastAngleSpeed) <= m_arrivalAngleSpeedThreshold
-				;
+	return 			fabs(m_angle_regulator.getError()) <= m_arrivalAngleThreshold_rad
+    			&& 	fabs(m_distance_regulator.getError()) <= m_arrivalDistanceThreshold_mm;
 }
 
 bool CommandManager::isGoalReach(float X_mm, float Y_mm)
@@ -309,7 +306,7 @@ bool CommandManager::isGoalReach(float X_mm, float Y_mm)
         	 float deltaY = currCMD.secValue - Y_mm;  // Différence entre la cible et le robot selon Y
 
         	 float deltaDist = computeDeltaDist(deltaX, deltaY);
-        	 return (deltaDist < m_gotoNextConsignDist );
+        	 return (deltaDist < m_gotoNextConsignDist_mm );
         }
         else
         	return isGoalReach(); // Si la consigne suivante n'est pas enchainable, il faut vraiment atteindre la consigne..

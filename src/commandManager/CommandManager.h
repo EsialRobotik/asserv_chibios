@@ -8,7 +8,9 @@ class CommandManager
 {
 
 public:
-   explicit CommandManager(const Regulator &angle_regulator, const Regulator &distance_regulator);
+   explicit CommandManager(float arrivalAngleThreshold_rad, float arrivalDistanceThreshold_mm,
+		   float gotoAngleThreshold_rad, float gotoNextConsignDist_mm,
+		   const Regulator &angle_regulator, const Regulator &distance_regulator);
     ~CommandManager();
 
     /*
@@ -48,14 +50,12 @@ private:
 
     bool m_emergencyStop;
 
-    float m_arrivalAngleThreshold;
-    float m_arrivalDistanceThreshold;
-    float m_arrivalAngleSpeedThreshold;
-    float m_arrivalDistSpeedThreshold;
+    float m_arrivalAngleThreshold_rad;
+    float m_arrivalDistanceThreshold_mm;
 
-    float m_gotoAngleThreshold;
+    float m_gotoAngleThreshold_rad;
 
-    float m_gotoNextConsignDist;
+    float m_gotoNextConsignDist_mm;
 
     float m_angleRegulatorConsign;
     float m_distRegulatorConsign;
