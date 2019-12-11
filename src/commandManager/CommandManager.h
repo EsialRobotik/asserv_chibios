@@ -21,6 +21,12 @@ public:
     bool addGoToAngle(float posXInmm, float posYInmm);
 
     /*
+     * Gestion de l'arret d'urgence
+     */
+    void setEmergencyStop();
+    void resetEmergencyStop();
+
+    /*
      * Mise à jour des consignes de sorties en fonction
      * 	de la nouvelle position du robot
      */
@@ -34,13 +40,13 @@ public:
 
 private:
     CMDList liste; //File d'attente des commandes
-    CMD currCMD; //commande courante
-    CMD nextCMD; //commande suivante
-
-
+    cmd_t currCMD; //commande courante
+    cmd_t nextCMD; //commande suivante
 
     const Regulator &m_angle_regulator;
     const Regulator &m_distance_regulator;
+
+    bool m_emergencyStop;
 
     float m_arrivalAngleThreshold;
     float m_arrivalDistanceThreshold;
@@ -54,11 +60,8 @@ private:
     float m_angleRegulatorConsign;
     float m_distRegulatorConsign;
 
-
-    int lastStatus;
-
     bool isGoalReach();
-    bool areRampsFinished(float X_mm, float Y_mm);
+    bool isGoalReach(float X_mm, float Y_mm);
 
     float computeDeltaTheta(float deltaX, float deltaY, float theta_rad); // Calcul de l'angle à parcourir
     float computeDeltaDist(float deltaX, float deltaY); // Calcul de la distance à parcourir

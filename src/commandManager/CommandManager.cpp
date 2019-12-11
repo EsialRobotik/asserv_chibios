@@ -9,9 +9,9 @@
 CommandManager::CommandManager(const Regulator &angle_regulator, const Regulator &distance_regulator):
 liste(), m_angle_regulator(angle_regulator), m_distance_regulator(distance_regulator)
 {
+	m_emergencyStop = false;
     currCMD.type = CMD_NULL;
     nextCMD.type = CMD_NULL;
-    lastStatus = 2;
     m_arrivalAngleThreshold = 0.1;
     m_arrivalDistanceThreshold = 1;
     m_arrivalAngleSpeedThreshold = 0.01;
@@ -28,41 +28,61 @@ CommandManager::~CommandManager()
 
 bool CommandManager::addStraightLine(float valueInmm)
 {
-    lastStatus = 0;
     return liste.enqueue(CMD_GO , valueInmm, 0);
 }
 
 bool CommandManager::addTurn(float angleInRad)
 {
-    lastStatus = 0;
     return liste.enqueue(CMD_TURN , angleInRad , 0);
 }
 
 bool CommandManager::addGoTo(float posXInmm, float posYInmm)
 {
-    lastStatus = 0;
     return liste.enqueue(CMD_GOTO , posXInmm , posYInmm);
 }
 
 bool CommandManager::addGoToEnchainement(float posXInmm, float posYInmm)
 {
-    lastStatus = 0;
     return liste.enqueue(CMD_GOTOENCHAIN , posXInmm, posYInmm);
 }
 
 bool CommandManager::addGoToAngle(float posXInmm, float posYInmm)
 {
-    lastStatus = 0;
     return liste.enqueue(CMD_GOTOANGLE, posXInmm, posYInmm);
 }
 
+void CommandManager::setEmergencyStop()
+{
+	m_angleRegulatorConsign = m_angle_regulator.getAccumulator();
+	m_distRegulatorConsign  = m_distance_regulator.getAccumulator();
+
+	while (currCMD.type != CMD_NULL)
+	        currCMD = liste.dequeue();
+    nextCMD.type = CMD_NULL;
+
+	m_emergencyStop = true;
+
+}
+
+void CommandManager::resetEmergencyStop()
+{
+	m_emergencyStop = false;
+}
 
 /*
  * Fonction de mise a jour...
  */
 void CommandManager::update(float X_mm, float Y_mm, float theta_rad)
 {
-    if (!areRampsFinished(X_mm, Y_mm))
+	if(m_emergencyStop)
+	{
+		while (currCMD.type != CMD_NULL)
+		        currCMD = liste.dequeue();
+	    nextCMD.type = CMD_NULL;
+	    return;
+	}
+
+    if (!isGoalReach(X_mm, Y_mm))
     {
 
         if (currCMD.type == CMD_GO || currCMD.type == CMD_TURN) {  // On avance ou on tourne sur place
@@ -267,7 +287,7 @@ bool CommandManager::isGoalReach()
 				;
 }
 
-bool CommandManager::areRampsFinished(float X_mm, float Y_mm)
+bool CommandManager::isGoalReach(float X_mm, float Y_mm)
 {
 
     if (currCMD.type!= CMD_GOTOENCHAIN)
