@@ -56,7 +56,7 @@ void operator delete[](void* ptr, size_t sz)
 }
 
 
-extern "C" void *malloc(int size)
+extern "C" void *malloc(unsigned int size)
 {
     chDbgAssert(heapAllocation, "heap allocation disabled during run time...");
     return chHeapAlloc(NULL, size);
