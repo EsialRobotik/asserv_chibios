@@ -44,6 +44,9 @@ public:
 
 	void* SendCurrentStream();
 
+	void releaseBuffer();
+	void getFullBuffer(void** ptr, uint32_t* size);
+
 
 	/*
 	 * DIRTY HACK !!
@@ -113,4 +116,4 @@ private:
 	uint32_t m_bufferSize;
 };
 
-#endif /* VITIDRIVE_SRC_DATASTREAM_HPP_ */
+#endif /* USBSTREAM_SRC_DATASTREAMTYPE_H_ */

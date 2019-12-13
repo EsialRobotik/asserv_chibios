@@ -83,3 +83,23 @@ void USBStream::getEmptyBuffer()
 		m_currentPtr = NULL;
 	}
 }
+
+
+void USBStream::getFullBuffer(void** ptr, uint32_t* size)
+{
+    msg_t msg = ibqGetFullBufferTimeout(&SDU1.ibqueue, TIME_INFINITE);
+    *size     = 0;
+
+    uint32_t sizeToRead = (size_t)SDU1.ibqueue.top - (size_t)SDU1.ibqueue.ptr;
+    if (msg != MSG_OK || sizeToRead == 0)
+        return;
+
+    *size = sizeToRead;
+    *ptr  = SDU1.ibqueue.ptr;
+}
+
+void USBStream::releaseBuffer()
+{
+    ibqReleaseEmptyBuffer(&SDU1.ibqueue);
+}
+
