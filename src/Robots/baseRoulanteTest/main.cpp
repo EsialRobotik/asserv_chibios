@@ -164,8 +164,10 @@ void asservCommand(BaseSequentialStream *chp, int argc, char **argv)
 		chprintf(outputStream," - asserv enablemotor 0|1\r\n");
 		chprintf(outputStream," - asserv enablepolar 0|1\r\n");
 		chprintf(outputStream," -------------- \r\n");
-		chprintf(outputStream," - asserv setspeed [speed]\r\n");
-		chprintf(outputStream," - asserv speedstep [speed] [step time] \r\n");
+		chprintf(outputStream," - asserv wheelspeedstep [r|l] [speed] [step time] \r\n");
+		chprintf(outputStream," -------------- \r\n");
+		chprintf(outputStream," - asserv robotfwspeedstep [speed] [step time] \r\n");
+		chprintf(outputStream," - asserv robotangspeedstep [speed] [step time] \r\n");
 		chprintf(outputStream," - asserv speedcontrol [r|l] [Kp] [Ki] \r\n");
 		chprintf(outputStream," - asserv angleSlope delta_speed \r\n");
 		chprintf(outputStream," - asserv distSlope delta_speed \r\n");
@@ -178,8 +180,8 @@ void asservCommand(BaseSequentialStream *chp, int argc, char **argv)
 		chprintf(outputStream," - asserv distreset\r\n");
 		chprintf(outputStream," - asserv distcontrol Kp\r\n");
 		chprintf(outputStream," -------------- \r\n");
-		chprintf(outputStream," - asserv goto\r\n");
-		chprintf(outputStream," - asserv goto2\r\n");
+		chprintf(outputStream," - asserv addgoto X Y\r\n");
+		chprintf(outputStream," - asserv gototest\r\n");
 
 
 	};
@@ -190,20 +192,44 @@ void asservCommand(BaseSequentialStream *chp, int argc, char **argv)
 		return;
 	}
 
-	if(!strcmp(argv[0], "setspeed"))
+	if(!strcmp(argv[0], "wheelspeedstep"))
 	{
-		float speedGoal = atof(argv[1]);
+		char side = *argv[1];
+		float speedGoal = atof(argv[2]);
+		int time = atoi(argv[3]);
+		chprintf(outputStream, "setting fw robot speed %.2f rad/s for %d ms\r\n",speedGoal,time);
 
-		chprintf(outputStream, "setting distance regulator speed %.2f rad/s \r\n", speedGoal);
-		mainAsserv.setRegulatorsSpeed(speedGoal, 0);
+		chprintf(outputStream, "setting wheel %s to speed %.2f rad/s for %d ms \r\n", (side == 'r') ? "right" : "left", speedGoal,time);
+
+		float speedRight = speedGoal;
+		float speedLeft = 0;
+		if( side == 'l')
+		{
+			speedLeft = speedGoal;
+			speedRight = 0;
+		}
+
+		mainAsserv.setWheelsSpeed(speedRight, speedLeft);
+		chThdSleepMilliseconds(time);
+		mainAsserv.setWheelsSpeed(0, 0);
 	}
-	else if(!strcmp(argv[0], "speedstep"))
+	else if(!strcmp(argv[0], "robotfwspeedstep"))
 	{
 		float speedGoal = atof(argv[1]);
 		int time = atoi(argv[2]);
-		chprintf(outputStream, "setting distance regulator speed %.2f rad/s for %d ms\r\n",speedGoal,time);
+		chprintf(outputStream, "setting fw robot speed %.2f rad/s for %d ms\r\n",speedGoal,time);
 
 		mainAsserv.setRegulatorsSpeed(speedGoal, 0);
+		chThdSleepMilliseconds(time);
+		mainAsserv.setRegulatorsSpeed(0, 0);
+	}
+	else if(!strcmp(argv[0], "robotangspeedstep"))
+	{
+		float speedGoal = atof(argv[1]);
+		int time = atoi(argv[2]);
+		chprintf(outputStream, "setting angle robot speed %.2f rad/s for %d ms\r\n",speedGoal,time);
+
+		mainAsserv.setRegulatorsSpeed(0, speedGoal);
 		chThdSleepMilliseconds(time);
 		mainAsserv.setRegulatorsSpeed(0, 0);
 	}
@@ -286,16 +312,15 @@ void asservCommand(BaseSequentialStream *chp, int argc, char **argv)
 
 		mainAsserv.enablePolar(enable);
 	}
-	else if(!strcmp(argv[0], "goto"))
+	else if(!strcmp(argv[0], "addgoto"))
 	{
-		commandManager.addGoTo(450,0);
-		commandManager.addGoTo(450,-800);
-		commandManager.addGoTo(100, -800);
-		commandManager.addGoTo(100, 0);
-		commandManager.addGoToAngle(450,0);
+		float X = atof(argv[1]);
+		float Y = atof(argv[2]);
+		chprintf(outputStream, "Adding goto(%.2f,%.2f) consign\r\n",X,Y);
 
+		commandManager.addGoTo(X, Y);
 	}
-	else if(!strcmp(argv[0], "goto2"))
+	else if(!strcmp(argv[0], "gototest"))
 	{
 //		commandManager.addGoToEnchainement(450,-200);
 //		commandManager.addGoToEnchainement(450,-600);

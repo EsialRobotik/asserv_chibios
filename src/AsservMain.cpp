@@ -183,6 +183,13 @@ void AsservMain::setRegulatorsSpeed(float distSpeed, float angleSpeed)
 	m_angleRegulatorOutputSpeedConsign = angleSpeed;
 }
 
+void AsservMain::setWheelsSpeed(float rightWheelSpeed, float leftWheelSpeed)
+{
+	(void)rightWheelSpeed;
+	(void)leftWheelSpeed;
+	chDbgAssert(false, "Individual wheel speed control not implemented yet...");
+}
+
 void AsservMain::enableMotors(bool enable)
 {
 	m_enableMotors = enable;

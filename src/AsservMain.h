@@ -28,6 +28,7 @@ public:
 	void mainLoop();
 
 	void setRegulatorsSpeed(float distSpeed, float angleSpeed);
+	void setWheelsSpeed(float rightWheelSpeed, float leftWheelSpeed);
 
 	void enableMotors(bool enable);
 	void enablePolar(bool enable);
