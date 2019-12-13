@@ -46,6 +46,9 @@ m_speedPositionLoopDivisor(speedPositionLoopDivisor)
 	m_angleSpeedLimited = 0;
 	m_enableMotors = true;
 	m_enablePolar = true;
+	m_asservMode = normal_mode;
+	m_directSpeedMode_rightWheelSpeed = 0;
+	m_directSpeedMode_leftWheelSpeed = 0;
 }
 
 float AsservMain::convertSpeedTommSec(float speed_ticksPerSec)
@@ -118,13 +121,27 @@ void AsservMain::mainLoop()
 		m_pllLeft.update(encoderDeltaLeft, m_loopPeriod );
 		float estimatedSpeedLeft = convertSpeedTommSec(m_pllLeft.getSpeed());
 
-		// On limite l'acceleration sur la sortie du regulateur de distance et d'angle
-		m_distSpeedLimited = m_distanceRegulatorSlopeFilter.filter(m_loopPeriod, m_distRegulatorOutputSpeedConsign);
-		m_angleSpeedLimited = m_angleRegulatorSlopeFilter.filter(m_loopPeriod, m_angleRegulatorOutputSpeedConsign);
+		if( m_asservMode == normal_mode)
+		{
+			// On limite l'acceleration sur la sortie du regulateur de distance et d'angle
+			m_distSpeedLimited = m_distanceRegulatorSlopeFilter.filter(m_loopPeriod, m_distRegulatorOutputSpeedConsign);
+			m_angleSpeedLimited = m_angleRegulatorSlopeFilter.filter(m_loopPeriod, m_angleRegulatorOutputSpeedConsign);
 
-		// Mise à jour des consignes en vitesse avec acceleration limitée
-		m_speedControllerRight.setSpeedGoal(m_distSpeedLimited+m_angleSpeedLimited);
-		m_speedControllerLeft.setSpeedGoal(m_distSpeedLimited-m_angleSpeedLimited);
+			// Mise à jour des consignes en vitesse avec acceleration limitée
+			m_speedControllerRight.setSpeedGoal(m_distSpeedLimited+m_angleSpeedLimited);
+			m_speedControllerLeft.setSpeedGoal(m_distSpeedLimited-m_angleSpeedLimited);
+		}
+		else
+		{
+			/* Ici, on ajoute un mode de fonctionnement pour pouvoir controler indépendamment les roues avec l'IHM ou le shell
+			 * C'est batard, et cela ne doit pas être utilisé autrement que pour faire du réglage
+			 * 		on réutilise les filtres de pente pour ne pas avoir à en instancier d'autres
+			 */
+			float rightWheelSpeed = m_distanceRegulatorSlopeFilter.filter(m_loopPeriod, m_directSpeedMode_rightWheelSpeed);
+			float leftWheelSpeed = m_angleRegulatorSlopeFilter.filter(m_loopPeriod, m_directSpeedMode_leftWheelSpeed);
+			m_speedControllerRight.setSpeedGoal(rightWheelSpeed);
+			m_speedControllerLeft.setSpeedGoal(leftWheelSpeed);
+		}
 
 		float outputSpeedRight = m_speedControllerRight.update(estimatedSpeedRight);
 		float outputSpeedLeft = m_speedControllerLeft.update(estimatedSpeedLeft);
@@ -185,9 +202,21 @@ void AsservMain::setRegulatorsSpeed(float distSpeed, float angleSpeed)
 
 void AsservMain::setWheelsSpeed(float rightWheelSpeed, float leftWheelSpeed)
 {
-	(void)rightWheelSpeed;
-	(void)leftWheelSpeed;
-	chDbgAssert(false, "Individual wheel speed control not implemented yet...");
+	m_directSpeedMode_rightWheelSpeed = rightWheelSpeed;
+	m_directSpeedMode_leftWheelSpeed = leftWheelSpeed;
+	m_asservMode = direct_speed_mode;
+	m_distanceRegulatorSlopeFilter.reset();
+	m_angleRegulatorSlopeFilter.reset();
+}
+
+void AsservMain::resetToNormalMode()
+{
+	if( m_asservMode != normal_mode)
+	{
+		m_asservMode = normal_mode;
+		m_distanceRegulatorSlopeFilter.reset();
+		m_angleRegulatorSlopeFilter.reset();
+	}
 }
 
 void AsservMain::enableMotors(bool enable)

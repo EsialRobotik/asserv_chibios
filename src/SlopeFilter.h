@@ -9,6 +9,7 @@ explicit SlopeFilter(float maxSlope);
 
 	  float filter(float dt, float value);
 	  void setSlope(float slope);
+	  void reset(){m_lastOutput = 0;};
 
 private:
 	float m_maxSlope;

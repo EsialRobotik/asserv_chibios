@@ -28,7 +28,15 @@ public:
 	void mainLoop();
 
 	void setRegulatorsSpeed(float distSpeed, float angleSpeed);
+
+
+	/*
+	 *	On peut donner une vitesse par roue en utilisant la fonction: setWheelsSpeed
+	 *	Le mode de fonctionnement change et doit être remis à la normal en utilisant: resetToNormalMode
+	 *	 avant de donner une consigne via setRegulatorsSpeed ou via le CommandManager
+	 */
 	void setWheelsSpeed(float rightWheelSpeed, float leftWheelSpeed);
+	void resetToNormalMode();
 
 	void enableMotors(bool enable);
 	void enablePolar(bool enable);
@@ -39,6 +47,7 @@ private:
 	float estimateDeltaDistance(int16_t deltaCountRight, int16_t deltaCountLeft );
 
 
+	typedef enum { normal_mode, direct_speed_mode } asserv_mode_t ;
 
 	MotorController &m_motorController;
 	Encoders &m_encoders;
@@ -72,6 +81,9 @@ private:
 
 	bool m_enableMotors;
 	bool m_enablePolar;
+	asserv_mode_t m_asservMode;
+	float m_directSpeedMode_rightWheelSpeed;
+	float m_directSpeedMode_leftWheelSpeed;
 };
 
 #endif /* ASSERVMAIN_H_ */

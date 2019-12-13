@@ -219,6 +219,7 @@ void asservCommand(BaseSequentialStream *chp, int argc, char **argv)
 		int time = atoi(argv[2]);
 		chprintf(outputStream, "setting fw robot speed %.2f rad/s for %d ms\r\n",speedGoal,time);
 
+		mainAsserv.resetToNormalMode();
 		mainAsserv.setRegulatorsSpeed(speedGoal, 0);
 		chThdSleepMilliseconds(time);
 		mainAsserv.setRegulatorsSpeed(0, 0);
@@ -229,6 +230,7 @@ void asservCommand(BaseSequentialStream *chp, int argc, char **argv)
 		int time = atoi(argv[2]);
 		chprintf(outputStream, "setting angle robot speed %.2f rad/s for %d ms\r\n",speedGoal,time);
 
+		mainAsserv.resetToNormalMode();
 		mainAsserv.setRegulatorsSpeed(0, speedGoal);
 		chThdSleepMilliseconds(time);
 		mainAsserv.setRegulatorsSpeed(0, 0);
@@ -265,6 +267,7 @@ void asservCommand(BaseSequentialStream *chp, int argc, char **argv)
 		float   angle = atof(argv[1]);
 		chprintf(outputStream, "Adding angle %.2frad \r\n",angle);
 
+		mainAsserv.resetToNormalMode();
 		commandManager.addTurn(angle);
 	}
 	else if(!strcmp(argv[0], "anglereset"))
@@ -282,6 +285,7 @@ void asservCommand(BaseSequentialStream *chp, int argc, char **argv)
 		float   dist = atof(argv[1]);
 		chprintf(outputStream, "Adding distance %.2fmm \r\n",dist);
 
+		mainAsserv.resetToNormalMode();
 		commandManager.addStraightLine(dist);
 	}
 	else if(!strcmp(argv[0], "anglecontrol"))
@@ -318,6 +322,7 @@ void asservCommand(BaseSequentialStream *chp, int argc, char **argv)
 		float Y = atof(argv[2]);
 		chprintf(outputStream, "Adding goto(%.2f,%.2f) consign\r\n",X,Y);
 
+		mainAsserv.resetToNormalMode();
 		commandManager.addGoTo(X, Y);
 	}
 	else if(!strcmp(argv[0], "gototest"))
@@ -327,7 +332,7 @@ void asservCommand(BaseSequentialStream *chp, int argc, char **argv)
 //		commandManager.addGoToEnchainement(300,-400);
 //		commandManager.addGoTo(150,0);
 
-
+		mainAsserv.resetToNormalMode();
 		commandManager.addGoToEnchainement(365,-270);
 		commandManager.addGoToEnchainement(550,-385);
 		commandManager.addGoToEnchainement(490,-590);
