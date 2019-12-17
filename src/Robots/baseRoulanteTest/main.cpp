@@ -4,7 +4,8 @@
 #include <chprintf.h>
 #include <cstdlib>
 #include <cstring>
-#include "util/constants.h"
+
+#include "util/asservMath.h"
 #include "util/chibiOsAllocatorWrapper.h"
 #include "AsservMain.h"
 #include "commandManager/CommandManager.h"
@@ -31,10 +32,13 @@
 #define ANGLE_REGULATOR_KP (1400)
 #define ANGLE_REGULATOR_MAX_DELTA (8/ASSERV_THREAD_PERIOD_S)
 
-#define SPEED_CONTROLLER_RIGHT_KP (0.25)
-#define SPEED_CONTROLLER_RIGHT_KI (0.45)
-#define SPEED_CONTROLLER_LEFT_KP (0.25)
-#define SPEED_CONTROLLER_LEFT_KI (0.45)
+float speed_controller_right_Kp[NB_PI_SUBSET] = {0.25, 0.25, 0.25};
+float speed_controller_right_Ki[NB_PI_SUBSET] = {0.45, 0.45, 0.45};
+float speed_controller_right_speed_set[NB_PI_SUBSET] = {500.0, 500.0, 500.0};
+
+float speed_controller_left_Kp[NB_PI_SUBSET] = {0.25, 0.25, 0.25};
+float speed_controller_left_Ki[NB_PI_SUBSET] = {0.45, 0.45, 0.45};
+float speed_controller_left_speed_set[NB_PI_SUBSET] = {500.0, 500.0, 500.0};
 
 #define PLL_BANDWIDTH (250)
 
@@ -55,8 +59,8 @@ Regulator distanceRegulator(DIST_REGULATOR_KP, MAX_SPEED);
 
 Odometry odometry(ENCODERS_WHEELS_DISTANCE_MM, 0, 0);
 
-SpeedController speedControllerRight(SPEED_CONTROLLER_RIGHT_KP, SPEED_CONTROLLER_RIGHT_KI, 100, MAX_SPEED, ASSERV_THREAD_FREQUENCY);
-SpeedController speedControllerLeft(SPEED_CONTROLLER_LEFT_KP, SPEED_CONTROLLER_LEFT_KI, 100, MAX_SPEED, ASSERV_THREAD_FREQUENCY);
+SpeedController speedControllerRight(speed_controller_right_Kp, speed_controller_right_Ki, speed_controller_right_speed_set, 100, MAX_SPEED, ASSERV_THREAD_FREQUENCY);
+SpeedController speedControllerLeft(speed_controller_left_Kp, speed_controller_left_Ki, speed_controller_left_speed_set, 100, MAX_SPEED, ASSERV_THREAD_FREQUENCY);
 
 Pll rightPll(PLL_BANDWIDTH);
 Pll leftPll(PLL_BANDWIDTH);

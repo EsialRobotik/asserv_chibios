@@ -1,9 +1,10 @@
 #include "CommandManager.h"
 #include <stdlib.h>
 #include <math.h>
+
+#include "util/asservMath.h"
 #include "ch.h"
 #include "hal.h"
-#include "util/constants.h"
 #include "USBStream.h"
 
 CommandManager::CommandManager(float arrivalAngleThreshold_rad, float arrivalDistanceThreshold_mm,
