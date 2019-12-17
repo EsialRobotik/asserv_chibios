@@ -27,9 +27,9 @@
 #define MAX_SPEED (500)
 
 #define DIST_REGULATOR_KP (9)
-#define DIST_REGULATOR_MAX_DELTA (1000)
+#define DIST_REGULATOR_MAX_DELTA (8/ASSERV_THREAD_PERIOD_S)
 #define ANGLE_REGULATOR_KP (1400)
-#define ANGLE_REGULATOR_MAX_DELTA (1000)
+#define ANGLE_REGULATOR_MAX_DELTA (8/ASSERV_THREAD_PERIOD_S)
 
 #define SPEED_CONTROLLER_RIGHT_KP (0.25)
 #define SPEED_CONTROLLER_RIGHT_KI (0.45)
@@ -219,7 +219,6 @@ void asservCommand(BaseSequentialStream *chp, int argc, char **argv)
 		int time = atoi(argv[2]);
 		chprintf(outputStream, "setting fw robot speed %.2f rad/s for %d ms\r\n",speedGoal,time);
 
-		mainAsserv.resetToNormalMode();
 		mainAsserv.setRegulatorsSpeed(speedGoal, 0);
 		chThdSleepMilliseconds(time);
 		mainAsserv.setRegulatorsSpeed(0, 0);
@@ -230,7 +229,6 @@ void asservCommand(BaseSequentialStream *chp, int argc, char **argv)
 		int time = atoi(argv[2]);
 		chprintf(outputStream, "setting angle robot speed %.2f rad/s for %d ms\r\n",speedGoal,time);
 
-		mainAsserv.resetToNormalMode();
 		mainAsserv.setRegulatorsSpeed(0, speedGoal);
 		chThdSleepMilliseconds(time);
 		mainAsserv.setRegulatorsSpeed(0, 0);

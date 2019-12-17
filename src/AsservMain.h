@@ -27,15 +27,19 @@ public:
 
 	void mainLoop();
 
-	void setRegulatorsSpeed(float distSpeed, float angleSpeed);
-
-
 	/*
 	 *	On peut donner une vitesse par roue en utilisant la fonction: setWheelsSpeed
 	 *	Le mode de fonctionnement change et doit être remis à la normal en utilisant: resetToNormalMode
 	 *	 avant de donner une consigne via setRegulatorsSpeed ou via le CommandManager
 	 */
 	void setWheelsSpeed(float rightWheelSpeed, float leftWheelSpeed);
+
+	/*
+	 *	On peut donner une commande de vitesse tel qu'elle sortirait des régulateur d'angle/distance
+	 *	Le mode de fonctionnement change et doit être remis à la normal en utilisant: resetToNormalMode
+	 *	 avant de donner une consigne via setRegulatorsSpeed ou via le CommandManager
+	 */
+	void setRegulatorsSpeed(float distSpeed, float angleSpeed);
 	void resetToNormalMode();
 
 	void enableMotors(bool enable);
@@ -47,7 +51,7 @@ private:
 	float estimateDeltaDistance(int16_t deltaCountRight, int16_t deltaCountLeft );
 
 
-	typedef enum { normal_mode, direct_speed_mode } asserv_mode_t ;
+	typedef enum { normal_mode, direct_speed_mode, regulator_output_control } asserv_mode_t ;
 
 	MotorController &m_motorController;
 	Encoders &m_encoders;
@@ -66,6 +70,7 @@ private:
 	const float m_distanceByEncoderTurn_mm;
 	const float m_encodersTicksByTurn;
 	const float m_encodermmByTicks;
+	const float m_encoderWheelsDistance_mm;
 	const float m_encoderWheelsDistance_ticks;
 
 	const uint16_t m_loopFrequency;

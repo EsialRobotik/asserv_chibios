@@ -34,6 +34,7 @@ m_pllLeft(leftPll),
 m_distanceByEncoderTurn_mm(M_2PI*wheelRadius_mm),
 m_encodersTicksByTurn(encodersTicksByTurn),
 m_encodermmByTicks(m_distanceByEncoderTurn_mm/m_encodersTicksByTurn),
+m_encoderWheelsDistance_mm(encoderWheelsDistance_mm),
 m_encoderWheelsDistance_ticks(encoderWheelsDistance_mm / m_encodermmByTicks),
 m_loopFrequency(loopFrequency),
 m_loopPeriod(1.0/float(loopFrequency)),
@@ -104,10 +105,11 @@ void AsservMain::mainLoop()
 		{
 			m_commandManager.update( m_odometry.getX(), m_odometry.getY(), m_odometry.getTheta() );
 
-			float angleConsign = m_angleRegulator.updateOutput( m_commandManager.getAngleGoal());
-			float distanceConsign = m_distanceRegulator.updateOutput( m_commandManager.getDistanceGoal());
-
-			setRegulatorsSpeed(distanceConsign, angleConsign);
+			if( m_asservMode == normal_mode)
+			{
+				m_angleRegulatorOutputSpeedConsign = m_angleRegulator.updateOutput( m_commandManager.getAngleGoal());
+				m_distRegulatorOutputSpeedConsign = m_distanceRegulator.updateOutput( m_commandManager.getDistanceGoal());
+			}
 
 			m_asservCounter=0;
 		}
@@ -121,7 +123,7 @@ void AsservMain::mainLoop()
 		m_pllLeft.update(encoderDeltaLeft, m_loopPeriod );
 		float estimatedSpeedLeft = convertSpeedTommSec(m_pllLeft.getSpeed());
 
-		if( m_asservMode == normal_mode)
+		if( m_asservMode == normal_mode || m_asservMode == regulator_output_control )
 		{
 			// On limite l'acceleration sur la sortie du regulateur de distance et d'angle
 			m_distSpeedLimited = m_distanceRegulatorSlopeFilter.filter(m_loopPeriod, m_distRegulatorOutputSpeedConsign);
@@ -133,7 +135,7 @@ void AsservMain::mainLoop()
 		}
 		else
 		{
-			/* Ici, on ajoute un mode de fonctionnement pour pouvoir controler indépendamment les roues avec l'IHM ou le shell
+			/* Ici, on ajoute un mode de fonctionnement pour pouvoir controler indépendamment les roues avec l'IHM ou le shell.
 			 * C'est batard, et cela ne doit pas être utilisé autrement que pour faire du réglage
 			 * 		on réutilise les filtres de pente pour ne pas avoir à en instancier d'autres
 			 */
@@ -196,15 +198,16 @@ void AsservMain::mainLoop()
 
 void AsservMain::setRegulatorsSpeed(float distSpeed, float angleSpeed)
 {
+	m_asservMode = regulator_output_control;
 	m_distRegulatorOutputSpeedConsign = distSpeed;
-	m_angleRegulatorOutputSpeedConsign = angleSpeed;
+	m_angleRegulatorOutputSpeedConsign = angleSpeed * m_encoderWheelsDistance_mm;
 }
 
 void AsservMain::setWheelsSpeed(float rightWheelSpeed, float leftWheelSpeed)
 {
+	m_asservMode = direct_speed_mode;
 	m_directSpeedMode_rightWheelSpeed = rightWheelSpeed;
 	m_directSpeedMode_leftWheelSpeed = leftWheelSpeed;
-	m_asservMode = direct_speed_mode;
 	m_distanceRegulatorSlopeFilter.reset();
 	m_angleRegulatorSlopeFilter.reset();
 }
