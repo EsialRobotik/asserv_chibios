@@ -146,6 +146,7 @@ CSRC = $(ALLCSRC) \
 CPPSRC = $(ALLCPPSRC) \
        $(SRCDIR)/Robots/$(ROBOT)/main.cpp \
        $(SRCDIR)/motorController/Vnh5019.cpp \
+       $(SRCDIR)/motorController/Md22.cpp \
        $(SRCDIR)/USBStream.cpp \
        $(SRCDIR)/Encoders/QuadratureEncoder.cpp \
        $(SRCDIR)/AsservMain.cpp \
