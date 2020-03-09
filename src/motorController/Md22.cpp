@@ -39,6 +39,8 @@ void Md22::init()
     uint8_t cmd[] = { modeReg, controlMode};
     msg_t msg = i2cMasterTransmitTimeout(&I2CD1, md22Address, cmd, sizeof(cmd), NULL, 0, TIME_INFINITE);
 
+    i2c_lld_get_errors(&I2CD1);
+
     if (msg != MSG_OK )
     {
      // What to do ?
