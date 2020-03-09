@@ -98,6 +98,7 @@ static THD_FUNCTION(AsservThread, arg)
 THD_WORKING_AREA(wa_shell, 512);
 THD_WORKING_AREA(wa_controlPanel, 512);
 THD_FUNCTION(ControlPanelThread, p);
+binary_semaphore_t controlPanelSemaphore;
 
 char history_buffer[SHELL_MAX_HIST_BUFF];
 char *completion_buffer[SHELL_MAX_COMPLETIONS];
@@ -144,6 +145,9 @@ int main(void)
 
 	chThdCreateStatic(waAsservThread, sizeof(waAsservThread), HIGHPRIO, AsservThread, NULL);
 
+
+    chBSemObjectInit(&controlPanelSemaphore, true);
+
 	chThdSleep(chTimeMS2I(200)); // Histoire d'être sur que l'usb soit lancé une fois que ce thread tourne...
 	 thread_t *controlPanelThd = chThdCreateStatic(wa_controlPanel, sizeof(wa_controlPanel), LOWPRIO, ControlPanelThread, nullptr);
 	 chRegSetThreadNameX(controlPanelThd, "controlPanel");
@@ -167,6 +171,7 @@ void asservCommand(BaseSequentialStream *chp, int argc, char **argv)
 		chprintf(outputStream,"Usage :");
 		chprintf(outputStream," - asserv enablemotor 0|1\r\n");
 		chprintf(outputStream," - asserv enablepolar 0|1\r\n");
+		chprintf(outputStream," - asserv startPanel \r\n");
 		chprintf(outputStream," -------------- \r\n");
 		chprintf(outputStream," - asserv wheelspeedstep [r|l] [speed] [step time] \r\n");
 		chprintf(outputStream," -------------- \r\n");
@@ -186,8 +191,6 @@ void asservCommand(BaseSequentialStream *chp, int argc, char **argv)
 		chprintf(outputStream," -------------- \r\n");
 		chprintf(outputStream," - asserv addgoto X Y\r\n");
 		chprintf(outputStream," - asserv gototest\r\n");
-
-
 	};
 	(void) chp;
 
@@ -311,6 +314,10 @@ void asservCommand(BaseSequentialStream *chp, int argc, char **argv)
 
 		mainAsserv.enableMotors(enable);
 	}
+	else if(!strcmp(argv[0], "startPanel"))
+	{
+	    chBSemSignal(&controlPanelSemaphore);
+	}
 	else if(!strcmp(argv[0], "enablepolar"))
 	{
 		bool enable = !(atoi(argv[1]) == 0);
@@ -363,6 +370,7 @@ THD_FUNCTION(ControlPanelThread, p)
     uint32_t size     = 0;
     char*    firstArg = nullptr;
     char*    argv[7];
+    chBSemWait(&controlPanelSemaphore);
     while (!chThdShouldTerminateX())
     {
     	USBStream::instance()->getFullBuffer(&ptr, &size);
