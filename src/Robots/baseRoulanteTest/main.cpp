@@ -51,7 +51,7 @@ float speed_controller_left_speed_set[NB_PI_SUBSET] = {500.0, 500.0, 500.0};
 
 
 
-QuadratureEncoder encoders(false,false, 1 , 1);
+QuadratureEncoder encoders(false,false);
 Vnh5019 Vnh5019MotorController(true,false);
 
 Regulator angleRegulator(ANGLE_REGULATOR_KP, MAX_SPEED);
@@ -98,7 +98,6 @@ static THD_FUNCTION(AsservThread, arg)
 THD_WORKING_AREA(wa_shell, 512);
 THD_WORKING_AREA(wa_controlPanel, 512);
 THD_FUNCTION(ControlPanelThread, p);
-binary_semaphore_t controlPanelSemaphore;
 
 char history_buffer[SHELL_MAX_HIST_BUFF];
 char *completion_buffer[SHELL_MAX_COMPLETIONS];
@@ -146,8 +145,6 @@ int main(void)
 	chThdCreateStatic(waAsservThread, sizeof(waAsservThread), HIGHPRIO, AsservThread, NULL);
 
 
-    chBSemObjectInit(&controlPanelSemaphore, true);
-
 	chThdSleep(chTimeMS2I(200)); // Histoire d'être sur que l'usb soit lancé une fois que ce thread tourne...
 	 thread_t *controlPanelThd = chThdCreateStatic(wa_controlPanel, sizeof(wa_controlPanel), LOWPRIO, ControlPanelThread, nullptr);
 	 chRegSetThreadNameX(controlPanelThd, "controlPanel");
@@ -171,7 +168,7 @@ void asservCommand(BaseSequentialStream *chp, int argc, char **argv)
 		chprintf(outputStream,"Usage :");
 		chprintf(outputStream," - asserv enablemotor 0|1\r\n");
 		chprintf(outputStream," - asserv enablepolar 0|1\r\n");
-		chprintf(outputStream," - asserv startPanel \r\n");
+		chprintf(outputStream," - asserv coders \r\n");
 		chprintf(outputStream," -------------- \r\n");
 		chprintf(outputStream," - asserv wheelspeedstep [r|l] [speed] [step time] \r\n");
 		chprintf(outputStream," -------------- \r\n");
@@ -314,9 +311,11 @@ void asservCommand(BaseSequentialStream *chp, int argc, char **argv)
 
 		mainAsserv.enableMotors(enable);
 	}
-	else if(!strcmp(argv[0], "startPanel"))
+	else if(!strcmp(argv[0], "coders"))
 	{
-	    chBSemSignal(&controlPanelSemaphore);
+	    int64_t encoderRight, encoderLeft;
+	    encoders.getEncodersTotalCount( &encoderRight, &encoderLeft);
+        chprintf(outputStream, "Encoders count %ld %ld \r\n", encoderRight, encoderLeft);
 	}
 	else if(!strcmp(argv[0], "enablepolar"))
 	{
@@ -370,7 +369,6 @@ THD_FUNCTION(ControlPanelThread, p)
     uint32_t size     = 0;
     char*    firstArg = nullptr;
     char*    argv[7];
-    chBSemWait(&controlPanelSemaphore);
     while (!chThdShouldTerminateX())
     {
     	USBStream::instance()->getFullBuffer(&ptr, &size);

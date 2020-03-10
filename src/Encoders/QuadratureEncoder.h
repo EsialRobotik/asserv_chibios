@@ -6,20 +6,24 @@
 class QuadratureEncoder : public Encoders
 {
 public:
-	QuadratureEncoder(bool invertEncoder1 = false, bool invertEncoder2 = false, float encoder1Ratio=1, float encoder2Ratio=1);
+	QuadratureEncoder(bool invertEncoder1 = false, bool invertEncoder2 = false);
 	virtual ~QuadratureEncoder();
 
 	void init();
 	void start();
 	void stop();
 
-	virtual void getValuesAndReset(int16_t *encoderRight, int16_t *encoderLeft);
+	void getEncodersTotalCount(int64_t * encoderRight, int64_t * encoderLeft);
+
+	virtual void getValues(int16_t *encoderRight, int16_t *encoderLeft);
 
 private:
 	bool m_invertEncoder1;
 	bool m_invertEncoder2;
-	float m_encoder1Ratio;
-	float m_encoder2Ratio;
+	int64_t m_encoder1Sum;
+	int64_t m_encoder2Sum;
+	int16_t m_encoder1Previous;
+    int16_t m_encoder2Previous;
 };
 
 #endif /* ENCODERS_H_ */

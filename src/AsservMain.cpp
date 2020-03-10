@@ -81,7 +81,7 @@ void AsservMain::mainLoop()
 	{
 		int16_t encoderDeltaRight;
 		int16_t encoderDeltaLeft;
-		m_encoders.getValuesAndReset(&encoderDeltaRight, &encoderDeltaLeft);
+		m_encoders.getValues(&encoderDeltaRight, &encoderDeltaLeft);
 
 		// Mise à jour de la position en polaire
 		m_odometry.refresh(
