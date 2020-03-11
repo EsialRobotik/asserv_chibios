@@ -1,5 +1,4 @@
 
-
 #include "Md22.h"
 #include <ch.h>
 #include <hal.h>
@@ -40,7 +39,7 @@ void Md22::init()
     palSetPadMode(GPIOB, 8, PAL_MODE_ALTERNATE(4) | PAL_STM32_OTYPE_OPENDRAIN); //SCL
     palSetPadMode(GPIOB, 9, PAL_MODE_ALTERNATE(4) | PAL_STM32_OTYPE_OPENDRAIN); //SDA
 
-<<<<<<< HEAD
+
 
     //chprintf(outputStream," init\r\n");
 
@@ -62,17 +61,8 @@ void Md22::init()
     if (msg != MSG_OK) {
         // What to do ?
         chprintf(outputStream," i2cMasterTransmitTimeout ERROR NOK\r\n");
-
-=======
-    i2c_lld_get_errors(&I2CD1);
-
-    i2c_lld_get_errors(&I2CD1);
-
-    if (msg != MSG_OK )
-    {
-     // What to do ?
->>>>>>> refs/heads/master
     }
+
 
     // Set acceleration
     cmd[0] = accReg;
@@ -119,6 +109,5 @@ void Md22::setMotor2Speed(float percentage)
 
 Md22::~Md22()
 {
-
 }
 
