@@ -149,6 +149,7 @@ CPPSRC = $(ALLCPPSRC) \
        $(SRCDIR)/motorController/Md22.cpp \
        $(SRCDIR)/USBStream.cpp \
        $(SRCDIR)/Encoders/QuadratureEncoder.cpp \
+       $(SRCDIR)/Encoders/MagEncoders.cpp \
        $(SRCDIR)/AsservMain.cpp \
        $(SRCDIR)/SpeedController.cpp \
        $(SRCDIR)/SlopeFilter.cpp \

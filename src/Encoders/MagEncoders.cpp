@@ -1,4 +1,4 @@
-#include "QuadratureEncoder.h"
+#include "MagEncoders.h"
 #include "ch.h"
 #include "hal.h"
 
@@ -9,7 +9,7 @@ __extension__ static QEIConfig qeicfg1 = { .mode = QEI_MODE_QUADRATURE, .resolut
 static QEIConfig qeicfg2 = { .mode = QEI_MODE_QUADRATURE, .resolution = QEI_BOTH_EDGES, .dirinv = QEI_DIRINV_FALSE,
         .overflow = QEI_OVERFLOW_WRAP, .min = 0, .max = 0, .notify_cb = nullptr, .overflow_cb = nullptr };
 
-QuadratureEncoder::QuadratureEncoder(bool is1EncoderRight, bool invertEncoderR, bool invertEncoderL) :
+MagEncoders::MagEncoders(bool is1EncoderRight, bool invertEncoderR, bool invertEncoderL) :
         Encoders()
 {
     m_invertEncoderR = invertEncoderR;
@@ -21,11 +21,11 @@ QuadratureEncoder::QuadratureEncoder(bool is1EncoderRight, bool invertEncoderR, 
     m_is1EncoderRight = is1EncoderRight;
 }
 
-QuadratureEncoder::~QuadratureEncoder()
+MagEncoders::~MagEncoders()
 {
 }
 
-void QuadratureEncoder::init()
+void MagEncoders::init()
 {
     // Encoder 1
     palSetPadMode(GPIOA, 7, PAL_MODE_ALTERNATE(2)); //TIM3_chan2
@@ -38,19 +38,19 @@ void QuadratureEncoder::init()
     qeiStart(&QEID2, &qeicfg2);
 }
 
-void QuadratureEncoder::start()
+void MagEncoders::start()
 {
     qeiEnable (&QEID3);
     qeiEnable (&QEID2);
 }
 
-void QuadratureEncoder::stop()
+void MagEncoders::stop()
 {
     qeiDisable (&QEID3);
     qeiDisable (&QEID2);
 }
 
-void QuadratureEncoder::getValues(int16_t *encoderRight, int16_t *encoderLeft)
+void MagEncoders::getValues(int16_t *encoderRight, int16_t *encoderLeft)
 {
 
     int16_t encoder2 = qeiGetCount(&QEID2);
@@ -76,7 +76,7 @@ void QuadratureEncoder::getValues(int16_t *encoderRight, int16_t *encoderLeft)
     m_encoder2Previous = encoder2;
 }
 
-void QuadratureEncoder::getEncodersTotalCount(int32_t *encoderRight, int32_t *encoderLeft)
+void MagEncoders::getEncodersTotalCount(int32_t *encoderRight, int32_t *encoderLeft)
 {
     *encoderRight = m_encoderRSum;
     *encoderLeft = m_encoderLSum;

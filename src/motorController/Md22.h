@@ -8,16 +8,17 @@
 class Md22: public MotorController
 {
 public:
-    explicit Md22(bool invertMotor1, bool invertMotor2);
+    explicit Md22(bool is1motorRight, bool invertMotorR, bool invertMotorL);
     virtual ~Md22();
 
     void init();
-    void setMotor1Speed(float percentage);
-    void setMotor2Speed(float percentage);
+    void setMotorLSpeed(float percentage);
+    void setMotorRSpeed(float percentage);
 
 private:
-    bool m_invertMotor1;
-    bool m_invertMotor2;
+    bool m_invertMotorL;
+    bool m_invertMotorR;
+    bool m_is1motorRight;
 };
 
 #endif /* MD22_H_ */

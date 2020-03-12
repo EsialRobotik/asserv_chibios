@@ -10,6 +10,7 @@
 #include "AsservMain.h"
 #include "commandManager/CommandManager.h"
 #include "Encoders/QuadratureEncoder.h"
+#include "Encoders/MagEncoders.h"
 #include "motorController/Md22.h"
 #include "Odometry.h"
 #include "USBStream.h"
@@ -46,8 +47,9 @@ float speed_controller_left_speed_set[NB_PI_SUBSET] = { 500.0, 500.0, 500.0 };
 #define COMMAND_MANAGER_GOTO_ANGLE_THRESHOLD_RAD (M_PI/8)
 #define COMMAND_MANAGER_GOTO_CHAIN_NEXT_CMD_DIST_mm (50)
 
-QuadratureEncoder encoders(false, false, 1, 1);
-Md22 Md22MotorController(true, false);
+QuadratureEncoder encoders_int(false, false);
+MagEncoders encoders(false, true, false);
+Md22 Md22MotorController(true, true, true);
 
 Regulator angleRegulator(ANGLE_REGULATOR_KP, MAX_SPEED);
 Regulator distanceRegulator(DIST_REGULATOR_KP, MAX_SPEED);
@@ -86,7 +88,7 @@ static THD_FUNCTION(AsservThread, arg)
     encoders.start();
     USBStream::init();
 
-//    while(1) //desactivation du mainloop
+//    while(1) //desactivation du mainloop afin de tester MD22 en direct
 //    { chThdSleep(chTimeMS2I(200));}
 
     mainAsserv.mainLoop();
@@ -155,6 +157,7 @@ void asservCommand(BaseSequentialStream *chp, int argc, char **argv)
 {
     auto printUsage = []() {
         chprintf(outputStream,"Usage :");
+        chprintf(outputStream," - asserv enablemotion 0|1\r\n");
         chprintf(outputStream," - asserv enablemotor 0|1\r\n");
         chprintf(outputStream," - asserv enablepolar 0|1\r\n");
         chprintf(outputStream," - asserv startPanel \r\n");
@@ -177,6 +180,10 @@ void asservCommand(BaseSequentialStream *chp, int argc, char **argv)
         chprintf(outputStream," -------------- \r\n");
         chprintf(outputStream," - asserv addgoto X Y\r\n");
         chprintf(outputStream," - asserv gototest\r\n");
+        chprintf(outputStream," -------------- \r\n");
+        chprintf(outputStream," - asserv md22speedlr [-100=>100] [-100=>100]\r\n");
+        chprintf(outputStream," - asserv encodervalues\r\n");
+
     };
     (void) chp;
 
@@ -270,10 +277,15 @@ void asservCommand(BaseSequentialStream *chp, int argc, char **argv)
 
         distanceRegulator.setGain(Kp);
     } else if (!strcmp(argv[0], "enablemotor")) {
-        bool enable = !(atoi(argv[1]) == 0);
-        chprintf(outputStream, "%s motor output\r\n", (enable ? "enabling" : "disabling"));
+            bool enable = !(atoi(argv[1]) == 0);
+            chprintf(outputStream, "%s motor output\r\n", (enable ? "enabling" : "disabling"));
 
-        mainAsserv.enableMotors(enable);
+            mainAsserv.enableMotors(enable);
+    } else if (!strcmp(argv[0], "enablemotion")) {
+            bool enable = !(atoi(argv[1]) == 0);
+            chprintf(outputStream, "%s asserv motion \r\n", (enable ? "enabling" : "disabling"));
+
+            mainAsserv.enableMotion(enable);
     } else if (!strcmp(argv[0], "startPanel")) {
         chBSemSignal(&controlPanelSemaphore);
     } else if (!strcmp(argv[0], "enablepolar")) {
@@ -308,22 +320,22 @@ void asservCommand(BaseSequentialStream *chp, int argc, char **argv)
         commandManager.addGoToAngle(1000, -250);
         commandManager.addStraightLine(-200);
 
-    } else if (!strcmp(argv[0], "md22up")) {
-        Md22MotorController.setMotor1Speed(100);
-        Md22MotorController.setMotor2Speed(100);
-        chprintf(outputStream, "Motors at 100\r\n");
-
-    } else if (!strcmp(argv[0], "md22stop")) {
-        Md22MotorController.setMotor1Speed(0);
-        Md22MotorController.setMotor2Speed(0);
-        chprintf(outputStream, "Motors at 0\r\n");
+    } else if (!strcmp(argv[0], "md22speedlr")) {
+        int speedGoalL = atoi(argv[1]);
+        int speedGoalR = atoi(argv[2]);
+        Md22MotorController.setMotorLSpeed(speedGoalL);
+        Md22MotorController.setMotorRSpeed(speedGoalR);
+        chprintf(outputStream, "Motors at %d %d\r\n", speedGoalL, speedGoalR);
 
     } else if (!strcmp(argv[0], "encodervalues")) {
         int16_t encoderDeltaRight_tmp = 0;
         int16_t encoderDeltaLeft_tmp = 0;
-        encoders.getValuesAndReset(&encoderDeltaRight_tmp, &encoderDeltaLeft_tmp);
+        int32_t encoderLSum = 0;
+        int32_t encoderRSum = 0;
+        encoders.getValues(&encoderDeltaRight_tmp, &encoderDeltaLeft_tmp);
 
-        chprintf(outputStream, "encoders L %d  R %d \r\n", encoderDeltaRight_tmp, encoderDeltaLeft_tmp);
+        encoders.getEncodersTotalCount(&encoderRSum, &encoderLSum);
+        chprintf(outputStream, "encoder TOTL %d TOTR %d\r\n" , encoderLSum, encoderRSum);
     } else {
         printUsage();
     }

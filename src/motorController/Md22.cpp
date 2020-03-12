@@ -1,4 +1,3 @@
-
 #include "Md22.h"
 #include <ch.h>
 #include <hal.h>
@@ -19,11 +18,12 @@ constexpr uint8_t controlMode = 0x01; // Wanted value for mode register. Ie: -12
 
 extern BaseSequentialStream *outputStream;
 
-Md22::Md22(bool invertMotor1, bool invertMotor2)
+Md22::Md22(bool is1motorRight, bool invertMotorR, bool invertMotorL)
 {
 
-    m_invertMotor1 = invertMotor1;
-    m_invertMotor2 = invertMotor2;
+    m_invertMotorR = invertMotorR;
+    m_invertMotorL = invertMotorL;
+    m_is1motorRight = is1motorRight;
 }
 
 void Md22::init()
@@ -39,17 +39,14 @@ void Md22::init()
     palSetPadMode(GPIOB, 8, PAL_MODE_ALTERNATE(4) | PAL_STM32_OTYPE_OPENDRAIN); //SCL
     palSetPadMode(GPIOB, 9, PAL_MODE_ALTERNATE(4) | PAL_STM32_OTYPE_OPENDRAIN); //SDA
 
-
-
     //chprintf(outputStream," init\r\n");
-
 
     //chprintf(outputStream,"ibefore\r\n");
     i2cStart(&I2CD1, &i2cconfig);
 
     //chprintf(outputStream,"iafter\r\n");
 
-    i2cAcquireBus(&I2CD1);
+    i2cAcquireBus (&I2CD1);
 
     // Set mode
     uint8_t cmd[] = { modeReg, controlMode };
@@ -57,12 +54,11 @@ void Md22::init()
 
     i2c_lld_get_errors(&I2CD1);
 
-    chDbgAssert (msg == MSG_OK, "Config MD22 - i2cMasterTransmitTimeout ERROR NOK\r\n");
+    chDbgAssert(msg == MSG_OK, "Config MD22 - i2cMasterTransmitTimeout ERROR NOK\r\n");
     if (msg != MSG_OK) {
         // What to do ?
-        chprintf(outputStream," i2cMasterTransmitTimeout ERROR NOK\r\n");
+        chprintf(outputStream, " i2cMasterTransmitTimeout ERROR NOK\r\n");
     }
-
 
     // Set acceleration
     cmd[0] = accReg;
@@ -81,28 +77,38 @@ void Md22::init()
     i2cReleaseBus(&I2CD1);
 }
 
-void Md22::setMotor1Speed(float percentage)
+void Md22::setMotorLSpeed(float percentage)
 {
-    if (m_invertMotor1)
+    if (m_invertMotorL)
         percentage = -percentage;
 
     int8_t md22SpeedConsign = (int8_t) fmap(percentage, -100.0, 100.0, -128.0, 127.0);
-
-    uint8_t cmd[] = { leftMotorReg, (uint8_t) md22SpeedConsign };
-    i2cAcquireBus(&I2CD1);
+    uint8_t reg = 0;
+    if (m_is1motorRight) {
+        reg = leftMotorReg;
+    } else {
+        reg = rightMotorReg;
+    }
+    uint8_t cmd[] = { reg, (uint8_t) md22SpeedConsign };
+    i2cAcquireBus (&I2CD1);
     i2cMasterTransmitTimeout(&I2CD1, md22Address, cmd, sizeof(cmd), NULL, 0, TIME_INFINITE);
     i2cReleaseBus(&I2CD1);
 }
 
-void Md22::setMotor2Speed(float percentage)
+void Md22::setMotorRSpeed(float percentage)
 {
-    if (m_invertMotor2)
+    if (m_invertMotorR)
         percentage = -percentage;
 
     int8_t md22SpeedConsign = (int8_t) fmap(percentage, -100.0, 100.0, -128.0, 127.0);
-
-    uint8_t cmd[] = { rightMotorReg, (uint8_t) md22SpeedConsign };
-    i2cAcquireBus(&I2CD1);
+    uint8_t reg = 0;
+    if (m_is1motorRight) {
+        reg = rightMotorReg;
+    } else {
+        reg = leftMotorReg;
+    }
+    uint8_t cmd[] = { reg, (uint8_t) md22SpeedConsign };
+    i2cAcquireBus (&I2CD1);
     i2cMasterTransmitTimeout(&I2CD1, md22Address, cmd, sizeof(cmd), NULL, 0, TIME_INFINITE);
     i2cReleaseBus(&I2CD1);
 }

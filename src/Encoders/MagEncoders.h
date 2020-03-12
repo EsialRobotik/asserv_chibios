@@ -1,13 +1,13 @@
-#ifndef ENCODERS_H_
-#define ENCODERS_H_
+#ifndef SRC_ENCODERS_MAGENCODERS_CPP_
+#define SRC_ENCODERS_MAGENCODERS_CPP_
 
 #include "Encoder.h"
 
-class QuadratureEncoder: public Encoders
+class MagEncoders: public Encoders
 {
 public:
-    QuadratureEncoder(bool is1EncoderRight, bool invertEncoderR = false, bool invertEncoderL = false);
-    virtual ~QuadratureEncoder();
+    MagEncoders(bool is1EncoderRight, bool invertEncoderR = false, bool invertEncoderL = false);
+    virtual ~MagEncoders();
 
     void init();
     void start();
@@ -27,4 +27,6 @@ private:
     bool m_is1EncoderRight;
 };
 
-#endif /* ENCODERS_H_ */
+
+
+#endif /* SRC_ENCODERS_MAGENCODERS_CPP_ */
