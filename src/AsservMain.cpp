@@ -36,7 +36,7 @@ AsservMain::AsservMain(uint16_t loopFrequency, uint16_t speedPositionLoopDivisor
     m_asservMode = normal_mode;
     m_directSpeedMode_rightWheelSpeed = 0;
     m_directSpeedMode_leftWheelSpeed = 0;
-    m_enableMotion = false;
+    m_enableMotion = true;
 }
 
 float AsservMain::convertSpeedTommSec(float speed_ticksPerSec)

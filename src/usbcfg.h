@@ -27,6 +27,7 @@ extern "C"
 	extern const USBConfig usbcfg;
 	extern SerialUSBConfig serusbcfg;
 	extern SerialUSBDriver SDU1;
+	int comm_usb_serial_configured_cnt(void);
 }
 #endif  /* USBCFG_H */
 

@@ -20,8 +20,8 @@ USBStream::USBStream()
 void USBStream::init()
 {
 	// USB FS
-	palSetPadMode(GPIOA, 12, PAL_MODE_ALTERNATE(10)); //USB D+
-	palSetPadMode(GPIOA, 11, PAL_MODE_ALTERNATE(10)); //USB D-
+	palSetPadMode(GPIOA, 12, PAL_MODE_ALTERNATE(10) | PAL_STM32_OSPEED_MID1); //USB D+
+	palSetPadMode(GPIOA, 11, PAL_MODE_ALTERNATE(10) | PAL_STM32_OSPEED_MID1); //USB D-
 
 	s_instance = new USBStream();
 
@@ -62,10 +62,10 @@ void* USBStream::SendCurrentStream()
 
 void USBStream::sendFullBuffer()
 {
-	if(m_currentPtr != NULL )
+	if(m_currentPtr != NULL && comm_usb_serial_configured_cnt() > 0)
 	{
 		*m_currentPtr = m_currentStruct;
-		obqPostFullBuffer(&SDU1.obqueue, sizeof(UsbStreamSample));
+		obqPostFullBuffer(&SDU1.obqueue, 4*3);
 	}
 }
 
