@@ -77,19 +77,25 @@ ENCODERS_WHEELS_RADIUS, ENCODERS_WHEELS_DISTANCE_MM, ENCODERS_TICKS_BY_TURN, com
         encoders, odometry, angleRegulator, distanceRegulator, angleSlopeFilter, distSlopeFilter, speedControllerRight,
         speedControllerLeft, rightPll, leftPll);
 
+BaseSequentialStream *outputStream;
+
 static THD_WORKING_AREA(waAsservThread, 512);
 static THD_FUNCTION(AsservThread, arg)
 {
     (void) arg;
     chRegSetThreadName("AsservThread");
 
+    chprintf(outputStream,"init...");
     Md22MotorController.init();
     encoders.init();
     encoders.start();
     USBStream::init();
+    chprintf(outputStream,"init done.");
 
-//    while(1) //desactivation du mainloop afin de tester MD22 en direct
-//    { chThdSleep(chTimeMS2I(200));}
+//    while (1) //desactivation du mainloop afin de tester MD22 en direct
+//    {
+//        chThdSleep(chTimeMS2I(200));
+//    }
 
     mainAsserv.mainLoop();
 }
@@ -104,7 +110,6 @@ char *completion_buffer[SHELL_MAX_COMPLETIONS];
 
 void asservCommand(BaseSequentialStream *chp, int argc, char **argv);
 
-BaseSequentialStream *outputStream;
 int main(void)
 {
 
@@ -116,17 +121,16 @@ int main(void)
 
     outputStream = reinterpret_cast<BaseSequentialStream*>(&SD2);
 
+
     // Custom commands
     const ShellCommand shellCommands[] = { { "asserv", &(asservCommand) }, { nullptr, nullptr } };
-    ShellConfig shellCfg = {
-    /* sc_channel */outputStream,
-    /* sc_commands */shellCommands,
+    ShellConfig shellCfg = { outputStream, shellCommands,
 #if (SHELL_USE_HISTORY == TRUE)
-                              /* sc_histbuf */history_buffer,
-                              /* sc_histsize */sizeof(history_buffer),
+                              history_buffer,
+                              sizeof(history_buffer),
 #endif
 #if (SHELL_USE_COMPLETION == TRUE)
-                              /* sc_completion */completion_buffer
+                              completion_buffer
 #endif
             };
 
@@ -183,6 +187,7 @@ void asservCommand(BaseSequentialStream *chp, int argc, char **argv)
         chprintf(outputStream," -------------- \r\n");
         chprintf(outputStream," - asserv md22speedlr [-100=>100] [-100=>100]\r\n");
         chprintf(outputStream," - asserv encodervalues\r\n");
+        chprintf(outputStream," - asserv test\r\n");
 
     };
     (void) chp;
@@ -277,15 +282,15 @@ void asservCommand(BaseSequentialStream *chp, int argc, char **argv)
 
         distanceRegulator.setGain(Kp);
     } else if (!strcmp(argv[0], "enablemotor")) {
-            bool enable = !(atoi(argv[1]) == 0);
-            chprintf(outputStream, "%s motor output\r\n", (enable ? "enabling" : "disabling"));
+        bool enable = !(atoi(argv[1]) == 0);
+        chprintf(outputStream, "%s motor output\r\n", (enable ? "enabling" : "disabling"));
 
-            mainAsserv.enableMotors(enable);
+        mainAsserv.enableMotors(enable);
     } else if (!strcmp(argv[0], "enablemotion")) {
-            bool enable = !(atoi(argv[1]) == 0);
-            chprintf(outputStream, "%s asserv motion \r\n", (enable ? "enabling" : "disabling"));
+        bool enable = !(atoi(argv[1]) == 0);
+        chprintf(outputStream, "%s asserv motion \r\n", (enable ? "enabling" : "disabling"));
 
-            mainAsserv.enableMotion(enable);
+        mainAsserv.enableMotion(enable);
     } else if (!strcmp(argv[0], "startPanel")) {
         chBSemSignal(&controlPanelSemaphore);
     } else if (!strcmp(argv[0], "enablepolar")) {
@@ -335,7 +340,34 @@ void asservCommand(BaseSequentialStream *chp, int argc, char **argv)
         encoders.getValues(&encoderDeltaRight_tmp, &encoderDeltaLeft_tmp);
 
         encoders.getEncodersTotalCount(&encoderRSum, &encoderLSum);
-        chprintf(outputStream, "encoder TOTL %d TOTR %d\r\n" , encoderLSum, encoderRSum);
+        chprintf(outputStream, "encoder TOTL %d TOTR %d\r\n", encoderLSum, encoderRSum);
+    } else if (!strcmp(argv[0], "test")) {
+
+        USBStream::instance()->setSpeedEstimatedRight(1);
+        USBStream::instance()->setSpeedEstimatedLeft(2);
+        USBStream::instance()->setSpeedGoalRight(3);
+        USBStream::instance()->setSpeedGoalLeft(4);
+        USBStream::instance()->setSpeedOutputRight(5);
+        USBStream::instance()->setSpeedOutputLeft(6);
+        USBStream::instance()->setSpeedIntegratedOutputRight(7);
+        USBStream::instance()->setSpeedIntegratedOutputLeft(8);
+        USBStream::instance()->setAngleGoal(9);
+        USBStream::instance()->setAngleAccumulator(0);
+        USBStream::instance()->setAngleOutput(1);
+        USBStream::instance()->setAngleOutputLimited(2);
+
+        USBStream::instance()->setDistGoal(3);
+        USBStream::instance()->setDistAccumulator(4);
+        USBStream::instance()->setDistOutput(5);
+        USBStream::instance()->setDistOutputLimited(6);
+        USBStream::instance()->setOdoX(10.0);
+        USBStream::instance()->setOdoY(100.0);
+        USBStream::instance()->setOdoTheta(9);
+
+        USBStream::instance()->setRawEncoderDeltaLeft(100.0);
+        USBStream::instance()->setRawEncoderDeltaRight(200.0);
+
+        USBStream::instance()->SendCurrentStream();
     } else {
         printUsage();
     }
@@ -354,10 +386,9 @@ THD_FUNCTION(ControlPanelThread, p)
         if (size > 0) {
             char *buffer = (char*) ptr;
 
-            /*
-             *  On transforme la commande recu dans une version argv/argc
-             *    de manière a utiliser les commandes shell déjà définie...
-             */
+            //On transforme la commande recu dans une version argv/argc
+            //de manière a utiliser les commandes shell déjà définie...
+
             bool prevWasSpace = false;
             firstArg = buffer;
             int nb_arg = 0;

@@ -16,7 +16,7 @@ constexpr uint8_t accReg = 0x03;
 
 constexpr uint8_t controlMode = 0x01; // Wanted value for mode register. Ie: -128 (full reverse)   0 (stop)   127 (full forward).
 
-extern BaseSequentialStream *outputStream;
+//extern BaseSequentialStream *outputStream;
 
 Md22::Md22(bool is1motorRight, bool invertMotorR, bool invertMotorL)
 {
@@ -57,7 +57,7 @@ void Md22::init()
     chDbgAssert(msg == MSG_OK, "Config MD22 - i2cMasterTransmitTimeout ERROR NOK\r\n");
     if (msg != MSG_OK) {
         // What to do ?
-        chprintf(outputStream, " i2cMasterTransmitTimeout ERROR NOK\r\n");
+        //chprintf(outputStream, " i2cMasterTransmitTimeout ERROR NOK\r\n");
     }
 
     // Set acceleration
