@@ -260,6 +260,9 @@ static const USBEndpointConfig ep2config = {
   NULL
 };
 
+
+static volatile int configured_cnt = 0;
+
 /*
  * Handles the USB driver global events.
  */
@@ -282,6 +285,7 @@ static void usb_event(USBDriver *usbp, usbevent_t event) {
     sduConfigureHookI(&SDU1);
 
     chSysUnlockFromISR();
+    configured_cnt++;
     return;
   case USB_EVENT_RESET:
     /* Falls into.*/
@@ -340,3 +344,9 @@ const SerialUSBConfig serusbcfg = {
   USBD1_DATA_AVAILABLE_EP,
   USBD1_INTERRUPT_REQUEST_EP
 };
+
+
+int is_usb_serial_configured()
+{
+    return configured_cnt;
+}

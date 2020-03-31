@@ -364,41 +364,47 @@ void asservCommand(BaseSequentialStream *chp, int argc, char **argv)
 
 THD_FUNCTION(ControlPanelThread, p)
 {
-    (void)p;
-    void* ptr = nullptr;
-    uint32_t size     = 0;
-    char*    firstArg = nullptr;
-    char*    argv[7];
+    (void) p;
+    void *ptr = nullptr;
+    uint32_t size = 0;
+    char *firstArg = nullptr;
+    char *argv[7];
     while (!chThdShouldTerminateX())
     {
-    	USBStream::instance()->getFullBuffer(&ptr, &size);
+        USBStream::instance()->getFullBuffer(&ptr, &size);
         if (size > 0)
         {
-            char* buffer = (char*)ptr;
+            char *buffer = (char*) ptr;
 
             /*
              *  On transforme la commande recu dans une version argv/argc
              *    de manière a utiliser les commandes shell déjà définie...
              */
             bool prevWasSpace = false;
-            firstArg          = buffer;
-            int nb_arg        = 0;
-            for (uint32_t i = 0; i < size; i++) {
-                if (prevWasSpace && buffer[i] != ' ') {
+            firstArg = buffer;
+            int nb_arg = 0;
+            for (uint32_t i = 0; i < size; i++)
+            {
+                if (prevWasSpace && buffer[i] != ' ')
+                {
                     argv[nb_arg++] = &buffer[i];
                 }
 
-                if (buffer[i] == ' ' || buffer[i] == '\r' || buffer[i] == '\n') {
+                if (buffer[i] == ' ' || buffer[i] == '\r' || buffer[i] == '\n')
+                {
                     prevWasSpace = true;
-                    buffer[i]    = '\0';
-                } else {
+                    buffer[i] = '\0';
+                }
+                else
+                {
                     prevWasSpace = false;
                 }
             }
 
             // On évite de faire appel au shell si le nombre d'arg est mauvais ou si la 1ière commande est mauvaise...
-            if (nb_arg > 0 && !strcmp(firstArg, "asserv")) {
-            	asservCommand(nullptr, nb_arg, argv);
+            if (nb_arg > 0 && !strcmp(firstArg, "asserv"))
+            {
+                asservCommand(nullptr, nb_arg, argv);
             }
             USBStream::instance()->releaseBuffer();
         }
