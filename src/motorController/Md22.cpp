@@ -46,20 +46,20 @@ void Md22::init()
 
     // Set acceleration
     cmd[0] = accReg;
-    cmd[0] = 0;
+    cmd[1] = 0;
     msg = i2cMasterTransmitTimeout(&I2CD1, md22Address, cmd, sizeof(cmd), NULL, 0, tmo);
     chDbgAssert(msg == MSG_OK, "Config MD22 - i2cMasterTransmitTimeout ERROR NOK\r\n");
 
 
     // Set motor speed to zero
     cmd[0] = motor1Reg;
-    cmd[0] = 0;
+    cmd[1] = 0;
     msg = i2cMasterTransmitTimeout(&I2CD1, md22Address, cmd, sizeof(cmd), NULL, 0, tmo);
     chDbgAssert(msg == MSG_OK, "Config MD22 - i2cMasterTransmitTimeout ERROR NOK\r\n");
 
 
     cmd[0] = motor2Reg;
-    cmd[0] = 0;
+    cmd[1] = 0;
     msg = i2cMasterTransmitTimeout(&I2CD1, md22Address, cmd, sizeof(cmd), NULL, 0, tmo);
     chDbgAssert(msg == MSG_OK, "Config MD22 - i2cMasterTransmitTimeout ERROR NOK\r\n");
 
