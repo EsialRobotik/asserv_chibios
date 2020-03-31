@@ -14,4 +14,14 @@ inline float fmap(float value, float inMin, float inMax, float outMin, float out
     return (value - inMin) * (outMax - outMin) / (inMax - inMin) + outMin;
 }
 
+inline float limit(float value, float minValue, float maxValue)
+{
+    if( value > maxValue)
+        value = maxValue;
+    if( value < minValue)
+        value = minValue;
+
+    return value;
+}
+
 #endif /* SRC_UTIL_ASSERVMATH_H_ */

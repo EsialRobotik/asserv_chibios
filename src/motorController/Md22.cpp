@@ -66,8 +66,11 @@ void Md22::init()
     i2cReleaseBus(&I2CD1);
 }
 
+
 void Md22::setMotorLeftSpeed(float percentage)
 {
+    percentage = limit(percentage, -100.0, 100.0);
+
     if (m_invertMotorLeft)
         percentage = -percentage;
 
@@ -86,6 +89,8 @@ void Md22::setMotorLeftSpeed(float percentage)
 
 void Md22::setMotorRightSpeed(float percentage)
 {
+    percentage = limit(percentage, -100.0, 100.0);
+
     if (m_invertMotorRight)
         percentage = -percentage;
 
