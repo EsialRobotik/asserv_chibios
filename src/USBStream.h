@@ -101,7 +101,7 @@ class USBStream
         inline void setXGoal(float x) { setValue( &m_currentStruct.value22, x); }
         inline void setYGoal(float y) { setValue( &m_currentStruct.value23, y); }
 
-private:
+    private:
         USBStream();
         virtual ~USBStream() {};
 

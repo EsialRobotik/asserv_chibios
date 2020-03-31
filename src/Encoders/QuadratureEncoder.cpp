@@ -27,8 +27,8 @@ static QEIConfig qeicfg2 = {
 
 QuadratureEncoder::QuadratureEncoder(bool invertEncoder1, bool invertEncoder2) : Encoders()
 {
-	m_invertEncoder1 = invertEncoder1;
-	m_invertEncoder2 = invertEncoder2;
+    m_invertEncoder1 = invertEncoder1;
+    m_invertEncoder2 = invertEncoder2;
     m_encoder1Sum = 0;
     m_encoder2Sum = 0;
     m_encoder1Previous = 0;
@@ -41,27 +41,27 @@ QuadratureEncoder::~QuadratureEncoder()
 
 void QuadratureEncoder::init()
 {
-	// Encoder 1
-	palSetPadMode(GPIOA, 7, PAL_MODE_ALTERNATE(2)); //TIM3_chan2
-	palSetPadMode(GPIOC, 6, PAL_MODE_ALTERNATE(2)); //TIM3_chan1
-	qeiStart(&QEID3, &qeicfg1);
+    // Encoder 1
+    palSetPadMode(GPIOA, 7, PAL_MODE_ALTERNATE(2)); //TIM3_chan2
+    palSetPadMode(GPIOC, 6, PAL_MODE_ALTERNATE(2)); //TIM3_chan1
+    qeiStart(&QEID3, &qeicfg1);
 
-	// Encoder 2
-	palSetPadMode(GPIOA, 1, PAL_MODE_ALTERNATE(1)); //TIM2_chan1
-	palSetPadMode(GPIOA, 0, PAL_MODE_ALTERNATE(1)); //TIM2_chan2
-	qeiStart(&QEID2, &qeicfg2);
+    // Encoder 2
+    palSetPadMode(GPIOA, 1, PAL_MODE_ALTERNATE(1)); //TIM2_chan1
+    palSetPadMode(GPIOA, 0, PAL_MODE_ALTERNATE(1)); //TIM2_chan2
+    qeiStart(&QEID2, &qeicfg2);
 }
 
 void QuadratureEncoder::start()
 {
-	qeiEnable (&QEID3);
-	qeiEnable (&QEID2);
+    qeiEnable (&QEID3);
+    qeiEnable (&QEID2);
 }
 
 void QuadratureEncoder::stop()
 {
-	qeiDisable(&QEID3);
-	qeiDisable(&QEID2);
+    qeiDisable(&QEID3);
+    qeiDisable(&QEID2);
 }
 
 void QuadratureEncoder::getValues(int16_t *encoderRight, int16_t *encoderLeft)
@@ -69,15 +69,15 @@ void QuadratureEncoder::getValues(int16_t *encoderRight, int16_t *encoderLeft)
     int16_t encoder1 = qeiGetCount(&QEID2);
     int16_t encoder2 = qeiGetCount(&QEID3);
 
-    *encoderRight = encoder1-m_encoder1Previous;
-    *encoderLeft = encoder2-m_encoder2Previous;
+    *encoderRight = encoder1 - m_encoder1Previous;
+    *encoderLeft = encoder2 - m_encoder2Previous;
 
-	if(m_invertEncoder1)
-		*encoderRight = -*encoderRight;
-	if(m_invertEncoder2)
-		*encoderLeft = -*encoderLeft;
+    if (m_invertEncoder1)
+        *encoderRight = -*encoderRight;
+    if (m_invertEncoder2)
+        *encoderLeft = -*encoderLeft;
 
-	m_encoder1Sum += *encoderRight;
+    m_encoder1Sum += *encoderRight;
     m_encoder2Sum += *encoderLeft;
 
     m_encoder1Previous = encoder1;

@@ -7,7 +7,7 @@ class Vnh5019 : public MotorController
 {
 public:
 	explicit Vnh5019(bool invertMotor1, bool invertMotor2);
-	virtual ~Vnh5019();
+	virtual ~Vnh5019() {};
 
 
 	void init();
