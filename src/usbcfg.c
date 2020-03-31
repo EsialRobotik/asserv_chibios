@@ -346,7 +346,7 @@ const SerialUSBConfig serusbcfg = {
 };
 
 
-int is_usb_serial_configured()
+int is_usb_serial_configured(void)
 {
     return configured_cnt;
 }
