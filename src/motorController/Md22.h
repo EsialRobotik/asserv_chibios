@@ -2,21 +2,23 @@
 #define MD22_H_
 
 #include "MotorController.h"
+#include "ch.h"
+#include "hal.h"
 
-class Md22 : public MotorController
+class Md22: public MotorController
 {
 public:
-	explicit Md22(bool invertMotor1, bool invertMotor2);
-	virtual ~Md22();
+    explicit Md22(bool is1motorRight, bool invertMotorRight, bool invertMotorLeft);
+    virtual ~Md22() {};
 
-
-	void init();
-	void setMotor1Speed(float percentage);
-	void setMotor2Speed(float percentage);
+    void init();
+    void setMotorRightSpeed(float percentage);
+    void setMotorLeftSpeed(float percentage);
 
 private:
-	bool m_invertMotor1;
-	bool m_invertMotor2;
+    bool m_invertMotorLeft;
+    bool m_invertMotorRight;
+    bool m_is1motorRight;
 };
 
 #endif /* MD22_H_ */

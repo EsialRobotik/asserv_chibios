@@ -53,7 +53,7 @@ void Vnh5019::init()
 	pwmStart(&PWMD4, &pwmcfg2);
 }
 
-void Vnh5019::setMotor1Speed(float percentage)
+void Vnh5019::setMotorRightSpeed(float percentage)
 {
 	if(m_invertMotor1)
 		percentage = -percentage;
@@ -87,7 +87,7 @@ void Vnh5019::setMotor1Speed(float percentage)
 	pwmEnableChannel(&PWMD8, 1, PWM_PERCENTAGE_TO_WIDTH(&PWMD8, (unsigned int)(10000*percentage/100.0))); // 10000 is 100% duty cycle
 }
 
-void Vnh5019::setMotor2Speed(float percentage)
+void Vnh5019::setMotorLeftSpeed(float percentage)
 {
 	if(m_invertMotor2)
 		percentage = -percentage;

@@ -150,13 +150,13 @@ void AsservMain::mainLoop()
 
 		if(m_enableMotors)
 		{
-			m_motorController.setMotor2Speed(outputSpeedRight);
-			m_motorController.setMotor1Speed(outputSpeedLeft);
+			m_motorController.setMotorRightSpeed(outputSpeedRight);
+			m_motorController.setMotorLeftSpeed(outputSpeedLeft);
 		}
 		else
 		{
-			m_motorController.setMotor2Speed(0);
-			m_motorController.setMotor1Speed(0);
+			m_motorController.setMotorRightSpeed(0);
+			m_motorController.setMotorLeftSpeed(0);
 		}
 
 		USBStream::instance()->setSpeedEstimatedRight(estimatedSpeedRight);

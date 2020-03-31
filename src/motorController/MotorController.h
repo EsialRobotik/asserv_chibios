@@ -6,8 +6,8 @@ class MotorController
     public:
         virtual ~MotorController() {}
 
-        virtual void setMotor1Speed(float percentage) = 0;
-        virtual void setMotor2Speed(float percentage) = 0;
+        virtual void setMotorRightSpeed(float percentage) = 0;
+        virtual void setMotorLeftSpeed(float percentage) = 0;
 };
 
 #endif /* SRC_MOTORCONTROLLER_MOTORCONTROLLER_H_ */

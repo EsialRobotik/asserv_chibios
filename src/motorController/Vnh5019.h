@@ -11,8 +11,8 @@ public:
 
 
 	void init();
-	void setMotor1Speed(float percentage);
-	void setMotor2Speed(float percentage);
+	void setMotorRightSpeed(float percentage);
+	void setMotorLeftSpeed(float percentage);
 
 private:
 	bool m_invertMotor1;
