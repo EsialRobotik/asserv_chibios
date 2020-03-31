@@ -21,11 +21,11 @@
 #define ASSERV_THREAD_PERIOD_S (1.0/ASSERV_THREAD_FREQUENCY)
 #define ASSERV_POSITION_DIVISOR (5)
 
-#define ENCODERS_WHEELS_RADIUS (47.2/2.0)
+#define ENCODERS_WHEELS_RADIUS_MM (47.2/2.0)
 #define ENCODERS_WHEELS_DISTANCE_MM (297)
 #define ENCODERS_TICKS_BY_TURN (1024*4)
 
-#define MAX_SPEED (500)
+#define MAX_SPEED_MM_PER_SEC (500)
 
 #define DIST_REGULATOR_KP (9)
 #define DIST_REGULATOR_MAX_DELTA (8/ASSERV_THREAD_PERIOD_S)
@@ -54,13 +54,13 @@ float speed_controller_left_speed_set[NB_PI_SUBSET] = {500.0, 500.0, 500.0};
 QuadratureEncoder encoders(false,false);
 Vnh5019 Vnh5019MotorController(true,false);
 
-Regulator angleRegulator(ANGLE_REGULATOR_KP, MAX_SPEED);
-Regulator distanceRegulator(DIST_REGULATOR_KP, MAX_SPEED);
+Regulator angleRegulator(ANGLE_REGULATOR_KP, MAX_SPEED_MM_PER_SEC);
+Regulator distanceRegulator(DIST_REGULATOR_KP, MAX_SPEED_MM_PER_SEC);
 
 Odometry odometry(ENCODERS_WHEELS_DISTANCE_MM, 0, 0);
 
-SpeedController speedControllerRight(speed_controller_right_Kp, speed_controller_right_Ki, speed_controller_right_speed_set, 100, MAX_SPEED, ASSERV_THREAD_FREQUENCY);
-SpeedController speedControllerLeft(speed_controller_left_Kp, speed_controller_left_Ki, speed_controller_left_speed_set, 100, MAX_SPEED, ASSERV_THREAD_FREQUENCY);
+SpeedController speedControllerRight(speed_controller_right_Kp, speed_controller_right_Ki, speed_controller_right_speed_set, 100, MAX_SPEED_MM_PER_SEC, ASSERV_THREAD_FREQUENCY);
+SpeedController speedControllerLeft(speed_controller_left_Kp, speed_controller_left_Ki, speed_controller_left_speed_set, 100, MAX_SPEED_MM_PER_SEC, ASSERV_THREAD_FREQUENCY);
 
 Pll rightPll(PLL_BANDWIDTH);
 Pll leftPll(PLL_BANDWIDTH);
@@ -73,7 +73,7 @@ CommandManager commandManager(COMMAND_MANAGER_ARRIVAL_ANGLE_THRESHOLD_RAD, COMMA
 		angleRegulator, distanceRegulator);
 
 AsservMain mainAsserv(ASSERV_THREAD_FREQUENCY, ASSERV_POSITION_DIVISOR,
-		ENCODERS_WHEELS_RADIUS, ENCODERS_WHEELS_DISTANCE_MM, ENCODERS_TICKS_BY_TURN,
+		ENCODERS_WHEELS_RADIUS_MM, ENCODERS_WHEELS_DISTANCE_MM, ENCODERS_TICKS_BY_TURN,
 		commandManager, Vnh5019MotorController, encoders, odometry,
 		angleRegulator, distanceRegulator,
 		angleSlopeFilter, distSlopeFilter,
