@@ -11,7 +11,18 @@ public:
     explicit Md22(bool is1motorRight, bool invertMotorRight, bool invertMotorLeft);
     virtual ~Md22() {};
 
-    void init();
+    typedef struct I2cPinInit
+    {
+        stm32_gpio_t* GPIObaseSCL;
+        uint8_t pinNumberSCL;
+        stm32_gpio_t* GPIObaseSDA;
+        uint8_t pinNumberSDA;
+    } I2cPinInit_t;
+
+    static I2cPinInit_t esialCardPinConf;
+    static I2cPinInit_t PMXCardPinConf;
+
+    void init(I2cPinInit_t *I2cPinInitConf);
     void setMotorRightSpeed(float percentage);
     void setMotorLeftSpeed(float percentage);
 
