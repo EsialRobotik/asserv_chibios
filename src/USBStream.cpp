@@ -19,8 +19,8 @@ USBStream::USBStream()
 void USBStream::init()
 {
     // USB FS
-    palSetPadMode(GPIOA, 12, PAL_MODE_ALTERNATE(10) | PAL_STM32_OSPEED_MID1); //USB D+
-    palSetPadMode(GPIOA, 11, PAL_MODE_ALTERNATE(10) | PAL_STM32_OSPEED_MID1); //USB D-
+    palSetPadMode(GPIOA, 12, PAL_MODE_ALTERNATE(10)); //USB D+
+    palSetPadMode(GPIOA, 11, PAL_MODE_ALTERNATE(10)); //USB D-
 
     s_instance = new USBStream();
 
@@ -28,7 +28,7 @@ void USBStream::init()
      * Initializes a serial-over-USB CDC driver.
      */
     sduObjectInit(&SDU1);
-    //std::memset(SDU1.ob, 0x0F0F0F0F, sizeof(SDU1.ob));
+    std::memset(SDU1.ob, 0x0F0F0F0F, sizeof(SDU1.ob));
     sduStart(&SDU1, &serusbcfg);
 
     /*
@@ -37,7 +37,7 @@ void USBStream::init()
      * after a reset.
      */
     usbDisconnectBus(serusbcfg.usbp);
-    chThdSleepMilliseconds(1500);
+    chThdSleepMilliseconds(1000);
     usbStart(serusbcfg.usbp, &usbcfg);
     usbConnectBus(serusbcfg.usbp);
 
@@ -59,27 +59,44 @@ void* USBStream::SendCurrentStream()
 
 void USBStream::sendFullBuffer()
 {
-    SDU1.vmt->writet(&SDU1, (uint8_t*) &m_currentStruct, sizeof(UsbStreamSample), TIME_IMMEDIATE);
+    if (m_currentPtr != NULL)
+    {
+        *m_currentPtr = m_currentStruct;
+        obqPostFullBuffer(&SDU1.obqueue, sizeof(UsbStreamSample));
+    }
 }
 
 void USBStream::getEmptyBuffer()
 {
-    return;
+    msg_t msg = obqGetEmptyBufferTimeout(&SDU1.obqueue, 0);
+    if (msg == MSG_OK)
+    {
+        m_currentPtr = (UsbStreamSample*) SDU1.obqueue.ptr;
+        uint32_t available_size = ((uint32_t) SDU1.obqueue.top - (uint32_t) SDU1.obqueue.ptr);
+        chDbgAssert(available_size >= (sizeof(UsbStreamSample) + 4), "Not enough space in the free buffer. Did you set a correct USB buffer size ?");
+    }
+    else
+    {
+        m_currentPtr = NULL;
+    }
 }
 
 void USBStream::getFullBuffer(void **ptr, uint32_t *size)
 {
-    msg_t msg = ibqGetFullBufferTimeout(&SDU1.ibqueue, TIME_INFINITE);
     *size = 0;
+    if (!is_usb_serial_configured())
+    {
+        /*
+         *  Workaround :
+         *   When USB isn't plugged, ibqGetFullBufferTimeout return MSG_RESET immediately and this thread stuck others threads.
+         *   is_usb_serial_configured return the number of time the usb serial driver was configured ( ie : plugged in a PC ),
+         *    so while this condition isn't true, just schedule the others thread.
+         */
 
-    /*
-     * Some kind of hack :-/
-     *   When USB isn't plugged, ibqGetFullBufferTimeout return MSG_RESET
-     *   So, in this case, make this thread sleep in order to let the others make theirs job.
-     */
-    if (msg == MSG_RESET) {
-        chThdSleepMilliseconds(100);
+        chThdYield();
     }
+
+    msg_t msg = ibqGetFullBufferTimeout(&SDU1.ibqueue, TIME_INFINITE);
 
     uint32_t sizeToRead = (size_t) SDU1.ibqueue.top - (size_t) SDU1.ibqueue.ptr;
     if (msg != MSG_OK || sizeToRead == 0)

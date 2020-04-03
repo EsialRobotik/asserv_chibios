@@ -125,12 +125,12 @@ LDSCRIPT= $(STARTUPLD)/STM32F446xE.ld
 # Custom part: Depending on a input variable ROBOT, the used main.cpp is different
 
 ifeq ($(ROBOT),)  # set the default ROBOT
-	ROBOT = baseRoulanteTest
+	ROBOT = PMI
 endif
 
 # Check if the specified ROBOT exist
 ifeq (,$(wildcard $(SRCDIR)/Robots/$(ROBOT)/main.cpp))
-$(error Unknown ROBOT specified! Knowns are : baseRoulanteTest)
+$(error Unknown ROBOT specified! Knowns are : baseRoulanteTest PMI)
 endif
 
 # C sources that can be compiled in ARM or THUMB mode depending on the global

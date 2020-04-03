@@ -21,11 +21,11 @@
 #define ASSERV_THREAD_PERIOD_S (1.0/ASSERV_THREAD_FREQUENCY)
 #define ASSERV_POSITION_DIVISOR (5)
 
-#define ENCODERS_WHEELS_RADIUS (47.2/2.0)
+#define ENCODERS_WHEELS_RADIUS_MM (47.2/2.0)
 #define ENCODERS_WHEELS_DISTANCE_MM (297)
 #define ENCODERS_TICKS_BY_TURN (1024*4)
 
-#define MAX_SPEED (500)
+#define MAX_SPEED_MM_PER_SEC (500)
 
 #define DIST_REGULATOR_KP (9)
 #define DIST_REGULATOR_MAX_DELTA (8/ASSERV_THREAD_PERIOD_S)
@@ -54,13 +54,13 @@ float speed_controller_left_speed_set[NB_PI_SUBSET] = {500.0, 500.0, 500.0};
 QuadratureEncoder encoders(false,false);
 Vnh5019 Vnh5019MotorController(true,false);
 
-Regulator angleRegulator(ANGLE_REGULATOR_KP, MAX_SPEED);
-Regulator distanceRegulator(DIST_REGULATOR_KP, MAX_SPEED);
+Regulator angleRegulator(ANGLE_REGULATOR_KP, MAX_SPEED_MM_PER_SEC);
+Regulator distanceRegulator(DIST_REGULATOR_KP, MAX_SPEED_MM_PER_SEC);
 
 Odometry odometry(ENCODERS_WHEELS_DISTANCE_MM, 0, 0);
 
-SpeedController speedControllerRight(speed_controller_right_Kp, speed_controller_right_Ki, speed_controller_right_speed_set, 100, MAX_SPEED, ASSERV_THREAD_FREQUENCY);
-SpeedController speedControllerLeft(speed_controller_left_Kp, speed_controller_left_Ki, speed_controller_left_speed_set, 100, MAX_SPEED, ASSERV_THREAD_FREQUENCY);
+SpeedController speedControllerRight(speed_controller_right_Kp, speed_controller_right_Ki, speed_controller_right_speed_set, 100, MAX_SPEED_MM_PER_SEC, ASSERV_THREAD_FREQUENCY);
+SpeedController speedControllerLeft(speed_controller_left_Kp, speed_controller_left_Ki, speed_controller_left_speed_set, 100, MAX_SPEED_MM_PER_SEC, ASSERV_THREAD_FREQUENCY);
 
 Pll rightPll(PLL_BANDWIDTH);
 Pll leftPll(PLL_BANDWIDTH);
@@ -73,7 +73,7 @@ CommandManager commandManager(COMMAND_MANAGER_ARRIVAL_ANGLE_THRESHOLD_RAD, COMMA
 		angleRegulator, distanceRegulator);
 
 AsservMain mainAsserv(ASSERV_THREAD_FREQUENCY, ASSERV_POSITION_DIVISOR,
-		ENCODERS_WHEELS_RADIUS, ENCODERS_WHEELS_DISTANCE_MM, ENCODERS_TICKS_BY_TURN,
+		ENCODERS_WHEELS_RADIUS_MM, ENCODERS_WHEELS_DISTANCE_MM, ENCODERS_TICKS_BY_TURN,
 		commandManager, Vnh5019MotorController, encoders, odometry,
 		angleRegulator, distanceRegulator,
 		angleSlopeFilter, distSlopeFilter,
@@ -364,41 +364,47 @@ void asservCommand(BaseSequentialStream *chp, int argc, char **argv)
 
 THD_FUNCTION(ControlPanelThread, p)
 {
-    (void)p;
-    void* ptr = nullptr;
-    uint32_t size     = 0;
-    char*    firstArg = nullptr;
-    char*    argv[7];
+    (void) p;
+    void *ptr = nullptr;
+    uint32_t size = 0;
+    char *firstArg = nullptr;
+    char *argv[7];
     while (!chThdShouldTerminateX())
     {
-    	USBStream::instance()->getFullBuffer(&ptr, &size);
+        USBStream::instance()->getFullBuffer(&ptr, &size);
         if (size > 0)
         {
-            char* buffer = (char*)ptr;
+            char *buffer = (char*) ptr;
 
             /*
              *  On transforme la commande recu dans une version argv/argc
              *    de manière a utiliser les commandes shell déjà définie...
              */
             bool prevWasSpace = false;
-            firstArg          = buffer;
-            int nb_arg        = 0;
-            for (uint32_t i = 0; i < size; i++) {
-                if (prevWasSpace && buffer[i] != ' ') {
+            firstArg = buffer;
+            int nb_arg = 0;
+            for (uint32_t i = 0; i < size; i++)
+            {
+                if (prevWasSpace && buffer[i] != ' ')
+                {
                     argv[nb_arg++] = &buffer[i];
                 }
 
-                if (buffer[i] == ' ' || buffer[i] == '\r' || buffer[i] == '\n') {
+                if (buffer[i] == ' ' || buffer[i] == '\r' || buffer[i] == '\n')
+                {
                     prevWasSpace = true;
-                    buffer[i]    = '\0';
-                } else {
+                    buffer[i] = '\0';
+                }
+                else
+                {
                     prevWasSpace = false;
                 }
             }
 
             // On évite de faire appel au shell si le nombre d'arg est mauvais ou si la 1ière commande est mauvaise...
-            if (nb_arg > 0 && !strcmp(firstArg, "asserv")) {
-            	asservCommand(nullptr, nb_arg, argv);
+            if (nb_arg > 0 && !strcmp(firstArg, "asserv"))
+            {
+                asservCommand(nullptr, nb_arg, argv);
             }
             USBStream::instance()->releaseBuffer();
         }

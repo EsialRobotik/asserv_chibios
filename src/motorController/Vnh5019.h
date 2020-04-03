@@ -7,12 +7,12 @@ class Vnh5019 : public MotorController
 {
 public:
 	explicit Vnh5019(bool invertMotor1, bool invertMotor2);
-	virtual ~Vnh5019();
+	virtual ~Vnh5019() {};
 
 
 	void init();
-	void setMotor1Speed(float percentage);
-	void setMotor2Speed(float percentage);
+	void setMotorRightSpeed(float percentage);
+	void setMotorLeftSpeed(float percentage);
 
 private:
 	bool m_invertMotor1;

@@ -55,6 +55,12 @@ void operator delete[](void* ptr, size_t sz)
     chHeapFree(ptr);
 }
 
+/*
+ * link time optimizations (LTO) remove this function if they are called only from a lib (ex: libg.a through sscanf)
+ * So use  __attribute__((used)) to force the linker to keeps theses functions
+ */
+extern "C" void *malloc(unsigned int size) __attribute__((used));
+extern "C" void free(void *alloc) __attribute__((used));
 
 extern "C" void *malloc(unsigned int size)
 {

@@ -3,19 +3,19 @@
 
 class SlopeFilter
 {
-public:
-explicit SlopeFilter(float maxSlope);
-	virtual ~SlopeFilter(){};
+    public:
+        explicit SlopeFilter(float maxSlope);
+        virtual ~SlopeFilter(){};
 
-	  float filter(float dt, float value);
-	  void setSlope(float slope);
-	  void reset(){m_lastOutput = 0;};
+        float filter(float dt, float value);
+        void setSlope(float slope);
+        void reset(){m_lastOutput = 0;};
 
-private:
-	float m_maxSlope;
-	float m_lastOutput;
+    private:
+        float m_maxSlope;
+        float m_lastOutput;
 
-	float constrain(float value, float low, float high);
+        float constrain(float value, float low, float high);
 };
 
 #endif /* SRC_SLOPE_FILTER_H_ */
