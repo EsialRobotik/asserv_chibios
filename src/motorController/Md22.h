@@ -8,28 +8,27 @@
 class Md22: public MotorController
 {
 public:
-    explicit Md22(bool is1motorRight, bool invertMotorRight, bool invertMotorLeft);
-    virtual ~Md22() {};
-
-    typedef struct I2cPinInit
+    struct I2cPinInit
     {
         stm32_gpio_t* GPIObaseSCL;
         uint8_t pinNumberSCL;
         stm32_gpio_t* GPIObaseSDA;
         uint8_t pinNumberSDA;
-    } I2cPinInit_t;
+    };
 
-    static I2cPinInit_t esialCardPinConf;
-    static I2cPinInit_t PMXCardPinConf;
+    explicit Md22(bool is1motorRight, bool invertMotorRight, bool invertMotorLeft, I2cPinInit pins, int freq=100);
+    virtual ~Md22() {};
 
-    void init(I2cPinInit_t *I2cPinInitConf);
+    void init();
     void setMotorRightSpeed(float percentage);
     void setMotorLeftSpeed(float percentage);
 
 private:
+    I2cPinInit m_i2cPinConf;
     bool m_invertMotorLeft;
     bool m_invertMotorRight;
     bool m_is1motorRight;
+    int m_freq;
 };
 
 #endif /* MD22_H_ */

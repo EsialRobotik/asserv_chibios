@@ -53,7 +53,8 @@ float speed_controller_left_speed_set[NB_PI_SUBSET] = {500.0, 500.0, 500.0};
 
 
 QuadratureEncoder encoders(false,false);
-Md22 Md22MotorController(true,true,false);
+Md22::I2cPinInit ESIALCardPinConf_SCL_SDA = {GPIOB, 6, GPIOB, 7};
+Md22 Md22MotorController(true,true,false, ESIALCardPinConf_SCL_SDA, 400);
 
 Regulator angleRegulator(ANGLE_REGULATOR_KP, MAX_SPEED_MM_PER_SEC);
 Regulator distanceRegulator(DIST_REGULATOR_KP, MAX_SPEED_MM_PER_SEC);
@@ -87,7 +88,7 @@ static THD_FUNCTION(AsservThread, arg)
     (void) arg;
     chRegSetThreadName("AsservThread");
 
-    Md22MotorController.init(&Md22::esialCardPinConf);
+    Md22MotorController.init();
     encoders.init();
     encoders.start();
     USBStream::init();

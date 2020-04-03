@@ -4,10 +4,11 @@
 #include "util/asservMath.h"
 
 
-Md22::I2cPinInit_t Md22::esialCardPinConf = {GPIOB, 6, GPIOB, 7};
-Md22::I2cPinInit_t Md22::PMXCardPinConf = {GPIOB, 8, GPIOB, 9};
+//Md22::I2cPinInit_t Md22::esialCardPinConf = {GPIOB, 6, GPIOB, 7};
+//Md22::I2cPinInit_t Md22::PMXCardPinConf = {GPIOB, 8, GPIOB, 9};
 
-static const I2CConfig i2cconfig = { OPMODE_I2C, 100000, STD_DUTY_CYCLE };
+static const I2CConfig i2cconfig100kHz = { OPMODE_I2C, 100000, STD_DUTY_CYCLE };
+static const I2CConfig i2cconfig400kHz = { OPMODE_I2C, 400000, FAST_DUTY_CYCLE_2 };
 
 constexpr uint8_t md22Address = 0xB0 >> 1; // MD22 address (All switches to ON) 0x10110000 =>1011000 0x58
 constexpr uint8_t modeReg = 0x00;
@@ -17,24 +18,34 @@ constexpr uint8_t accReg = 0x03;
 
 constexpr uint8_t controlMode = 0x01; // Wanted value for mode register. Ie: -128 (full reverse)   0 (stop)   127 (full forward).
 
-Md22::Md22(bool is1motorRight, bool invertMotorRight, bool invertMotorLeft) : MotorController()
+Md22::Md22(bool is1motorRight, bool invertMotorRight, bool invertMotorLeft, I2cPinInit pins, int freq) : MotorController()
 {
+    m_i2cPinConf = pins;
     m_invertMotorRight = invertMotorRight;
     m_invertMotorLeft = invertMotorLeft;
     m_is1motorRight = is1motorRight;
+    m_freq = freq;
 }
 
-void Md22::init(I2cPinInit_t *I2cPinInitConf)
+void Md22::init()
 {
     sysinterval_t tmo = TIME_MS2I(4);
 
     // Enable I2C SDA & SCL pin
     // External pullups with correct resistance value shall be used !
     // see : http://wiki.chibios.org/dokuwiki/doku.php?id=chibios:community:guides:i2c_trouble_shooting
-    palSetPadMode(I2cPinInitConf->GPIObaseSCL, I2cPinInitConf->pinNumberSCL, PAL_MODE_ALTERNATE(4) | PAL_STM32_OTYPE_OPENDRAIN);
-    palSetPadMode(I2cPinInitConf->GPIObaseSDA, I2cPinInitConf->pinNumberSDA, PAL_MODE_ALTERNATE(4) | PAL_STM32_OTYPE_OPENDRAIN);
+    palSetPadMode(m_i2cPinConf.GPIObaseSCL, m_i2cPinConf.pinNumberSCL, PAL_MODE_ALTERNATE(4) | PAL_STM32_OTYPE_OPENDRAIN);
+    palSetPadMode(m_i2cPinConf.GPIObaseSDA, m_i2cPinConf.pinNumberSDA, PAL_MODE_ALTERNATE(4) | PAL_STM32_OTYPE_OPENDRAIN);
 
-    i2cStart(&I2CD1, &i2cconfig);
+    if(m_freq > 0 and m_freq <= 100)
+    {
+        i2cStart(&I2CD1, &i2cconfig100kHz);
+    }
+    if(m_freq > 100 and m_freq <= 400)
+    {
+        i2cStart(&I2CD1, &i2cconfig400kHz);
+    }
+
 
     i2cAcquireBus (&I2CD1);
 

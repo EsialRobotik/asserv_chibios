@@ -42,6 +42,7 @@ class AsservMain
 
         void enableMotors(bool enable);
         void enablePolar(bool enable);
+        void enableMotion(bool enable);
 
     private:
 
@@ -88,6 +89,7 @@ class AsservMain
         asserv_mode_t m_asservMode;
         float m_directSpeedMode_rightWheelSpeed;
         float m_directSpeedMode_leftWheelSpeed;
+        bool m_enableMotion;
 };
 
 #endif /* ASSERVMAIN_H_ */

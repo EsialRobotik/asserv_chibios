@@ -47,9 +47,11 @@ float speed_controller_left_speed_set[NB_PI_SUBSET] = { 500.0, 500.0, 500.0 };
 #define COMMAND_MANAGER_GOTO_ANGLE_THRESHOLD_RAD (M_PI/8)
 #define COMMAND_MANAGER_GOTO_CHAIN_NEXT_CMD_DIST_mm (50)
 
-QuadratureEncoder encoders_int(false, false);
-MagEncoders encoders(false, true, false);
-Md22 Md22MotorController(true, true, true);
+QuadratureEncoder encoders_int(false, true, false);
+
+//MagEncoders encoders(false, true, false);
+Md22::I2cPinInit PMXCardPinConf_SCL_SDA = {GPIOB, 8, GPIOB, 9};
+Md22 Md22MotorController(false, true, true, PMXCardPinConf_SCL_SDA, 400);
 
 Regulator angleRegulator(ANGLE_REGULATOR_KP, MAX_SPEED);
 Regulator distanceRegulator(DIST_REGULATOR_KP, MAX_SPEED);
@@ -74,8 +76,8 @@ COMMAND_MANAGER_GOTO_ANGLE_THRESHOLD_RAD, COMMAND_MANAGER_GOTO_CHAIN_NEXT_CMD_DI
 
 AsservMain mainAsserv(ASSERV_THREAD_FREQUENCY, ASSERV_POSITION_DIVISOR,
 ENCODERS_WHEELS_RADIUS, ENCODERS_WHEELS_DISTANCE_MM, ENCODERS_TICKS_BY_TURN, commandManager, Md22MotorController,
-        encoders, odometry, angleRegulator, distanceRegulator, angleSlopeFilter, distSlopeFilter, speedControllerRight,
-        speedControllerLeft, rightPll, leftPll);
+        encoders_int, odometry, angleRegulator, distanceRegulator, angleSlopeFilter, distSlopeFilter,
+        speedControllerRight, speedControllerLeft, rightPll, leftPll);
 
 BaseSequentialStream *outputStream;
 
@@ -85,12 +87,10 @@ static THD_FUNCTION(AsservThread, arg)
     (void) arg;
     chRegSetThreadName("AsservThread");
 
-    chprintf(outputStream,"init...");
-    Md22MotorController.init(&Md22::PMXCardPinConf);
-    encoders.init();
-    encoders.start();
+    Md22MotorController.init();
+    encoders_int.init();
+    encoders_int.start();
     USBStream::init();
-    chprintf(outputStream,"init done.");
 
 //    while (1) //desactivation du mainloop afin de tester MD22 en direct
 //    {
@@ -121,18 +121,17 @@ int main(void)
 
     outputStream = reinterpret_cast<BaseSequentialStream*>(&SD2);
 
-
     // Custom commands
     const ShellCommand shellCommands[] = { { "asserv", &(asservCommand) }, { nullptr, nullptr } };
     ShellConfig shellCfg = { outputStream, shellCommands,
 #if (SHELL_USE_HISTORY == TRUE)
-                              history_buffer,
-                              sizeof(history_buffer),
+            history_buffer,
+            sizeof(history_buffer),
 #endif
 #if (SHELL_USE_COMPLETION == TRUE)
-                              completion_buffer
+            completion_buffer
 #endif
-            };
+        };
 
     thread_t *shellThd = chThdCreateStatic(wa_shell, sizeof(wa_shell), LOWPRIO, shellThread, &shellCfg);
     chRegSetThreadNameX(shellThd, "shell");
@@ -290,7 +289,7 @@ void asservCommand(BaseSequentialStream *chp, int argc, char **argv)
         bool enable = !(atoi(argv[1]) == 0);
         chprintf(outputStream, "%s asserv motion \r\n", (enable ? "enabling" : "disabling"));
 
-        //mainAsserv.enableMotion(enable);
+        mainAsserv.enableMotion(enable);
     } else if (!strcmp(argv[0], "startPanel")) {
         chBSemSignal(&controlPanelSemaphore);
     } else if (!strcmp(argv[0], "enablepolar")) {
@@ -314,7 +313,7 @@ void asservCommand(BaseSequentialStream *chp, int argc, char **argv)
         mainAsserv.resetToNormalMode();
         commandManager.addGoToEnchainement(365, -270);
         commandManager.addGoToEnchainement(550, -385);
-        commandManager.addGoToEnchainement(490, -590);
+        /*commandManager.addGoToEnchainement(490, -590);
         commandManager.addGoToEnchainement(295, -720);
         commandManager.addGoToEnchainement(180, -1000);
         commandManager.addGoToEnchainement(390, -1100);
@@ -322,24 +321,26 @@ void asservCommand(BaseSequentialStream *chp, int argc, char **argv)
         commandManager.addGoToEnchainement(395, -630);
         commandManager.addGoToEnchainement(300, -440);
         commandManager.addGoTo(300, -250);
-        commandManager.addGoToAngle(1000, -250);
+        commandManager.addGoToAngle(1000, -250);*/
         commandManager.addStraightLine(-200);
 
     } else if (!strcmp(argv[0], "md22speedlr")) {
         int speedGoalL = atoi(argv[1]);
         int speedGoalR = atoi(argv[2]);
+        mainAsserv.enableMotion(false);
         Md22MotorController.setMotorLeftSpeed(speedGoalL);
         Md22MotorController.setMotorRightSpeed(speedGoalR);
         chprintf(outputStream, "Motors at %d %d\r\n", speedGoalL, speedGoalR);
 
     } else if (!strcmp(argv[0], "encodervalues")) {
+        mainAsserv.enableMotion(false);
         int16_t encoderDeltaRight_tmp = 0;
         int16_t encoderDeltaLeft_tmp = 0;
         int32_t encoderLSum = 0;
         int32_t encoderRSum = 0;
-        encoders.getValues(&encoderDeltaRight_tmp, &encoderDeltaLeft_tmp);
+        encoders_int.getValues(&encoderDeltaRight_tmp, &encoderDeltaLeft_tmp);
 
-        encoders.getEncodersTotalCount(&encoderRSum, &encoderLSum);
+        encoders_int.getEncodersTotalCount(&encoderRSum, &encoderLSum);
         chprintf(outputStream, "encoder TOTL %d TOTR %d\r\n", encoderLSum, encoderRSum);
     } else if (!strcmp(argv[0], "test")) {
 
