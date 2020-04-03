@@ -87,7 +87,7 @@ static THD_FUNCTION(AsservThread, arg)
     (void) arg;
     chRegSetThreadName("AsservThread");
 
-    Md22MotorController.init();
+    Md22MotorController.init(&Md22::esialCardPinConf);
     encoders.init();
     encoders.start();
     USBStream::init();
