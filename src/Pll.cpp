@@ -29,7 +29,6 @@ void Pll::update(int16_t deltaTicks, float deltaT)
         m_speed = 0.0f;
 }
 
-
 void Pll::setBandwidth(float bandwidth)
 {
     m_kp = 2.0f * bandwidth;

@@ -2,16 +2,10 @@
 #include "ch.h"
 #include "hal.h"
 
-__extension__ static QEIConfig qeicfg1 = { .mode = QEI_MODE_QUADRATURE, .resolution = QEI_BOTH_EDGES, .dirinv =
-        QEI_DIRINV_FALSE, .overflow = QEI_OVERFLOW_WRAP, .min = 0, .max = 0, .notify_cb = nullptr, .overflow_cb =
-        nullptr };
-
-static QEIConfig qeicfg2 = { .mode = QEI_MODE_QUADRATURE, .resolution = QEI_BOTH_EDGES, .dirinv = QEI_DIRINV_FALSE,
-        .overflow = QEI_OVERFLOW_WRAP, .min = 0, .max = 0, .notify_cb = nullptr, .overflow_cb = nullptr };
-
 MagEncoders::MagEncoders(bool is1EncoderRight, bool invertEncoderR, bool invertEncoderL) :
         Encoders()
 {
+    /*
     m_invertEncoderR = invertEncoderR;
     m_invertEncoderL = invertEncoderL;
     m_encoderRSum = 0;
@@ -19,6 +13,8 @@ MagEncoders::MagEncoders(bool is1EncoderRight, bool invertEncoderR, bool invertE
     m_encoder1Previous = 0;
     m_encoder2Previous = 0;
     m_is1EncoderRight = is1EncoderRight;
+    */
+
 }
 
 MagEncoders::~MagEncoders()
@@ -27,6 +23,7 @@ MagEncoders::~MagEncoders()
 
 void MagEncoders::init()
 {
+    /*
     // Encoder 1
     palSetPadMode(GPIOA, 7, PAL_MODE_ALTERNATE(2)); //TIM3_chan2
     palSetPadMode(GPIOC, 6, PAL_MODE_ALTERNATE(2)); //TIM3_chan1
@@ -36,23 +33,22 @@ void MagEncoders::init()
     palSetPadMode(GPIOA, 1, PAL_MODE_ALTERNATE(1)); //TIM2_chan1
     palSetPadMode(GPIOA, 0, PAL_MODE_ALTERNATE(1)); //TIM2_chan2
     qeiStart(&QEID2, &qeicfg2);
+    */
 }
 
 void MagEncoders::start()
 {
-    qeiEnable (&QEID3);
-    qeiEnable (&QEID2);
+
 }
 
 void MagEncoders::stop()
 {
-    qeiDisable (&QEID3);
-    qeiDisable (&QEID2);
+
 }
 
 void MagEncoders::getValues(int16_t *encoderRight, int16_t *encoderLeft)
 {
-
+/*
     int16_t encoder2 = qeiGetCount(&QEID2);
     int16_t encoder1 = qeiGetCount(&QEID3);
 
@@ -74,10 +70,13 @@ void MagEncoders::getValues(int16_t *encoderRight, int16_t *encoderLeft)
 
     m_encoder1Previous = encoder1;
     m_encoder2Previous = encoder2;
+    */
 }
 
 void MagEncoders::getEncodersTotalCount(int32_t *encoderRight, int32_t *encoderLeft)
 {
+    /*
     *encoderRight = m_encoderRSum;
     *encoderLeft = m_encoderLSum;
+    */
 }

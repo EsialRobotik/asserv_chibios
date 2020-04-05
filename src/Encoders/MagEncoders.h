@@ -27,6 +27,4 @@ private:
     bool m_is1EncoderRight;
 };
 
-
-
 #endif /* SRC_ENCODERS_MAGENCODERS_CPP_ */
