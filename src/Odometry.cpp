@@ -41,13 +41,11 @@ void Odometry::refresh(float m_encoderDeltaRight_mm, float m_encoderDeltaLeft_mm
     double deltaTheta = double(diffCount) / double(m_encoderWheelsDistance_mm); // En radian
 
     if (diffCount == 0)    // On considère le mouvement comme une ligne droite
-    {
+            {
         // Mise à jour de la position
         m_X_mm += deltaDist * cos(m_theta_rad);
         m_Y_mm += deltaDist * sin(m_theta_rad);
-    }
-    else
-    {
+    } else {
         //On approxime en considérant que le robot suit un arc de cercle
         // On calcule le rayon de courbure du cercle
         float R = float(deltaDist) / deltaTheta;

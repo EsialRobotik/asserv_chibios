@@ -6,21 +6,27 @@
 class Pll
 {
 
-    public:
-        explicit Pll(float bandwidth);
+public:
+    explicit Pll(float bandwidth);
 
-        void update(int16_t deltaPosition, float deltaT);
+    void update(int16_t deltaPosition, float deltaT);
 
-        void setBandwidth(float bandwidth);
-        float getSpeed() { return m_speed; }
-        float getPosition() { return m_position; }
+    void setBandwidth(float bandwidth);
+    float getSpeed()
+    {
+        return m_speed;
+    }
+    float getPosition()
+    {
+        return m_position;
+    }
 
-    private:
-        float m_kp;
-        float m_ki;
-        float m_position;
-        float m_speed;
-        int64_t m_count;
+private:
+    float m_kp;
+    float m_ki;
+    float m_position;
+    float m_speed;
+    int64_t m_count;
 };
 
 #endif /* SRC_PLL_H_ */

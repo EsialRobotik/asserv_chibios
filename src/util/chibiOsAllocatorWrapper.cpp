@@ -5,7 +5,7 @@ static bool heapAllocation = true;
 
 void deactivateHeapAllocation()
 {
-	heapAllocation = false;
+    heapAllocation = false;
 }
 
 void* operator new(size_t size)
@@ -32,7 +32,6 @@ void* operator new(size_t size, stkalign_t alignment)
     return chHeapAllocAligned(nullptr, size, alignment);
 }
 
-
 void operator delete(void* ptr) noexcept
 {
     chHeapFree(ptr);
@@ -45,13 +44,13 @@ void operator delete[](void* ptr) noexcept
 
 void operator delete(void* ptr, size_t sz)
 {
-    (void)sz;
+    (void) sz;
     chHeapFree(ptr);
 }
 
 void operator delete[](void* ptr, size_t sz)
 {
-    (void)sz;
+    (void) sz;
     chHeapFree(ptr);
 }
 
@@ -72,6 +71,4 @@ extern "C" void free(void *alloc)
 {
     chHeapFree(alloc);
 }
-
-
 

@@ -59,8 +59,7 @@ void* USBStream::SendCurrentStream()
 
 void USBStream::sendFullBuffer()
 {
-    if (m_currentPtr != NULL)
-    {
+    if (m_currentPtr != NULL) {
         *m_currentPtr = m_currentStruct;
         obqPostFullBuffer(&SDU1.obqueue, sizeof(UsbStreamSample));
     }
@@ -69,14 +68,12 @@ void USBStream::sendFullBuffer()
 void USBStream::getEmptyBuffer()
 {
     msg_t msg = obqGetEmptyBufferTimeout(&SDU1.obqueue, 0);
-    if (msg == MSG_OK)
-    {
+    if (msg == MSG_OK) {
         m_currentPtr = (UsbStreamSample*) SDU1.obqueue.ptr;
         uint32_t available_size = ((uint32_t) SDU1.obqueue.top - (uint32_t) SDU1.obqueue.ptr);
-        chDbgAssert(available_size >= (sizeof(UsbStreamSample) + 4), "Not enough space in the free buffer. Did you set a correct USB buffer size ?");
-    }
-    else
-    {
+        chDbgAssert(available_size >= (sizeof(UsbStreamSample) + 4),
+                "Not enough space in the free buffer. Did you set a correct USB buffer size ?");
+    } else {
         m_currentPtr = NULL;
     }
 }
@@ -84,8 +81,7 @@ void USBStream::getEmptyBuffer()
 void USBStream::getFullBuffer(void **ptr, uint32_t *size)
 {
     *size = 0;
-    if (!is_usb_serial_configured())
-    {
+    if (!is_usb_serial_configured()) {
         /*
          *  Workaround :
          *   When USB isn't plugged, ibqGetFullBufferTimeout return MSG_RESET immediately and this thread stuck others threads.

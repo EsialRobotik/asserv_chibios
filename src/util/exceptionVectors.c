@@ -177,4 +177,6 @@ void __assert_func(const char * assertion, const char * file, unsigned int line,
  *	 Et Giovanni il est d'accord avec moi en plus ==> http://www.chibios.com/forum/viewtopic.php?t=4172
  */
 __attribute__((used))
-void _fini(void) { }
+void _fini(void)
+{
+}
