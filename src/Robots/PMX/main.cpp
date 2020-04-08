@@ -53,7 +53,7 @@ QuadratureEncoder encoders_int(false, true, false);
 Md22::I2cPinInit PMXCardPinConf_SCL_SDA = {GPIOB, 8, GPIOB, 9};
 //Md22::I2cPinInit ESIALCardPinConf_SCL_SDA = {GPIOB, 6, GPIOB, 7};
 
-Md22 Md22MotorController(false, true, true, PMXCardPinConf_SCL_SDA, 400);
+Md22 Md22MotorController(false, true, true, &PMXCardPinConf_SCL_SDA, 400000);
 
 Regulator angleRegulator(ANGLE_REGULATOR_KP, MAX_SPEED);
 Regulator distanceRegulator(DIST_REGULATOR_KP, MAX_SPEED);
@@ -329,13 +329,13 @@ void asservCommand(BaseSequentialStream *chp, int argc, char **argv)
     } else if (!strcmp(argv[0], "md22speedlr")) {
         int speedGoalL = atoi(argv[1]);
         int speedGoalR = atoi(argv[2]);
-        mainAsserv.enableMotion(false);
+        mainAsserv.enableMotors(false);
         Md22MotorController.setMotorLeftSpeed(speedGoalL);
         Md22MotorController.setMotorRightSpeed(speedGoalR);
         chprintf(outputStream, "Motors at %d %d\r\n", speedGoalL, speedGoalR);
 
     } else if (!strcmp(argv[0], "encodervalues")) {
-        mainAsserv.enableMotion(false);
+        mainAsserv.enableMotors(false);
         int16_t encoderDeltaRight_tmp = 0;
         int16_t encoderDeltaLeft_tmp = 0;
         int32_t encoderLSum = 0;
