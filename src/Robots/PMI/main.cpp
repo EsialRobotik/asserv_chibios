@@ -54,7 +54,7 @@ float speed_controller_left_speed_set[NB_PI_SUBSET] = {500.0, 500.0, 500.0};
 
 QuadratureEncoder encoders(false,false);
 Md22::I2cPinInit ESIALCardPinConf_SCL_SDA = {GPIOB, 6, GPIOB, 7};
-Md22 Md22MotorController(true,true,false, ESIALCardPinConf_SCL_SDA, 400);
+Md22 Md22MotorController(true,true,false, &ESIALCardPinConf_SCL_SDA, 100000);
 
 Regulator angleRegulator(ANGLE_REGULATOR_KP, MAX_SPEED_MM_PER_SEC);
 Regulator distanceRegulator(DIST_REGULATOR_KP, MAX_SPEED_MM_PER_SEC);
