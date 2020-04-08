@@ -149,6 +149,7 @@ CPPSRC = $(ALLCPPSRC) \
        $(SRCDIR)/motorController/Md22.cpp \
        $(SRCDIR)/USBStream.cpp \
        $(SRCDIR)/Encoders/QuadratureEncoder.cpp \
+       $(SRCDIR)/Encoders/ams_as5048b.cpp \
        $(SRCDIR)/Encoders/MagEncoders.cpp \
        $(SRCDIR)/AsservMain.cpp \
        $(SRCDIR)/SpeedController.cpp \
@@ -159,6 +160,7 @@ CPPSRC = $(ALLCPPSRC) \
        $(SRCDIR)/commandManager/CommandManager.cpp \
        $(SRCDIR)/commandManager/CMDList/CMDList.cpp \
        $(SRCDIR)/util/chibiOsAllocatorWrapper.cpp
+
     
 
 # List ASM source files here.
