@@ -108,10 +108,8 @@ void AsservMain::mainLoop()
 
         if (m_asservMode == normal_mode || m_asservMode == regulator_output_control) {
             // On limite l'acceleration sur la sortie du regulateur de distance et d'angle
-            m_distSpeedLimited = m_distanceRegulatorSlopeFilter.filter(m_loopPeriod,
-                    m_distRegulatorOutputSpeedConsign);
-            m_angleSpeedLimited = m_angleRegulatorSlopeFilter.filter(m_loopPeriod,
-                    m_angleRegulatorOutputSpeedConsign);
+            m_distSpeedLimited = m_distanceRegulatorSlopeFilter.filter(m_loopPeriod, m_distRegulatorOutputSpeedConsign);
+            m_angleSpeedLimited = m_angleRegulatorSlopeFilter.filter(m_loopPeriod, m_angleRegulatorOutputSpeedConsign);
 
             // Mise à jour des consignes en vitesse avec acceleration limitée
             m_speedControllerRight.setSpeedGoal(m_distSpeedLimited + m_angleSpeedLimited);
@@ -123,8 +121,7 @@ void AsservMain::mainLoop()
              */
             float rightWheelSpeed = m_distanceRegulatorSlopeFilter.filter(m_loopPeriod,
                     m_directSpeedMode_rightWheelSpeed);
-            float leftWheelSpeed = m_angleRegulatorSlopeFilter.filter(m_loopPeriod,
-                    m_directSpeedMode_leftWheelSpeed);
+            float leftWheelSpeed = m_angleRegulatorSlopeFilter.filter(m_loopPeriod, m_directSpeedMode_leftWheelSpeed);
             m_speedControllerRight.setSpeedGoal(rightWheelSpeed);
             m_speedControllerLeft.setSpeedGoal(leftWheelSpeed);
         }
@@ -205,10 +202,10 @@ void AsservMain::enableMotors(bool enable)
         // Ici, il faut reset les intégrateurs des asserv en vitesse
         m_speedControllerLeft.resetIntegral();
         m_speedControllerRight.resetIntegral();
-    }
-    else {
-        m_motorController.setMotorRightSpeed(0);
-        m_motorController.setMotorLeftSpeed(0);
+    } else {
+        //DO NOTHING pour permettre des tests unitaires sur les moteurs
+        //m_motorController.setMotorRightSpeed(0);
+        //m_motorController.setMotorLeftSpeed(0);
     }
 }
 

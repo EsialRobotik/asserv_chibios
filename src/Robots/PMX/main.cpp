@@ -50,7 +50,7 @@ float speed_controller_left_speed_set[NB_PI_SUBSET] = { 500.0, 500.0, 500.0 };
 QuadratureEncoder encoders_int(false, true, false);
 
 //MagEncoders encoders(false, true, false);
-Md22::I2cPinInit PMXCardPinConf_SCL_SDA = {GPIOB, 8, GPIOB, 9};
+Md22::I2cPinInit PMXCardPinConf_SCL_SDA = { GPIOB, 8, GPIOB, 9 };
 //Md22::I2cPinInit ESIALCardPinConf_SCL_SDA = {GPIOB, 6, GPIOB, 7};
 
 Md22 Md22MotorController(false, true, true, &PMXCardPinConf_SCL_SDA, 400000);
@@ -161,8 +161,7 @@ int main(void)
 void asservCommand(BaseSequentialStream *chp, int argc, char **argv)
 {
     auto printUsage = []() {
-        chprintf(outputStream,"Usage :");
-        chprintf(outputStream," - asserv enablemotion 0|1\r\n");
+        chprintf(outputStream,"Usage :\r\n");
         chprintf(outputStream," - asserv enablemotor 0|1\r\n");
         chprintf(outputStream," - asserv enablepolar 0|1\r\n");
         chprintf(outputStream," - asserv startPanel \r\n");
@@ -287,11 +286,6 @@ void asservCommand(BaseSequentialStream *chp, int argc, char **argv)
         chprintf(outputStream, "%s motor output\r\n", (enable ? "enabling" : "disabling"));
 
         mainAsserv.enableMotors(enable);
-    } else if (!strcmp(argv[0], "enablemotion")) {
-        bool enable = !(atoi(argv[1]) == 0);
-        chprintf(outputStream, "%s asserv motion \r\n", (enable ? "enabling" : "disabling"));
-
-        mainAsserv.enableMotion(enable);
     } else if (!strcmp(argv[0], "startPanel")) {
         chBSemSignal(&controlPanelSemaphore);
     } else if (!strcmp(argv[0], "enablepolar")) {
@@ -307,24 +301,24 @@ void asservCommand(BaseSequentialStream *chp, int argc, char **argv)
         mainAsserv.resetToNormalMode();
         commandManager.addGoTo(X, Y);
     } else if (!strcmp(argv[0], "gototest")) {
-//                  commandManager.addGoToEnchainement(450,-200);
-//                  commandManager.addGoToEnchainement(450,-600);
-//                  commandManager.addGoToEnchainement(300,-400);
-//                  commandManager.addGoTo(150,0);
+//        commandManager.addGoToEnchainement(450, -200);
+//        commandManager.addGoToEnchainement(450, -600);
+//        commandManager.addGoToEnchainement(300, -400);
+//        commandManager.addGoTo(150,0);
 
         mainAsserv.resetToNormalMode();
-        commandManager.addGoToEnchainement(365, -270);
-        commandManager.addGoToEnchainement(550, -385);
-        /*commandManager.addGoToEnchainement(490, -590);
-        commandManager.addGoToEnchainement(295, -720);
-        commandManager.addGoToEnchainement(180, -1000);
-        commandManager.addGoToEnchainement(390, -1100);
-        commandManager.addGoToEnchainement(550, -900);
-        commandManager.addGoToEnchainement(395, -630);
+//        commandManager.addGoToEnchainement(365, -270);
+//        commandManager.addGoToEnchainement(550, -385);
+//        commandManager.addGoToEnchainement(490, -590);
+//        commandManager.addGoToEnchainement(295, -720);
+//        commandManager.addGoToEnchainement(180, -1000);
+//        commandManager.addGoToEnchainement(390, -1100);
+//        commandManager.addGoToEnchainement(550, -900);
+//        commandManager.addGoToEnchainement(395, -630);
         commandManager.addGoToEnchainement(300, -440);
         commandManager.addGoTo(300, -250);
-        commandManager.addGoToAngle(1000, -250);*/
-        commandManager.addStraightLine(-200);
+//        commandManager.addGoToAngle(1000, -250);
+//        commandManager.addStraightLine(-200);
 
     } else if (!strcmp(argv[0], "md22speedlr")) {
         int speedGoalL = atoi(argv[1]);
