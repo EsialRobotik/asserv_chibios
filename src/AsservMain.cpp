@@ -36,7 +36,6 @@ AsservMain::AsservMain(uint16_t loopFrequency, uint16_t speedPositionLoopDivisor
     m_asservMode = normal_mode;
     m_directSpeedMode_rightWheelSpeed = 0;
     m_directSpeedMode_leftWheelSpeed = 0;
-    m_enableMotion = true;
 }
 
 float AsservMain::convertSpeedTommSec(float speed_ticksPerSec)
@@ -61,6 +60,9 @@ float AsservMain::estimateDeltaDistance(int16_t deltaCountRight, int16_t deltaCo
 
 void AsservMain::mainLoop()
 {
+    m_motorController.setMotorRightSpeed(0);
+    m_motorController.setMotorLeftSpeed(0);
+
     const time_conv_t loopPeriod_ms = (m_loopPeriod * 1000.0);
     systime_t time = chVTGetSystemTime();
     time += TIME_MS2I(loopPeriod_ms);
@@ -72,111 +74,87 @@ void AsservMain::mainLoop()
         // Mise à jour de la position en polaire
         m_odometry.refresh(encoderDeltaRight * m_encodermmByTicks, encoderDeltaLeft * m_encodermmByTicks);
 
-        if (m_enableMotion) {
+        // Estimation & mise à jour des feedbacks
+        float deltaAngle_radian = estimateDeltaAngle(encoderDeltaRight, encoderDeltaLeft);
+        float deltaDistance_mm = estimateDeltaDistance(encoderDeltaRight, encoderDeltaLeft);
 
-            // Estimation & mise à jour des feedbacks
-            float deltaAngle_radian = estimateDeltaAngle(encoderDeltaRight, encoderDeltaLeft);
-            float deltaDistance_mm = estimateDeltaDistance(encoderDeltaRight, encoderDeltaLeft);
+        m_angleRegulator.updateFeedback(deltaAngle_radian);
+        m_distanceRegulator.updateFeedback(deltaDistance_mm);
 
-            m_angleRegulator.updateFeedback(deltaAngle_radian);
-            m_distanceRegulator.updateFeedback(deltaDistance_mm);
+        /* Calculer une nouvelle consigne de vitesse a chaque  ASSERV_POSITION_DIVISOR tour de boucle
+         * L'asserv en vitesse étant commandé par l'asserv en position, on laisse qq'e tours de boucle
+         * à l'asserv en vitesse pour atteindre sa consigne.
+         */
+        if (m_asservCounter == m_speedPositionLoopDivisor && m_enablePolar) {
+            m_commandManager.update(m_odometry.getX(), m_odometry.getY(), m_odometry.getTheta());
 
-            /* Calculer une nouvelle consigne de vitesse a chaque  ASSERV_POSITION_DIVISOR tour de boucle
-             * L'asserv en vitesse étant commandé par l'asserv en position, on laisse qq'e tours de boucle
-             * à l'asserv en vitesse pour atteindre sa consigne.
-             */
-            if (m_asservCounter == m_speedPositionLoopDivisor && m_enablePolar) {
-                m_commandManager.update(m_odometry.getX(), m_odometry.getY(), m_odometry.getTheta());
-
-                if (m_asservMode == normal_mode) {
-                    m_angleRegulatorOutputSpeedConsign = m_angleRegulator.updateOutput(m_commandManager.getAngleGoal());
-                    m_distRegulatorOutputSpeedConsign = m_distanceRegulator.updateOutput(
-                            m_commandManager.getDistanceGoal());
-                }
-
-                m_asservCounter = 0;
+            if (m_asservMode == normal_mode) {
+                m_angleRegulatorOutputSpeedConsign = m_angleRegulator.updateOutput(m_commandManager.getAngleGoal());
+                m_distRegulatorOutputSpeedConsign = m_distanceRegulator.updateOutput(
+                        m_commandManager.getDistanceGoal());
             }
 
-            /*
-             * Regulation en vitesse
-             */
-            m_pllRight.update(encoderDeltaRight, m_loopPeriod);
-            float estimatedSpeedRight = convertSpeedTommSec(m_pllRight.getSpeed());
-
-            m_pllLeft.update(encoderDeltaLeft, m_loopPeriod);
-            float estimatedSpeedLeft = convertSpeedTommSec(m_pllLeft.getSpeed());
-
-            if (m_asservMode == normal_mode || m_asservMode == regulator_output_control) {
-                // On limite l'acceleration sur la sortie du regulateur de distance et d'angle
-                m_distSpeedLimited = m_distanceRegulatorSlopeFilter.filter(m_loopPeriod,
-                        m_distRegulatorOutputSpeedConsign);
-                m_angleSpeedLimited = m_angleRegulatorSlopeFilter.filter(m_loopPeriod,
-                        m_angleRegulatorOutputSpeedConsign);
-
-                // Mise à jour des consignes en vitesse avec acceleration limitée
-                m_speedControllerRight.setSpeedGoal(m_distSpeedLimited + m_angleSpeedLimited);
-                m_speedControllerLeft.setSpeedGoal(m_distSpeedLimited - m_angleSpeedLimited);
-            } else {
-                /* Ici, on ajoute un mode de fonctionnement pour pouvoir controler indépendamment les roues avec l'IHM ou le shell.
-                 * C'est batard, et cela ne doit pas être utilisé autrement que pour faire du réglage
-                 *      on réutilise les filtres de pente pour ne pas avoir à en instancier d'autres
-                 */
-                float rightWheelSpeed = m_distanceRegulatorSlopeFilter.filter(m_loopPeriod,
-                        m_directSpeedMode_rightWheelSpeed);
-                float leftWheelSpeed = m_angleRegulatorSlopeFilter.filter(m_loopPeriod,
-                        m_directSpeedMode_leftWheelSpeed);
-                m_speedControllerRight.setSpeedGoal(rightWheelSpeed);
-                m_speedControllerLeft.setSpeedGoal(leftWheelSpeed);
-            }
-
-            float outputSpeedRight = m_speedControllerRight.update(estimatedSpeedRight);
-            float outputSpeedLeft = m_speedControllerLeft.update(estimatedSpeedLeft);
-
-            if (m_enableMotors) {
-                m_motorController.setMotorRightSpeed(outputSpeedRight);
-                m_motorController.setMotorLeftSpeed(outputSpeedLeft);
-            } else {
-                m_motorController.setMotorRightSpeed(0);
-                m_motorController.setMotorLeftSpeed(0);
-            }
-
-            USBStream::instance()->setSpeedEstimatedRight(estimatedSpeedRight);
-            USBStream::instance()->setSpeedEstimatedLeft(estimatedSpeedLeft);
-            USBStream::instance()->setSpeedGoalRight(m_speedControllerRight.getSpeedGoal());
-            USBStream::instance()->setSpeedGoalLeft(m_speedControllerLeft.getSpeedGoal());
-            USBStream::instance()->setSpeedOutputRight(outputSpeedRight);
-            USBStream::instance()->setSpeedOutputLeft(outputSpeedLeft);
-            USBStream::instance()->setSpeedIntegratedOutputRight(m_speedControllerRight.getIntegratedOutput());
-            USBStream::instance()->setSpeedIntegratedOutputLeft(m_speedControllerLeft.getIntegratedOutput());
-
-            USBStream::instance()->setAngleGoal(m_commandManager.getAngleGoal());
-            USBStream::instance()->setAngleAccumulator(m_angleRegulator.getAccumulator());
-            USBStream::instance()->setAngleOutput(m_angleRegulatorOutputSpeedConsign);
-            USBStream::instance()->setAngleOutputLimited(m_angleSpeedLimited);
-
-            USBStream::instance()->setDistGoal(m_commandManager.getDistanceGoal());
-            USBStream::instance()->setDistAccumulator(m_distanceRegulator.getAccumulator());
-            USBStream::instance()->setDistOutput(m_distRegulatorOutputSpeedConsign);
-            USBStream::instance()->setDistOutputLimited(m_distSpeedLimited);
-        } else {
-            USBStream::instance()->setSpeedEstimatedRight(0);
-            USBStream::instance()->setSpeedEstimatedLeft(0);
-            USBStream::instance()->setSpeedGoalRight(0);
-            USBStream::instance()->setSpeedGoalLeft(0);
-            USBStream::instance()->setSpeedOutputRight(0);
-            USBStream::instance()->setSpeedOutputLeft(0);
-            USBStream::instance()->setSpeedIntegratedOutputRight(0);
-            USBStream::instance()->setSpeedIntegratedOutputLeft(0);
-            USBStream::instance()->setAngleGoal(0);
-            USBStream::instance()->setAngleAccumulator(0);
-            USBStream::instance()->setAngleOutput(0);
-            USBStream::instance()->setAngleOutputLimited(0);
-
-            USBStream::instance()->setDistGoal(0);
-            USBStream::instance()->setDistAccumulator(0);
-            USBStream::instance()->setDistOutput(0);
-            USBStream::instance()->setDistOutputLimited(0);
+            m_asservCounter = 0;
         }
+
+        /*
+         * Regulation en vitesse
+         */
+        m_pllRight.update(encoderDeltaRight, m_loopPeriod);
+        float estimatedSpeedRight = convertSpeedTommSec(m_pllRight.getSpeed());
+
+        m_pllLeft.update(encoderDeltaLeft, m_loopPeriod);
+        float estimatedSpeedLeft = convertSpeedTommSec(m_pllLeft.getSpeed());
+
+        if (m_asservMode == normal_mode || m_asservMode == regulator_output_control) {
+            // On limite l'acceleration sur la sortie du regulateur de distance et d'angle
+            m_distSpeedLimited = m_distanceRegulatorSlopeFilter.filter(m_loopPeriod,
+                    m_distRegulatorOutputSpeedConsign);
+            m_angleSpeedLimited = m_angleRegulatorSlopeFilter.filter(m_loopPeriod,
+                    m_angleRegulatorOutputSpeedConsign);
+
+            // Mise à jour des consignes en vitesse avec acceleration limitée
+            m_speedControllerRight.setSpeedGoal(m_distSpeedLimited + m_angleSpeedLimited);
+            m_speedControllerLeft.setSpeedGoal(m_distSpeedLimited - m_angleSpeedLimited);
+        } else {
+            /* Ici, on ajoute un mode de fonctionnement pour pouvoir controler indépendamment les roues avec l'IHM ou le shell.
+             * C'est batard, et cela ne doit pas être utilisé autrement que pour faire du réglage
+             *      on réutilise les filtres de pente pour ne pas avoir à en instancier d'autres
+             */
+            float rightWheelSpeed = m_distanceRegulatorSlopeFilter.filter(m_loopPeriod,
+                    m_directSpeedMode_rightWheelSpeed);
+            float leftWheelSpeed = m_angleRegulatorSlopeFilter.filter(m_loopPeriod,
+                    m_directSpeedMode_leftWheelSpeed);
+            m_speedControllerRight.setSpeedGoal(rightWheelSpeed);
+            m_speedControllerLeft.setSpeedGoal(leftWheelSpeed);
+        }
+
+        float outputSpeedRight = m_speedControllerRight.update(estimatedSpeedRight);
+        float outputSpeedLeft = m_speedControllerLeft.update(estimatedSpeedLeft);
+
+        if (m_enableMotors) {
+            m_motorController.setMotorRightSpeed(outputSpeedRight);
+            m_motorController.setMotorLeftSpeed(outputSpeedLeft);
+        }
+
+        USBStream::instance()->setSpeedEstimatedRight(estimatedSpeedRight);
+        USBStream::instance()->setSpeedEstimatedLeft(estimatedSpeedLeft);
+        USBStream::instance()->setSpeedGoalRight(m_speedControllerRight.getSpeedGoal());
+        USBStream::instance()->setSpeedGoalLeft(m_speedControllerLeft.getSpeedGoal());
+        USBStream::instance()->setSpeedOutputRight(outputSpeedRight);
+        USBStream::instance()->setSpeedOutputLeft(outputSpeedLeft);
+        USBStream::instance()->setSpeedIntegratedOutputRight(m_speedControllerRight.getIntegratedOutput());
+        USBStream::instance()->setSpeedIntegratedOutputLeft(m_speedControllerLeft.getIntegratedOutput());
+
+        USBStream::instance()->setAngleGoal(m_commandManager.getAngleGoal());
+        USBStream::instance()->setAngleAccumulator(m_angleRegulator.getAccumulator());
+        USBStream::instance()->setAngleOutput(m_angleRegulatorOutputSpeedConsign);
+        USBStream::instance()->setAngleOutputLimited(m_angleSpeedLimited);
+
+        USBStream::instance()->setDistGoal(m_commandManager.getDistanceGoal());
+        USBStream::instance()->setDistAccumulator(m_distanceRegulator.getAccumulator());
+        USBStream::instance()->setDistOutput(m_distRegulatorOutputSpeedConsign);
+        USBStream::instance()->setDistOutputLimited(m_distSpeedLimited);
 
         USBStream::instance()->setOdoX(m_odometry.getX());
         USBStream::instance()->setOdoY(m_odometry.getY());
@@ -228,14 +206,13 @@ void AsservMain::enableMotors(bool enable)
         m_speedControllerLeft.resetIntegral();
         m_speedControllerRight.resetIntegral();
     }
+    else {
+        m_motorController.setMotorRightSpeed(0);
+        m_motorController.setMotorLeftSpeed(0);
+    }
 }
 
 void AsservMain::enablePolar(bool enable)
 {
     m_enablePolar = enable;
-}
-
-void AsservMain::enableMotion(bool enable)
-{
-    m_enableMotion = enable;
 }
