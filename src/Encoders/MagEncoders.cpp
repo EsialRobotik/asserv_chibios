@@ -5,7 +5,7 @@
 MagEncoders::MagEncoders(bool is1EncoderRight, bool invertEncoderR, bool invertEncoderL) :
         Encoders()
 {
-    /*
+
     m_invertEncoderR = invertEncoderR;
     m_invertEncoderL = invertEncoderL;
     m_encoderRSum = 0;
@@ -13,7 +13,6 @@ MagEncoders::MagEncoders(bool is1EncoderRight, bool invertEncoderR, bool invertE
     m_encoder1Previous = 0;
     m_encoder2Previous = 0;
     m_is1EncoderRight = is1EncoderRight;
-    */
 
 }
 
@@ -46,7 +45,7 @@ void MagEncoders::stop()
 
 }
 
-void MagEncoders::getValues(int16_t *encoderRight, int16_t *encoderLeft)
+void MagEncoders::getValues(int16_t *, int16_t *)
 {
 /*
     int16_t encoder2 = qeiGetCount(&QEID2);
@@ -73,7 +72,7 @@ void MagEncoders::getValues(int16_t *encoderRight, int16_t *encoderLeft)
     */
 }
 
-void MagEncoders::getEncodersTotalCount(int32_t *encoderRight, int32_t *encoderLeft)
+void MagEncoders::getEncodersTotalCount(int32_t *, int32_t *)
 {
     /*
     *encoderRight = m_encoderRSum;
