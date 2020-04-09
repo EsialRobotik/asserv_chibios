@@ -203,9 +203,8 @@ void AsservMain::enableMotors(bool enable)
         m_speedControllerLeft.resetIntegral();
         m_speedControllerRight.resetIntegral();
     } else {
-        //DO NOTHING pour permettre des tests unitaires sur les moteurs
-        //m_motorController.setMotorRightSpeed(0);
-        //m_motorController.setMotorLeftSpeed(0);
+        m_motorController.setMotorRightSpeed(0);
+        m_motorController.setMotorLeftSpeed(0);
     }
 }
 

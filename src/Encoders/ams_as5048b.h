@@ -1,4 +1,3 @@
-
 #include "ch.h"
 #include "hal.h"
 #include <math.h>
@@ -41,7 +40,6 @@
 class AMS_AS5048B
 {
 public:
-    AMS_AS5048B(void);
     AMS_AS5048B(uint8_t chipAddress);
 
     void begin(void); // to init the object, must be called in the setup loop
@@ -58,12 +56,12 @@ public:
     uint16_t angleRegR(void); //read raw value of the angle register
     uint8_t diagR(void); //read diagnostic register
     uint16_t magnitudeR(void); //read current magnitude
-    double angleR(int unit = U_RAW, bool newVal = true); //Read current angle or get last measure with unit conversion : RAW, TRN, DEG, RAD, GRAD, MOA, SOA, MILNATO, MILSE, MILRU
+    float angleR(int unit = U_RAW, bool newVal = true); //Read current angle or get last measure with unit conversion : RAW, TRN, DEG, RAD, GRAD, MOA, SOA, MILNATO, MILSE, MILRU
     uint8_t getAutoGain(void);
     uint8_t getDiagReg(void);
 
     void updateMovingAvgExp(void); //measure the current angle and feed the Exponential Moving Average calculation
-    double getMovingAvgExp(int unit = U_RAW); //get Exponential Moving Average calculation
+    float getMovingAvgExp(int unit = U_RAW); //get Exponential Moving Average calculation
     void resetMovingAvgExp(void); //reset Exponential Moving Average calculation values
 
     //variables
@@ -72,11 +70,11 @@ public:
     uint8_t _chipAddress;
     uint8_t _addressRegVal;
     uint16_t _zeroRegVal;
-    double _lastAngleRaw;
-    double _movingAvgExpAngle;
-    double _movingAvgExpSin;
-    double _movingAvgExpCos;
-    double _movingAvgExpAlpha;
+    float _lastAngleRaw;
+    float _movingAvgExpAngle;
+    float _movingAvgExpSin;
+    float _movingAvgExpCos;
+    float _movingAvgExpAlpha;
     int _movingAvgCountLoop;
 
     //methods
@@ -84,8 +82,8 @@ public:
     uint16_t readReg16(uint8_t address); //16 bit value got from 2x8bits registers (7..0 MSB + 5..0 LSB) => 14 bits value
     uint8_t readRegs(uint8_t address, uint8_t len, uint8_t* data);
     void writeReg(uint8_t address, uint8_t value);
-    double convertAngle(int unit, double angle); //RAW, TRN, DEG, RAD, GRAD, MOA, SOA, MILNATO, MILSE, MILRU
-    double getExpAvgRawAngle(void);
+    float convertAngle(int unit, float angle); //RAW, TRN, DEG, RAD, GRAD, MOA, SOA, MILNATO, MILSE, MILRU
+    float getExpAvgRawAngle(void);
     void printDebug(void);
 };
 

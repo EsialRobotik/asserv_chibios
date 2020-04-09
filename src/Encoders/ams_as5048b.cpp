@@ -2,7 +2,7 @@
 /*!
  @file     ams_as5048b.cpp
  @author   SOSAndroid (E. Ha.)
- @license  BSD (see license.txt)
+ @license  BSD
 
  Library to interface the AS5048B magnetic rotary encoder from AMS over the I2C bus
 
@@ -12,6 +12,7 @@
  v1.0.1 - Typo to allow compiling on Codebender.cc (Math.h vs math.h)
  v1.0.2 - setZeroReg() issue raised by @MechatronicsWorkman
  v1.0.3 - Small bug fix and improvement by @DavidHowlett
+ +Modifications PMX to use ChibiOS I2c features
  */
 /**************************************************************************/
 
@@ -19,6 +20,8 @@
 #include <math.h>
 #include "../util/asservMath.h"
 #include "ams_as5048b.h"
+#include "ch.h"
+#include "hal.h"
 
 /*========================================================================*/
 /*                            CONSTRUCTORS                                */
@@ -29,20 +32,6 @@
  Constructor
  */
 /**************************************************************************/
-AMS_AS5048B::AMS_AS5048B(void)
-{
-    _chipAddress = AS5048_ADDRESS;
-    _debugFlag = false;
-    _zeroRegVal = 0;
-    _addressRegVal = 0;
-    _clockWise = false;
-    _movingAvgCountLoop = 0;
-    _movingAvgExpCos = 0.0;
-    _movingAvgExpSin = 0.0;
-    _movingAvgExpAngle = 0.0;
-    _movingAvgExpAlpha = 0.0;
-    _lastAngleRaw = 0.0;
-}
 
 AMS_AS5048B::AMS_AS5048B(uint8_t chipAddress)
 {
@@ -76,30 +65,18 @@ AMS_AS5048B::AMS_AS5048B(uint8_t chipAddress)
 
 void AMS_AS5048B::begin(void)
 {
-
-#ifdef USE_WIREBEGIN_ENABLED
-    Wire.begin(I2C_MASTER, 0x00, I2C_PINS_18_19, I2C_PULLUP_EXT, 400000);
-    Wire.setDefaultTimeout(200000); // 200ms
-#endif
-#ifdef SERIAL_DEBUG_ENABLED
-    _debugFlag = true;
-    if (!Serial) {
-        Serial.begin(9600);
-    }
-#endif
-
     _clockWise = false;
     _lastAngleRaw = 0.0;
     _zeroRegVal = AMS_AS5048B::zeroRegR();
     _addressRegVal = AMS_AS5048B::addressRegR();
-
     AMS_AS5048B::resetMovingAvgExp();
-
     return;
 }
 
 /**************************************************************************/
 /*!
+ *
+ *
  @brief  Toggle debug output to serial
 
  @params
@@ -110,7 +87,6 @@ void AMS_AS5048B::begin(void)
 /**************************************************************************/
 void AMS_AS5048B::toggleDebug(void)
 {
-
     _debugFlag = !_debugFlag;
     return;
 }
@@ -127,7 +103,6 @@ void AMS_AS5048B::toggleDebug(void)
 /**************************************************************************/
 void AMS_AS5048B::setClockWise(bool cw)
 {
-
     _clockWise = cw;
     _lastAngleRaw = 0.0;
     AMS_AS5048B::resetMovingAvgExp();
@@ -146,7 +121,6 @@ void AMS_AS5048B::setClockWise(bool cw)
 /**************************************************************************/
 void AMS_AS5048B::progRegister(uint8_t regVal)
 {
-
     AMS_AS5048B::writeReg(AS5048B_PROG_REG, regVal);
     return;
 }
@@ -163,7 +137,6 @@ void AMS_AS5048B::progRegister(uint8_t regVal)
 /**************************************************************************/
 void AMS_AS5048B::doProg(void)
 {
-
     //enable special programming mode
     AMS_AS5048B::progRegister(0xFD);
     chThdSleepMilliseconds(10);
@@ -227,7 +200,6 @@ void AMS_AS5048B::doProgZero(void)
 /**************************************************************************/
 void AMS_AS5048B::addressRegW(uint8_t regVal)
 {
-
     // write the new chip address to the register
     AMS_AS5048B::writeReg(AS5048B_ADDR_REG, regVal);
 
@@ -249,7 +221,6 @@ void AMS_AS5048B::addressRegW(uint8_t regVal)
 /**************************************************************************/
 uint8_t AMS_AS5048B::addressRegR(void)
 {
-
     return AMS_AS5048B::readReg8(AS5048B_ADDR_REG);
 }
 
@@ -265,7 +236,6 @@ uint8_t AMS_AS5048B::addressRegR(void)
 /**************************************************************************/
 void AMS_AS5048B::setZeroReg(void)
 {
-
     AMS_AS5048B::zeroRegW((uint16_t) 0x00); //Issue closed by @MechatronicsWorkman and @oilXander. The last sequence avoids any offset for the new Zero position
     uint16_t newZero = AMS_AS5048B::readReg16(AS5048B_ANGLMSB_REG);
     AMS_AS5048B::zeroRegW(newZero);
@@ -284,7 +254,6 @@ void AMS_AS5048B::setZeroReg(void)
 /**************************************************************************/
 void AMS_AS5048B::zeroRegW(uint16_t regVal)
 {
-
     AMS_AS5048B::writeReg(AS5048B_ZEROMSB_REG, (uint8_t) (regVal >> 6));
     AMS_AS5048B::writeReg(AS5048B_ZEROLSB_REG, (uint8_t) (regVal & 0x3F));
     return;
@@ -302,7 +271,6 @@ void AMS_AS5048B::zeroRegW(uint16_t regVal)
 /**************************************************************************/
 uint16_t AMS_AS5048B::zeroRegR(void)
 {
-
     return AMS_AS5048B::readReg16(AS5048B_ZEROMSB_REG);
 }
 
@@ -318,13 +286,11 @@ uint16_t AMS_AS5048B::zeroRegR(void)
 /**************************************************************************/
 uint16_t AMS_AS5048B::magnitudeR(void)
 {
-
     return AMS_AS5048B::readReg16(AS5048B_MAGNMSB_REG);
 }
 
 uint16_t AMS_AS5048B::angleRegR(void)
 {
-
     return AMS_AS5048B::readReg16(AS5048B_ANGLMSB_REG);
 }
 
@@ -340,7 +306,6 @@ uint16_t AMS_AS5048B::angleRegR(void)
 /**************************************************************************/
 uint8_t AMS_AS5048B::getAutoGain(void)
 {
-
     return AMS_AS5048B::readReg8(AS5048B_GAIN_REG);
 }
 
@@ -356,7 +321,6 @@ uint8_t AMS_AS5048B::getAutoGain(void)
 /**************************************************************************/
 uint8_t AMS_AS5048B::getDiagReg(void)
 {
-
     return AMS_AS5048B::readReg8(AS5048B_DIAG_REG);
 }
 
@@ -369,19 +333,18 @@ uint8_t AMS_AS5048B::getDiagReg(void)
  @params[in]
  Bool newVal : have a new measurement or use the last read one. True as default
  @returns
- Double angle value converted into the desired unit
+ float angle value converted into the desired unit
  */
 /**************************************************************************/
-double AMS_AS5048B::angleR(int unit, bool newVal)
+float AMS_AS5048B::angleR(int unit, bool newVal)
 {
-
-    double angleRaw;
+    float angleRaw;
 
     if (newVal) {
         if (_clockWise) {
-            angleRaw = (double) (0b11111111111111 - AMS_AS5048B::readReg16(AS5048B_ANGLMSB_REG));
+            angleRaw = (float) (0b11111111111111 - AMS_AS5048B::readReg16(AS5048B_ANGLMSB_REG));
         } else {
-            angleRaw = (double) AMS_AS5048B::readReg16(AS5048B_ANGLMSB_REG);
+            angleRaw = (float) AMS_AS5048B::readReg16(AS5048B_ANGLMSB_REG);
         }
         _lastAngleRaw = angleRaw;
     } else {
@@ -404,10 +367,8 @@ double AMS_AS5048B::angleR(int unit, bool newVal)
 /**************************************************************************/
 void AMS_AS5048B::updateMovingAvgExp(void)
 {
-
     //sine and cosine calculation on angles in radian
-
-    double angle = AMS_AS5048B::angleR(U_RAD, true);
+    float angle = AMS_AS5048B::angleR(U_RAD, true);
 
     if (_movingAvgCountLoop < EXP_MOVAVG_LOOP) {
         _movingAvgExpSin += sin(angle);
@@ -418,8 +379,8 @@ void AMS_AS5048B::updateMovingAvgExp(void)
         }
         _movingAvgCountLoop++;
     } else {
-        double movavgexpsin = _movingAvgExpSin + _movingAvgExpAlpha * (sin(angle) - _movingAvgExpSin);
-        double movavgexpcos = _movingAvgExpCos + _movingAvgExpAlpha * (cos(angle) - _movingAvgExpCos);
+        float movavgexpsin = _movingAvgExpSin + _movingAvgExpAlpha * (sin(angle) - _movingAvgExpSin);
+        float movavgexpcos = _movingAvgExpCos + _movingAvgExpAlpha * (cos(angle) - _movingAvgExpCos);
         _movingAvgExpSin = movavgexpsin;
         _movingAvgExpCos = movavgexpcos;
         _movingAvgExpAngle = getExpAvgRawAngle();
@@ -435,18 +396,16 @@ void AMS_AS5048B::updateMovingAvgExp(void)
  @params[in]
  String unit : string expressing the unit of the angle. Sensor raw value as default
  @returns
- Double exponential moving averaged angle value
+ float exponential moving averaged angle value
  */
 /**************************************************************************/
-double AMS_AS5048B::getMovingAvgExp(int unit)
+float AMS_AS5048B::getMovingAvgExp(int unit)
 {
-
     return AMS_AS5048B::convertAngle(unit, _movingAvgExpAngle);
 }
 
 void AMS_AS5048B::resetMovingAvgExp(void)
 {
-
     _movingAvgExpAngle = 0.0;
     _movingAvgCountLoop = 0;
     _movingAvgExpAlpha = 2.0 / (EXP_MOVAVG_N + 1.0);
@@ -459,95 +418,47 @@ void AMS_AS5048B::resetMovingAvgExp(void)
 
 uint8_t AMS_AS5048B::readReg8(uint8_t address)
 {
-    /*TODO
-     uint8_t readValue;
-     byte requestResult;
-     uint8_t nbByte2Read = 1;
-
-     Wire.beginTransmission(_chipAddress);
-     Wire.write(address);
-     requestResult = Wire.endTransmission(false);
-     if (requestResult) {
-     Serial.print("I2C error: ");
-     Serial.println(requestResult);
-     }
-
-     Wire.requestFrom(_chipAddress, nbByte2Read);
-     readValue = (uint8_t) Wire.read();
-     */
-    return 0;//readValue;
+    uint8_t readValue;
+    readRegs(address, 1, &readValue);
+    return readValue;
 }
 
 uint16_t AMS_AS5048B::readReg16(uint8_t address)
 {
     //16 bit value got from 2 8bits registers (7..0 MSB + 5..0 LSB) => 14 bits value
-    /*TODO
-     uint8_t nbByte2Read = 2;
-     byte requestResult;
-     byte readArray[2];
-     uint16_t readValue = 0;
-
-     Wire.beginTransmission(_chipAddress);
-     Wire.write(address);
-     requestResult = Wire.endTransmission(false);
-     if (requestResult) {
-     Serial.print("I2C error: ");
-     Serial.println(requestResult);
-     }
-
-     Wire.requestFrom(_chipAddress, nbByte2Read);
-     for (byte i = 0; i < nbByte2Read; i++) {
-     readArray[i] = Wire.read();
-     }
-
-     readValue = (((uint16_t) readArray[0]) << 6);
-     readValue += (readArray[1] & 0x3F);*/
-    /*
-     Serial.println(readArray[0], BIN);
-     Serial.println(readArray[1], BIN);
-     Serial.println(readValue, BIN);
-     */
-    return 0;//readValue;
+    uint8_t readArray[2];
+    uint16_t readValue = 0;
+    readRegs(address, 2, readArray);
+    readValue = (((uint16_t) readArray[0]) << 6);
+    readValue += (readArray[1] & 0x3F);
+    return readValue;
 }
 
 uint8_t AMS_AS5048B::readRegs(uint8_t address, uint8_t len, uint8_t* data)
 {
-    /*TODO
-     byte requestResult;
-
-     Wire.beginTransmission(_chipAddress);
-     Wire.write(address);
-     requestResult = Wire.endTransmission(false);
-     if (requestResult) {
-     //Serial.print("I2C error: ");
-     return requestResult;
-     }
-
-     Wire.requestFrom(_chipAddress, len);
-     for (uint16_t i = 0; i < len; i++) {
-     data[i] = Wire.read();
-     }
-     */
+    i2cAcquireBus (&I2CD2);
+    uint8_t cmd[] = { address };
+    msg_t msg = i2cMasterTransmitTimeout(&I2CD2, _chipAddress, cmd, sizeof(cmd), data, len, TIME_MS2I(1));
+    chDbgAssert(msg == MSG_OK, "AMS_AS5048B - i2cMasterReceiveTimeout readRegs ERROR NOK\r\n");
+    i2cReleaseBus(&I2CD2);
     return 0;
 }
 
 void AMS_AS5048B::writeReg(uint8_t address, uint8_t value)
 {
-    /*TODO
-     Wire.beginTransmission(_chipAddress);
-     Wire.write(address);
-     Wire.write(value);
-     Wire.endTransmission();
-     */
+    i2cAcquireBus (&I2CD2);
+    uint8_t cmd[] = { address, value };
+    msg_t msg = i2cMasterTransmitTimeout(&I2CD2, _chipAddress, cmd, sizeof(cmd), NULL, 0, TIME_MS2I(1));
+    chDbgAssert(msg == MSG_OK, "AMS_AS5048B - i2cMasterTransmitTimeout writeReg ERROR NOK\r\n");
+    i2cReleaseBus(&I2CD2);
+
     return;
 }
 
-double AMS_AS5048B::convertAngle(int unit, double angle)
+float AMS_AS5048B::convertAngle(int unit, float angle)
 {
-
     // convert raw sensor reading into angle unit
-
-    double angleConv;
+    float angleConv;
 
     switch (unit) {
     case U_RAW:
@@ -598,11 +509,10 @@ double AMS_AS5048B::convertAngle(int unit, double angle)
     return angleConv;
 }
 
-double AMS_AS5048B::getExpAvgRawAngle(void)
+float AMS_AS5048B::getExpAvgRawAngle(void)
 {
-
-    double angle;
-    double twopi = 2 * M_PI;
+    float angle;
+    float twopi = 2 * M_PI;
 
     if (_movingAvgExpSin < 0.0) {
         angle = twopi - acos(_movingAvgExpCos);
@@ -617,6 +527,5 @@ double AMS_AS5048B::getExpAvgRawAngle(void)
 
 void AMS_AS5048B::printDebug(void)
 {
-
     return;
 }

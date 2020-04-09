@@ -49,10 +49,10 @@ float speed_controller_left_speed_set[NB_PI_SUBSET] = { 500.0, 500.0, 500.0 };
 
 QuadratureEncoder encoders_int(false, true, false);
 
-//MagEncoders encoders(false, true, false);
-Md22::I2cPinInit PMXCardPinConf_SCL_SDA = { GPIOB, 8, GPIOB, 9 };
-//Md22::I2cPinInit ESIALCardPinConf_SCL_SDA = {GPIOB, 6, GPIOB, 7};
+MagEncoders encoders(false, true, false);
 
+Md22::I2cPinInit PMXCardPinConf_SCL_SDA = { GPIOB, 8, GPIOB, 9 };
+//Md22::I2cPinInit PMXCardPinConf_SCL_SDA = {GPIOB, 6, GPIOB, 7};
 Md22 Md22MotorController(false, true, true, &PMXCardPinConf_SCL_SDA, 400000);
 
 Regulator angleRegulator(ANGLE_REGULATOR_KP, MAX_SPEED);
@@ -93,6 +93,7 @@ static THD_FUNCTION(AsservThread, arg)
     encoders_int.init();
     encoders_int.start();
     USBStream::init();
+    encoders.init();
 
 //    while (1) //desactivation du mainloop afin de tester MD22 en direct
 //    {
@@ -149,7 +150,7 @@ int main(void)
 
     deactivateHeapAllocation();
 
-    chThdSetPriority(LOWPRIO);
+    chThdSetPriority (LOWPRIO);
     while (true) {
         palClearPad(GPIOA, GPIOA_LED_GREEN);
         chThdSleepMilliseconds(250);
@@ -186,7 +187,8 @@ void asservCommand(BaseSequentialStream *chp, int argc, char **argv)
         chprintf(outputStream," - asserv gototest\r\n");
         chprintf(outputStream," -------------- \r\n");
         chprintf(outputStream," - asserv md22speedlr [-100=>100] [-100=>100]\r\n");
-        chprintf(outputStream," - asserv encodervalues\r\n");
+        chprintf(outputStream," - asserv intencodersval 0|1\r\n");
+        chprintf(outputStream," - asserv extencodersval 0|1\r\n");
         chprintf(outputStream," - asserv test\r\n");
 
     };
@@ -328,16 +330,44 @@ void asservCommand(BaseSequentialStream *chp, int argc, char **argv)
         Md22MotorController.setMotorRightSpeed(speedGoalR);
         chprintf(outputStream, "Motors at %d %d\r\n", speedGoalL, speedGoalR);
 
-    } else if (!strcmp(argv[0], "encodervalues")) {
+    } else if (!strcmp(argv[0], "intencodersval")) {
+        bool enable = !(atoi(argv[1]) == 0);
         mainAsserv.enableMotors(false);
         int16_t encoderDeltaRight_tmp = 0;
         int16_t encoderDeltaLeft_tmp = 0;
         int32_t encoderLSum = 0;
         int32_t encoderRSum = 0;
-        encoders_int.getValues(&encoderDeltaRight_tmp, &encoderDeltaLeft_tmp);
+        do {
+            encoders_int.getValues(&encoderDeltaRight_tmp, &encoderDeltaLeft_tmp);
+            encoders_int.getEncodersTotalCount(&encoderRSum, &encoderLSum);
+            chprintf(outputStream, "encoder TOTL %d TOTR %d\r\n", encoderLSum, encoderRSum);
+        } while (enable);
+    } else if (!strcmp(argv[0], "extencodersval")) {
+        bool enable = !(atoi(argv[1]) == 0);
+        mainAsserv.enableMotors(false);
+        int16_t encoderDeltaRight_tmp = 0;
+        int16_t encoderDeltaLeft_tmp = 0;
+        int32_t encoderLSum = 0;
+        int32_t encoderRSum = 0;
+        uint8_t agcR = 0;
+        uint8_t agcL = 0;
+        uint8_t diagR = 0;
+        uint8_t diagL = 0;
+        uint16_t magR = 0;
+        uint16_t magL = 0;
+        uint16_t rawR = 0;
+        uint16_t rawL = 0;
 
-        encoders_int.getEncodersTotalCount(&encoderRSum, &encoderLSum);
-        chprintf(outputStream, "encoder TOTL %d TOTR %d\r\n", encoderLSum, encoderRSum);
+        do {
+            encoders.getValuesStatus(&encoderDeltaRight_tmp, &encoderDeltaLeft_tmp, &agcR, &agcL, &diagR, &diagL, &magR,
+                    &magL, &rawR, &rawL);
+            //encoders.getValues(&encoderDeltaRight_tmp, &encoderDeltaLeft_tmp);
+
+            encoders.getEncodersTotalCount(&encoderRSum, &encoderLSum);
+            chprintf(outputStream, "encoder %d\t TOTL %d\tAGC=%d\tDIAG=%d\tMAG=%d\traw=%d : %d\t  TOTR %d\r\n",
+                    encoderDeltaLeft_tmp, encoderLSum, agcL, diagL, magL, rawL, encoderDeltaRight_tmp, encoderRSum);
+            chThdSleepMilliseconds(200);
+        } while (enable);
     } else if (!strcmp(argv[0], "test")) {
 
         USBStream::instance()->setSpeedEstimatedRight(1);
