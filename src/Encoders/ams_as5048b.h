@@ -84,6 +84,7 @@ public:
     void writeReg(uint8_t address, uint8_t value);
     float convertAngle(int unit, float angle); //RAW, TRN, DEG, RAD, GRAD, MOA, SOA, MILNATO, MILSE, MILRU
     float getExpAvgRawAngle(void);
+    uint8_t getAllData(uint8_t *agc, uint8_t *diag, uint16_t *mag, uint16_t *raw);
     void printDebug(void);
 };
 

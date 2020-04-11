@@ -15,7 +15,7 @@ public:
 
     void getEncodersTotalCount(int32_t *encoderRight, int32_t *encoderLeft);
 
-    virtual void getValues(int16_t *encoderRight, int16_t *encoderLeft);
+    virtual void getValues(int16_t *deltaEncoderRight, int16_t *deltaEncoderLeft);
 
 private:
     bool m_invertEncoderL;

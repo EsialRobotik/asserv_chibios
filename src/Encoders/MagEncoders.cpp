@@ -3,6 +3,9 @@
 #include <hal.h>
 #include "util/asservMath.h"
 #include "ams_as5048b.h"
+//#include <chprintf.h>
+
+//extern BaseSequentialStream *outputStream;
 
 MagEncoders::MagEncoders(bool is1EncoderRight, bool invertEncoderRight, bool invertEncoderLeft) :
         Encoders(), m_mysensor1(AS5048B_ADDR(0, 0)), m_mysensor2(AS5048B_ADDR(1, 0))
@@ -37,47 +40,74 @@ void MagEncoders::init()
             PAL_MODE_ALTERNATE(4) | PAL_STM32_OTYPE_OPENDRAIN);
 
     i2cStart(&I2CD2, &m_i2cconfig);
-    //wait 200ms
-    chThdSleepMilliseconds(200);
+    //wait 20ms
+    chThdSleepMilliseconds(20);
 
     m_mysensor1.begin();
     m_mysensor2.begin();
+
+    //verification
+    uint8_t agc = 0;
+    uint8_t diag = 0;
+    uint16_t mag = 0;
+    uint16_t raw = 0;
+    m_mysensor1.getAllData(&agc, &diag, &mag, &raw);
+    chDbgAssert((diag == 1), "init() m_mysensor1 MagEncoders - getAllData (diag == 1) NOK\r\n");
+    chDbgAssert((agc >= 30 && agc <= 70),
+            "init() m_mysensor1 MagEncoders - getAllData (agc >= 30 && agc <= 70) NOK\r\n");
+
+    m_mysensor2.getAllData(&agc, &diag, &mag, &raw);
+    chDbgAssert((diag == 1), "init() m_mysensor2 MagEncoders - getAllData (diag == 1) NOK\r\n");
+    chDbgAssert((agc >= 30 && agc <= 70),
+            "init() m_mysensor2 MagEncoders - getAllData (agc >= 30 && agc <= 70) NOK\r\n");
+
+    //chprintf(outputStream,"MagEncoders::init() done;\r\n");
 }
 
 void MagEncoders::start()
 {
+    m_encoder1Previous = (int16_t) ((m_mysensor1.angleR(U_RAW, true) - 8192.0) * 4.0);
+    m_encoder2Previous = (int16_t) ((m_mysensor2.angleR(U_RAW, true) - 8192.0) * 4.0);
+    m_encoderRSum = 0;
+    m_encoderLSum = 0;
 
+    //chprintf(outputStream,"MagEncoders::start() done; %d %d\r\n",m_encoder1Previous, m_encoder2Previous);
 }
 
 void MagEncoders::stop()
 {
-
+    start();
 }
 
-void MagEncoders::getValues(int16_t *encoderRight, int16_t *encoderLeft)
+void MagEncoders::getValues(int16_t *deltaEncoderRight, int16_t *deltaEncoderLeft)
 {
-    int16_t encoder1 = m_mysensor1.angleR(U_RAW, true);
-    int16_t encoder2 = m_mysensor2.angleR(U_RAW, true);
+    //chprintf(outputStream,"MagEncoders::getValues() done; %d %d\r\n", m_encoder1Previous, m_encoder2Previous);
+    //utilisation du depassement d'un int16
+    //[0;16383] -8192 * 4 = [-32768;32764]
+    int16_t encoder1 = (int16_t) ((m_mysensor1.angleR(U_RAW, true) - 8192.0) * 4.0);
+    int16_t encoder2 = (int16_t) ((m_mysensor2.angleR(U_RAW, true) - 8192.0) * 4.0);
 
     if (m_is1EncoderRight) {
-        *encoderRight = encoder1 - m_encoder1Previous;
-        *encoderLeft = encoder2 - m_encoder2Previous;
+        *deltaEncoderRight = encoder1 - m_encoder1Previous;
+        *deltaEncoderLeft = encoder2 - m_encoder2Previous;
     } else {
-        *encoderRight = encoder2 - m_encoder2Previous;
-        *encoderLeft = encoder1 - m_encoder1Previous;
+        *deltaEncoderRight = encoder2 - m_encoder2Previous;
+        *deltaEncoderLeft = encoder1 - m_encoder1Previous;
     }
 
     if (m_invertEncoderR)
-        *encoderRight = -*encoderRight;
+        *deltaEncoderRight = -*deltaEncoderRight;
     if (m_invertEncoderL)
-        *encoderLeft = -*encoderLeft;
+        *deltaEncoderLeft = -*deltaEncoderLeft;
 
-    m_encoderRSum += *encoderRight;
-    m_encoderLSum += *encoderLeft;
+    *deltaEncoderRight = (int16_t)(*deltaEncoderRight / 4.0);
+    *deltaEncoderLeft = (int16_t)(*deltaEncoderLeft / 4.0);
+
+    m_encoderRSum += (int32_t)(*deltaEncoderRight);
+    m_encoderLSum += (int32_t)(*deltaEncoderLeft);
 
     m_encoder1Previous = encoder1;
     m_encoder2Previous = encoder2;
-
 }
 
 void MagEncoders::getEncodersTotalCount(int32_t *encoderRight, int32_t *encoderLeft)
@@ -85,55 +115,11 @@ void MagEncoders::getEncodersTotalCount(int32_t *encoderRight, int32_t *encoderL
     *encoderRight = m_encoderRSum;
     *encoderLeft = m_encoderLSum;
 }
-void MagEncoders::getValuesStatus(int16_t *encoderRight, int16_t *encoderLeft, uint8_t *agcR, uint8_t *agcL,
-        uint8_t *diagR, uint8_t *diagL, uint16_t *magR, uint16_t *magL, uint16_t *rawR, uint16_t *rawL)
+
+void MagEncoders::getValuesStatus(uint16_t *rawR, uint16_t *rawL, uint8_t *agcR, uint8_t *agcL, uint8_t *diagR,
+        uint8_t *diagL, uint16_t *magR, uint16_t *magL)
 {
-    uint8_t data1[6];
-    uint8_t data2[6];
+    m_mysensor1.getAllData(agcR, diagR, magR, rawR);
+    m_mysensor2.getAllData(agcL, diagL, magL, rawL);
 
-    m_mysensor1.readRegs( AS5048B_GAIN_REG, 6, data1);
-    m_mysensor2.readRegs( AS5048B_GAIN_REG, 6, data2);
-
-
-    int16_t encoder1 = m_mysensor1.angleR(U_RAW, true);
-    int16_t encoder2 = m_mysensor2.angleR(U_RAW, true);
-
-    if (m_is1EncoderRight) {
-        *encoderRight = encoder1 - m_encoder1Previous;
-        *agcR = data1[0];
-        *diagR = data1[1];
-        *magR = ((uint16_t) (data1[2]) << 6) + (data1[3] & 0x3F);
-        *rawR = ((uint16_t) (data1[4]) << 6) + (data1[5] & 0x3F);
-
-        *encoderLeft = encoder2 - m_encoder2Previous;
-        *agcL = data2[0];
-        *diagL = data2[1];
-        *magL = ((uint16_t) (data2[2]) << 6) + (data2[3] & 0x3F);
-        *rawL = ((uint16_t) (data2[4]) << 6) + (data2[5] & 0x3F);
-
-    } else {
-        *encoderRight = encoder2 - m_encoder2Previous;
-        *agcR = data2[0];
-        *diagR = data2[1];
-        *magR = ((uint16_t) (data2[2]) << 6) + (data2[3] & 0x3F);
-        *rawR = ((uint16_t) (data2[4]) << 6) + (data2[5] & 0x3F);
-
-        *encoderLeft = encoder1 - m_encoder1Previous;
-        *agcL = data1[0];
-        *diagL = data1[1];
-        *magL = ((uint16_t) (data1[2]) << 6) + (data1[3] & 0x3F);
-        *rawL = ((uint16_t) (data1[4]) << 6) + (data1[5] & 0x3F);
-    }
-
-    if (m_invertEncoderR)
-        *encoderRight = -*encoderRight;
-    if (m_invertEncoderL)
-        *encoderLeft = -*encoderLeft;
-
-    m_encoderRSum += *encoderRight;
-    m_encoderLSum += *encoderLeft;
-
-    m_encoder1Previous = encoder1;
-    m_encoder2Previous = encoder2;
 }
-

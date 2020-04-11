@@ -65,27 +65,26 @@ void QuadratureEncoder::stop()
     qeiDisable (&QEID2);
 }
 
-void QuadratureEncoder::getValues(int16_t *encoderRight, int16_t *encoderLeft)
+void QuadratureEncoder::getValues(int16_t *deltaEncoderRight, int16_t *deltaEncoderLeft)
 {
-
     int16_t encoder2 = qeiGetCount(&QEID2);
     int16_t encoder1 = qeiGetCount(&QEID3);
 
     if (m_is1EncoderRight) {
-        *encoderRight = encoder1 - m_encoder1Previous;
-        *encoderLeft = encoder2 - m_encoder2Previous;
+        *deltaEncoderRight = encoder1 - m_encoder1Previous;
+        *deltaEncoderLeft = encoder2 - m_encoder2Previous;
     } else {
-        *encoderRight = encoder2 - m_encoder2Previous;
-        *encoderLeft = encoder1 - m_encoder1Previous;
+        *deltaEncoderRight = encoder2 - m_encoder2Previous;
+        *deltaEncoderLeft = encoder1 - m_encoder1Previous;
     }
 
     if (m_invertEncoderR)
-        *encoderRight = -*encoderRight;
+        *deltaEncoderRight = -*deltaEncoderRight;
     if (m_invertEncoderL)
-        *encoderLeft = -*encoderLeft;
+        *deltaEncoderLeft = -*deltaEncoderLeft;
 
-    m_encoderRSum += *encoderRight;
-    m_encoderLSum += *encoderLeft;
+    m_encoderRSum += *deltaEncoderRight;
+    m_encoderLSum += *deltaEncoderLeft;
 
     m_encoder1Previous = encoder1;
     m_encoder2Previous = encoder2;

@@ -20,8 +20,12 @@
 #include <math.h>
 #include "../util/asservMath.h"
 #include "ams_as5048b.h"
+#include "string.h"
 #include "ch.h"
 #include "hal.h"
+//#include <chprintf.h>
+
+//extern BaseSequentialStream *outputStream;
 
 /*========================================================================*/
 /*                            CONSTRUCTORS                                */
@@ -438,18 +442,49 @@ uint8_t AMS_AS5048B::readRegs(uint8_t address, uint8_t len, uint8_t* data)
 {
     i2cAcquireBus (&I2CD2);
     uint8_t cmd[] = { address };
-    msg_t msg = i2cMasterTransmitTimeout(&I2CD2, _chipAddress, cmd, sizeof(cmd), data, len, TIME_MS2I(1));
-    chDbgAssert(msg == MSG_OK, "AMS_AS5048B - i2cMasterReceiveTimeout readRegs ERROR NOK\r\n");
+    int i = 0;
+    msg_t msg = MSG_OK;
+    do {
+        i++;
+        msg = i2cMasterTransmitTimeout(&I2CD2, _chipAddress, cmd, sizeof(cmd), data, len, TIME_MS2I(1));
+        //chprintf(outputStream, "i=%d\r\n", i);
+        if (i > 5)
+            break;
+    } while (msg != MSG_OK );
+    //std::string message = "AMS_AS5048B - i2cMasterReceiveTimeout readRegs ERROR after";
+
+    chDbgAssert(msg == MSG_OK, "AMS_AS5048B - i2cMasterReceiveTimeout readRegs ERROR after 5 requests NOK\r\n");
     i2cReleaseBus(&I2CD2);
     return 0;
+}
+
+uint8_t AMS_AS5048B::getAllData(uint8_t *agc, uint8_t *diag, uint16_t *mag, uint16_t *raw)
+{
+    uint8_t data[6] = { 0, 0, 0, 0, 0, 0 };
+    uint8_t r = readRegs(AS5048B_GAIN_REG, 6, data);
+
+    *agc = data[0];
+    *diag = data[1];
+    *mag = ((uint16_t) (data[2]) << 6) + (data[3] & 0x3F);
+    *raw = ((uint16_t) (data[4]) << 6) + (data[5] & 0x3F);
+    return r;
 }
 
 void AMS_AS5048B::writeReg(uint8_t address, uint8_t value)
 {
     i2cAcquireBus (&I2CD2);
     uint8_t cmd[] = { address, value };
-    msg_t msg = i2cMasterTransmitTimeout(&I2CD2, _chipAddress, cmd, sizeof(cmd), NULL, 0, TIME_MS2I(1));
-    chDbgAssert(msg == MSG_OK, "AMS_AS5048B - i2cMasterTransmitTimeout writeReg ERROR NOK\r\n");
+    int i = 0;
+    msg_t msg = MSG_OK;
+    do {
+        i++;
+        msg = i2cMasterTransmitTimeout(&I2CD2, _chipAddress, cmd, sizeof(cmd), NULL, 0, TIME_MS2I(1));
+        //chprintf(outputStream, "i=%d\r\n", i);
+        if (i > 5)
+            break;
+    } while (msg != MSG_OK );
+
+    chDbgAssert(msg == MSG_OK, "AMS_AS5048B - i2cMasterTransmitTimeout writeReg after 5 requests ERROR NOK\r\n");
     i2cReleaseBus(&I2CD2);
 
     return;

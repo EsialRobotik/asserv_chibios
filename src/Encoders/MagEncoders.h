@@ -27,12 +27,12 @@ public:
     void start();
     void stop();
 
-    void getEncodersTotalCount(int32_t *encoderRight, int32_t *encoderLeft);
+    void getEncodersTotalCount(int32_t *sumEncoderRight, int32_t *sumEncoderLeft);
 
-    virtual void getValues(int16_t *encoderRight, int16_t *encoderLeft);
+    virtual void getValues(int16_t *deltaEncoderRight, int16_t *deltaEncoderLeft);
 
-    void getValuesStatus(int16_t *encoderRight, int16_t *encoderLeft, uint8_t *agcR, uint8_t *agcL,
-            uint8_t *diagR, uint8_t *diagL, uint16_t *magR, uint16_t *magL, uint16_t *rawR, uint16_t *rawL);
+    void getValuesStatus(uint16_t *encoderRight, uint16_t *encoderLeft, uint8_t *agcR, uint8_t *agcL, uint8_t *diagR,
+            uint8_t *diagL, uint16_t *magR, uint16_t *magL);
 private:
     I2CConfig m_i2cconfig;
     I2cPinInit m_i2cPinConf;
@@ -45,6 +45,7 @@ private:
     int32_t m_encoderRSum;
     int16_t m_encoder1Previous;
     int16_t m_encoder2Previous;
+
     bool m_is1EncoderRight;
 };
 

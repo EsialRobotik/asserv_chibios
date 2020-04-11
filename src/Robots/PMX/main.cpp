@@ -49,7 +49,7 @@ float speed_controller_left_speed_set[NB_PI_SUBSET] = { 500.0, 500.0, 500.0 };
 
 QuadratureEncoder encoders_int(false, true, false);
 
-MagEncoders encoders(false, true, false);
+MagEncoders encoders(false, false, true);
 
 Md22::I2cPinInit PMXCardPinConf_SCL_SDA = { GPIOB, 8, GPIOB, 9 };
 //Md22::I2cPinInit PMXCardPinConf_SCL_SDA = {GPIOB, 6, GPIOB, 7};
@@ -88,12 +88,12 @@ static THD_FUNCTION(AsservThread, arg)
 {
     (void) arg;
     chRegSetThreadName("AsservThread");
-
-    Md22MotorController.init();
+    encoders.init();
+    encoders.start();
     encoders_int.init();
     encoders_int.start();
+    Md22MotorController.init();
     USBStream::init();
-    encoders.init();
 
 //    while (1) //desactivation du mainloop afin de tester MD22 en direct
 //    {
@@ -187,6 +187,7 @@ void asservCommand(BaseSequentialStream *chp, int argc, char **argv)
         chprintf(outputStream," - asserv gototest\r\n");
         chprintf(outputStream," -------------- \r\n");
         chprintf(outputStream," - asserv md22speedlr [-100=>100] [-100=>100]\r\n");
+        chprintf(outputStream," - asserv magvalues 0|1\r\n");
         chprintf(outputStream," - asserv intencodersval 0|1\r\n");
         chprintf(outputStream," - asserv extencodersval 0|1\r\n");
         chprintf(outputStream," - asserv test\r\n");
@@ -332,7 +333,6 @@ void asservCommand(BaseSequentialStream *chp, int argc, char **argv)
 
     } else if (!strcmp(argv[0], "intencodersval")) {
         bool enable = !(atoi(argv[1]) == 0);
-        mainAsserv.enableMotors(false);
         int16_t encoderDeltaRight_tmp = 0;
         int16_t encoderDeltaLeft_tmp = 0;
         int32_t encoderLSum = 0;
@@ -340,7 +340,8 @@ void asservCommand(BaseSequentialStream *chp, int argc, char **argv)
         do {
             encoders_int.getValues(&encoderDeltaRight_tmp, &encoderDeltaLeft_tmp);
             encoders_int.getEncodersTotalCount(&encoderRSum, &encoderLSum);
-            chprintf(outputStream, "encoder TOTL %d TOTR %d\r\n", encoderLSum, encoderRSum);
+            chprintf(outputStream, "INT TOTL %d \t%d\t;\tTOTR %d \t%d\r\n", encoderLSum, encoderDeltaLeft_tmp, encoderRSum,
+                    encoderDeltaRight_tmp);
         } while (enable);
     } else if (!strcmp(argv[0], "extencodersval")) {
         bool enable = !(atoi(argv[1]) == 0);
@@ -349,6 +350,18 @@ void asservCommand(BaseSequentialStream *chp, int argc, char **argv)
         int16_t encoderDeltaLeft_tmp = 0;
         int32_t encoderLSum = 0;
         int32_t encoderRSum = 0;
+        //encoders.start();
+        do {
+            encoders.getValues(&encoderDeltaRight_tmp, &encoderDeltaLeft_tmp);
+            encoders.getEncodersTotalCount(&encoderRSum, &encoderLSum);
+            chprintf(outputStream, "EXT TOTL %d \t%d \t;\tTOTR %d \t%d \r\n", encoderLSum, encoderDeltaLeft_tmp,
+                    encoderRSum, encoderDeltaRight_tmp);
+            chThdSleepMilliseconds(2);
+        } while (enable);
+
+    } else if (!strcmp(argv[0], "magvalues")) {
+        bool enable = !(atoi(argv[1]) == 0);
+
         uint8_t agcR = 0;
         uint8_t agcL = 0;
         uint8_t diagR = 0;
@@ -359,13 +372,11 @@ void asservCommand(BaseSequentialStream *chp, int argc, char **argv)
         uint16_t rawL = 0;
 
         do {
-            encoders.getValuesStatus(&encoderDeltaRight_tmp, &encoderDeltaLeft_tmp, &agcR, &agcL, &diagR, &diagL, &magR,
-                    &magL, &rawR, &rawL);
-            //encoders.getValues(&encoderDeltaRight_tmp, &encoderDeltaLeft_tmp);
+            encoders.getValuesStatus(&rawR, &rawL, &agcR, &agcL, &diagR, &diagL, &magR, &magL);
 
-            encoders.getEncodersTotalCount(&encoderRSum, &encoderLSum);
-            chprintf(outputStream, "encoder %d\t TOTL %d\tAGC=%d\tDIAG=%d\tMAG=%d\traw=%d : %d\t  TOTR %d\r\n",
-                    encoderDeltaLeft_tmp, encoderLSum, agcL, diagL, magL, rawL, encoderDeltaRight_tmp, encoderRSum);
+            chprintf(outputStream,
+                    "MAG rawL=%d\t AGC=%d\t DIAG=%d\t MAG=%d\t  ;  rawR=%d\t AGC=%d\t DIAG=%d\t MAG=%d\t\r\n", rawL,
+                    agcL, diagL, magL, rawR, agcR, diagR, magR);
             chThdSleepMilliseconds(200);
         } while (enable);
     } else if (!strcmp(argv[0], "test")) {
