@@ -22,7 +22,6 @@ MagEncoders::MagEncoders(bool is1EncoderRight, bool invertEncoderRight, bool inv
     m_encoder1Previous = 0;
     m_encoder2Previous = 0;
     m_is1EncoderRight = is1EncoderRight;
-
 }
 
 MagEncoders::~MagEncoders()
@@ -121,5 +120,4 @@ void MagEncoders::getValuesStatus(uint16_t *rawR, uint16_t *rawL, uint8_t *agcR,
 {
     m_mysensor1.getAllData(agcR, diagR, magR, rawR);
     m_mysensor2.getAllData(agcL, diagL, magL, rawL);
-
 }
