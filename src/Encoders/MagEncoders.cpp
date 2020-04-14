@@ -7,12 +7,12 @@
 
 //extern BaseSequentialStream *outputStream;
 
-MagEncoders::MagEncoders(bool is1EncoderRight, bool invertEncoderRight, bool invertEncoderLeft) :
+MagEncoders::MagEncoders( I2cPinInit *i2cPins, bool is1EncoderRight, bool invertEncoderRight, bool invertEncoderLeft) :
         Encoders(), m_mysensor1(AS5048B_ADDR(0, 0)), m_mysensor2(AS5048B_ADDR(1, 0))
 {
-
-    I2cPinInit encodersI2cPinsConf_SCL_SDA = { GPIOB, 10, GPIOB, 3 };
-    m_i2cPinConf = encodersI2cPinsConf_SCL_SDA;
+    m_i2cPinConf = *i2cPins;
+    //I2cPinInit encodersI2cPinsConf_SCL_SDA = { GPIOB, 10, GPIOB, 3 };
+    //m_i2cPinConf = encodersI2cPinsConf_SCL_SDA;
     m_i2cconfig = {OPMODE_I2C, 400000, FAST_DUTY_CYCLE_2};
 
     m_invertEncoderR = invertEncoderRight;

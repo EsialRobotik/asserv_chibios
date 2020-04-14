@@ -20,7 +20,7 @@ public:
         uint8_t pinNumberSDA;
     };
 
-    MagEncoders(bool is1EncoderRight, bool invertEncoderRight = false, bool invertEncoderLeft = false);
+    MagEncoders(I2cPinInit *i2cPins, bool is1EncoderRight, bool invertEncoderRight = false, bool invertEncoderLeft = false);
     virtual ~MagEncoders();
 
     void init();

@@ -49,7 +49,8 @@ float speed_controller_left_speed_set[NB_PI_SUBSET] = { 500.0, 500.0, 500.0 };
 
 QuadratureEncoder encoders_int(false, true, false);
 
-MagEncoders encoders(false, false, true);
+MagEncoders::I2cPinInit magEncodersI2cPinsConf_SCL_SDA = { GPIOB, 10, GPIOB, 3 };
+MagEncoders encoders(&magEncodersI2cPinsConf_SCL_SDA, false, false, true);
 
 Md22::I2cPinInit PMXCardPinConf_SCL_SDA = { GPIOB, 8, GPIOB, 9 };
 //Md22::I2cPinInit PMXCardPinConf_SCL_SDA = {GPIOB, 6, GPIOB, 7};
