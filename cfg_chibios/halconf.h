@@ -84,6 +84,13 @@
 #endif
 
 /**
+ * @brief   Enables I2C slave mode.
+ */
+#if !defined(STM32_I2C_SLAVE_ENABLE) || defined(__DOXYGEN__)
+#define STM32_I2C_SLAVE_ENABLE       TRUE
+#endif
+
+/**
  * @brief   Enables the I2S subsystem.
  */
 #if !defined(HAL_USE_I2S) || defined(__DOXYGEN__)
