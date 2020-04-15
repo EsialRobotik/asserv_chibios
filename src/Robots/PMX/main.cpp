@@ -16,6 +16,7 @@
 #include "USBStream.h"
 #include "SlopeFilter.h"
 #include "Pll.h"
+#include "SlaveI2c.h"
 
 #define ASSERV_THREAD_FREQUENCY (500)
 #define ASSERV_THREAD_PERIOD_S (1.0/ASSERV_THREAD_FREQUENCY)
@@ -46,6 +47,9 @@ float speed_controller_left_speed_set[NB_PI_SUBSET] = { 500.0, 500.0, 500.0 };
 #define COMMAND_MANAGER_ARRIVAL_DISTANCE_THRESHOLD_mm (1)
 #define COMMAND_MANAGER_GOTO_ANGLE_THRESHOLD_RAD (M_PI/8)
 #define COMMAND_MANAGER_GOTO_CHAIN_NEXT_CMD_DIST_mm (50)
+
+SlaveI2c::I2cPinInit slaveI2cPinsConf_SCL_SDA = { GPIOA, 8, GPIOB, 4 };
+SlaveI2c slaveI2c(&slaveI2cPinsConf_SCL_SDA, 400000);
 
 QuadratureEncoder encoders_int(false, true, false);
 
@@ -124,6 +128,10 @@ int main(void)
     shellInit();
 
     outputStream = reinterpret_cast<BaseSequentialStream*>(&SD2);
+
+    slaveI2c.init();
+
+
 
     // Custom commands
     const ShellCommand shellCommands[] = { { "asserv", &(asservCommand) }, { nullptr, nullptr } };

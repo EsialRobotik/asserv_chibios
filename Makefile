@@ -159,8 +159,8 @@ CPPSRC = $(ALLCPPSRC) \
        $(SRCDIR)/Odometry.cpp \
        $(SRCDIR)/commandManager/CommandManager.cpp \
        $(SRCDIR)/commandManager/CMDList/CMDList.cpp \
-       $(SRCDIR)/util/chibiOsAllocatorWrapper.cpp
-
+       $(SRCDIR)/util/chibiOsAllocatorWrapper.cpp \
+	   $(SRCDIR)/SlaveI2c.cpp
     
 
 # List ASM source files here.
