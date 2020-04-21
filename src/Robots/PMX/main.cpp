@@ -53,7 +53,7 @@ MagEncoders encoders(false, false, true);
 
 Md22::I2cPinInit PMXCardPinConf_SCL_SDA = { GPIOB, 8, GPIOB, 9 };
 //Md22::I2cPinInit PMXCardPinConf_SCL_SDA = {GPIOB, 6, GPIOB, 7};
-Md22 Md22MotorController(false, true, true, &PMXCardPinConf_SCL_SDA, 400000);
+Md22 md22MotorController(false, true, true, &PMXCardPinConf_SCL_SDA, 400000);
 
 Regulator angleRegulator(ANGLE_REGULATOR_KP, MAX_SPEED);
 Regulator distanceRegulator(DIST_REGULATOR_KP, MAX_SPEED);
@@ -77,7 +77,7 @@ COMMAND_MANAGER_GOTO_ANGLE_THRESHOLD_RAD, COMMAND_MANAGER_GOTO_CHAIN_NEXT_CMD_DI
         distanceRegulator);
 
 AsservMain mainAsserv(ASSERV_THREAD_FREQUENCY, ASSERV_POSITION_DIVISOR,
-ENCODERS_WHEELS_RADIUS, ENCODERS_WHEELS_DISTANCE_MM, ENCODERS_TICKS_BY_TURN, commandManager, Md22MotorController,
+ENCODERS_WHEELS_RADIUS, ENCODERS_WHEELS_DISTANCE_MM, ENCODERS_TICKS_BY_TURN, commandManager, md22MotorController,
         encoders_int, odometry, angleRegulator, distanceRegulator, angleSlopeFilter, distSlopeFilter,
         speedControllerRight, speedControllerLeft, rightPll, leftPll);
 
@@ -92,7 +92,7 @@ static THD_FUNCTION(AsservThread, arg)
     encoders.start();
     encoders_int.init();
     encoders_int.start();
-    Md22MotorController.init();
+    md22MotorController.init();
     USBStream::init();
 
 //    while (1) //desactivation du mainloop afin de tester MD22 en direct
@@ -327,8 +327,8 @@ void asservCommand(BaseSequentialStream *chp, int argc, char **argv)
         int speedGoalL = atoi(argv[1]);
         int speedGoalR = atoi(argv[2]);
         mainAsserv.enableMotors(false);
-        Md22MotorController.setMotorLeftSpeed(speedGoalL);
-        Md22MotorController.setMotorRightSpeed(speedGoalR);
+        md22MotorController.setMotorLeftSpeed(speedGoalL);
+        md22MotorController.setMotorRightSpeed(speedGoalR);
         chprintf(outputStream, "Motors at %d %d\r\n", speedGoalL, speedGoalR);
 
     } else if (!strcmp(argv[0], "intencodersval")) {

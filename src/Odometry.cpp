@@ -29,6 +29,13 @@ void Odometry::resetTheta()
     m_theta_rad = 0;
 }
 
+void Odometry::reset()
+{
+    resetX(0);
+    resetY(0);
+    resetTheta();
+}
+
 void Odometry::refresh(float m_encoderDeltaRight_mm, float m_encoderDeltaLeft_mm)
 {
     /*

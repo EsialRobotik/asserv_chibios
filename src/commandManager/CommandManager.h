@@ -45,6 +45,12 @@ class CommandManager
             return m_angleRegulatorConsign;
         }
 
+        inline void reset()
+        {
+            setEmergencyStop();
+            resetEmergencyStop();
+        }
+
     private:
         CMDList liste; //File d'attente des commandes
         cmd_t currCMD; //commande courante

@@ -52,9 +52,9 @@ float speed_controller_left_speed_set[NB_PI_SUBSET] = {500.0, 500.0, 500.0};
 
 
 
-QuadratureEncoder encoders(false,false);
+QuadratureEncoder encoders(true, true, true);
 Md22::I2cPinInit ESIALCardPinConf_SCL_SDA = {GPIOB, 6, GPIOB, 7};
-Md22 Md22MotorController(true,true,false, &ESIALCardPinConf_SCL_SDA, 100000);
+Md22 md22MotorController(true,true,false, &ESIALCardPinConf_SCL_SDA, 100000);
 
 Regulator angleRegulator(ANGLE_REGULATOR_KP, MAX_SPEED_MM_PER_SEC);
 Regulator distanceRegulator(DIST_REGULATOR_KP, MAX_SPEED_MM_PER_SEC);
@@ -76,7 +76,7 @@ CommandManager commandManager(COMMAND_MANAGER_ARRIVAL_ANGLE_THRESHOLD_RAD, COMMA
 
 AsservMain mainAsserv(ASSERV_THREAD_FREQUENCY, ASSERV_POSITION_DIVISOR,
 		ENCODERS_WHEELS_RADIUS_MM, ENCODERS_WHEELS_DISTANCE_MM, ENCODERS_TICKS_BY_TURN,
-		commandManager, Md22MotorController, encoders, odometry,
+		commandManager, md22MotorController, encoders, odometry,
 		angleRegulator, distanceRegulator,
 		angleSlopeFilter, distSlopeFilter,
 		speedControllerRight, speedControllerLeft,
@@ -88,7 +88,7 @@ static THD_FUNCTION(AsservThread, arg)
     (void) arg;
     chRegSetThreadName("AsservThread");
 
-    Md22MotorController.init();
+    md22MotorController.init();
     encoders.init();
     encoders.start();
     USBStream::init();
@@ -162,6 +162,8 @@ void asservCommand(BaseSequentialStream *chp, int argc, char **argv)
         chprintf(outputStream," - asserv enablemotor 0|1\r\n");
         chprintf(outputStream," - asserv enablepolar 0|1\r\n");
         chprintf(outputStream," - asserv coders \r\n");
+        chprintf(outputStream," - asserv reset \r\n");
+        chprintf(outputStream," - asserv motorspeed [r|l] speed \r\n");
         chprintf(outputStream," -------------- \r\n");
         chprintf(outputStream," - asserv wheelspeedstep [r|l] [speed] [step time] \r\n");
         chprintf(outputStream," -------------- \r\n");
@@ -310,6 +312,22 @@ void asservCommand(BaseSequentialStream *chp, int argc, char **argv)
         int32_t encoderRight, encoderLeft;
         encoders.getEncodersTotalCount(&encoderRight, &encoderLeft);
         chprintf(outputStream, "Encoders count %d %d \r\n", encoderRight, encoderLeft);
+    }
+    else if (!strcmp(argv[0], "reset"))
+    {
+        mainAsserv.reset();
+    }
+    else if (!strcmp(argv[0], "motorspeed"))
+    {
+        char side = *argv[1];
+        float speedGoal = atof(argv[2]);
+
+        chprintf(outputStream, "setting wheel %s to speed %.2f \r\n", (side == 'r') ? "right" : "left", speedGoal);
+
+        if (side == 'l')
+            md22MotorController.setMotorLeftSpeed(speedGoal);
+        else
+            md22MotorController.setMotorRightSpeed(speedGoal);
     }
     else if (!strcmp(argv[0], "enablepolar"))
     {

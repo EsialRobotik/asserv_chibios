@@ -212,3 +212,22 @@ void AsservMain::enablePolar(bool enable)
 {
     m_enablePolar = enable;
 }
+
+void AsservMain::reset()
+{
+    /* Pour etre certain de conserver la cohérence des infos,
+     * le reset est en section critique
+     */
+    chSysLock();
+    m_odometry.reset();
+    m_speedControllerRight.resetIntegral();
+    m_speedControllerLeft.resetIntegral();
+    m_angleRegulator.reset();
+    m_distanceRegulator.reset();
+    m_angleRegulatorSlopeFilter.reset();
+    m_distanceRegulatorSlopeFilter.reset();
+    m_commandManager.reset();
+    m_pllRight.reset();
+    m_pllLeft.reset();
+    chSysUnlock();
+}

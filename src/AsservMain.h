@@ -47,6 +47,8 @@ public:
     void enableMotors(bool enable);
     void enablePolar(bool enable);
 
+    void reset();
+
 private:
 
     float convertSpeedTommSec(float speed_ticksPerSec);

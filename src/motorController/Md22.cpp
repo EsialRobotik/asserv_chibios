@@ -40,6 +40,11 @@ void Md22::init()
 
     i2cStart(&I2CD1, &m_i2cconfig);
 
+    // When the stm32 and the Md22 are powered on at the same time,
+    //   it seems that the MD22 could take much longer to boot...
+    // So wait a few ms !
+    chThdSleepMilliseconds(100);
+
     i2cAcquireBus (&I2CD1);
 
     sysinterval_t tmo = TIME_MS2I(4);

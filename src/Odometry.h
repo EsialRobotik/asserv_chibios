@@ -18,6 +18,8 @@ public:
     void resetY(float yval);
     void resetTheta();
 
+    void reset();
+
     void refresh(float m_encoderDeltaRight_mm, float m_encoderDeltaLeft_mm);
 
     float getX()

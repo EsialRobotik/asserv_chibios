@@ -12,11 +12,20 @@ public:
     void update(int16_t deltaPosition, float deltaT);
 
     void setBandwidth(float bandwidth);
-    float getSpeed()
+
+    inline void reset()
+    {
+        m_position = 0;
+        m_speed = 0;
+        m_count = 0;
+    }
+
+    inline float getSpeed()
     {
         return m_speed;
     }
-    float getPosition()
+
+    inline float getPosition()
     {
         return m_position;
     }

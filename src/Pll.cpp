@@ -4,9 +4,7 @@
 Pll::Pll(float bandwidth)
 {
     setBandwidth(bandwidth);
-    m_position = 0;
-    m_speed = 0;
-    m_count = 0;
+    reset();
 }
 
 // Voir ce thread pour plus de détails sur le fonctionnement
