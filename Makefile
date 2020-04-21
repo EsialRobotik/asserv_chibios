@@ -129,13 +129,19 @@ ifeq ($(ROBOT),)  # set the default ROBOT
 endif
 
 # Check if the specified ROBOT exist
+AVAILABLE_ROBOTS=$(shell find src/Robots -type d -exec basename {} \;)
 ifeq (,$(wildcard $(SRCDIR)/Robots/$(ROBOT)/main.cpp))
-$(error Unknown ROBOT specified! Knowns are : baseRoulanteTest PMI)
+$(error Unknown ROBOT specified! Knowns are : $(AVAILABLE_ROBOTS))
+endif
+
+ifeq ($(NO_SHELL),)  # Disable the shell
+	SHELL_MODE_DEFINE = -DENABLE_SHELL
 endif
 
 # C sources that can be compiled in ARM or THUMB mode depending on the global
 # setting.
 CSRC = $(ALLCSRC) \
+       $(wildcard $(SRCDIR)/Robots/$(ROBOT)/*.c ) \
        $(SRCDIR)/usbcfg.c \
        $(SRCDIR)/util/exceptionVectors.c \
        $(CHIBIOS)/os/various/syscalls.c \
@@ -144,7 +150,7 @@ CSRC = $(ALLCSRC) \
 # C++ sources that can be compiled in ARM or THUMB mode depending on the global
 # setting.
 CPPSRC = $(ALLCPPSRC) \
-       $(SRCDIR)/Robots/$(ROBOT)/main.cpp \
+       $(wildcard $(SRCDIR)/Robots/$(ROBOT)/*.cpp ) \
        $(SRCDIR)/motorController/Vnh5019.cpp \
        $(SRCDIR)/motorController/Md22.cpp \
        $(SRCDIR)/USBStream.cpp \
@@ -187,7 +193,7 @@ CPPWARN = -Wall -Wextra -Wundef
 #
 
 # List all user C define here, like -D_DEBUG=1
-UDEFS =
+UDEFS = $(SHELL_MODE_DEFINE)
 
 # Define ASM defines here
 UADEFS =
@@ -220,14 +226,24 @@ include $(RULESPATH)/rules.mk
 ##############################################################################
 # Custom rules
 #
-zob :
-	@echo "CPPSRC $(CPPSRC)"
-
+help :
+	@echo "make                             :   build with default robot config"
+	@echo "make ROBOT=myRobot               :   build using the myRobot config. A myRobot dir must be present in src/Robots"
+	@echo "make ROBOT=myRobot NO_SHELL=true :   build using the myRobot config and disable the default shell (must be handled in src/Robots/myRobot/main.cpp ! ) "
+	@echo "make flash                       :   load the generated elf to the board"
+	@echo "make debug                       :   load the generated elf to the board & wait for a debugger to connect (with arm-none-eabi-gdb build/asservNucleo.elf -ex \"target remote :3333\" )"
+	@echo "make robots                      :   print the knows robots"
+	
+robots :
+	@echo "Available robots :  $(AVAILABLE_ROBOTS)" 
+	
 flash : all
 	openocd -c "tcl_port disabled" -c "telnet_port disabled" -c "source [find board/st_nucleo_f4.cfg]" -c "stm32f4x.cpu configure -rtos ChibiOS" -c "init" -c "reset halt" -c "flash write_image erase unlock $(BUILDDIR)/$(PROJECT).elf" -c "verify_image $(BUILDDIR)/$(PROJECT).elf" -c "reset run" -c "shutdown"
 
 debug : all
 	openocd -c "tcl_port disabled" -c "telnet_port disabled" -c "source [find board/st_nucleo_f4.cfg]" -c "stm32f4x.cpu configure -rtos ChibiOS" -c "init" -c "reset halt" -c "flash write_image erase unlock $(BUILDDIR)/$(PROJECT).elf" -c "verify_image $(BUILDDIR)/$(PROJECT).elf" -c "reset halt"
+
+	
 
 #
 # Custom rules

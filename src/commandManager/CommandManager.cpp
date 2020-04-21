@@ -15,16 +15,13 @@ liste(), m_angle_regulator(angle_regulator), m_distance_regulator(distance_regul
     m_emergencyStop = false;
     currCMD.type = CMD_NULL;
     nextCMD.type = CMD_NULL;
+    m_commandStatus = STATUS_IDLE;
     m_arrivalAngleThreshold_rad = arrivalAngleThreshold_rad;
     m_arrivalDistanceThreshold_mm = arrivalDistanceThreshold_mm;
     m_gotoAngleThreshold_rad = gotoAngleThreshold_rad;
     m_gotoNextConsignDist_mm = gotoNextConsignDist_mm;
     m_angleRegulatorConsign = 0;
     m_distRegulatorConsign = 0;
-}
-
-CommandManager::~CommandManager()
-{
 }
 
 bool CommandManager::addStraightLine(float valueInmm)
@@ -63,12 +60,19 @@ void CommandManager::setEmergencyStop()
     nextCMD.type = CMD_NULL;
 
     m_emergencyStop = true;
-
 }
 
 void CommandManager::resetEmergencyStop()
 {
     m_emergencyStop = false;
+}
+
+CommandStatus CommandManager::getCommandStatus()
+{
+    if( m_emergencyStop )
+        return STATUS_HALTED;
+
+    return m_commandStatus;
 }
 
 void CommandManager::update(float X_mm, float Y_mm, float theta_rad)
@@ -84,6 +88,11 @@ void CommandManager::update(float X_mm, float Y_mm, float theta_rad)
 
     if (!isGoalReach(X_mm, Y_mm))
     {
+
+        if(isBlocked())
+            m_commandStatus = STATUS_BLOCKED;
+        else
+            m_commandStatus = STATUS_RUNNING;
 
         if (currCMD.type == CMD_GO || currCMD.type == CMD_TURN)
         {  // On avance ou on tourne sur place
@@ -124,6 +133,7 @@ void CommandManager::update(float X_mm, float Y_mm, float theta_rad)
 
         if (currCMD.type == CMD_NULL)
         {  // S'il n'y a plus de commande, on est arrivé à bon port
+            m_commandStatus = STATUS_IDLE;
             return; // Il n'y en a pas...
         }
 
@@ -147,6 +157,7 @@ void CommandManager::update(float X_mm, float Y_mm, float theta_rad)
         { // On appel computeGoToAngle qui se débrouille pour s'aligner avec (x,y)
             computeGoToAngle(X_mm, Y_mm, theta_rad);
         }
+        m_commandStatus = STATUS_RUNNING;
     }
 }
 
@@ -333,5 +344,11 @@ bool CommandManager::isGoalReach(float X_mm, float Y_mm)
         return false;
 }
 
+
+// TODO : Trouver une équivalence!
+bool CommandManager::isBlocked()
+{
+    return true;
+}
 
 

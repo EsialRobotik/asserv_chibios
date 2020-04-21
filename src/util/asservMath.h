@@ -23,4 +23,10 @@ inline float limit(float value, float minValue, float maxValue)
     return value;
 }
 
+
+inline float degToRad(float deg)
+{
+    return deg * M_PI/180.0;
+}
+
 #endif /* SRC_UTIL_ASSERVMATH_H_ */

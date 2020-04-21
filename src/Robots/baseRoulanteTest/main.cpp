@@ -102,7 +102,7 @@ THD_FUNCTION(ControlPanelThread, p);
 char history_buffer[SHELL_MAX_HIST_BUFF];
 char *completion_buffer[SHELL_MAX_COMPLETIONS];
 
-void asservCommand(BaseSequentialStream *chp, int argc, char **argv);
+void asservCommandUSB(BaseSequentialStream *chp, int argc, char **argv);
 
 BaseSequentialStream *outputStream;
 int main(void)
@@ -121,7 +121,7 @@ int main(void)
 	const ShellCommand shellCommands[] = {
 	{
 		"asserv",
-		 &(asservCommand)
+		 &(asservCommandUSB)
 	},
 	{nullptr, nullptr}
 	};
@@ -162,7 +162,7 @@ int main(void)
 }
 
 
-void asservCommand(BaseSequentialStream *chp, int argc, char **argv)
+void asservCommandUSB(BaseSequentialStream *chp, int argc, char **argv)
 {
 	auto printUsage = []() {
 		chprintf(outputStream,"Usage :");
@@ -404,7 +404,7 @@ THD_FUNCTION(ControlPanelThread, p)
             // On évite de faire appel au shell si le nombre d'arg est mauvais ou si la 1ière commande est mauvaise...
             if (nb_arg > 0 && !strcmp(firstArg, "asserv"))
             {
-                asservCommand(nullptr, nb_arg, argv);
+                asservCommandUSB(nullptr, nb_arg, argv);
             }
             USBStream::instance()->releaseBuffer();
         }

@@ -5,7 +5,6 @@
 
 class Odometry
 {
-
 public:
     explicit Odometry(float encoderWheelsDistance_mm, float initialX = 0, float initialY = 0);
     ~Odometry()

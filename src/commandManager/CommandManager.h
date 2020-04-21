@@ -4,13 +4,19 @@
 #include "CMDList/CMDList.h"
 #include "Regulator.h"
 
+enum CommandStatus {
+    STATUS_IDLE     = 0,
+    STATUS_RUNNING  = 1,
+    STATUS_HALTED   = 2,
+    STATUS_BLOCKED  = 3,
+};
+
 class CommandManager
 {
-
     public:
         explicit CommandManager(float arrivalAngleThreshold_rad, float arrivalDistanceThreshold_mm, float gotoAngleThreshold_rad,
                 float gotoNextConsignDist_mm, const Regulator &angle_regulator, const Regulator &distance_regulator);
-        ~CommandManager();
+        ~CommandManager() {};
 
         /*
          * Commandes ajoutables a la liste des consignes du robot
@@ -45,6 +51,11 @@ class CommandManager
             return m_angleRegulatorConsign;
         }
 
+        /*
+         * Permet au haut niveau de savoir où en est la commande actuelle
+         */
+        CommandStatus getCommandStatus();
+
         inline void reset()
         {
             setEmergencyStop();
@@ -55,6 +66,8 @@ class CommandManager
         CMDList liste; //File d'attente des commandes
         cmd_t currCMD; //commande courante
         cmd_t nextCMD; //commande suivante
+
+        CommandStatus m_commandStatus;
 
         const Regulator &m_angle_regulator;
         const Regulator &m_distance_regulator;
@@ -73,6 +86,8 @@ class CommandManager
 
         bool isGoalReach();
         bool isGoalReach(float X_mm, float Y_mm);
+
+        bool isBlocked();
 
         float computeDeltaTheta(float deltaX, float deltaY, float theta_rad); // Calcul de l'angle à parcourir
         float computeDeltaDist(float deltaX, float deltaY); // Calcul de la distance à parcourir
