@@ -15,10 +15,7 @@ class SpeedController
 public:
     explicit SpeedController(float speedKpSet[NB_PI_SUBSET], float speedKiSet[NB_PI_SUBSET],
             float setSpeedRange[NB_PI_SUBSET], float outputLimit, float maxInputSpeed, float measureFrequency);
-    virtual ~SpeedController()
-    {
-    }
-    ;
+    virtual ~SpeedController(){};
 
     float update(float actualSpeed);
 
@@ -29,18 +26,16 @@ public:
     {
         return m_speedGoal;
     }
-    ;
+
     float getIntegratedOutput()
     {
         return m_integratedOutput;
     }
-    ;
 
     void resetIntegral()
     {
         m_integratedOutput = 0;
     }
-    ;
 
 private:
     float m_speedGoal;

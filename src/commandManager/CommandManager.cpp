@@ -75,6 +75,18 @@ CommandStatus CommandManager::getCommandStatus()
     return m_commandStatus;
 }
 
+int CommandManager::getPendingCommandCount()
+{
+    // Nombre de commande dans la file d'attente
+    int count = liste.size();
+
+    // On n'oublie pas l'éventuelle commande suivante
+    if(nextCMD.type != CMD_NULL)
+        count++;
+
+    return count;
+}
+
 void CommandManager::update(float X_mm, float Y_mm, float theta_rad)
 {
     if (m_emergencyStop)

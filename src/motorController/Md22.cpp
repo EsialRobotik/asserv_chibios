@@ -18,7 +18,8 @@ constexpr uint8_t controlMode = 0x01; // Wanted value for mode register. Ie: -12
     m_invertMotorRight = invertMotorRight;
     m_invertMotorLeft = invertMotorLeft;
     m_is1motorRight = is1motorRight;
-
+    m_lastRightConsign = 0;
+    m_lastLeftConsign = 0;
 
     chDbgAssert(i2cFrequency <= 400000, "Md22: i2cFrequency shall be lower than 400khz \r\n");
 
@@ -93,6 +94,7 @@ void Md22::setMotorLeftSpeed(float percentage)
     i2cAcquireBus (&I2CD1);
     i2cMasterTransmitTimeout(&I2CD1, md22Address, cmd, sizeof(cmd), NULL, 0, TIME_MS2I(1));
     i2cReleaseBus(&I2CD1);
+    m_lastLeftConsign = md22SpeedConsign;
 }
 
 void Md22::setMotorRightSpeed(float percentage)
@@ -113,5 +115,6 @@ void Md22::setMotorRightSpeed(float percentage)
     i2cAcquireBus (&I2CD1);
     i2cMasterTransmitTimeout(&I2CD1, md22Address, cmd, sizeof(cmd), NULL, 0, TIME_MS2I(1));
     i2cReleaseBus(&I2CD1);
+    m_lastRightConsign = md22SpeedConsign;
 }
 

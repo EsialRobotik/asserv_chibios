@@ -55,6 +55,7 @@ class CommandManager
          * Permet au haut niveau de savoir où en est la commande actuelle
          */
         CommandStatus getCommandStatus();
+        int getPendingCommandCount();
 
         inline void reset()
         {

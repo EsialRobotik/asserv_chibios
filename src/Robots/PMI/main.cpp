@@ -91,7 +91,6 @@ AsservMain mainAsserv(ASSERV_THREAD_FREQUENCY, ASSERV_POSITION_DIVISOR,
  */
 static binary_semaphore_t asservStarted_semaphore;
 
-
 static THD_WORKING_AREA(waAsservThread, 512);
 static THD_FUNCTION(AsservThread, arg)
 {
@@ -113,6 +112,7 @@ THD_WORKING_AREA(wa_shell, 1024);
 THD_WORKING_AREA(wa_controlPanel, 256);
 THD_FUNCTION(ControlPanelThread, p);
 THD_FUNCTION(asservCommandSerial, p);
+THD_FUNCTION(asservPositionSerial, p);
 
 char history_buffer[SHELL_MAX_HIST_BUFF];
 char *completion_buffer[SHELL_MAX_COMPLETIONS];
@@ -162,7 +162,7 @@ int main(void)
         thread_t *shellThd = chThdCreateStatic(wa_shell, sizeof(wa_shell), LOWPRIO, shellThread, &shellCfg);
         chRegSetThreadNameX(shellThd, "shell");
 
-        // Le thread controlPanel n'a de sens que quand le shell tourne ?
+        // Le thread controlPanel n'a de sens que quand le shell tourne
         thread_t *controlPanelThd = chThdCreateStatic(wa_controlPanel, sizeof(wa_controlPanel), LOWPRIO, ControlPanelThread, nullptr);
         chRegSetThreadNameX(controlPanelThd, "controlPanel");
     }
@@ -170,6 +170,10 @@ int main(void)
     {
         thread_t *asserCmdSerialThread = chThdCreateStatic(wa_shell, sizeof(wa_shell), LOWPRIO, asservCommandSerial, nullptr);
         chRegSetThreadNameX(asserCmdSerialThread, "asserv Command serial");
+
+        thread_t *controlPanelThd = chThdCreateStatic(wa_controlPanel, sizeof(wa_controlPanel), LOWPRIO, asservPositionSerial, nullptr);
+        chRegSetThreadNameX(controlPanelThd, "asserv position update serial");
+
     }
 
     deactivateHeapAllocation();
@@ -468,12 +472,9 @@ static void serialReadLine(char *buffer, unsigned int buffer_size)
     buffer[i] = '\0';
 }
 
-
-
 THD_FUNCTION(asservCommandSerial, p)
 {
     (void) p;
-
     /*
      * Commande / Caractères à envoyer sur la série / Paramètres / Effets obtenus
 
@@ -518,7 +519,7 @@ THD_FUNCTION(asservCommandSerial, p)
     chprintf(outputStream, "Started\r\n");
 
 
-    while(1)
+    while(true)
     {
         char readChar = streamGet(&SD2);
 
@@ -587,7 +588,7 @@ THD_FUNCTION(asservCommandSerial, p)
             break;
 
         case 'p': //retourne la Position et l'angle courants du robot
-            chprintf(outputStream, "x%lfy%lfa%lfs%d\r\n",
+            chprintf(outputStream, "x%fy%fa%fs%d\r\n",
                     odometry.getX(), odometry.getY(), odometry.getTheta(),
                     commandManager.getCommandStatus());
             break;
@@ -598,4 +599,20 @@ THD_FUNCTION(asservCommandSerial, p)
     }
 }
 
+THD_FUNCTION(asservPositionSerial, p)
+{
+    (void) p;
+    const time_conv_t loopPeriod_ms = 20;
+    systime_t time = chVTGetSystemTime();
+    time += TIME_MS2I(loopPeriod_ms);
+    while(true)
+    {
+        chprintf(outputStream, "#%d;%d;%f;%d;%d;%d;%d\r\n",
+            (int32_t)odometry.getX(), (int32_t)odometry.getY(), odometry.getTheta(),
+            commandManager.getCommandStatus(), commandManager.getPendingCommandCount(),
+            md22MotorController.getLeftSpeed(), md22MotorController.getRightSpeed());
 
+        chThdSleepUntil(time);
+        time += TIME_MS2I(loopPeriod_ms);
+    }
+}

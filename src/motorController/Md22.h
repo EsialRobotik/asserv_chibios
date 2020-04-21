@@ -23,12 +23,18 @@ public:
     void setMotorRightSpeed(float percentage);
     void setMotorLeftSpeed(float percentage);
 
+    inline uint8_t getRightSpeed() { return m_lastRightConsign; }
+    inline uint8_t getLeftSpeed() { return m_lastLeftConsign; }
+
 private:
     I2CConfig m_i2cconfig;
     I2cPinInit m_i2cPinConf;
     bool m_invertMotorLeft;
     bool m_invertMotorRight;
     bool m_is1motorRight;
+
+    uint8_t m_lastRightConsign;
+    uint8_t m_lastLeftConsign;
 };
 
 #endif /* MD22_H_ */

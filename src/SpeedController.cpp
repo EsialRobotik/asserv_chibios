@@ -12,7 +12,8 @@ SpeedController::SpeedController(float speedKpSet[NB_PI_SUBSET], float speedKiSe
     m_speedKp = 0;
     m_speedKi = 0;
 
-    for (int i = 0; i < NB_PI_SUBSET; i++) {
+    for (int i = 0; i < NB_PI_SUBSET; i++)
+    {
         m_setSpeedRange[i] = setSpeedRange[i];
         m_speedKpSet[i] = speedKpSet[i];
         m_speedKiSet[i] = speedKiSet[i];
@@ -48,7 +49,8 @@ float SpeedController::update(float actualSpeed)
     if (limited) // .. Si la sortie est limité, on désature l'intégrale
     {
         m_integratedOutput *= 0.9;
-    } else	// .. Sinon, on integre l'erreur
+    }
+    else	// .. Sinon, on integre l'erreur
     {
         m_integratedOutput += m_speedKi * speedError / m_measureFrequency;
         if (std::fabs(speedError) < 0.1) // Quand l'erreur de vitesse est proche de zero(ie: consigne à 0 et le robot ne bouge pas..), on désature l'intégrale
