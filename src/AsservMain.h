@@ -16,7 +16,7 @@ class AsservMain
 {
 public:
     explicit AsservMain(uint16_t loopFrequency, uint16_t speedPositionLoopDivisor, float wheelRadius_mm,
-            float encoderWheelsDistance_mm, float encodersTicksByTurn, CommandManager &commandManager,
+            float encoderWheelsDistance_mm, uint32_t encodersTicksByTurn, CommandManager &commandManager,
             MotorController &motorController, Encoders &encoders, Odometry &odometrie, Regulator &angleRegulator,
             Regulator &distanceRegulator, SlopeFilter &angleRegulatorSlopeFilter,
             SlopeFilter &distanceRegulatorSlopeFilter, SpeedController &speedControllerRight,
