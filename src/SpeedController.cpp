@@ -1,5 +1,6 @@
 #include "SpeedController.h"
 #include "util/asservMath.h"
+#include "ch.h"
 #include <cmath>
 #include <cstdlib>
 #include <cstdint>
@@ -79,10 +80,11 @@ void SpeedController::setSpeedGoal(float speed)
 }
 ;
 
-void SpeedController::setGains(float Kp, float Ki)
+void SpeedController::setGains(float Kp, float Ki, uint8_t range)
 {
-    m_speedKp = Kp;
-    m_speedKi = Ki;
+//    chDbgAssert(range < NB_PI_SUBSET, "out of range ...range ! ");
+    m_speedKpSet[range] = Kp;
+    m_speedKiSet[range] = Ki;
     resetIntegral();
 }
 
@@ -90,7 +92,7 @@ void SpeedController::computeGains(float actualSpeed)
 {
     // D'abord, on cherche à quel set correspond la vitesse actuelle
     uint8_t set = 0;
-    while (set < NB_PI_SUBSET && actualSpeed > m_setSpeedRange[set])
+    while (set < (NB_PI_SUBSET-1) && actualSpeed > m_setSpeedRange[set])
         set++;
 
     if (set == 0) {

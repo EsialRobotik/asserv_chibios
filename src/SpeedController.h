@@ -1,6 +1,8 @@
 #ifndef SRC_SPEEDCONTROLLER_H_
 #define SRC_SPEEDCONTROLLER_H_
 
+#include <cstdint>
+
 #define NB_PI_SUBSET (3)
 
 class SpeedController
@@ -19,17 +21,27 @@ public:
 
     float update(float actualSpeed);
 
-    void setGains(float Kp, float Ki);
+    void setGains(float Kp, float Ki, uint8_t range = 0);
 
     void setSpeedGoal(float speed);
-    float getSpeedGoal()
+    float getSpeedGoal() const
     {
         return m_speedGoal;
     }
 
-    float getIntegratedOutput()
+    float getIntegratedOutput() const
     {
         return m_integratedOutput;
+    }
+
+    float getCurrentKp() const
+    {
+        return m_speedKp;
+    }
+
+    float getCurrentKi() const
+    {
+        return m_speedKi;
     }
 
     void resetIntegral()
