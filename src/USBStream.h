@@ -31,6 +31,10 @@ typedef struct
     float value21;
     float value22;
     float value23;
+    float value24;
+    float value25;
+    float value26;
+    float value27;
 }__attribute__((packed)) UsbStreamSample;
 
 class USBStream
@@ -79,6 +83,14 @@ public:
     {
         setValue(&m_currentStruct.value7, speed);
     }
+    inline void setSpeedKpRight(float Kp)
+    {
+        setValue(&m_currentStruct.value24, Kp);
+    }
+    inline void setSpeedKiRight(float Ki)
+    {
+        setValue(&m_currentStruct.value25, Ki);
+    }
 
     // Left motor speed control
     inline void setSpeedGoalLeft(float speed)
@@ -96,6 +108,14 @@ public:
     inline void setSpeedIntegratedOutputLeft(float speed)
     {
         setValue(&m_currentStruct.value8, speed);
+    }
+    inline void setSpeedKpLeft(float Kp)
+    {
+        setValue(&m_currentStruct.value26, Kp);
+    }
+    inline void setSpeedKiLeft(float Ki)
+    {
+        setValue(&m_currentStruct.value27, Ki);
     }
 
     // Angle regulator
