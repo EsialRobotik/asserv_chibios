@@ -4,13 +4,13 @@
 class SlopeFilter
 {
 public:
-    explicit SlopeFilter(float maxSlope);
+    explicit SlopeFilter(float maxAcceleration, float maxAccelerationLowSpeed, float lowSpeecThreshold);
     virtual ~SlopeFilter()
     {
     }
     ;
 
-    float filter(float dt, float value);
+    float filter(float dt, float targetSpeed, float currentSpeed);
     void setSlope(float slope);
     void reset()
     {
@@ -19,7 +19,10 @@ public:
     ;
 
 private:
-    float m_maxSlope;
+    float m_maxAcceleration;
+    float m_maxAccelerationLowSpeed;
+    float m_lowSpeedThreshold;
+    float m_maxDeceleration;
     float m_lastOutput;
 
     float constrain(float value, float low, float high);

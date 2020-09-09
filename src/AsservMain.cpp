@@ -7,6 +7,7 @@
 #include "SlopeFilter.h"
 #include "Pll.h"
 #include <chprintf.h>
+#include <cfloat>
 #include "Encoders/Encoder.h"
 #include "util/asservMath.h"
 
@@ -109,7 +110,7 @@ void AsservMain::mainLoop()
         if (m_asservMode == normal_mode || m_asservMode == regulator_output_control) {
             // On limite l'acceleration sur la sortie du regulateur de distance et d'angle
             m_distSpeedLimited = m_distanceRegulatorSlopeFilter.filter(m_loopPeriod, m_distRegulatorOutputSpeedConsign, (estimatedSpeedRight+estimatedSpeedLeft)*0.5 );
-            m_angleSpeedLimited = m_angleRegulatorSlopeFilter.filter(m_loopPeriod, m_angleRegulatorOutputSpeedConsign);
+            m_angleSpeedLimited = m_angleRegulatorSlopeFilter.filter(m_loopPeriod, m_angleRegulatorOutputSpeedConsign, (estimatedSpeedRight-estimatedSpeedLeft)/m_encoderWheelsDistance_mm );
 
             // Mise à jour des consignes en vitesse avec acceleration limitée
             m_speedControllerRight.setSpeedGoal(m_distSpeedLimited + m_angleSpeedLimited);
@@ -119,9 +120,8 @@ void AsservMain::mainLoop()
              * C'est batard, et cela ne doit pas être utilisé autrement que pour faire du réglage
              *      on réutilise les filtres de pente pour ne pas avoir à en instancier d'autres
              */
-            float rightWheelSpeed = m_distanceRegulatorSlopeFilter.filter(m_loopPeriod,
-                    m_directSpeedMode_rightWheelSpeed);
-            float leftWheelSpeed = m_angleRegulatorSlopeFilter.filter(m_loopPeriod, m_directSpeedMode_leftWheelSpeed);
+            float rightWheelSpeed = m_distanceRegulatorSlopeFilter.filter(m_loopPeriod, m_directSpeedMode_rightWheelSpeed, FLT_MAX);
+            float leftWheelSpeed = m_angleRegulatorSlopeFilter.filter(m_loopPeriod, m_directSpeedMode_leftWheelSpeed, FLT_MAX);
             m_speedControllerRight.setSpeedGoal(rightWheelSpeed);
             m_speedControllerLeft.setSpeedGoal(leftWheelSpeed);
         }
@@ -180,7 +180,7 @@ void AsservMain::setRegulatorsSpeed(float distSpeed, float angleSpeed)
     chSysLock();
     m_asservMode = regulator_output_control;
     m_distRegulatorOutputSpeedConsign = distSpeed;
-    m_angleRegulatorOutputSpeedConsign = angleSpeed * m_encoderWheelsDistance_mm;
+    m_angleRegulatorOutputSpeedConsign = (angleSpeed * m_encoderWheelsDistance_mm)/2.0;
     chSysUnlock();
 }
 
