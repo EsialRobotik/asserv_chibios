@@ -109,7 +109,7 @@ void AsservMain::mainLoop()
 
         if (m_asservMode == normal_mode || m_asservMode == regulator_output_control) {
             // On limite l'acceleration sur la sortie du regulateur de distance et d'angle
-            m_distSpeedLimited = m_distanceRegulatorSlopeFilter.filter(m_loopPeriod, m_distRegulatorOutputSpeedConsign);
+            m_distSpeedLimited = m_distanceRegulatorSlopeFilter.filter(m_loopPeriod, m_distRegulatorOutputSpeedConsign, (estimatedSpeedRight+estimatedSpeedLeft)*0.5 );
             m_angleSpeedLimited = m_angleRegulatorSlopeFilter.filter(m_loopPeriod, m_angleRegulatorOutputSpeedConsign, (estimatedSpeedRight-estimatedSpeedLeft)/m_encoderWheelsDistance_mm );
 
             // Mise à jour des consignes en vitesse avec acceleration limitée
