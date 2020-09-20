@@ -54,7 +54,9 @@ float speed_controller_left_speed_set[NB_PI_SUBSET] = {FLT_MAX, 0, 0};
 #define COMMAND_MANAGER_ARRIVAL_ANGLE_THRESHOLD_RAD (1)
 #define COMMAND_MANAGER_ARRIVAL_DISTANCE_THRESHOLD_mm (30)
 #define COMMAND_MANAGER_GOTO_ANGLE_THRESHOLD_RAD (M_PI/8)
-#define COMMAND_MANAGER_GOTO_CHAIN_NEXT_CMD_DIST_mm (200)
+#define COMMAND_MANAGER_GOTONOSTOP_FULLSPEED_CONSIGN_DIST_mm (MAX_SPEED_MM_PER_SEC/DIST_REGULATOR_KP)
+#define COMMAND_MANAGER_GOTONOSTOP_MIN_DIST_NEXT_CONSIGN_mm (200)
+#define COMMAND_MANAGER_GOTONOSTOP_NEXT_FULLSPEED_CONSIGN_ANGLE_mm (M_PI/8)
 
 
 
@@ -78,7 +80,8 @@ SlopeFilter angleSlopeFilter(ANGLE_REGULATOR_MAX_ACC, ANGLE_REGULATOR_MAX_ACC_LO
 SlopeFilter distSlopeFilter(DIST_REGULATOR_MAX_ACC, DIST_REGULATOR_MAX_ACC_LOW_SPEED, DIST_REGULATOR_LOW_SPEED_THRESHOLD);
 
 CommandManager commandManager(COMMAND_MANAGER_ARRIVAL_ANGLE_THRESHOLD_RAD, COMMAND_MANAGER_ARRIVAL_DISTANCE_THRESHOLD_mm,
-		COMMAND_MANAGER_GOTO_ANGLE_THRESHOLD_RAD, COMMAND_MANAGER_GOTO_CHAIN_NEXT_CMD_DIST_mm,
+		COMMAND_MANAGER_GOTO_ANGLE_THRESHOLD_RAD,
+		COMMAND_MANAGER_GOTONOSTOP_FULLSPEED_CONSIGN_DIST_mm, COMMAND_MANAGER_GOTONOSTOP_MIN_DIST_NEXT_CONSIGN_mm, COMMAND_MANAGER_GOTONOSTOP_NEXT_FULLSPEED_CONSIGN_ANGLE_mm,
 		angleRegulator, distanceRegulator);
 
 AsservMain mainAsserv(ASSERV_THREAD_FREQUENCY, ASSERV_POSITION_DIVISOR,
@@ -390,17 +393,16 @@ void asservCommandUSB(BaseSequentialStream *chp, int argc, char **argv)
     }
     else if (!strcmp(argv[0], "gototest"))
     {
-//		commandManager.addGoToEnchainement(450,-200);
-//		commandManager.addGoToEnchainement(450,-600);
-//		commandManager.addGoToEnchainement(300,-400);
-//		commandManager.addGoTo(150,0);
-
         mainAsserv.resetToNormalMode();
-        commandManager.addGoToEnchainement(900, 300);
-        commandManager.addGoToEnchainement(900, 50);
-        commandManager.addGoToEnchainement(100, 400);
-        commandManager.addGoToEnchainement(100, 0);
-        commandManager.addGoToEnchainement(500, 400);
+        commandManager.addGoToNoStop(500, 0);
+        commandManager.addGoToNoStop(900, 0);
+        commandManager.addGoToNoStop(1100, 0);
+        commandManager.addGoToNoStop(1100, 200);
+        commandManager.addGoToNoStop(1100, 400);
+        commandManager.addGoToNoStop(900, 400);
+        commandManager.addGoToNoStop(500, 400);
+        commandManager.addGoToNoStop(100, 200);
+        commandManager.addGoToAngle(500, 200);
 
 
     }
@@ -586,7 +588,7 @@ THD_FUNCTION(asservCommandSerial, p)
         case 'e': // goto, mais on s'autorise à Enchainer la consigne suivante sans s'arrêter
             serialReadLine(buffer, sizeof(buffer));
             sscanf(buffer, "%f#%f", &consigneValue1, &consigneValue2);
-            commandManager.addGoToEnchainement(consigneValue1, consigneValue2);
+            commandManager.addGoToNoStop(consigneValue1, consigneValue2);
             break;
 
         case 'p': //retourne la Position et l'angle courants du robot

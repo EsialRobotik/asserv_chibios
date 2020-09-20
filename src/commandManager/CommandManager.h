@@ -14,8 +14,10 @@ enum CommandStatus {
 class CommandManager
 {
     public:
-        explicit CommandManager(float arrivalAngleThreshold_rad, float arrivalDistanceThreshold_mm, float gotoAngleThreshold_rad,
-                float gotoNextConsignDist_mm, const Regulator &angle_regulator, const Regulator &distance_regulator);
+        explicit CommandManager(float arrivalAngleThreshold_rad, float arrivalDistanceThreshold_mm,
+                float gotoAngleThreshold_rad,
+                float gotoNoStopFullSpeedConsignDist_mm, float gotoNoStopMinDistNextConsign_mm, float gotoNoStopNextFullSpeedConsignAngle_rad,
+                const Regulator &angle_regulator, const Regulator &distance_regulator);
         ~CommandManager() {};
 
         /*
@@ -24,7 +26,7 @@ class CommandManager
         bool addStraightLine(float valueInmm);
         bool addTurn(float angleInDeg);
         bool addGoTo(float posXInmm, float posYInmm);
-        bool addGoToEnchainement(float posXInmm, float posYInmm);
+        bool addGoToNoStop(float posXInmm, float posYInmm);
         bool addGoToAngle(float posXInmm, float posYInmm);
 
         /*
@@ -80,13 +82,15 @@ class CommandManager
 
         float m_gotoAngleThreshold_rad;
 
-        float m_gotoNextConsignDist_mm;
+        float m_gotoNoStopFullSpeedConsignDist_mm;
+        float m_gotoNoStopMinDistNextConsign_mm;
+        float m_gotoNoStopNextFullSpeedConsignAngle_rad;
 
         float m_angleRegulatorConsign;
         float m_distRegulatorConsign;
 
         bool isGoalReach();
-        bool isGoalReach(float X_mm, float Y_mm);
+        bool isGoalReach(float X_mm, float Y_mm, float theta_rad);
 
         bool isBlocked();
 
@@ -94,7 +98,7 @@ class CommandManager
         float computeDeltaDist(float deltaX, float deltaY); // Calcul de la distance à parcourir
         void computeGoTo(float X_mm, float Y_mm, float theta_rad);
         void computeGoToAngle(float deltaX, float deltaY, float theta_rad);
-        void computeEnchainement(float X_mm, float Y_mm, float theta_rad);
+        void computeGotoNoStop(float X_mm, float Y_mm, float theta_rad);
 };
 
 #endif

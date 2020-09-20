@@ -318,7 +318,7 @@ void asservCommand(BaseSequentialStream *chp, int argc, char **argv)
 //        commandManager.addGoToEnchainement(390, -1100);
 //        commandManager.addGoToEnchainement(550, -900);
 //        commandManager.addGoToEnchainement(395, -630);
-        commandManager.addGoToEnchainement(300, -440);
+        commandManager.addGoToNoStop(300, -440);
         commandManager.addGoTo(300, -250);
 //        commandManager.addGoToAngle(1000, -250);
 //        commandManager.addStraightLine(-200);

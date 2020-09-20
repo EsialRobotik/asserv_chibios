@@ -396,11 +396,11 @@ void asservCommandUSB(BaseSequentialStream *chp, int argc, char **argv)
 //		commandManager.addGoTo(150,0);
 
         mainAsserv.resetToNormalMode();
-        commandManager.addGoToEnchainement(900, 300);
-        commandManager.addGoToEnchainement(900, 50);
-        commandManager.addGoToEnchainement(100, 400);
-        commandManager.addGoToEnchainement(100, 0);
-        commandManager.addGoToEnchainement(500, 400);
+        commandManager.addGoToNoStop(900, 300);
+        commandManager.addGoToNoStop(900, 50);
+        commandManager.addGoToNoStop(100, 400);
+        commandManager.addGoToNoStop(100, 0);
+        commandManager.addGoToNoStop(500, 400);
 
 
     }
@@ -586,7 +586,7 @@ THD_FUNCTION(asservCommandSerial, p)
         case 'e': // goto, mais on s'autorise à Enchainer la consigne suivante sans s'arrêter
             serialReadLine(buffer, sizeof(buffer));
             sscanf(buffer, "%f#%f", &consigneValue1, &consigneValue2);
-            commandManager.addGoToEnchainement(consigneValue1, consigneValue2);
+            commandManager.addGoToNoStop(consigneValue1, consigneValue2);
             break;
 
         case 'p': //retourne la Position et l'angle courants du robot

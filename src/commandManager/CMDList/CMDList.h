@@ -13,8 +13,8 @@ enum typeCMD {
     CMD_STOP, // Bon, là, je sais pas...
     CMD_GOTO, // Aller à un point précis
     CMD_GOTOANGLE, // Se tourner vers un point précis
-    CMD_GOTOENCHAIN // Aller vers un point précis, mais si la commande suivante est un GOTO ou
-    // un GOTOENCHAIN, on s'autorise à ne pas s'arrêter au point de consigne
+    CMD_GOTO_NOSTOP // Aller vers un point précis, mais si la commande suivante est un GOTO ou
+    // un CMD_GOTO_NOSTOP, on s'autorise à ne pas s'arrêter au point de consigne
 };
 
 typedef struct CMD_struct {
