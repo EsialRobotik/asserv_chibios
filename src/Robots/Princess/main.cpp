@@ -24,9 +24,9 @@
 #define ASSERV_THREAD_PERIOD_S (1.0/ASSERV_THREAD_FREQUENCY)
 #define ASSERV_POSITION_DIVISOR (5)
 
-#define ENCODERS_WHEELS_RADIUS_MM (31.80/2.0)
-#define ENCODERS_WHEELS_DISTANCE_MM (264)
-#define ENCODERS_TICKS_BY_TURN (1440*4)
+#define ENCODERS_WHEELS_RADIUS_MM (31.83/2.0)
+#define ENCODERS_WHEELS_DISTANCE_MM (268.5)
+#define ENCODERS_TICKS_BY_TURN (1024*4)
 
 #define MAX_SPEED_MM_PER_SEC (1500)
 
@@ -61,7 +61,7 @@ float speed_controller_left_speed_set[NB_PI_SUBSET] = {FLT_MAX, 0, 0};
 
 QuadratureEncoder encoders(true, true, true);
 Md22::I2cPinInit ESIALCardPinConf_SCL_SDA = {GPIOB, 6, GPIOB, 7};
-Md22 md22MotorController(true,false,false, &ESIALCardPinConf_SCL_SDA, 100000);
+Md22 md22MotorController(false, false, true, &ESIALCardPinConf_SCL_SDA, 100000);
 
 Regulator angleRegulator(ANGLE_REGULATOR_KP, MAX_SPEED_MM_PER_SEC);
 Regulator distanceRegulator(DIST_REGULATOR_KP, MAX_SPEED_MM_PER_SEC);
