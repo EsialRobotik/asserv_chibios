@@ -8,7 +8,8 @@
 #include "USBStream.h"
 
 CommandManager::CommandManager(float arrivalAngleThreshold_rad, float arrivalDistanceThreshold_mm,
-		float gotoAngleThreshold_rad, float gotoNextConsignDist_mm,
+		float gotoAngleThreshold_rad,
+		float gotoNoStopFullSpeedConsignDist_mm, float gotoNoStopMinDistNextConsign_mm, float gotoNoStopNextFullSpeedConsignAngle_rad,
 		const Regulator &angle_regulator, const Regulator &distance_regulator):
 liste(), m_angle_regulator(angle_regulator), m_distance_regulator(distance_regulator)
 {
@@ -19,7 +20,9 @@ liste(), m_angle_regulator(angle_regulator), m_distance_regulator(distance_regul
     m_arrivalAngleThreshold_rad = arrivalAngleThreshold_rad;
     m_arrivalDistanceThreshold_mm = arrivalDistanceThreshold_mm;
     m_gotoAngleThreshold_rad = gotoAngleThreshold_rad;
-    m_gotoNextConsignDist_mm = gotoNextConsignDist_mm;
+    m_gotoNoStopFullSpeedConsignDist_mm = gotoNoStopFullSpeedConsignDist_mm;
+    m_gotoNoStopMinDistNextConsign_mm = gotoNoStopMinDistNextConsign_mm;
+    m_gotoNoStopNextFullSpeedConsignAngle_rad = gotoNoStopNextFullSpeedConsignAngle_rad;
     m_angleRegulatorConsign = 0;
     m_distRegulatorConsign = 0;
 }
@@ -39,9 +42,9 @@ bool CommandManager::addGoTo(float posXInmm, float posYInmm)
     return liste.enqueue(CMD_GOTO , posXInmm , posYInmm);
 }
 
-bool CommandManager::addGoToEnchainement(float posXInmm, float posYInmm)
+bool CommandManager::addGoToNoStop(float posXInmm, float posYInmm)
 {
-    return liste.enqueue(CMD_GOTOENCHAIN , posXInmm, posYInmm);
+    return liste.enqueue(CMD_GOTO_NOSTOP , posXInmm, posYInmm);
 }
 
 bool CommandManager::addGoToAngle(float posXInmm, float posYInmm)
@@ -98,7 +101,7 @@ void CommandManager::update(float X_mm, float Y_mm, float theta_rad)
         return;
     }
 
-    if (!isGoalReach(X_mm, Y_mm))
+    if (!isGoalReach(X_mm, Y_mm, theta_rad))
     {
 
         if(isBlocked())
@@ -118,9 +121,9 @@ void CommandManager::update(float X_mm, float Y_mm, float theta_rad)
         { // On est en plein GoTo en angle, donc on est en train de se planter et on ajuste
             computeGoToAngle(X_mm, Y_mm, theta_rad);
         }
-        else if (currCMD.type == CMD_GOTOENCHAIN)
+        else if (currCMD.type == CMD_GOTO_NOSTOP)
         { // Là, on est vraiment en train de se planter parce qu'on veut enchainer les consignes
-            computeEnchainement(X_mm, Y_mm, theta_rad);
+            computeGotoNoStop(X_mm, Y_mm, theta_rad);
         }
 
         if (nextCMD.type == CMD_NULL)
@@ -132,7 +135,6 @@ void CommandManager::update(float X_mm, float Y_mm, float theta_rad)
     else
     {
 
-        // ToDo Réfléchir à l'enchainement de commande pour ne pas s'arrêter au moment de calculer la suivante
         if (nextCMD.type != CMD_NULL)
         { //On a déjà chargée une consigne
             currCMD = nextCMD; // La consigne suivante devient la consigne courante
@@ -161,9 +163,9 @@ void CommandManager::update(float X_mm, float Y_mm, float theta_rad)
         {   // On appel computeGoTo qui se débrouille pour aller en (x,y)
             computeGoTo(X_mm, Y_mm, theta_rad);
         }
-        else if (currCMD.type == CMD_GOTOENCHAIN)
+        else if (currCMD.type == CMD_GOTO_NOSTOP)
         {
-            computeEnchainement(X_mm, Y_mm, theta_rad); //On va tenter d'enchainer la consigne suivante
+            computeGotoNoStop(X_mm, Y_mm, theta_rad); //On va tenter d'enchainer la consigne suivante
         }
         else if (currCMD.type == CMD_GOTOANGLE)
         { // On appel computeGoToAngle qui se débrouille pour s'aligner avec (x,y)
@@ -262,7 +264,7 @@ float CommandManager::computeDeltaDist(float deltaX, float deltaY)
         return 0;
 }
 
-void CommandManager::computeEnchainement(float X_mm, float Y_mm, float theta_rad)
+void CommandManager::computeGotoNoStop(float X_mm, float Y_mm, float theta_rad)
 {
     float X_goto = currCMD.value;
     float Y_goto = currCMD.secValue;
@@ -276,7 +278,7 @@ void CommandManager::computeEnchainement(float X_mm, float Y_mm, float theta_rad
      *  Sauf si la distance entre le robot et la prochaine consigne est inférieur a m_gotoNextConsignDist
      *  	(ce cas de figure arrive quand il n'y a plus d'autres consignes a enchainer )
      */
-    if (computeDeltaDist(X_goto - X_mm, Y_goto - Y_mm) > m_gotoNextConsignDist_mm)
+    if (computeDeltaDist(X_goto - X_mm, Y_goto - Y_mm) > m_gotoNoStopFullSpeedConsignDist_mm)
     {
         float angle = M_PI / 2;
 
@@ -298,8 +300,8 @@ void CommandManager::computeEnchainement(float X_mm, float Y_mm, float theta_rad
             angle = -angle;
 
         // Then find a (x,y) point that will be our current goal
-        X_goal = X_mm + cosf(angle) * m_gotoNextConsignDist_mm;
-        Y_goal = Y_mm + sinf(angle) * m_gotoNextConsignDist_mm;
+        X_goal = X_mm + cosf(angle) * m_gotoNoStopFullSpeedConsignDist_mm;
+        Y_goal = Y_mm + sinf(angle) * m_gotoNoStopFullSpeedConsignDist_mm;
     }
 
     USBStream::instance()->setXGoal(X_goal);
@@ -325,15 +327,15 @@ bool CommandManager::isGoalReach()
         && fabs(m_distance_regulator.getError()) <= m_arrivalDistanceThreshold_mm;
 }
 
-bool CommandManager::isGoalReach(float X_mm, float Y_mm)
+bool CommandManager::isGoalReach(float X_mm, float Y_mm, float theta_rad)
 {
-    if (currCMD.type != CMD_GOTOENCHAIN)
+    if (currCMD.type != CMD_GOTO_NOSTOP)
     {
         return isGoalReach();
     }
-    else if (currCMD.type == CMD_GOTOENCHAIN)
+    else if (currCMD.type == CMD_GOTO_NOSTOP)
     {
-        if (nextCMD.type == CMD_GOTO || nextCMD.type == CMD_GOTOENCHAIN)
+        if (nextCMD.type == CMD_GOTO || nextCMD.type == CMD_GOTO_NOSTOP)
         {
             /* Si la prochaine consigne est enchainable, la consigne suivante
              *  est l'intersection entre une ligne qui part du centre du robot vers le prochain goto
@@ -346,7 +348,10 @@ bool CommandManager::isGoalReach(float X_mm, float Y_mm)
             float deltaY = currCMD.secValue - Y_mm;  // Différence entre la cible et le robot selon Y
 
             float deltaDist = computeDeltaDist(deltaX, deltaY);
-            return (deltaDist < m_gotoNextConsignDist_mm);
+            float deltaThetaNext = computeDeltaTheta(nextCMD.value - X_mm,  nextCMD.secValue - Y_mm, theta_rad);
+            return (deltaDist < m_gotoNoStopFullSpeedConsignDist_mm && fabs(deltaThetaNext) < m_gotoNoStopNextFullSpeedConsignAngle_rad )
+                    || (deltaDist < m_gotoNoStopMinDistNextConsign_mm);
+
         }
         else
             return isGoalReach(); // Si la consigne suivante n'est pas enchainable, il faut vraiment atteindre la consigne..
@@ -360,7 +365,7 @@ bool CommandManager::isGoalReach(float X_mm, float Y_mm)
 // TODO : Trouver une équivalence!
 bool CommandManager::isBlocked()
 {
-    return true;
+    return false;
 }
 
 

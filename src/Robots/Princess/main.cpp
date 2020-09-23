@@ -40,13 +40,11 @@
 #define ANGLE_REGULATOR_MAX_ACC_LOW_SPEED (3/ASSERV_THREAD_PERIOD_S)
 #define ANGLE_REGULATOR_LOW_SPEED_THRESHOLD (0)
 
-float speed_controller_right_Kp[NB_PI_SUBSET] = {0.1, 0.0, 0.0};
-float speed_controller_right_Ki[NB_PI_SUBSET] = {0.6, 0.0, 0.0};
-float speed_controller_right_speed_set[NB_PI_SUBSET] = {FLT_MAX, 0, 0};
+float speed_controller_right_Kp = 0.1;
+float speed_controller_right_Ki = 0.6;
 
-float speed_controller_left_Kp[NB_PI_SUBSET] = {0.1, 0.0, 0.0};
-float speed_controller_left_Ki[NB_PI_SUBSET] = {0.6, 0.0, 0.0};
-float speed_controller_left_speed_set[NB_PI_SUBSET] = {FLT_MAX, 0, 0};
+float speed_controller_left_Kp = 0.1;
+float speed_controller_left_Ki = 0.6;
 
 #define PLL_BANDWIDTH (250)
 
@@ -68,8 +66,8 @@ Regulator distanceRegulator(DIST_REGULATOR_KP, MAX_SPEED_MM_PER_SEC);
 
 Odometry odometry(ENCODERS_WHEELS_DISTANCE_MM, 0, 0);
 
-SpeedController speedControllerRight(speed_controller_right_Kp, speed_controller_right_Ki, speed_controller_right_speed_set, 100, MAX_SPEED_MM_PER_SEC, ASSERV_THREAD_FREQUENCY);
-SpeedController speedControllerLeft(speed_controller_left_Kp, speed_controller_left_Ki, speed_controller_left_speed_set, 100, MAX_SPEED_MM_PER_SEC, ASSERV_THREAD_FREQUENCY);
+SpeedController speedControllerRight(speed_controller_right_Kp, speed_controller_right_Ki, 100, MAX_SPEED_MM_PER_SEC, ASSERV_THREAD_FREQUENCY);
+SpeedController speedControllerLeft(speed_controller_left_Kp, speed_controller_left_Ki, 100, MAX_SPEED_MM_PER_SEC, ASSERV_THREAD_FREQUENCY);
 
 Pll rightPll(PLL_BANDWIDTH);
 Pll leftPll(PLL_BANDWIDTH);
@@ -396,11 +394,11 @@ void asservCommandUSB(BaseSequentialStream *chp, int argc, char **argv)
 //		commandManager.addGoTo(150,0);
 
         mainAsserv.resetToNormalMode();
-        commandManager.addGoToEnchainement(900, 300);
-        commandManager.addGoToEnchainement(900, 50);
-        commandManager.addGoToEnchainement(100, 400);
-        commandManager.addGoToEnchainement(100, 0);
-        commandManager.addGoToEnchainement(500, 400);
+        commandManager.addGoToNoStop(900, 300);
+        commandManager.addGoToNoStop(900, 50);
+        commandManager.addGoToNoStop(100, 400);
+        commandManager.addGoToNoStop(100, 0);
+        commandManager.addGoToNoStop(500, 400);
 
 
     }
@@ -586,7 +584,7 @@ THD_FUNCTION(asservCommandSerial, p)
         case 'e': // goto, mais on s'autorise à Enchainer la consigne suivante sans s'arrêter
             serialReadLine(buffer, sizeof(buffer));
             sscanf(buffer, "%f#%f", &consigneValue1, &consigneValue2);
-            commandManager.addGoToEnchainement(consigneValue1, consigneValue2);
+            commandManager.addGoToNoStop(consigneValue1, consigneValue2);
             break;
 
         case 'p': //retourne la Position et l'angle courants du robot
