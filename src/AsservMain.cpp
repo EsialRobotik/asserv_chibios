@@ -34,6 +34,7 @@ AsservMain::AsservMain(uint16_t loopFrequency, uint16_t speedPositionLoopDivisor
     m_angleSpeedLimited = 0;
     m_enableMotors = true;
     m_enablePolar = true;
+    m_emergencyStop = false;
     m_asservMode = normal_mode;
     m_directSpeedMode_rightWheelSpeed = 0;
     m_directSpeedMode_leftWheelSpeed = 0;
@@ -89,14 +90,21 @@ void AsservMain::mainLoop()
         if (m_asservCounter == m_speedPositionLoopDivisor && m_enablePolar) {
             m_commandManager.update(m_odometry.getX(), m_odometry.getY(), m_odometry.getTheta());
 
-            if (m_asservMode == normal_mode) {
-                m_angleRegulatorOutputSpeedConsign = m_angleRegulator.updateOutput(m_commandManager.getAngleGoal());
-                m_distRegulatorOutputSpeedConsign = m_distanceRegulator.updateOutput(
-                        m_commandManager.getDistanceGoal());
+            if (m_asservMode == normal_mode)
+            {
+                m_angleRegulatorOutputSpeedConsign = m_angleRegulator.updateOutput( m_commandManager.getAngleGoal() );
+                m_distRegulatorOutputSpeedConsign  = m_distanceRegulator.updateOutput( m_commandManager.getDistanceGoal() );
             }
 
             m_asservCounter = 0;
         }
+
+        if( m_emergencyStop )
+        {
+            m_angleRegulatorOutputSpeedConsign = 0;
+            m_distRegulatorOutputSpeedConsign = 0;
+        }
+
 
         /*
          * Regulation en vitesse
@@ -223,6 +231,26 @@ void AsservMain::enableMotors(bool enable)
         m_motorController.setMotorRightSpeed(0);
         m_motorController.setMotorLeftSpeed(0);
     }
+}
+
+void AsservMain::setEmergencyStop()
+{
+    chSysLock();
+    m_commandManager.setEmergencyStop();
+    m_angleRegulatorSlopeFilter.disable();
+    m_distanceRegulatorSlopeFilter.disable();
+    m_emergencyStop = true;
+    chSysUnlock();
+}
+
+void AsservMain::resetEmergencyStop()
+{
+    chSysLock();
+    m_commandManager.resetEmergencyStop();
+    m_angleRegulatorSlopeFilter.enable();
+    m_distanceRegulatorSlopeFilter.enable();
+    m_emergencyStop = false;
+    chSysUnlock();
 }
 
 void AsservMain::enablePolar(bool enable)
