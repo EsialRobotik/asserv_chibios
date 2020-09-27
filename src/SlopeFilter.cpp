@@ -9,10 +9,14 @@ SlopeFilter::SlopeFilter(float maxAcceleration, float maxAccelerationLowSpeed, f
     m_maxAccelerationLowSpeed = maxAccelerationLowSpeed;
     m_lowSpeedThreshold = lowSpeecThreshold;
     m_lastOutput = 0;
+    m_enabled = true;
 }
 
 float SlopeFilter::filter(float dt, float targetSpeed, float currentSpeed)
 {
+    if( !m_enabled)
+        return targetSpeed;
+
     bool isAccelerating;
     if( m_lastOutput >= 0 && targetSpeed >= 0)
     {
@@ -47,6 +51,7 @@ float SlopeFilter::filter(float dt, float targetSpeed, float currentSpeed)
     {
         maxDelta = dt * m_maxDeceleration;
     }
+
     m_lastOutput += constrain(change, -maxDelta, maxDelta);
     return m_lastOutput;
 }
@@ -56,6 +61,16 @@ void SlopeFilter::setSlope(float slope)
 {
     m_maxAcceleration = slope;
     m_lastOutput = 0;
+}
+
+void SlopeFilter::enable()
+{
+    m_enabled = true;
+}
+
+void SlopeFilter::disable()
+{
+    m_enabled = false;
 }
 
 float SlopeFilter::constrain(float value, float low, float high)

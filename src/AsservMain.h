@@ -49,6 +49,9 @@ public:
 
     void reset();
 
+    void setEmergencyStop();
+    void resetEmergencyStop();
+
 private:
 
     float convertSpeedTommSec(float speed_ticksPerSec);
@@ -91,6 +94,7 @@ private:
 
     bool m_enableMotors;
     bool m_enablePolar;
+    bool m_emergencyStop;
     asserv_mode_t m_asservMode;
     float m_directSpeedMode_rightWheelSpeed;
     float m_directSpeedMode_leftWheelSpeed;
