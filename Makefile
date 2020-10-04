@@ -134,7 +134,7 @@ ifeq (,$(wildcard $(SRCDIR)/Robots/$(ROBOT)/main.cpp))
 $(error Unknown ROBOT specified! Knowns are : $(AVAILABLE_ROBOTS))
 endif
 
-ifeq ($(NO_SHELL),)  # Disable the shell
+ifneq ($(SHELL_ENABLE),)  # enable the shell
 	SHELL_MODE_DEFINE = -DENABLE_SHELL
 endif
 
@@ -227,12 +227,12 @@ include $(RULESPATH)/rules.mk
 # Custom rules
 #
 help :
-	@echo "make                             :   build with default robot config"
-	@echo "make ROBOT=myRobot               :   build using the myRobot config. A myRobot dir must be present in src/Robots"
-	@echo "make ROBOT=myRobot NO_SHELL=true :   build using the myRobot config and disable the default shell (must be handled in src/Robots/myRobot/main.cpp ! ) "
-	@echo "make flash                       :   load the generated elf to the board"
-	@echo "make debug                       :   load the generated elf to the board & wait for a debugger to connect (with arm-none-eabi-gdb build/asservNucleo.elf -ex \"target remote :3333\" )"
-	@echo "make robots                      :   print the knows robots"
+	@echo "make                                 :   build with default robot config"
+	@echo "make ROBOT=myRobot                   :   build using the myRobot config. A myRobot dir must be present in src/Robots"
+	@echo "make ROBOT=myRobot SHELL_ENABLE=true :   build using the myRobot config and enable the shell (Ie: ENABLE_SHELL will be defined and must be handled in src/Robots/myRobot/main.cpp ! ) "
+	@echo "make flash                           :   load the generated elf to the board"
+	@echo "make debug                           :   load the generated elf to the board & wait for a debugger to connect (with arm-none-eabi-gdb build/asservNucleo.elf -ex \"target remote :3333\" )"
+	@echo "make robots                          :   print the knows robots"
 	
 robots :
 	@echo "Available robots :  $(AVAILABLE_ROBOTS)" 
