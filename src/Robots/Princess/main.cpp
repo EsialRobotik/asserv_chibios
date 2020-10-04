@@ -24,9 +24,9 @@
 #define ASSERV_THREAD_PERIOD_S (1.0/ASSERV_THREAD_FREQUENCY)
 #define ASSERV_POSITION_DIVISOR (5)
 
-#define ENCODERS_WHEELS_RADIUS_MM (31.80/2.0)
-#define ENCODERS_WHEELS_DISTANCE_MM (264)
-#define ENCODERS_TICKS_BY_TURN (1440*4)
+#define ENCODERS_WHEELS_RADIUS_MM (31.83/2.0)
+#define ENCODERS_WHEELS_DISTANCE_MM (268.5)
+#define ENCODERS_TICKS_BY_TURN (1024*4)
 
 #define MAX_SPEED_MM_PER_SEC (1500)
 
@@ -52,14 +52,16 @@ float speed_controller_left_Ki = 0.6;
 #define COMMAND_MANAGER_ARRIVAL_ANGLE_THRESHOLD_RAD (1)
 #define COMMAND_MANAGER_ARRIVAL_DISTANCE_THRESHOLD_mm (30)
 #define COMMAND_MANAGER_GOTO_ANGLE_THRESHOLD_RAD (M_PI/8)
-#define COMMAND_MANAGER_GOTO_CHAIN_NEXT_CMD_DIST_mm (200)
+#define COMMAND_MANAGER_GOTONOSTOP_FULLSPEED_CONSIGN_DIST_mm (MAX_SPEED_MM_PER_SEC/DIST_REGULATOR_KP)
+#define COMMAND_MANAGER_GOTONOSTOP_MIN_DIST_NEXT_CONSIGN_mm (200)
+#define COMMAND_MANAGER_GOTONOSTOP_NEXT_FULLSPEED_CONSIGN_ANGLE_mm (M_PI/8)
 
 
 
 
 QuadratureEncoder encoders(true, true, true);
 Md22::I2cPinInit ESIALCardPinConf_SCL_SDA = {GPIOB, 6, GPIOB, 7};
-Md22 md22MotorController(true,false,false, &ESIALCardPinConf_SCL_SDA, 100000);
+Md22 md22MotorController(false, false, true, &ESIALCardPinConf_SCL_SDA, 100000);
 
 Regulator angleRegulator(ANGLE_REGULATOR_KP, MAX_SPEED_MM_PER_SEC);
 Regulator distanceRegulator(DIST_REGULATOR_KP, MAX_SPEED_MM_PER_SEC);
@@ -76,16 +78,17 @@ SlopeFilter angleSlopeFilter(ANGLE_REGULATOR_MAX_ACC, ANGLE_REGULATOR_MAX_ACC_LO
 SlopeFilter distSlopeFilter(DIST_REGULATOR_MAX_ACC, DIST_REGULATOR_MAX_ACC_LOW_SPEED, DIST_REGULATOR_LOW_SPEED_THRESHOLD);
 
 CommandManager commandManager(COMMAND_MANAGER_ARRIVAL_ANGLE_THRESHOLD_RAD, COMMAND_MANAGER_ARRIVAL_DISTANCE_THRESHOLD_mm,
-		COMMAND_MANAGER_GOTO_ANGLE_THRESHOLD_RAD, COMMAND_MANAGER_GOTO_CHAIN_NEXT_CMD_DIST_mm,
-		angleRegulator, distanceRegulator);
+        COMMAND_MANAGER_GOTO_ANGLE_THRESHOLD_RAD,
+        COMMAND_MANAGER_GOTONOSTOP_FULLSPEED_CONSIGN_DIST_mm, COMMAND_MANAGER_GOTONOSTOP_MIN_DIST_NEXT_CONSIGN_mm, COMMAND_MANAGER_GOTONOSTOP_NEXT_FULLSPEED_CONSIGN_ANGLE_mm,
+        angleRegulator, distanceRegulator);
 
 AsservMain mainAsserv(ASSERV_THREAD_FREQUENCY, ASSERV_POSITION_DIVISOR,
-		ENCODERS_WHEELS_RADIUS_MM, ENCODERS_WHEELS_DISTANCE_MM, ENCODERS_TICKS_BY_TURN,
-		commandManager, md22MotorController, encoders, odometry,
-		angleRegulator, distanceRegulator,
-		angleSlopeFilter, distSlopeFilter,
-		speedControllerRight, speedControllerLeft,
-		rightPll, leftPll);
+        ENCODERS_WHEELS_RADIUS_MM, ENCODERS_WHEELS_DISTANCE_MM, ENCODERS_TICKS_BY_TURN,
+        commandManager, md22MotorController, encoders, odometry,
+        angleRegulator, distanceRegulator,
+        angleSlopeFilter, distSlopeFilter,
+        speedControllerRight, speedControllerLeft,
+        rightPll, leftPll);
 
 
 /*
