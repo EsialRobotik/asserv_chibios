@@ -124,12 +124,8 @@ LDSCRIPT= $(STARTUPLD)/STM32F446xE.ld
 
 # Custom part: Depending on a input variable ROBOT, the used main.cpp is different
 
-ifeq ($(ROBOT),)  # set the default ROBOT
-	ROBOT = PMI
-endif
-
 # Check if the specified ROBOT exist
-AVAILABLE_ROBOTS=$(shell find src/Robots -type d -exec basename {} \;)
+AVAILABLE_ROBOTS=$(shell find src/Robots -mindepth 1 -type d -exec basename {} \;)
 ifeq (,$(wildcard $(SRCDIR)/Robots/$(ROBOT)/main.cpp))
 $(error Unknown ROBOT specified! Knowns are : $(AVAILABLE_ROBOTS))
 endif
