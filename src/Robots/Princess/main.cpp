@@ -488,11 +488,9 @@ THD_FUNCTION(asservCommandSerial, p)
      f%x#%y\n / faire Face / x, y : entiers, en mm / Fait tourner le robot pour être en face du point de coordonnées (x, y). En gros, ça réalise la première partie d'un Goto : on se tourne vers le point cible, mais on avance pas.
      h / Halte ! / Arrêt d'urgence ! Le robot est ensuite systématiquement asservi à sa position actuelle. Cela devrait suffire à arrêter le robot correctement. La seule commande acceptée par la suite sera un Reset de l'arrêt d'urgence : toute autre commande sera ignorée.
      r / Reset de l'arrêt d'urgence / Remet le robot dans son fonctionnement normal après un arrêt d'urgence. Les commandes en cours au moment de l'arrêt d'urgence NE sont PAS reprises. Si le robot n'est pas en arrêt d'urgence, cette commande n'a aucun effet.
-     --c%s%r / Calage bordure / s : sens du calage bordure, r : robot ('g' : gros ; 'p' : petit) / Effectue un calage bordure. Le robot doit être dans sa zone de départ au début du calage, dirigé vers la case de départ adverse en face de la table. Il doit être assez proche de la bordure derrière lui, et pas trop proche de la bordure sur le côté. A la fin du calage, le robot est prêt à partir pour un match dans sa case de départ.
-     Le choix du robot est possible, si on veut que deux robots asservis concourent en même temps sur la même table, pour qu'ils puissent faire un calage bordure en même temps sans se rentrer dedans.
 
      p / get Position / Récupère la position et le cap du robot sur la connexion i2c, sous la forme de 3 types float (3 * 4 bytes), avec x, y, et a les coordonnées et l'angle du robot.
-     S / set Position / applique la nouvelle position du robot
+     S%x#%y#%a\n / set Position / applique la nouvelle position du robot
 
      z / avance de 20 cm
      s / recule de 20 cm
@@ -517,6 +515,7 @@ THD_FUNCTION(asservCommandSerial, p)
 
     float consigneValue1 = 0;
     float consigneValue2 = 0;
+    float consigneValue3 = 0;
     char buffer[64];
 
     chprintf(outputStream, "Started\r\n");
@@ -595,6 +594,13 @@ THD_FUNCTION(asservCommandSerial, p)
                     odometry.getX(), odometry.getY(), odometry.getTheta(),
                     commandManager.getCommandStatus());
             break;
+
+        case 'S': // set la position et l'angle du robot
+            serialReadLine(buffer, sizeof(buffer));
+            sscanf(buffer, "%f#%f#%f", &consigneValue1, &consigneValue2, &consigneValue3);
+            mainAsserv.setPosition(consigneValue1, consigneValue2, consigneValue3);
+            break;
+
         default:
             chprintf(outputStream, " - unexpected character\r\n");
             break;
