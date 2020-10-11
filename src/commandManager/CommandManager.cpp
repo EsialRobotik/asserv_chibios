@@ -42,6 +42,11 @@ bool CommandManager::addGoTo(float posXInmm, float posYInmm)
     return liste.enqueue(CMD_GOTO , posXInmm , posYInmm);
 }
 
+bool CommandManager::addGoToBack(float posXInmm, float posYInmm)
+{
+    return liste.enqueue(CMD_GOTO_BACK , posXInmm , posYInmm);
+}
+
 bool CommandManager::addGoToNoStop(float posXInmm, float posYInmm)
 {
     return liste.enqueue(CMD_GOTO_NOSTOP , posXInmm, posYInmm);
@@ -117,6 +122,10 @@ void CommandManager::update(float X_mm, float Y_mm, float theta_rad)
         { // On est en plein GoTo, donc on est en train de se planter et on ajuste
             computeGoTo(X_mm, Y_mm, theta_rad);
         }
+        else if (currCMD.type == CMD_GOTO_BACK)
+        { // On est en plein GoTo, donc on est en train de se planter et on ajuste
+            computeGoToBack(X_mm, Y_mm, theta_rad);
+        }
         else if (currCMD.type == CMD_GOTOANGLE)
         { // On est en plein GoTo en angle, donc on est en train de se planter et on ajuste
             computeGoToAngle(X_mm, Y_mm, theta_rad);
@@ -162,6 +171,10 @@ void CommandManager::update(float X_mm, float Y_mm, float theta_rad)
         else if (currCMD.type == CMD_GOTO)
         {   // On appel computeGoTo qui se débrouille pour aller en (x,y)
             computeGoTo(X_mm, Y_mm, theta_rad);
+        }
+        else if (currCMD.type == CMD_GOTO_BACK)
+        { // On est en plein GoTo, donc on est en train de se planter et on ajuste
+            computeGoToBack(X_mm, Y_mm, theta_rad);
         }
         else if (currCMD.type == CMD_GOTO_NOSTOP)
         {
@@ -212,6 +225,38 @@ void CommandManager::computeGoTo(float X_mm, float Y_mm, float theta_rad)
     }
 }
 
+
+void CommandManager::computeGoToBack(float X_mm, float Y_mm, float theta_rad)
+{
+    USBStream::instance()->setXGoal(currCMD.value);
+    USBStream::instance()->setYGoal(currCMD.secValue);
+
+    float deltaX = currCMD.value - X_mm; // Différence entre la cible et le robot selon X
+    float deltaY = currCMD.secValue - Y_mm;  // Différence entre la cible et le robot selon Y
+
+    // Valeur absolue de la distance à parcourir en allant tout droit pour atteindre la consigne
+    float deltaDist = computeDeltaDist(deltaX, deltaY);
+
+    // La différence entre le thetaCible (= cap à atteindre) et le theta (= cap actuel du robot) donne l'angle à parcourir
+    float deltaTheta = computeDeltaTheta(-deltaX, -deltaY, theta_rad);
+
+    float projectedDist = deltaDist * cos(deltaTheta);
+
+    //TODO JGU: Fix pour ne pas se retourner après avoir dépassé un point sur un overshoot!
+    //    mais y'a un bug, si le point est proche mais sur le coté, on va juste avancer !!!!
+
+    if (deltaDist < 50/*Config::returnThreshold*/)
+    {
+        m_distRegulatorConsign = -projectedDist + m_distance_regulator.getAccumulator();
+    }
+    else
+    {
+        m_angleRegulatorConsign = deltaTheta + m_angle_regulator.getAccumulator();
+
+        if (fabs(deltaTheta) < m_gotoAngleThreshold_rad)
+            m_distRegulatorConsign = -deltaDist + m_distance_regulator.getAccumulator();
+    }
+}
 /*
  * On a une commande GoToAngle(x,y), on veut que le cap du robot pointe vers ce point
  */

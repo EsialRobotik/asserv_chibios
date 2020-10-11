@@ -26,6 +26,7 @@ class CommandManager
         bool addStraightLine(float valueInmm);
         bool addTurn(float angleInDeg);
         bool addGoTo(float posXInmm, float posYInmm);
+        bool addGoToBack(float posXInmm, float posYInmm);
         bool addGoToNoStop(float posXInmm, float posYInmm);
         bool addGoToAngle(float posXInmm, float posYInmm);
 
@@ -97,6 +98,7 @@ class CommandManager
         float computeDeltaTheta(float deltaX, float deltaY, float theta_rad); // Calcul de l'angle à parcourir
         float computeDeltaDist(float deltaX, float deltaY); // Calcul de la distance à parcourir
         void computeGoTo(float X_mm, float Y_mm, float theta_rad);
+        void computeGoToBack(float X_mm, float Y_mm, float theta_rad);
         void computeGoToAngle(float deltaX, float deltaY, float theta_rad);
         void computeGotoNoStop(float X_mm, float Y_mm, float theta_rad);
 };
