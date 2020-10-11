@@ -70,3 +70,10 @@ void Odometry::refresh(float m_encoderDeltaRight_mm, float m_encoderDeltaLeft_mm
             m_theta_rad += 2 * M_PI;
     }
 }
+
+void Odometry::setPosition(float X_mm, float Y_mm, float theta_rad)
+{
+    m_X_mm = X_mm;
+    m_Y_mm = Y_mm;
+    m_theta_rad = theta_rad;
+}

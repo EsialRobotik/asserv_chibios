@@ -52,6 +52,8 @@ public:
     void setEmergencyStop();
     void resetEmergencyStop();
 
+    void setPosition(float X_mm, float Y_mm, float theta_rad);
+
 private:
 
     float convertSpeedTommSec(float speed_ticksPerSec);

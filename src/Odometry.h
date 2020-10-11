@@ -21,18 +21,21 @@ public:
 
     void refresh(float m_encoderDeltaRight_mm, float m_encoderDeltaLeft_mm);
 
-    float getX()
+    float getX() const
     {
         return m_X_mm;   // Renvoie la position en X par rapport au point de départ
     }
-    float getY()
+    float getY() const
     {
         return m_Y_mm;   // Renvoie la position en Y par rapport au point de départ
     }
-    float getTheta()
+    float getTheta() const
     {
         return m_theta_rad;   // Renvoie l'angle par rapport au cap de départ
     }
+
+    void setPosition(float X_mm, float Y_mm, float theta_rad);
+
 
 private:
 

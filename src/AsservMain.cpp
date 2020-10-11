@@ -253,6 +253,18 @@ void AsservMain::resetEmergencyStop()
     chSysUnlock();
 }
 
+void AsservMain::setPosition(float X_mm, float Y_mm, float theta_rad)
+{
+    chSysLock();
+    m_odometry.setPosition(X_mm, Y_mm, theta_rad);
+    /* CommandManager shall be reseted,
+     *    because when the current position is overrided in the odometry,
+     *    enqued consign in the commandManager are false
+     */
+    m_commandManager.reset();
+    chSysUnlock();
+}
+
 void AsservMain::enablePolar(bool enable)
 {
     chSysLock();
@@ -278,3 +290,6 @@ void AsservMain::reset()
     m_pllLeft.reset();
     chSysUnlock();
 }
+
+
+
