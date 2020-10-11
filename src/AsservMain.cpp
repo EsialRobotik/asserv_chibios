@@ -34,7 +34,6 @@ AsservMain::AsservMain(uint16_t loopFrequency, uint16_t speedPositionLoopDivisor
     m_angleSpeedLimited = 0;
     m_enableMotors = true;
     m_enablePolar = true;
-    m_emergencyStop = false;
     m_asservMode = normal_mode;
     m_directSpeedMode_rightWheelSpeed = 0;
     m_directSpeedMode_leftWheelSpeed = 0;
@@ -98,13 +97,6 @@ void AsservMain::mainLoop()
 
             m_asservCounter = 0;
         }
-
-        if( m_emergencyStop )
-        {
-            m_angleRegulatorOutputSpeedConsign = 0;
-            m_distRegulatorOutputSpeedConsign = 0;
-        }
-
 
         /*
          * Regulation en vitesse
@@ -239,7 +231,8 @@ void AsservMain::setEmergencyStop()
     m_commandManager.setEmergencyStop();
     m_angleRegulatorSlopeFilter.disable();
     m_distanceRegulatorSlopeFilter.disable();
-    m_emergencyStop = true;
+    m_angleRegulator.disable();
+    m_distanceRegulator.disable();
     chSysUnlock();
 }
 
@@ -249,7 +242,36 @@ void AsservMain::resetEmergencyStop()
     m_commandManager.resetEmergencyStop();
     m_angleRegulatorSlopeFilter.enable();
     m_distanceRegulatorSlopeFilter.enable();
-    m_emergencyStop = false;
+    m_angleRegulator.enable();
+    m_distanceRegulator.enable();
+    chSysUnlock();
+}
+
+void AsservMain::enableAngleRegulator()
+{
+    chSysLock();
+    m_angleRegulator.enable();
+    chSysUnlock();
+}
+
+void AsservMain::disableAngleRegulator()
+{
+    chSysLock();
+    m_angleRegulator.disable();
+    chSysUnlock();
+}
+
+void AsservMain::enableDistanceRegulator()
+{
+    chSysLock();
+    m_distanceRegulator.enable();
+    chSysUnlock();
+}
+
+void AsservMain::disableDistanceRegulator()
+{
+    chSysLock();
+    m_distanceRegulator.disable();
     chSysUnlock();
 }
 

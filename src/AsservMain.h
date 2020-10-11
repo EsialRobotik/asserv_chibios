@@ -52,6 +52,11 @@ public:
     void setEmergencyStop();
     void resetEmergencyStop();
 
+    void enableAngleRegulator();
+    void disableAngleRegulator();
+    void enableDistanceRegulator();
+    void disableDistanceRegulator();
+
     void setPosition(float X_mm, float Y_mm, float theta_rad);
     void limitMotorControllerConsignToPercentage(float percentage);
 private:
@@ -96,7 +101,6 @@ private:
 
     bool m_enableMotors;
     bool m_enablePolar;
-    bool m_emergencyStop;
     asserv_mode_t m_asservMode;
     float m_directSpeedMode_rightWheelSpeed;
     float m_directSpeedMode_leftWheelSpeed;
