@@ -53,7 +53,7 @@ public:
     void resetEmergencyStop();
 
     void setPosition(float X_mm, float Y_mm, float theta_rad);
-
+    void limitMotorControllerConsignToPercentage(float percentage);
 private:
 
     float convertSpeedTommSec(float speed_ticksPerSec);

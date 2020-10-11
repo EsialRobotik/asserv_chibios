@@ -39,6 +39,11 @@ public:
         m_integratedOutput = 0;
     }
 
+    void setMaxOutputLimit(float outputLimit)
+    {
+        m_outputLimit = outputLimit;
+    }
+
 private:
     float m_speedGoal;
     float m_integratedOutput;

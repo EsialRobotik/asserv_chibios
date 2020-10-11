@@ -265,6 +265,18 @@ void AsservMain::setPosition(float X_mm, float Y_mm, float theta_rad)
     chSysUnlock();
 }
 
+void AsservMain::limitMotorControllerConsignToPercentage(float percentage)
+{
+    /*
+     * Use this method to make an low speed for your robot
+     */
+    chDbgAssert(percentage >= 0 && percentage <= 100, "Percentage shall be in [0;100]");
+    chSysLock();
+    m_speedControllerLeft.setMaxOutputLimit(percentage);
+    m_speedControllerRight.setMaxOutputLimit(percentage);
+    chSysUnlock();
+}
+
 void AsservMain::enablePolar(bool enable)
 {
     chSysLock();
