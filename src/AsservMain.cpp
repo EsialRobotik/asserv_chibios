@@ -4,8 +4,10 @@
 #include "commandManager/CommandManager.h"
 #include "USBStream.h"
 #include "Odometry.h"
-#include "SlopeFilter.h"
+#include "SpeedController/SpeedController.h"
+#include "AccelerationLimiter/AccelerationLimiter.h"
 #include "Pll.h"
+#include "Regulator.h"
 #include <chprintf.h>
 #include <cfloat>
 #include "Encoders/Encoder.h"
@@ -13,14 +15,16 @@
 
 AsservMain::AsservMain(uint16_t loopFrequency, uint16_t speedPositionLoopDivisor, float wheelRadius_mm,
         float encoderWheelsDistance_mm, uint32_t encodersTicksByTurn, CommandManager &commandManager,
-        MotorController &motorController, Encoders &encoders, Odometry &odometrie, Regulator &angleRegulator,
-        Regulator &distanceRegulator, SlopeFilter &angleRegulatorSlopeFilter, SlopeFilter &distanceRegulatorSlopeFilter,
-        SpeedController &speedControllerRight, SpeedController &speedControllerLeft, Pll &rightPll, Pll &leftPll) :
+        MotorController &motorController, Encoders &encoders, Odometry &odometrie,
+        Regulator &angleRegulator, Regulator &distanceRegulator,
+        AccelerationLimiter &angleRegulatorAccelerationLimiter, AccelerationLimiter &distanceRegulatorAccelerationLimiter,
+        SpeedController &speedControllerRight, SpeedController &speedControllerLeft,
+        Pll &rightPll, Pll &leftPll) :
 
         m_motorController(motorController), m_encoders(encoders), m_odometry(odometrie),
             m_speedControllerRight(speedControllerRight), m_speedControllerLeft(speedControllerLeft),
             m_angleRegulator(angleRegulator), m_distanceRegulator(distanceRegulator),
-            m_angleRegulatorSlopeFilter(angleRegulatorSlopeFilter), m_distanceRegulatorSlopeFilter(distanceRegulatorSlopeFilter),
+            m_angleRegulatorAccelerationLimiter(angleRegulatorAccelerationLimiter), m_distanceRegulatorAccelerationLimiter(distanceRegulatorAccelerationLimiter),
             m_commandManager(commandManager),
             m_pllRight(rightPll), m_pllLeft(leftPll),
             m_distanceByEncoderTurn_mm(M_2PI * wheelRadius_mm), m_encodersTicksByTurn(encodersTicksByTurn), m_encodermmByTicks(m_distanceByEncoderTurn_mm / m_encodersTicksByTurn),
@@ -109,8 +113,8 @@ void AsservMain::mainLoop()
 
         if (m_asservMode == normal_mode || m_asservMode == regulator_output_control) {
             // On limite l'acceleration sur la sortie du regulateur de distance et d'angle
-            m_distSpeedLimited = m_distanceRegulatorSlopeFilter.filter(m_loopPeriod, m_distRegulatorOutputSpeedConsign, (estimatedSpeedRight+estimatedSpeedLeft)*0.5 );
-            m_angleSpeedLimited = m_angleRegulatorSlopeFilter.filter(m_loopPeriod, m_angleRegulatorOutputSpeedConsign, (estimatedSpeedRight-estimatedSpeedLeft)/m_encoderWheelsDistance_mm );
+            m_distSpeedLimited = m_distanceRegulatorAccelerationLimiter.limitAcceleration(m_loopPeriod, m_distRegulatorOutputSpeedConsign, (estimatedSpeedRight+estimatedSpeedLeft)*0.5 );
+            m_angleSpeedLimited = m_angleRegulatorAccelerationLimiter.limitAcceleration(m_loopPeriod, m_angleRegulatorOutputSpeedConsign, (estimatedSpeedRight-estimatedSpeedLeft)/m_encoderWheelsDistance_mm );
 
             // Mise à jour des consignes en vitesse avec acceleration limitée
             m_speedControllerRight.setSpeedGoal(m_distSpeedLimited + m_angleSpeedLimited);
@@ -120,8 +124,8 @@ void AsservMain::mainLoop()
              * C'est batard, et cela ne doit pas être utilisé autrement que pour faire du réglage
              *      on réutilise les filtres de pente pour ne pas avoir à en instancier d'autres
              */
-            float rightWheelSpeed = m_distanceRegulatorSlopeFilter.filter(m_loopPeriod, m_directSpeedMode_rightWheelSpeed, FLT_MAX);
-            float leftWheelSpeed = m_angleRegulatorSlopeFilter.filter(m_loopPeriod, m_directSpeedMode_leftWheelSpeed, FLT_MAX);
+            float rightWheelSpeed = m_distanceRegulatorAccelerationLimiter.limitAcceleration(m_loopPeriod, m_directSpeedMode_rightWheelSpeed, FLT_MAX);
+            float leftWheelSpeed = m_angleRegulatorAccelerationLimiter.limitAcceleration(m_loopPeriod, m_directSpeedMode_leftWheelSpeed, FLT_MAX);
             m_speedControllerRight.setSpeedGoal(rightWheelSpeed);
             m_speedControllerLeft.setSpeedGoal(leftWheelSpeed);
         }
@@ -190,8 +194,8 @@ void AsservMain::setWheelsSpeed(float rightWheelSpeed, float leftWheelSpeed)
     m_asservMode = direct_speed_mode;
     m_directSpeedMode_rightWheelSpeed = rightWheelSpeed;
     m_directSpeedMode_leftWheelSpeed = leftWheelSpeed;
-    m_distanceRegulatorSlopeFilter.reset();
-    m_angleRegulatorSlopeFilter.reset();
+    m_distanceRegulatorAccelerationLimiter.reset();
+    m_angleRegulatorAccelerationLimiter.reset();
     chSysUnlock();
 }
 
@@ -200,8 +204,8 @@ void AsservMain::resetToNormalMode()
     chSysLock();
     if (m_asservMode != normal_mode) {
         m_asservMode = normal_mode;
-        m_distanceRegulatorSlopeFilter.reset();
-        m_angleRegulatorSlopeFilter.reset();
+        m_distanceRegulatorAccelerationLimiter.reset();
+        m_angleRegulatorAccelerationLimiter.reset();
     }
     chSysUnlock();
 }
@@ -229,8 +233,8 @@ void AsservMain::setEmergencyStop()
 {
     chSysLock();
     m_commandManager.setEmergencyStop();
-    m_angleRegulatorSlopeFilter.disable();
-    m_distanceRegulatorSlopeFilter.disable();
+    m_angleRegulatorAccelerationLimiter.disable();
+    m_distanceRegulatorAccelerationLimiter.disable();
     m_angleRegulator.disable();
     m_distanceRegulator.disable();
     chSysUnlock();
@@ -240,8 +244,8 @@ void AsservMain::resetEmergencyStop()
 {
     chSysLock();
     m_commandManager.resetEmergencyStop();
-    m_angleRegulatorSlopeFilter.enable();
-    m_distanceRegulatorSlopeFilter.enable();
+    m_angleRegulatorAccelerationLimiter.enable();
+    m_distanceRegulatorAccelerationLimiter.enable();
     m_angleRegulator.enable();
     m_distanceRegulator.enable();
     chSysUnlock();
@@ -317,8 +321,8 @@ void AsservMain::reset()
     m_speedControllerLeft.resetIntegral();
     m_angleRegulator.reset();
     m_distanceRegulator.reset();
-    m_angleRegulatorSlopeFilter.reset();
-    m_distanceRegulatorSlopeFilter.reset();
+    m_angleRegulatorAccelerationLimiter.reset();
+    m_distanceRegulatorAccelerationLimiter.reset();
     m_commandManager.reset();
     m_pllRight.reset();
     m_pllLeft.reset();

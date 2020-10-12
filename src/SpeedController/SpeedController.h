@@ -9,9 +9,9 @@ public:
     explicit SpeedController(float speedKp, float speedKi, float outputLimit, float maxInputSpeed, float measureFrequency);
     virtual ~SpeedController(){};
 
-    float update(float actualSpeed);
+    virtual float update(float actualSpeed);
 
-    void setGains(float Kp, float Ki);
+    virtual void setGains(float Kp, float Ki);
 
     void setSpeedGoal(float speed);
     float getSpeedGoal() const
@@ -43,13 +43,15 @@ public:
     {
         m_outputLimit = outputLimit;
     }
+protected:
+    float m_speedKp;
+    float m_speedKi;
+
 
 private:
     float m_speedGoal;
     float m_integratedOutput;
 
-    float m_speedKp;
-    float m_speedKi;
     float m_outputLimit;
     float m_inputLimit;
 

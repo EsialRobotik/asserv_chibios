@@ -11,11 +11,13 @@
 #include "util/chibiOsAllocatorWrapper.h"
 #include "AsservMain.h"
 #include "commandManager/CommandManager.h"
+#include "SpeedController/SpeedController.h"
 #include "Encoders/QuadratureEncoder.h"
 #include "motorController/Md22.h"
 #include "Odometry.h"
 #include "USBStream.h"
-#include "SlopeFilter.h"
+#include "AccelerationLimiter/SimpleAccelerationLimiter.h"
+#include "AccelerationLimiter/AdvancedAccelerationLimiter.h"
 #include "Pll.h"
 
 
@@ -74,8 +76,8 @@ SpeedController speedControllerLeft(speed_controller_left_Kp, speed_controller_l
 Pll rightPll(PLL_BANDWIDTH);
 Pll leftPll(PLL_BANDWIDTH);
 
-SlopeFilter angleSlopeFilter(ANGLE_REGULATOR_MAX_ACC, ANGLE_REGULATOR_MAX_ACC_LOW_SPEED, ANGLE_REGULATOR_LOW_SPEED_THRESHOLD);
-SlopeFilter distSlopeFilter(DIST_REGULATOR_MAX_ACC, DIST_REGULATOR_MAX_ACC_LOW_SPEED, DIST_REGULATOR_LOW_SPEED_THRESHOLD);
+SimpleAccelerationLimiter angleAccelerationlimiter(ANGLE_REGULATOR_MAX_ACC);
+AdvancedAccelerationLimiter distanceAccelerationLimiter(DIST_REGULATOR_MAX_ACC, DIST_REGULATOR_MAX_ACC_LOW_SPEED, DIST_REGULATOR_LOW_SPEED_THRESHOLD);
 
 CommandManager commandManager(COMMAND_MANAGER_ARRIVAL_ANGLE_THRESHOLD_RAD, COMMAND_MANAGER_ARRIVAL_DISTANCE_THRESHOLD_mm,
         COMMAND_MANAGER_GOTO_ANGLE_THRESHOLD_RAD,
@@ -86,7 +88,7 @@ AsservMain mainAsserv(ASSERV_THREAD_FREQUENCY, ASSERV_POSITION_DIVISOR,
         ENCODERS_WHEELS_RADIUS_MM, ENCODERS_WHEELS_DISTANCE_MM, ENCODERS_TICKS_BY_TURN,
         commandManager, md22MotorController, encoders, odometry,
         angleRegulator, distanceRegulator,
-        angleSlopeFilter, distSlopeFilter,
+        angleAccelerationlimiter, distanceAccelerationLimiter,
         speedControllerRight, speedControllerLeft,
         rightPll, leftPll);
 
@@ -290,17 +292,17 @@ void asservCommandUSB(BaseSequentialStream *chp, int argc, char **argv)
     }
     else if (!strcmp(argv[0], "angleacc"))
     {
-        float slope = atof(argv[1]);
-        chprintf(outputStream, "setting angle slope delta %.2f \r\n", slope);
+        float acc = atof(argv[1]);
+        chprintf(outputStream, "setting angle slope delta %.2f \r\n", acc);
 
-        angleSlopeFilter.setSlope(slope);
+        angleAccelerationlimiter.setMaxAcceleration(acc);
     }
     else if (!strcmp(argv[0], "distacc"))
     {
-        float slope = atof(argv[1]);
-        chprintf(outputStream, "setting distance slope delta %.2f \r\n", slope);
+        float acc = atof(argv[1]);
+        chprintf(outputStream, "setting distance slope delta %.2f \r\n", acc);
 
-        distSlopeFilter.setSlope(slope);
+        distanceAccelerationLimiter.setMaxAcceleration(acc);
     }
     else if (!strcmp(argv[0], "addangle"))
     {

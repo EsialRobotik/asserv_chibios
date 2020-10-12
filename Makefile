@@ -154,14 +154,16 @@ CPPSRC = $(ALLCPPSRC) \
        $(SRCDIR)/Encoders/ams_as5048b.cpp \
        $(SRCDIR)/Encoders/MagEncoders.cpp \
        $(SRCDIR)/AsservMain.cpp \
-       $(SRCDIR)/SpeedController.cpp \
-       $(SRCDIR)/SlopeFilter.cpp \
+       $(SRCDIR)/SpeedController/SpeedController.cpp \
        $(SRCDIR)/Pll.cpp \
        $(SRCDIR)/Regulator.cpp \
        $(SRCDIR)/Odometry.cpp \
        $(SRCDIR)/commandManager/CommandManager.cpp \
        $(SRCDIR)/commandManager/CMDList/CMDList.cpp \
-       $(SRCDIR)/util/chibiOsAllocatorWrapper.cpp
+       $(SRCDIR)/util/chibiOsAllocatorWrapper.cpp  \
+       $(SRCDIR)/AccelerationLimiter/AbstractAccelerationLimiter.cpp \
+       $(SRCDIR)/AccelerationLimiter/SimpleAccelerationLimiter.cpp \
+       $(SRCDIR)/AccelerationLimiter/AdvancedAccelerationLimiter.cpp 
 
     
 
