@@ -155,6 +155,7 @@ CPPSRC = $(ALLCPPSRC) \
        $(SRCDIR)/Encoders/MagEncoders.cpp \
        $(SRCDIR)/AsservMain.cpp \
        $(SRCDIR)/SpeedController/SpeedController.cpp \
+       $(SRCDIR)/SpeedController/AdaptativeSpeedController.cpp \
        $(SRCDIR)/Pll.cpp \
        $(SRCDIR)/Regulator.cpp \
        $(SRCDIR)/Odometry.cpp \

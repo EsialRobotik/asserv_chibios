@@ -13,6 +13,7 @@
 #include "commandManager/CommandManager.h"
 #include "SpeedController/SpeedController.h"
 #include "SpeedController/AdaptativeSpeedController.h"
+#include "SpeedController/SpeedController.h"
 #include "Encoders/QuadratureEncoder.h"
 #include "motorController/Md22.h"
 #include "Odometry.h"
@@ -41,11 +42,20 @@
 #define ANGLE_REGULATOR_KP (650)
 #define ANGLE_REGULATOR_MAX_ACC (3/ASSERV_THREAD_PERIOD_S)
 
+//float speed_controller_right_Kp[NB_PI_SUBSET] = { 0.1, 0.1, 0.1};
+//float speed_controller_right_Ki[NB_PI_SUBSET] = { 1.0, 0.8, 0.6};
+//float speed_controller_right_SpeedRange[NB_PI_SUBSET] = { 0, 20, 50};
+//
+//float speed_controller_left_Kp[NB_PI_SUBSET] = { 0.1, 0.1, 0.1};
+//float speed_controller_left_Ki[NB_PI_SUBSET] = { 1.0, 0.8, 0.6};
+//float speed_controller_left_SpeedRange[NB_PI_SUBSET] = { 0, 20, 50};
+
 float speed_controller_right_Kp = 0.1;
 float speed_controller_right_Ki = 0.6;
 
 float speed_controller_left_Kp = 0.1;
 float speed_controller_left_Ki = 0.6;
+
 
 #define PLL_BANDWIDTH (250)
 
@@ -71,6 +81,8 @@ Odometry odometry(ENCODERS_WHEELS_DISTANCE_MM, 0, 0);
 
 SpeedController speedControllerRight(speed_controller_right_Kp, speed_controller_right_Ki, 100, MAX_SPEED_MM_PER_SEC, ASSERV_THREAD_FREQUENCY);
 SpeedController speedControllerLeft(speed_controller_left_Kp, speed_controller_left_Ki, 100, MAX_SPEED_MM_PER_SEC, ASSERV_THREAD_FREQUENCY);
+//AdaptativeSpeedController speedControllerRight(speed_controller_right_Kp, speed_controller_right_Ki, speed_controller_right_SpeedRange, 100, MAX_SPEED_MM_PER_SEC, ASSERV_THREAD_FREQUENCY);
+//AdaptativeSpeedController speedControllerLeft(speed_controller_left_Kp, speed_controller_left_Ki, speed_controller_left_SpeedRange, 100, MAX_SPEED_MM_PER_SEC, ASSERV_THREAD_FREQUENCY);
 
 Pll rightPll(PLL_BANDWIDTH);
 Pll leftPll(PLL_BANDWIDTH);
@@ -143,6 +155,8 @@ int main(void)
     chThdCreateStatic(waAsservThread, sizeof(waAsservThread), HIGHPRIO, AsservThread, NULL);
     chBSemWait(&asservStarted_semaphore);
 
+#ifdef ENABLE_SHELL
+
     outputStream = reinterpret_cast<BaseSequentialStream*>(&SD2);
 
     // Custom commands
@@ -160,39 +174,29 @@ int main(void)
 #endif
     };
 
-#ifdef ENABLE_SHELL
-    bool startShell = true;
+    thread_t *shellThd = chThdCreateStatic(wa_shell, sizeof(wa_shell), LOWPRIO, shellThread, &shellCfg);
+    chRegSetThreadNameX(shellThd, "shell");
+
+    // Le thread controlPanel n'a de sens que quand le shell tourne
+    thread_t *controlPanelThd = chThdCreateStatic(wa_controlPanel, sizeof(wa_controlPanel), LOWPRIO, ControlPanelThread, nullptr);
+    chRegSetThreadNameX(controlPanelThd, "controlPanel");
 #else
-    bool startShell = false;
+    thread_t *asserCmdSerialThread = chThdCreateStatic(wa_shell, sizeof(wa_shell), LOWPRIO, asservCommandSerial, nullptr);
+    chRegSetThreadNameX(asserCmdSerialThread, "asserv Command serial");
+
+    thread_t *controlPanelThd = chThdCreateStatic(wa_controlPanel, sizeof(wa_controlPanel), LOWPRIO, asservPositionSerial, nullptr);
+    chRegSetThreadNameX(controlPanelThd, "asserv position update serial");
+
 #endif
-    if (startShell)
-    {
-        thread_t *shellThd = chThdCreateStatic(wa_shell, sizeof(wa_shell), LOWPRIO, shellThread, &shellCfg);
-        chRegSetThreadNameX(shellThd, "shell");
-
-        // Le thread controlPanel n'a de sens que quand le shell tourne
-        thread_t *controlPanelThd = chThdCreateStatic(wa_controlPanel, sizeof(wa_controlPanel), LOWPRIO, ControlPanelThread, nullptr);
-        chRegSetThreadNameX(controlPanelThd, "controlPanel");
-    }
-    else
-    {
-        thread_t *asserCmdSerialThread = chThdCreateStatic(wa_shell, sizeof(wa_shell), LOWPRIO, asservCommandSerial, nullptr);
-        chRegSetThreadNameX(asserCmdSerialThread, "asserv Command serial");
-
-        thread_t *controlPanelThd = chThdCreateStatic(wa_controlPanel, sizeof(wa_controlPanel), LOWPRIO, asservPositionSerial, nullptr);
-        chRegSetThreadNameX(controlPanelThd, "asserv position update serial");
-
-    }
-
     deactivateHeapAllocation();
 
     chThdSetPriority(LOWPRIO);
     while (true)
     {
         palClearPad(GPIOA, GPIOA_LED_GREEN);
-        chThdSleepMilliseconds(250);
+        chThdSleepMilliseconds(500);
         palSetPad(GPIOA, GPIOA_LED_GREEN);
-        chThdSleepMilliseconds(250);
+        chThdSleepMilliseconds(500);
     }
 }
 
@@ -281,8 +285,9 @@ void asservCommandUSB(BaseSequentialStream *chp, int argc, char **argv)
         char side = *argv[1];
         float Kp = atof(argv[2]);
         float Ki = atof(argv[3]);
+        uint8_t range =  0;
 
-        chprintf(outputStream, "setting speed control Kp:%.2f Ki:%.2f to side %c \r\n", Kp, Ki, side);
+        chprintf(outputStream, "setting speed control Kp:%.2f Ki:%.2f range:%d to side %c \r\n", Kp, Ki, range, side);
 
         if (side == 'r')
             speedControllerRight.setGains(Kp, Ki);
