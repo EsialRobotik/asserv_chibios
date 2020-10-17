@@ -471,7 +471,7 @@ static void serialReadLine(char *buffer, unsigned int buffer_size)
     for(i=0; i<buffer_size; i++)
     {
         buffer[i] = streamGet(&SD2);
-        if ( buffer[i] == '\r' )
+        if ( buffer[i] == '\n' || buffer[i] == '\r')
             break;
     }
     buffer[i] = '\0';
@@ -570,31 +570,35 @@ THD_FUNCTION(asservCommandSerial, p)
             serialReadLine(buffer, sizeof(buffer));
             sscanf(buffer, "%f", &consigneValue1);
             commandManager.addTurn(degToRad(consigneValue1));
+            chprintf(outputStream, "t%f\r\n", consigneValue1);
             break;
 
         case 'f': //faire Face à un point précis, mais ne pas y aller, juste se tourner
-
             serialReadLine(buffer, sizeof(buffer));
             sscanf(buffer, "%f#%f", &consigneValue1, &consigneValue2);
             commandManager.addGoToAngle(consigneValue1, consigneValue2);
+            chprintf(outputStream, "f%f#%f\r\n", consigneValue1, consigneValue2);
             break;
 
         case 'g': //Go : va à un point précis
             serialReadLine(buffer, sizeof(buffer));
             sscanf(buffer, "%f#%f", &consigneValue1, &consigneValue2);
             commandManager.addGoTo(consigneValue1, consigneValue2);
+            chprintf(outputStream, "g%f#%f\r\n", consigneValue1, consigneValue2);
             break;
 
         case 'b': //Go : va à un point précis
             serialReadLine(buffer, sizeof(buffer));
             sscanf(buffer, "%f#%f", &consigneValue1, &consigneValue2);
             commandManager.addGoToBack(consigneValue1, consigneValue2);
+            chprintf(outputStream, "b%f#%f\r\n", consigneValue1, consigneValue2);
             break;
 
         case 'e': // goto, mais on s'autorise à Enchainer la consigne suivante sans s'arrêter
             serialReadLine(buffer, sizeof(buffer));
             sscanf(buffer, "%f#%f", &consigneValue1, &consigneValue2);
             commandManager.addGoToNoStop(consigneValue1, consigneValue2);
+            chprintf(outputStream, "e%f#%f\r\n", consigneValue1, consigneValue2);
             break;
 
         case 'p': //retourne la Position et l'angle courants du robot
@@ -607,6 +611,7 @@ THD_FUNCTION(asservCommandSerial, p)
             serialReadLine(buffer, sizeof(buffer));
             sscanf(buffer, "%f#%f#%f", &consigneValue1, &consigneValue2, &consigneValue3);
             mainAsserv.setPosition(consigneValue1, consigneValue2, consigneValue3);
+            chprintf(outputStream, "S%f#%f#%f\r\n", consigneValue1, consigneValue2, consigneValue3);
             break;
 
         default:
@@ -619,7 +624,7 @@ THD_FUNCTION(asservCommandSerial, p)
 THD_FUNCTION(asservPositionSerial, p)
 {
     (void) p;
-    const time_conv_t loopPeriod_ms = 20;
+    const time_conv_t loopPeriod_ms = 60;
     systime_t time = chVTGetSystemTime();
     time += TIME_MS2I(loopPeriod_ms);
     while(true)
