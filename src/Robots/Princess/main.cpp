@@ -585,6 +585,12 @@ THD_FUNCTION(asservCommandSerial, p)
             commandManager.addGoTo(consigneValue1, consigneValue2);
             break;
 
+        case 'b': //Go : va à un point précis
+            serialReadLine(buffer, sizeof(buffer));
+            sscanf(buffer, "%f#%f", &consigneValue1, &consigneValue2);
+            commandManager.addGoToBack(consigneValue1, consigneValue2);
+            break;
+
         case 'e': // goto, mais on s'autorise à Enchainer la consigne suivante sans s'arrêter
             serialReadLine(buffer, sizeof(buffer));
             sscanf(buffer, "%f#%f", &consigneValue1, &consigneValue2);
