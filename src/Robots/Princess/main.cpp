@@ -13,6 +13,7 @@
 #include "AsservMain.h"
 #include "commandManager/CommandManager.h"
 #include "SpeedController/SpeedController.h"
+#include "SpeedController/AdaptativeSpeedController.h"
 #include "Encoders/QuadratureEncoder.h"
 #include "motorController/Md22.h"
 #include "Odometry.h"
@@ -43,11 +44,19 @@
 #define ANGLE_REGULATOR_MAX_ACC_LOW_SPEED (3/ASSERV_THREAD_PERIOD_S)
 #define ANGLE_REGULATOR_LOW_SPEED_THRESHOLD (0)
 
-float speed_controller_right_Kp = 0.1;
-float speed_controller_right_Ki = 0.6;
+//float speed_controller_right_Kp = 0.1;
+//float speed_controller_right_Ki = 0.6;
+//
+//float speed_controller_left_Kp = 0.1;
+//float speed_controller_left_Ki = 0.6;
 
-float speed_controller_left_Kp = 0.1;
-float speed_controller_left_Ki = 0.6;
+float speed_controller_right_Kp[NB_PI_SUBSET] = { 0.1, 0.1, 0.1};
+float speed_controller_right_Ki[NB_PI_SUBSET] = { 1.0, 0.8, 0.6};
+float speed_controller_right_SpeedRange[NB_PI_SUBSET] = { 0, 20, 50};
+
+float speed_controller_left_Kp[NB_PI_SUBSET] = { 0.1, 0.1, 0.1};
+float speed_controller_left_Ki[NB_PI_SUBSET] = { 1.0, 0.8, 0.6};
+float speed_controller_left_SpeedRange[NB_PI_SUBSET] = { 0, 20, 50};
 
 #define PLL_BANDWIDTH (250)
 
@@ -71,8 +80,12 @@ Regulator distanceRegulator(DIST_REGULATOR_KP, MAX_SPEED_MM_PER_SEC);
 
 Odometry odometry(ENCODERS_WHEELS_DISTANCE_MM, 0, 0);
 
-SpeedController speedControllerRight(speed_controller_right_Kp, speed_controller_right_Ki, 100, MAX_SPEED_MM_PER_SEC, ASSERV_THREAD_FREQUENCY);
-SpeedController speedControllerLeft(speed_controller_left_Kp, speed_controller_left_Ki, 100, MAX_SPEED_MM_PER_SEC, ASSERV_THREAD_FREQUENCY);
+//SpeedController speedControllerRight(speed_controller_right_Kp, speed_controller_right_Ki, 100, MAX_SPEED_MM_PER_SEC, ASSERV_THREAD_FREQUENCY);
+//SpeedController speedControllerLeft(speed_controller_left_Kp, speed_controller_left_Ki, 100, MAX_SPEED_MM_PER_SEC, ASSERV_THREAD_FREQUENCY);
+AdaptativeSpeedController speedControllerRight(speed_controller_right_Kp, speed_controller_right_Ki, speed_controller_right_SpeedRange, 100, MAX_SPEED_MM_PER_SEC, ASSERV_THREAD_FREQUENCY);
+AdaptativeSpeedController speedControllerLeft(speed_controller_left_Kp, speed_controller_left_Ki, speed_controller_left_SpeedRange, 100, MAX_SPEED_MM_PER_SEC, ASSERV_THREAD_FREQUENCY);
+
+
 
 Pll rightPll(PLL_BANDWIDTH);
 Pll leftPll(PLL_BANDWIDTH);
