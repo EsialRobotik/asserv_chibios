@@ -7,6 +7,7 @@
 #include <cstdio>
 #include <cfloat>
 
+#include "raspIO.h"
 #include "util/asservMath.h"
 #include "util/chibiOsAllocatorWrapper.h"
 #include "AsservMain.h"
@@ -90,18 +91,18 @@ Pll leftPll(PLL_BANDWIDTH);
 SimpleAccelerationLimiter angleAccelerationlimiter(ANGLE_REGULATOR_MAX_ACC);
 AdvancedAccelerationLimiter distanceAccelerationLimiter(DIST_REGULATOR_MAX_ACC, DIST_REGULATOR_MAX_ACC_LOW_SPEED, DIST_REGULATOR_LOW_SPEED_THRESHOLD);
 
-CommandManager commandManager(COMMAND_MANAGER_ARRIVAL_ANGLE_THRESHOLD_RAD, COMMAND_MANAGER_ARRIVAL_DISTANCE_THRESHOLD_mm,
-		COMMAND_MANAGER_GOTO_ANGLE_THRESHOLD_RAD,
-		COMMAND_MANAGER_GOTONOSTOP_FULLSPEED_CONSIGN_DIST_mm, COMMAND_MANAGER_GOTONOSTOP_MIN_DIST_NEXT_CONSIGN_mm, COMMAND_MANAGER_GOTONOSTOP_NEXT_FULLSPEED_CONSIGN_ANGLE_mm,
-		angleRegulator, distanceRegulator);
+CommandManager commandManager( COMMAND_MANAGER_ARRIVAL_ANGLE_THRESHOLD_RAD, COMMAND_MANAGER_ARRIVAL_DISTANCE_THRESHOLD_mm,
+                               COMMAND_MANAGER_GOTO_ANGLE_THRESHOLD_RAD,
+                               COMMAND_MANAGER_GOTONOSTOP_FULLSPEED_CONSIGN_DIST_mm, COMMAND_MANAGER_GOTONOSTOP_MIN_DIST_NEXT_CONSIGN_mm, COMMAND_MANAGER_GOTONOSTOP_NEXT_FULLSPEED_CONSIGN_ANGLE_mm,
+                               angleRegulator, distanceRegulator);
 
-AsservMain mainAsserv(ASSERV_THREAD_FREQUENCY, ASSERV_POSITION_DIVISOR,
-		ENCODERS_WHEELS_RADIUS_MM, ENCODERS_WHEELS_DISTANCE_MM, ENCODERS_TICKS_BY_TURN,
-		commandManager, md22MotorController, encoders, odometry,
-		angleRegulator, distanceRegulator,
-		angleAccelerationlimiter, distanceAccelerationLimiter,
-		speedControllerRight, speedControllerLeft,
-		rightPll, leftPll);
+AsservMain mainAsserv( ASSERV_THREAD_FREQUENCY, ASSERV_POSITION_DIVISOR,
+                       ENCODERS_WHEELS_RADIUS_MM, ENCODERS_WHEELS_DISTANCE_MM, ENCODERS_TICKS_BY_TURN,
+                       commandManager, md22MotorController, encoders, odometry,
+                       angleRegulator, distanceRegulator,
+                       angleAccelerationlimiter, distanceAccelerationLimiter,
+                       speedControllerRight, speedControllerLeft,
+                       rightPll, leftPll);
 
 
 /*
@@ -128,11 +129,9 @@ static THD_FUNCTION(AsservThread, arg)
 }
 
 
-THD_WORKING_AREA(wa_shell, 1024);
+THD_WORKING_AREA(wa_shell, 2048);
 THD_WORKING_AREA(wa_controlPanel, 256);
 THD_FUNCTION(ControlPanelThread, p);
-THD_FUNCTION(asservCommandSerial, p);
-THD_FUNCTION(asservPositionSerial, p);
 
 char history_buffer[SHELL_MAX_HIST_BUFF];
 char *completion_buffer[SHELL_MAX_COMPLETIONS];
@@ -155,8 +154,6 @@ int main(void)
     chThdCreateStatic(waAsservThread, sizeof(waAsservThread), HIGHPRIO, AsservThread, NULL);
     chBSemWait(&asservStarted_semaphore);
 
-#ifdef ENABLE_SHELL
-
     outputStream = reinterpret_cast<BaseSequentialStream*>(&SD2);
 
     // Custom commands
@@ -174,29 +171,39 @@ int main(void)
 #endif
     };
 
-    thread_t *shellThd = chThdCreateStatic(wa_shell, sizeof(wa_shell), LOWPRIO, shellThread, &shellCfg);
-    chRegSetThreadNameX(shellThd, "shell");
-
-    // Le thread controlPanel n'a de sens que quand le shell tourne
-    thread_t *controlPanelThd = chThdCreateStatic(wa_controlPanel, sizeof(wa_controlPanel), LOWPRIO, ControlPanelThread, nullptr);
-    chRegSetThreadNameX(controlPanelThd, "controlPanel");
+#ifdef ENABLE_SHELL
+    bool startShell = true;
 #else
-    thread_t *asserCmdSerialThread = chThdCreateStatic(wa_shell, sizeof(wa_shell), LOWPRIO, asservCommandSerial, nullptr);
-    chRegSetThreadNameX(asserCmdSerialThread, "asserv Command serial");
-
-    thread_t *controlPanelThd = chThdCreateStatic(wa_controlPanel, sizeof(wa_controlPanel), LOWPRIO, asservPositionSerial, nullptr);
-    chRegSetThreadNameX(controlPanelThd, "asserv position update serial");
-
+    bool startShell = false;
 #endif
+    if (startShell)
+    {
+        thread_t *shellThd = chThdCreateStatic(wa_shell, sizeof(wa_shell), LOWPRIO, shellThread, &shellCfg);
+        chRegSetThreadNameX(shellThd, "shell");
+
+        // Le thread controlPanel n'a de sens que quand le shell tourne
+        thread_t *controlPanelThd = chThdCreateStatic(wa_controlPanel, sizeof(wa_controlPanel), LOWPRIO, ControlPanelThread, nullptr);
+        chRegSetThreadNameX(controlPanelThd, "controlPanel");
+    }
+    else
+    {
+        thread_t *asserCmdSerialThread = chThdCreateStatic(wa_shell, sizeof(wa_shell), LOWPRIO, asservCommandSerial, nullptr);
+        chRegSetThreadNameX(asserCmdSerialThread, "asserv Command serial");
+
+        thread_t *controlPanelThd = chThdCreateStatic(wa_controlPanel, sizeof(wa_controlPanel), LOWPRIO, asservPositionSerial, nullptr);
+        chRegSetThreadNameX(controlPanelThd, "asserv position update serial");
+
+    }
+
     deactivateHeapAllocation();
 
     chThdSetPriority(LOWPRIO);
     while (true)
     {
         palClearPad(GPIOA, GPIOA_LED_GREEN);
-        chThdSleepMilliseconds(500);
+        chThdSleepMilliseconds(250);
         palSetPad(GPIOA, GPIOA_LED_GREEN);
-        chThdSleepMilliseconds(500);
+        chThdSleepMilliseconds(250);
     }
 }
 
@@ -465,164 +472,5 @@ THD_FUNCTION(ControlPanelThread, p)
             }
             USBStream::instance()->releaseBuffer();
         }
-    }
-}
-
-
-
-static void serialReadLine(char *buffer, unsigned int buffer_size)
-{
-    unsigned int i;
-    for(i=0; i<buffer_size; i++)
-    {
-        buffer[i] = streamGet(&SD2);
-        if ( buffer[i] == '\r' )
-            break;
-    }
-    buffer[i] = '\0';
-}
-
-THD_FUNCTION(asservCommandSerial, p)
-{
-    (void) p;
-    /*
-     * Commande / Caractères à envoyer sur la série / Paramètres / Effets obtenus
-
-     g%x#%y\n / Goto / x, y : entiers, en mm /Le robot se déplace au point de coordonnée (x, y). Il tourne vers le point, puis avance en ligne droite. L'angle est sans cesse corrigé pour bien viser le point voulu.
-     e%x#%y\n / goto Enchaîné / x, y : entiers, en mm / Idem que le Goto, sauf que lorsque le robot est proche du point d'arrivée (x, y), on s'autorise à enchaîner directement la consigne suivante si c'est un Goto ou un Goto enchaîné, sans marquer d'arrêt.
-     v%d\n / aVancer / d : entier, en mm / Fait avancer le robot de d mm, tout droit
-     t%a\n / Tourner / a : entier, en degrées / Fait tourner le robot de a degrées. Le robot tournera dans le sens trigonométrique : si a est positif, il tourne à gauche, et vice-versa.
-     f%x#%y\n / faire Face / x, y : entiers, en mm / Fait tourner le robot pour être en face du point de coordonnées (x, y). En gros, ça réalise la première partie d'un Goto : on se tourne vers le point cible, mais on avance pas.
-     h / Halte ! / Arrêt d'urgence ! Le robot est ensuite systématiquement asservi à sa position actuelle. Cela devrait suffire à arrêter le robot correctement. La seule commande acceptée par la suite sera un Reset de l'arrêt d'urgence : toute autre commande sera ignorée.
-     r / Reset de l'arrêt d'urgence / Remet le robot dans son fonctionnement normal après un arrêt d'urgence. Les commandes en cours au moment de l'arrêt d'urgence NE sont PAS reprises. Si le robot n'est pas en arrêt d'urgence, cette commande n'a aucun effet.
-     --c%s%r / Calage bordure / s : sens du calage bordure, r : robot ('g' : gros ; 'p' : petit) / Effectue un calage bordure. Le robot doit être dans sa zone de départ au début du calage, dirigé vers la case de départ adverse en face de la table. Il doit être assez proche de la bordure derrière lui, et pas trop proche de la bordure sur le côté. A la fin du calage, le robot est prêt à partir pour un match dans sa case de départ.
-     Le choix du robot est possible, si on veut que deux robots asservis concourent en même temps sur la même table, pour qu'ils puissent faire un calage bordure en même temps sans se rentrer dedans.
-
-     p / get Position / Récupère la position et le cap du robot sur la connexion i2c, sous la forme de 3 types float (3 * 4 bytes), avec x, y, et a les coordonnées et l'angle du robot.
-     S / set Position / applique la nouvelle position du robot
-
-     z / avance de 20 cm
-     s / recule de 20 cm
-     q / tourne de 45° (gauche)
-     d / tourne de -45° (droite)
-
-     M / modifie la valeur d'un paramètre / name, value
-     R / réinitialiser l'asserv
-     D / dump la config du robot
-     G / lire la valeur d'un paramètre / name
-     L / recharge la config config.txt
-     W / sauvegarde la config courante  config~1.txt = config.default.txt
-
-     I / Active les actions dans la boucle d'asservissement (odo + managers)
-     ! / Stoppe actions dans la boucle d'asservissement
-     K / desactive le consignController et le commandManager
-     J / reactive le consignController et le commandManager
-
-     + / applique une valeur +1 sur les moteurs LEFT
-     - / applique une valeur -1 sur les moteurs LEFT
-     */
-
-    float consigneValue1 = 0;
-    float consigneValue2 = 0;
-    char buffer[64];
-
-    chprintf(outputStream, "Started\r\n");
-
-
-    while(true)
-    {
-        char readChar = streamGet(&SD2);
-
-        switch (readChar) {
-
-        case 'h': //Arrêt d'urgence
-            commandManager.setEmergencyStop();
-            chprintf(outputStream, "Arrêt d'urgence ! \r\n");
-            break;
-
-        case 'r': //Reset de l'arrêt d'urgence
-            commandManager.resetEmergencyStop();
-            break;
-
-        case 'z':
-            // Go 20cm
-            chprintf(outputStream, "consigne avant : 200mm\n");
-            commandManager.addStraightLine(200);
-            break;
-
-        case 's':
-            chprintf(outputStream, "consigne arrière : 200mm\n");
-            commandManager.addStraightLine(-200);
-            break;
-
-        case 'q':
-            chprintf(outputStream, "consigne gauche : 45°\n");
-            commandManager.addTurn(degToRad(45));
-            break;
-
-        case 'd':
-            chprintf(outputStream, "consigne gauche : 45°\n");
-             commandManager.addTurn(degToRad(-45));
-             break;
-
-        case 'v': //aVance d'un certain nombre de mm
-            serialReadLine(buffer, sizeof(buffer));
-            sscanf(buffer, "%f", &consigneValue1);
-            commandManager.addStraightLine(consigneValue1);
-            chprintf(outputStream, "v%f\r\n", consigneValue1);
-            break;
-
-        case 't': //Tourne d'un certain angle en degrés
-            serialReadLine(buffer, sizeof(buffer));
-            sscanf(buffer, "%f", &consigneValue1);
-            commandManager.addTurn(degToRad(consigneValue1));
-            break;
-
-        case 'f': //faire Face à un point précis, mais ne pas y aller, juste se tourner
-
-            serialReadLine(buffer, sizeof(buffer));
-            sscanf(buffer, "%f#%f", &consigneValue1, &consigneValue2);
-            commandManager.addGoToAngle(consigneValue1, consigneValue2);
-            break;
-
-        case 'g': //Go : va à un point précis
-            serialReadLine(buffer, sizeof(buffer));
-            sscanf(buffer, "%f#%f", &consigneValue1, &consigneValue2);
-            commandManager.addGoTo(consigneValue1, consigneValue2);
-            break;
-
-        case 'e': // goto, mais on s'autorise à Enchainer la consigne suivante sans s'arrêter
-            serialReadLine(buffer, sizeof(buffer));
-            sscanf(buffer, "%f#%f", &consigneValue1, &consigneValue2);
-            commandManager.addGoToNoStop(consigneValue1, consigneValue2);
-            break;
-
-        case 'p': //retourne la Position et l'angle courants du robot
-            chprintf(outputStream, "x%fy%fa%fs%d\r\n",
-                    odometry.getX(), odometry.getY(), odometry.getTheta(),
-                    commandManager.getCommandStatus());
-            break;
-        default:
-            chprintf(outputStream, " - unexpected character\r\n");
-            break;
-        }
-    }
-}
-
-THD_FUNCTION(asservPositionSerial, p)
-{
-    (void) p;
-    const time_conv_t loopPeriod_ms = 20;
-    systime_t time = chVTGetSystemTime();
-    time += TIME_MS2I(loopPeriod_ms);
-    while(true)
-    {
-        chprintf(outputStream, "#%d;%d;%f;%d;%d;%d;%d\r\n",
-            (int32_t)odometry.getX(), (int32_t)odometry.getY(), odometry.getTheta(),
-            commandManager.getCommandStatus(), commandManager.getPendingCommandCount(),
-            md22MotorController.getLeftSpeed(), md22MotorController.getRightSpeed());
-
-        chThdSleepUntil(time);
-        time += TIME_MS2I(loopPeriod_ms);
     }
 }
