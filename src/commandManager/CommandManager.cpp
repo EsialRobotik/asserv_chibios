@@ -8,7 +8,7 @@
 #include "USBStream.h"
 
 CommandManager::CommandManager(float arrivalAngleThreshold_rad, float arrivalDistanceThreshold_mm,
-		float gotoAngleThreshold_rad,
+		float gotoAngleThreshold_rad, float gotoReturnThreshold_mm,
 		float gotoNoStopFullSpeedConsignDist_mm, float gotoNoStopMinDistNextConsign_mm, float gotoNoStopNextFullSpeedConsignAngle_rad,
 		const Regulator &angle_regulator, const Regulator &distance_regulator):
 liste(), m_angle_regulator(angle_regulator), m_distance_regulator(distance_regulator)
@@ -20,6 +20,7 @@ liste(), m_angle_regulator(angle_regulator), m_distance_regulator(distance_regul
     m_arrivalAngleThreshold_rad = arrivalAngleThreshold_rad;
     m_arrivalDistanceThreshold_mm = arrivalDistanceThreshold_mm;
     m_gotoAngleThreshold_rad = gotoAngleThreshold_rad;
+    m_gotoReturnThreshold_mm = gotoReturnThreshold_mm;
     m_gotoNoStopFullSpeedConsignDist_mm = gotoNoStopFullSpeedConsignDist_mm;
     m_gotoNoStopMinDistNextConsign_mm = gotoNoStopMinDistNextConsign_mm;
     m_gotoNoStopNextFullSpeedConsignAngle_rad = gotoNoStopNextFullSpeedConsignAngle_rad;
@@ -212,7 +213,7 @@ void CommandManager::computeGoTo(float X_mm, float Y_mm, float theta_rad)
     //TODO JGU: Fix pour ne pas se retourner après avoir dépassé un point sur un overshoot!
     //    mais y'a un bug, si le point est proche mais sur le coté, on va juste avancer !!!!
 
-    if (deltaDist < 50/*Config::returnThreshold*/)
+    if (deltaDist < m_gotoReturnThreshold_mm)
     {
         m_distRegulatorConsign = projectedDist + m_distance_regulator.getAccumulator();
     }
@@ -245,7 +246,7 @@ void CommandManager::computeGoToBack(float X_mm, float Y_mm, float theta_rad)
     //TODO JGU: Fix pour ne pas se retourner après avoir dépassé un point sur un overshoot!
     //    mais y'a un bug, si le point est proche mais sur le coté, on va juste avancer !!!!
 
-    if (deltaDist < 50/*Config::returnThreshold*/)
+    if (deltaDist < m_gotoReturnThreshold_mm)
     {
         m_distRegulatorConsign = -projectedDist + m_distance_regulator.getAccumulator();
     }
