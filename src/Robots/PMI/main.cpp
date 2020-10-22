@@ -75,8 +75,8 @@ QuadratureEncoder encoders(true, true, true);
 Md22::I2cPinInit ESIALCardPinConf_SCL_SDA = {GPIOB, 6, GPIOB, 7};
 Md22 md22MotorController(true, true, true, &ESIALCardPinConf_SCL_SDA, 100000);
 
-Regulator angleRegulator(ANGLE_REGULATOR_KP, MAX_SPEED_MM_PER_SEC);
-Regulator distanceRegulator(DIST_REGULATOR_KP, MAX_SPEED_MM_PER_SEC);
+Regulator angleRegulator(ANGLE_REGULATOR_KP, 0, MAX_SPEED_MM_PER_SEC);
+Regulator distanceRegulator(DIST_REGULATOR_KP, 0, MAX_SPEED_MM_PER_SEC);
 
 Odometry odometry(ENCODERS_WHEELS_DISTANCE_MM, 0, 0);
 
@@ -346,14 +346,16 @@ void asservCommandUSB(BaseSequentialStream *chp, int argc, char **argv)
         float Kp = atof(argv[1]);
         chprintf(outputStream, "setting angle Kp to %.2f \r\n", Kp);
 
-        angleRegulator.setGain(Kp);
+        angleRegulator.setGains(Kp);
     }
     else if (!strcmp(argv[0], "distcontrol"))
     {
         float Kp = atof(argv[1]);
-        chprintf(outputStream, "setting dist Kp to %.2f \r\n", Kp);
+        float Kd = atof(argv[2]);
 
-        distanceRegulator.setGain(Kp);
+        chprintf(outputStream, "setting dist Kp to %.2f  Kd %.2f \r\n", Kp, Kd);
+
+        distanceRegulator.setGains(Kp, Kd);
     }
     else if (!strcmp(argv[0], "enablemotor"))
     {

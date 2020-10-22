@@ -6,7 +6,7 @@
 class Regulator
 {
 public:
-    explicit Regulator(float Kp, float max_output);
+    explicit Regulator(float Kp, float Kd, float max_output);
     virtual ~Regulator() {};
 
     void updateFeedback(float feedback);
@@ -17,9 +17,10 @@ public:
         return m_accumulator;
     };
 
-    void setGain(float Kp)
+    void setGains(float Kp, float Kd = 0)
     {
         m_Kp = Kp;
+        m_Kd = Kd;
     }
 
     float getGain() const
@@ -56,9 +57,11 @@ public:
 private:
     double m_accumulator;
     float m_Kp;
+    float m_Kd;
     float m_error;
     float m_output;
     float m_maxOutput;
+    float m_lastFeedback;
     float m_enabled;
 };
 
