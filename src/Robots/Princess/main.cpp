@@ -51,8 +51,8 @@ float speed_controller_left_Ki = 0.6;
 #define PLL_BANDWIDTH (250)
 
 
-#define COMMAND_MANAGER_ARRIVAL_ANGLE_THRESHOLD_RAD (1)
-#define COMMAND_MANAGER_ARRIVAL_DISTANCE_THRESHOLD_mm (30)
+#define COMMAND_MANAGER_ARRIVAL_ANGLE_THRESHOLD_RAD (0.01)
+#define COMMAND_MANAGER_ARRIVAL_DISTANCE_THRESHOLD_mm (1)
 #define COMMAND_MANAGER_GOTO_ANGLE_THRESHOLD_RAD (M_PI/8)
 #define COMMAND_MANAGER_GOTONOSTOP_FULLSPEED_CONSIGN_DIST_mm (MAX_SPEED_MM_PER_SEC/DIST_REGULATOR_KP)
 #define COMMAND_MANAGER_GOTONOSTOP_MIN_DIST_NEXT_CONSIGN_mm (200)
@@ -529,94 +529,82 @@ THD_FUNCTION(asservCommandSerial, p)
 
         switch (readChar) {
 
-        case 'h': //Arrêt d'urgence
-            commandManager.setEmergencyStop();
-            chprintf(outputStream, "Arrêt d'urgence ! \r\n");
-            break;
+            case 'h': //Arrêt d'urgence
+                commandManager.setEmergencyStop();
+                break;
 
-        case 'r': //Reset de l'arrêt d'urgence
-            commandManager.resetEmergencyStop();
-            break;
+            case 'r': //Reset de l'arrêt d'urgence
+                commandManager.resetEmergencyStop();
+                break;
 
-        case 'z':
-            // Go 20cm
-            chprintf(outputStream, "consigne avant : 200mm\n");
-            commandManager.addStraightLine(200);
-            break;
+            case 'z':
+                // Go 20cm
+                commandManager.addStraightLine(200);
+                break;
 
-        case 's':
-            chprintf(outputStream, "consigne arrière : 200mm\n");
-            commandManager.addStraightLine(-200);
-            break;
+            case 's':
+                commandManager.addStraightLine(-200);
+                break;
 
-        case 'q':
-            chprintf(outputStream, "consigne gauche : 45°\n");
-            commandManager.addTurn(degToRad(45));
-            break;
+            case 'q':
+                commandManager.addTurn(degToRad(45));
+                break;
 
-        case 'd':
-            chprintf(outputStream, "consigne gauche : 45°\n");
-             commandManager.addTurn(degToRad(-45));
-             break;
+            case 'd':
+                commandManager.addTurn(degToRad(-45));
+                break;
 
-        case 'v': //aVance d'un certain nombre de mm
-            serialReadLine(buffer, sizeof(buffer));
-            sscanf(buffer, "%f", &consigneValue1);
-            commandManager.addStraightLine(consigneValue1);
-            chprintf(outputStream, "v%f\r\n", consigneValue1);
-            break;
+            case 'v': //aVance d'un certain nombre de mm
+                serialReadLine(buffer, sizeof(buffer));
+                sscanf(buffer, "%f", &consigneValue1);
+                commandManager.addStraightLine(consigneValue1);
+                break;
 
-        case 't': //Tourne d'un certain angle en degrés
-            serialReadLine(buffer, sizeof(buffer));
-            sscanf(buffer, "%f", &consigneValue1);
-            commandManager.addTurn(degToRad(consigneValue1));
-            chprintf(outputStream, "t%f\r\n", consigneValue1);
-            break;
+            case 't': //Tourne d'un certain angle en degrés
+                serialReadLine(buffer, sizeof(buffer));
+                sscanf(buffer, "%f", &consigneValue1);
+                commandManager.addTurn(degToRad(consigneValue1));
+                break;
 
-        case 'f': //faire Face à un point précis, mais ne pas y aller, juste se tourner
-            serialReadLine(buffer, sizeof(buffer));
-            sscanf(buffer, "%f#%f", &consigneValue1, &consigneValue2);
-            commandManager.addGoToAngle(consigneValue1, consigneValue2);
-            chprintf(outputStream, "f%f#%f\r\n", consigneValue1, consigneValue2);
-            break;
+            case 'f': //faire Face à un point précis, mais ne pas y aller, juste se tourner
+                serialReadLine(buffer, sizeof(buffer));
+                sscanf(buffer, "%f#%f", &consigneValue1, &consigneValue2);
+                commandManager.addGoToAngle(consigneValue1, consigneValue2);
+                break;
 
-        case 'g': //Go : va à un point précis
-            serialReadLine(buffer, sizeof(buffer));
-            sscanf(buffer, "%f#%f", &consigneValue1, &consigneValue2);
-            commandManager.addGoTo(consigneValue1, consigneValue2);
-            chprintf(outputStream, "g%f#%f\r\n", consigneValue1, consigneValue2);
-            break;
+            case 'g': //Go : va à un point précis
+                serialReadLine(buffer, sizeof(buffer));
+                sscanf(buffer, "%f#%f", &consigneValue1, &consigneValue2);
+                commandManager.addGoTo(consigneValue1, consigneValue2);
+                break;
 
-        case 'b': //Go : va à un point précis
-            serialReadLine(buffer, sizeof(buffer));
-            sscanf(buffer, "%f#%f", &consigneValue1, &consigneValue2);
-            commandManager.addGoToBack(consigneValue1, consigneValue2);
-            chprintf(outputStream, "b%f#%f\r\n", consigneValue1, consigneValue2);
-            break;
+            case 'b': //Back : va à un point précis en marche arrière
+                serialReadLine(buffer, sizeof(buffer));
+                sscanf(buffer, "%f#%f", &consigneValue1, &consigneValue2);
+                commandManager.addGoToBack(consigneValue1, consigneValue2);
+                break;
 
-        case 'e': // goto, mais on s'autorise à Enchainer la consigne suivante sans s'arrêter
-            serialReadLine(buffer, sizeof(buffer));
-            sscanf(buffer, "%f#%f", &consigneValue1, &consigneValue2);
-            commandManager.addGoToNoStop(consigneValue1, consigneValue2);
-            chprintf(outputStream, "e%f#%f\r\n", consigneValue1, consigneValue2);
-            break;
+            case 'e': // goto, mais on s'autorise à Enchainer la consigne suivante sans s'arrêter
+                serialReadLine(buffer, sizeof(buffer));
+                sscanf(buffer, "%f#%f", &consigneValue1, &consigneValue2);
+                commandManager.addGoToNoStop(consigneValue1, consigneValue2);
+                break;
 
-        case 'p': //retourne la Position et l'angle courants du robot
-            chprintf(outputStream, "x%fy%fa%fs%d\r\n",
-                    odometry.getX(), odometry.getY(), odometry.getTheta(),
-                    commandManager.getCommandStatus());
-            break;
+            case 'p': //retourne la Position et l'angle courants du robot
+                chprintf(outputStream, "x%fy%fa%fs%d\r\n",
+                        odometry.getX(), odometry.getY(), odometry.getTheta(),
+                        commandManager.getCommandStatus());
+                break;
 
-        case 'S': // set la position et l'angle du robot
-            serialReadLine(buffer, sizeof(buffer));
-            sscanf(buffer, "%f#%f#%f", &consigneValue1, &consigneValue2, &consigneValue3);
-            mainAsserv.setPosition(consigneValue1, consigneValue2, consigneValue3);
-            chprintf(outputStream, "S%f#%f#%f\r\n", consigneValue1, consigneValue2, consigneValue3);
-            break;
+            case 'S': // set la position et l'angle du robot
+                serialReadLine(buffer, sizeof(buffer));
+                sscanf(buffer, "%f#%f#%f", &consigneValue1, &consigneValue2, &consigneValue3);
+                mainAsserv.setPosition(consigneValue1, consigneValue2, consigneValue3);
+                break;
 
-        default:
-            chprintf(outputStream, " - unexpected character\r\n");
-            break;
+            default:
+                // chprintf(outputStream, " - unexpected character\r\n");
+                break;
         }
     }
 }
@@ -624,7 +612,7 @@ THD_FUNCTION(asservCommandSerial, p)
 THD_FUNCTION(asservPositionSerial, p)
 {
     (void) p;
-    const time_conv_t loopPeriod_ms = 60;
+    const time_conv_t loopPeriod_ms = 100;
     systime_t time = chVTGetSystemTime();
     time += TIME_MS2I(loopPeriod_ms);
     while(true)
