@@ -13,6 +13,7 @@
 #include "AsservMain.h"
 #include "commandManager/CommandManager.h"
 #include "SpeedController/SpeedController.h"
+#include "SpeedController/AdaptativeSpeedController.h"
 #include "Encoders/QuadratureEncoder.h"
 #include "motorController/Md22.h"
 #include "Odometry.h"
@@ -40,14 +41,20 @@
 
 #define ANGLE_REGULATOR_KP (650)
 #define ANGLE_REGULATOR_MAX_ACC (3/ASSERV_THREAD_PERIOD_S)
-#define ANGLE_REGULATOR_MAX_ACC_LOW_SPEED (3/ASSERV_THREAD_PERIOD_S)
-#define ANGLE_REGULATOR_LOW_SPEED_THRESHOLD (0)
 
-float speed_controller_right_Kp = 0.1;
-float speed_controller_right_Ki = 0.6;
+float speed_controller_right_Kp[NB_PI_SUBSET] = { 0.1, 0.1, 0.1};
+float speed_controller_right_Ki[NB_PI_SUBSET] = { 1.0, 0.8, 0.6};
+float speed_controller_right_SpeedRange[NB_PI_SUBSET] = { 0, 20, 50};
 
-float speed_controller_left_Kp = 0.1;
-float speed_controller_left_Ki = 0.6;
+float speed_controller_left_Kp[NB_PI_SUBSET] = { 0.1, 0.1, 0.1};
+float speed_controller_left_Ki[NB_PI_SUBSET] = { 1.0, 0.8, 0.6};
+float speed_controller_left_SpeedRange[NB_PI_SUBSET] = { 0, 20, 50};
+
+//float speed_controller_right_Kp = 0.1;
+//float speed_controller_right_Ki = 0.6;
+//
+//float speed_controller_left_Kp = 0.1;
+//float speed_controller_left_Ki = 0.6;
 
 #define PLL_BANDWIDTH (250)
 
@@ -71,8 +78,10 @@ Regulator distanceRegulator(DIST_REGULATOR_KP, MAX_SPEED_MM_PER_SEC);
 
 Odometry odometry(ENCODERS_WHEELS_DISTANCE_MM, 0, 0);
 
-SpeedController speedControllerRight(speed_controller_right_Kp, speed_controller_right_Ki, 100, MAX_SPEED_MM_PER_SEC, ASSERV_THREAD_FREQUENCY);
-SpeedController speedControllerLeft(speed_controller_left_Kp, speed_controller_left_Ki, 100, MAX_SPEED_MM_PER_SEC, ASSERV_THREAD_FREQUENCY);
+//SpeedController speedControllerRight(speed_controller_right_Kp, speed_controller_right_Ki, 100, MAX_SPEED_MM_PER_SEC, ASSERV_THREAD_FREQUENCY);
+//SpeedController speedControllerLeft(speed_controller_left_Kp, speed_controller_left_Ki, 100, MAX_SPEED_MM_PER_SEC, ASSERV_THREAD_FREQUENCY);
+AdaptativeSpeedController speedControllerRight(speed_controller_right_Kp, speed_controller_right_Ki, speed_controller_right_SpeedRange, 100, MAX_SPEED_MM_PER_SEC, ASSERV_THREAD_FREQUENCY);
+AdaptativeSpeedController speedControllerLeft(speed_controller_left_Kp, speed_controller_left_Ki, speed_controller_left_SpeedRange, 100, MAX_SPEED_MM_PER_SEC, ASSERV_THREAD_FREQUENCY);
 
 Pll rightPll(PLL_BANDWIDTH);
 Pll leftPll(PLL_BANDWIDTH);
@@ -125,6 +134,7 @@ THD_FUNCTION(ControlPanelThread, p);
 char history_buffer[SHELL_MAX_HIST_BUFF];
 char *completion_buffer[SHELL_MAX_COMPLETIONS];
 
+float config_buffer[30];
 void asservCommandUSB(BaseSequentialStream *chp, int argc, char **argv);
 
 void asservCommandSerial();
@@ -281,27 +291,32 @@ void asservCommandUSB(BaseSequentialStream *chp, int argc, char **argv)
         char side = *argv[1];
         float Kp = atof(argv[2]);
         float Ki = atof(argv[3]);
+        uint8_t range = atof(argv[4]);;
 
-        chprintf(outputStream, "setting speed control Kp:%.2f Ki:%.2f to side %c \r\n", Kp, Ki, side);
+        chprintf(outputStream, "setting speed control Kp:%.2f Ki:%.2f range:%d to side %c \r\n", Kp, Ki, range, side);
 
         if (side == 'r')
-            speedControllerRight.setGains(Kp, Ki);
+            speedControllerRight.setGains(Kp, Ki, range);
         else if (side == 'l')
-            speedControllerLeft.setGains(Kp, Ki);
+            speedControllerLeft.setGains(Kp, Ki, range);
     }
     else if (!strcmp(argv[0], "angleacc"))
     {
         float acc = atof(argv[1]);
-        chprintf(outputStream, "setting angle slope delta %.2f \r\n", acc);
+        chprintf(outputStream, "setting angle acceleration limit to %.2f \r\n", acc);
 
         angleAccelerationlimiter.setMaxAcceleration(acc);
     }
     else if (!strcmp(argv[0], "distacc"))
     {
-        float acc = atof(argv[1]);
-        chprintf(outputStream, "setting distance slope delta %.2f \r\n", acc);
+        float acc_max = atof(argv[1]);
+        float acc_min = atof(argv[2]);
+        float acc_threshold = atof(argv[3]);
+        chprintf(outputStream, "setting distance acceleration limiter max %.2f min %.2f threshold %.2f \r\n", acc_max, acc_min, acc_threshold);
 
-        distanceAccelerationLimiter.setMaxAcceleration(acc);
+        distanceAccelerationLimiter.setMaxAcceleration(acc_max);
+        distanceAccelerationLimiter.setMaxAcceleration(acc_min);
+        distanceAccelerationLimiter.setHighSpeedThreshold(acc_threshold);
     }
     else if (!strcmp(argv[0], "addangle"))
     {
@@ -405,6 +420,37 @@ void asservCommandUSB(BaseSequentialStream *chp, int argc, char **argv)
         commandManager.addGoToNoStop(500, 400);
 
 
+    }
+    else if (!strcmp(argv[0], "get_config"))
+    {
+        uint8_t index = 0;
+
+        // SpeedControllerLeft
+        for( int i=0; i<NB_PI_SUBSET; i++)
+        {
+            speedControllerLeft.getGainsForRange(i, &config_buffer[index], &config_buffer[index+1], &config_buffer[index+2] );
+            index += 3;
+        }
+
+        // SpeedControllerRight
+        for( int i=0; i<NB_PI_SUBSET; i++)
+        {
+            speedControllerRight.getGainsForRange(i, &config_buffer[index], &config_buffer[index+1], &config_buffer[index+2]);
+            index += 3;
+        }
+
+        //Regulators
+        config_buffer[index++] = distanceRegulator.getGain();
+        config_buffer[index++] = angleRegulator.getGain();
+
+        // accel limiter
+        config_buffer[index++] = angleAccelerationlimiter.getMaxAcceleration();
+        config_buffer[index++] = distanceAccelerationLimiter.getMaxAcceleration();
+        config_buffer[index++] = distanceAccelerationLimiter.getMinAcceleration();
+        config_buffer[index++] = distanceAccelerationLimiter.getHighSpeedThreshold();
+
+        chprintf(outputStream, "sending %d float of config !\r\n", index);
+        USBStream::instance()->sendConfig((uint8_t*)config_buffer, index*sizeof(config_buffer[0]));
     }
     else
     {

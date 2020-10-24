@@ -14,7 +14,6 @@
 #include "commandManager/CommandManager.h"
 #include "SpeedController/SpeedController.h"
 #include "SpeedController/AdaptativeSpeedController.h"
-#include "SpeedController/SpeedController.h"
 #include "Encoders/QuadratureEncoder.h"
 #include "motorController/Md22.h"
 #include "Odometry.h"
@@ -137,6 +136,7 @@ THD_FUNCTION(ControlPanelThread, p);
 char history_buffer[SHELL_MAX_HIST_BUFF];
 char *completion_buffer[SHELL_MAX_COMPLETIONS];
 
+float config_buffer[30];
 void asservCommandUSB(BaseSequentialStream *chp, int argc, char **argv);
 
 void asservCommandSerial();
@@ -208,7 +208,6 @@ int main(void)
     }
 }
 
-float config_buffer[30];
 void asservCommandUSB(BaseSequentialStream *chp, int argc, char **argv)
 {
     auto printUsage = []()
@@ -364,10 +363,7 @@ void asservCommandUSB(BaseSequentialStream *chp, int argc, char **argv)
     {
         bool enable = !(atoi(argv[1]) == 0);
         chprintf(outputStream, "%s motor output\r\n", (enable ? "enabling" : "disabling"));
-        if( enable )
-            mainAsserv.resetEmergencyStop();
-        else
-            mainAsserv.setEmergencyStop();
+        mainAsserv.enableMotors(enable);
     }
     else if (!strcmp(argv[0], "coders"))
     {
