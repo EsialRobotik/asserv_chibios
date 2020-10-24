@@ -169,7 +169,7 @@ void AsservMain::mainLoop()
         USBStream::instance()->setRawEncoderDeltaLeft((float) encoderDeltaLeft);
         USBStream::instance()->setRawEncoderDeltaRight((float) encoderDeltaRight);
 
-        USBStream::instance()->SendCurrentStream();
+        USBStream::instance()->sendCurrentStream();
 
         m_asservCounter++;
 

@@ -71,3 +71,11 @@ void AdaptativeSpeedController::setGains(float Kp, float Ki, uint8_t range)
     m_speedKpSet[range] = Kp;
     m_speedKiSet[range] = Ki;
 }
+
+void AdaptativeSpeedController::getGainsForRange(uint8_t range, float *Kp, float *Ki, float *speedRange)
+{
+    chDbgAssert(range<NB_PI_SUBSET, "getGainsForRange with wrong range !");
+    *Kp = m_speedKpSet[range];
+    *Ki = m_speedKiSet[range];
+    *speedRange = m_GainsSpeedRange[range];
+}

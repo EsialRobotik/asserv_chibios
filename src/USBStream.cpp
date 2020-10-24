@@ -5,7 +5,8 @@
 #include "core_cm4.h"
 #include <cstring>
 
-const uint32_t synchroWord = 0xCAFED00D;
+const uint32_t synchroWord_stream = 0xCAFED00D;
+const uint32_t synchroWord_config = 0xCAFEDECA;
 
 USBStream *USBStream::s_instance = NULL;
 USBStream::USBStream()
@@ -45,9 +46,9 @@ void USBStream::init()
 
 }
 
-void* USBStream::SendCurrentStream()
+void* USBStream::sendCurrentStream()
 {
-    m_currentStruct.synchro = synchroWord;
+    m_currentStruct.synchro = synchroWord_stream;
     m_currentStruct.timestamp = m_timestamp++;
 
     sendFullBuffer();
@@ -55,6 +56,13 @@ void* USBStream::SendCurrentStream()
     getEmptyBuffer();
 
     return m_currentPtr;
+}
+
+void USBStream::sendConfig(uint8_t *configBuffer, uint8_t size)
+{
+    chnWrite(&SDU1, (uint8_t*)&synchroWord_config, sizeof(synchroWord_config));
+    chnWrite(&SDU1, &size, sizeof(size));
+    chnWrite(&SDU1, configBuffer, size);
 }
 
 void USBStream::sendFullBuffer()

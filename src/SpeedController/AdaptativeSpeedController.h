@@ -18,6 +18,8 @@ class AdaptativeSpeedController : public SpeedController
         virtual void setGains(float Kp, float Ki);
         void setGains(float Kp, float Ki, uint8_t range);
 
+        void getGainsForRange(uint8_t range, float *Kp, float *Ki, float *speedRange);
+
     private:
         void  updateGains(float actualSpeed);
 

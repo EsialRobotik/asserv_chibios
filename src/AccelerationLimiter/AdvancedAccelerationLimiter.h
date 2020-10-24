@@ -14,6 +14,10 @@ public:
     void setMinAcceleration(float minAcceleration);
     void setHighSpeedThreshold(float highSpeedThreshold);
 
+    inline float getMaxAcceleration() const { return m_maxAcceleration; };
+    inline float getMinAcceleration() const { return m_minAcceleration; };
+    inline float getHighSpeedThreshold() const{ return m_HighSpeedThreshold; };
+
 private:
     virtual float limitOutput(float dt, float targetSpeed, float previousOutput, float currentSpeed);
 

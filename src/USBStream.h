@@ -46,7 +46,8 @@ public:
         return s_instance;
     }
 
-    void* SendCurrentStream();
+    void* sendCurrentStream();
+    void sendConfig(uint8_t *configBuffer, uint8_t size);
 
     void releaseBuffer();
     void getFullBuffer(void** ptr, uint32_t* size);

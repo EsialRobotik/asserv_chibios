@@ -405,7 +405,7 @@ void asservCommand(BaseSequentialStream *chp, int argc, char **argv)
         USBStream::instance()->setRawEncoderDeltaLeft(100.0);
         USBStream::instance()->setRawEncoderDeltaRight(200.0);
 
-        USBStream::instance()->SendCurrentStream();
+        USBStream::instance()->sendCurrentStream();
     } else {
         printUsage();
     }

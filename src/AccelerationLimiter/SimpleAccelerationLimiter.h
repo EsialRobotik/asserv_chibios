@@ -11,6 +11,7 @@ public:
     virtual ~SimpleAccelerationLimiter(){};
 
     void setMaxAcceleration(float maxAcceleration);
+    inline float getMaxAcceleration() const { return m_maxAcceleration; };
 
 private:
     virtual float limitOutput(float dt, float targetSpeed, float previousOutput, float currentSpeed);
