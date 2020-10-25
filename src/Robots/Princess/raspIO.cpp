@@ -161,10 +161,22 @@ THD_FUNCTION(asservCommandSerial, p)
                     commandManager.getCommandStatus());
             break;
 
-        case 'S': // set la position et l'angle du robot
+        case 'P': // set la position et l'angle du robot
             serialReadLine(buffer, sizeof(buffer));
             sscanf(buffer, "%f#%f#%f", &consigneValue1, &consigneValue2, &consigneValue3);
             mainAsserv.setPosition(consigneValue1, consigneValue2, consigneValue3);
+            break;
+
+        case 'M': // M0 = coupe les moteurs / M1 = remet les moteurs
+            serialReadLine(buffer, sizeof(buffer));
+            sscanf(buffer, "%f", &consigneValue1);
+            mainAsserv.enableMotors(consigneValue1 == 1);
+            break;
+
+        case 'S': // Vitesse maximum en %
+            serialReadLine(buffer, sizeof(buffer));
+            sscanf(buffer, "%f", &consigneValue1);
+            mainAsserv.limitMotorControllerConsignToPercentage(consigneValue1);
             break;
 
         default:
