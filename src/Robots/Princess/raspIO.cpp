@@ -91,11 +91,13 @@ THD_FUNCTION(asservCommandSerial, p)
 
         case 'h': //Arrêt d'urgence
             commandManager.setEmergencyStop();
+            serialReadLine(buffer, sizeof(buffer));
             chprintf(outputStream, "Arrêt d'urgence ! \r\n");
             break;
 
         case 'r': //Reset de l'arrêt d'urgence
             commandManager.resetEmergencyStop();
+            serialReadLine(buffer, sizeof(buffer));
             break;
 
         case 'z':
