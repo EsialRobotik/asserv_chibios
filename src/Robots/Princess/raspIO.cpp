@@ -90,12 +90,14 @@ THD_FUNCTION(asservCommandSerial, p)
         switch (readChar) {
 
         case 'h': //Arrêt d'urgence
-            commandManager.setEmergencyStop();
+            mainAsserv.setEmergencyStop();
+            serialReadLine(buffer, sizeof(buffer));
             chprintf(outputStream, "Arrêt d'urgence ! \r\n");
             break;
 
         case 'r': //Reset de l'arrêt d'urgence
-            commandManager.resetEmergencyStop();
+            mainAsserv.resetEmergencyStop();
+            serialReadLine(buffer, sizeof(buffer));
             break;
 
         case 'z':
@@ -161,11 +163,24 @@ THD_FUNCTION(asservCommandSerial, p)
                     commandManager.getCommandStatus());
             break;
 
-        case 'S': // set la position et l'angle du robot
+        case 'P': // set la position et l'angle du robot
             serialReadLine(buffer, sizeof(buffer));
             sscanf(buffer, "%f#%f#%f", &consigneValue1, &consigneValue2, &consigneValue3);
             mainAsserv.setPosition(consigneValue1, consigneValue2, consigneValue3);
             break;
+
+        case 'M': // M0 = coupe les moteurs / M1 = remet les moteurs
+            serialReadLine(buffer, sizeof(buffer));
+            sscanf(buffer, "%f", &consigneValue1);
+            mainAsserv.enableMotors(consigneValue1 == 1);
+            break;
+
+        case 'S': // Vitesse maximum en %
+            serialReadLine(buffer, sizeof(buffer));
+            sscanf(buffer, "%f", &consigneValue1);
+            mainAsserv.limitMotorControllerConsignToPercentage(consigneValue1);
+            break;
+
 
         default:
             chprintf(outputStream, " - unexpected character\r\n");
@@ -177,7 +192,7 @@ THD_FUNCTION(asservCommandSerial, p)
 THD_FUNCTION(asservPositionSerial, p)
 {
     (void) p;
-    const time_conv_t loopPeriod_ms = 60;
+    const time_conv_t loopPeriod_ms = 100;
     systime_t time = chVTGetSystemTime();
     time += TIME_MS2I(loopPeriod_ms);
     while(true)
