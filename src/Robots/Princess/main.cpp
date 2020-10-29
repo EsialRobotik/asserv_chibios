@@ -58,8 +58,8 @@ float speed_controller_left_SpeedRange[NB_PI_SUBSET] = { 20, 50, 60};
 #define COMMAND_MANAGER_GOTO_ANGLE_THRESHOLD_RAD (M_PI/8)
 #define COMMAND_MANAGER_GOTO_RETURN_THRESHOLD_mm (20)
 #define COMMAND_MANAGER_GOTONOSTOP_FULLSPEED_CONSIGN_DIST_mm (MAX_SPEED_MM_PER_SEC/DIST_REGULATOR_KP)
-#define COMMAND_MANAGER_GOTONOSTOP_MIN_DIST_NEXT_CONSIGN_mm (200)
-#define COMMAND_MANAGER_GOTONOSTOP_NEXT_FULLSPEED_CONSIGN_ANGLE_mm (M_PI/8)
+#define COMMAND_MANAGER_GOTONOSTOP_MIN_DIST_NEXT_CONSIGN_mm (20)
+#define COMMAND_MANAGER_GOTONOSTOP_NEXT_FULLSPEED_CONSIGN_ANGLE_mm (M_PI/20)
 
 
 
@@ -402,17 +402,26 @@ void asservCommandUSB(BaseSequentialStream *chp, int argc, char **argv)
     }
     else if (!strcmp(argv[0], "gototest"))
     {
-//		commandManager.addGoToEnchainement(450,-200);
-//		commandManager.addGoToEnchainement(450,-600);
-//		commandManager.addGoToEnchainement(300,-400);
-//		commandManager.addGoTo(150,0);
-
         mainAsserv.resetToNormalMode();
-        commandManager.addGoToNoStop(900, 300);
-        commandManager.addGoToNoStop(900, 50);
-        commandManager.addGoToNoStop(100, 400);
-        commandManager.addGoToNoStop(100, 0);
-        commandManager.addGoToNoStop(500, 400);
+//        commandManager.addGoToNoStop(470, 0);
+//        commandManager.addGoTo(470, 190);
+//        commandManager.addGoToAngle(0, 190);
+//        commandManager.addGoToNoStop(50, 190);
+//        commandManager.addGoToBack(470, 190);
+//        commandManager.addGoToAngle(0, 190);
+
+//        commandManager.addGoTo(200, -200);
+//        commandManager.addGoTo(200, -400);
+//        commandManager.addGoTo(400, -400);
+//        commandManager.addGoTo(0, 0);
+//        commandManager.addGoToAngle(200, 0);
+
+
+        commandManager.addGoToNoStop(200, -200);
+        commandManager.addGoToNoStop(200, -400);
+        commandManager.addGoToNoStop(400, -400);
+//        commandManager.addGoToNoStop(0, 0);
+//        commandManager.addGoToAngle(200, 0);
 
 
     }
