@@ -43,6 +43,7 @@ public:
     {
         m_outputLimit = outputLimit;
     }
+
 protected:
     float m_speedKp;
     float m_speedKi;

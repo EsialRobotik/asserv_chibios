@@ -58,7 +58,7 @@ float speed_controller_left_SpeedRange[NB_PI_SUBSET] = { 20, 50, 60};
 #define COMMAND_MANAGER_GOTO_ANGLE_THRESHOLD_RAD (M_PI/8)
 #define COMMAND_MANAGER_GOTO_RETURN_THRESHOLD_mm (20)
 #define COMMAND_MANAGER_GOTONOSTOP_FULLSPEED_CONSIGN_DIST_mm (MAX_SPEED_MM_PER_SEC/DIST_REGULATOR_KP)
-#define COMMAND_MANAGER_GOTONOSTOP_MIN_DIST_NEXT_CONSIGN_mm (20)
+#define COMMAND_MANAGER_GOTONOSTOP_MIN_DIST_NEXT_CONSIGN_mm (100)
 #define COMMAND_MANAGER_GOTONOSTOP_NEXT_FULLSPEED_CONSIGN_ANGLE_mm (M_PI/20)
 
 
@@ -111,6 +111,7 @@ static THD_FUNCTION(AsservThread, arg)
     (void) arg;
     chRegSetThreadName("AsservThread");
 
+    commandManager.setMainAsserv(&mainAsserv);
     md22MotorController.init();
     encoders.init();
     encoders.start();
@@ -420,8 +421,9 @@ void asservCommandUSB(BaseSequentialStream *chp, int argc, char **argv)
         commandManager.addGoToNoStop(200, -200);
         commandManager.addGoToNoStop(200, -400);
         commandManager.addGoToNoStop(400, -400);
-//        commandManager.addGoToNoStop(0, 0);
-//        commandManager.addGoToAngle(200, 0);
+        commandManager.addGoToNoStop(400, -200);
+        commandManager.addGoToNoStop(200, -200);
+        commandManager.addGoToNoStop(200, -400);
 
 
     }

@@ -8,6 +8,7 @@ Regulator::Regulator(float Kp, float max_output)
     m_output = 0;
     m_maxOutput = max_output;
     m_enabled = true;
+    m_limitOutputRatio = 1;
 }
 
 void Regulator::updateFeedback(float feedback)
@@ -32,5 +33,5 @@ float Regulator::updateOutput(float goal)
     else if (m_output > m_maxOutput)
         m_output = m_maxOutput;
 
-    return m_output;
+    return m_output * m_limitOutputRatio;
 }

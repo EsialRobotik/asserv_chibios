@@ -3,6 +3,8 @@
 
 #include "CMDList/CMDList.h"
 #include "Regulator.h"
+#include "AsservMain.h"
+
 
 enum CommandStatus {
     STATUS_IDLE     = 0,
@@ -11,14 +13,17 @@ enum CommandStatus {
     STATUS_BLOCKED  = 3,
 };
 
+
 class CommandManager
 {
     public:
         explicit CommandManager(float arrivalAngleThreshold_rad, float arrivalDistanceThreshold_mm,
                 float gotoAngleThreshold_rad, float gotoReturnThreshold_mm,
                 float gotoNoStopFullSpeedConsignDist_mm, float gotoNoStopMinDistNextConsign_mm, float gotoNoStopNextFullSpeedConsignAngle_rad,
-                const Regulator &angle_regulator, const Regulator &distance_regulator);
+                Regulator &angle_regulator, Regulator &distance_regulator);
         ~CommandManager() {};
+
+        void setMainAsserv( AsservMain *asserv_main) { m_asserv_main = asserv_main;};
 
         /*
          * Commandes ajoutables a la liste des consignes du robot
@@ -73,8 +78,9 @@ class CommandManager
 
         CommandStatus m_commandStatus;
 
-        const Regulator &m_angle_regulator;
-        const Regulator &m_distance_regulator;
+        Regulator &m_angle_regulator;
+        Regulator &m_distance_regulator;
+        AsservMain *m_asserv_main;
 
         bool m_emergencyStop;
 

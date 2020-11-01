@@ -10,8 +10,8 @@
 CommandManager::CommandManager(float arrivalAngleThreshold_rad, float arrivalDistanceThreshold_mm,
 		float gotoAngleThreshold_rad, float gotoReturnThreshold_mm,
 		float gotoNoStopFullSpeedConsignDist_mm, float gotoNoStopMinDistNextConsign_mm, float gotoNoStopNextFullSpeedConsignAngle_rad,
-		const Regulator &angle_regulator, const Regulator &distance_regulator):
-liste(), m_angle_regulator(angle_regulator), m_distance_regulator(distance_regulator)
+		Regulator &angle_regulator, Regulator &distance_regulator):
+liste(), m_angle_regulator(angle_regulator), m_distance_regulator(distance_regulator), m_asserv_main(0)
 {
     m_emergencyStop = false;
     currCMD.type = CMD_NULL;
@@ -317,6 +317,8 @@ void CommandManager::computeGotoNoStop(float X_mm, float Y_mm, float theta_rad)
 
     float X_goal = X_goto;
     float Y_goal = Y_goto;
+    USBStream::instance()->setXGoal(X_goal);
+    USBStream::instance()->setYGoal(Y_goal);
 
     /*
      * En dynamique, la consigne  est l'intersection entre une ligne qui part du centre du robot vers le prochain goto
@@ -352,8 +354,6 @@ void CommandManager::computeGotoNoStop(float X_mm, float Y_mm, float theta_rad)
         USBStream::instance()->setXGoal(X_goal);
         USBStream::instance()->setYGoal(Y_goal);
 
-
-        // TODO : Il faut calculer un VRAI GOTO ! qui tourne pas comme un débile !
         // Finally, apply some simple GOTO command
         float deltaX = X_goal - X_mm; // Différence entre la cible et le robot selon X
         float deltaY = Y_goal - Y_mm;  // Différence entre la cible et le robot selon Y
@@ -370,7 +370,56 @@ void CommandManager::computeGotoNoStop(float X_mm, float Y_mm, float theta_rad)
     }
     else
     {
-        computeGoTo(X_mm, Y_mm, theta_rad);
+        if (nextCMD.type == CMD_GOTO || nextCMD.type == CMD_GOTO_NOSTOP)
+        {
+            float deltaTheta = fabs(computeDeltaTheta(currCMD.value - X_mm,  currCMD.secValue - Y_mm, theta_rad));
+            if(  nextCMD.type == CMD_GOTO || nextCMD.type == CMD_GOTO_NOSTOP )
+            {
+                float deltaThetaNext = fabs(computeDeltaTheta(nextCMD.value - X_mm,  nextCMD.secValue - Y_mm, theta_rad));
+                if(deltaTheta < deltaThetaNext)
+                    deltaTheta = deltaThetaNext;
+
+            }
+
+
+
+            float thetaVMin = M_PI/2;
+            float thetaVMax = M_PI/8;
+
+            // saturation entre [thetaVMax ; thetaVMin]
+            if( deltaTheta >  thetaVMin)
+                deltaTheta = thetaVMin;
+            if(deltaTheta < thetaVMax )
+                deltaTheta =  thetaVMax;
+
+            float Vmax  = 1200;
+            float Vmin = 300;
+
+            float currentMaxSpeed = fmap(deltaTheta, thetaVMax, thetaVMin, Vmax, Vmin );
+            m_distance_regulator.limitMaxOutputToRatio(currentMaxSpeed/Vmax );
+            USBStream::instance()->setSpeedKpRight(currentMaxSpeed/Vmax * 100.0);
+            USBStream::instance()->setSpeedKpLeft(deltaTheta);
+
+
+            {
+                // Finally, apply some simple GOTO command
+               float deltaX = X_goal - X_mm; // Différence entre la cible et le robot selon X
+               float deltaY = Y_goal - Y_mm;  // Différence entre la cible et le robot selon Y
+
+               // Valeur absolue de la distance à parcourir en allant tout droit pour atteindre la consigne
+               float deltaDist = computeDeltaDist(deltaX, deltaY);
+
+               // La différence entre le thetaCible (= cap à atteindre) et le theta (= cap actuel du robot) donne l'angle à parcourir
+               float deltaTheta = computeDeltaTheta(deltaX, deltaY, theta_rad);
+
+               m_angleRegulatorConsign = deltaTheta + m_angle_regulator.getAccumulator();
+               m_distRegulatorConsign = deltaDist + m_distance_regulator.getAccumulator();
+            }
+        }
+        else
+        {
+            computeGoTo(X_mm, Y_mm, theta_rad);
+        }
     }
 }
 
@@ -382,6 +431,7 @@ bool CommandManager::isGoalReach()
 
 bool CommandManager::isGoalReach(float X_mm, float Y_mm, float theta_rad)
 {
+    m_asserv_main->limitMotorControllerConsignToPercentage(100);
     if (currCMD.type != CMD_GOTO_NOSTOP)
     {
         return isGoalReach();
@@ -402,7 +452,7 @@ bool CommandManager::isGoalReach(float X_mm, float Y_mm, float theta_rad)
 
             float deltaDist = computeDeltaDist(deltaX, deltaY);
             float deltaThetaNext = computeDeltaTheta(nextCMD.value - X_mm,  nextCMD.secValue - Y_mm, theta_rad);
-            float deltaThetaCurrent = computeDeltaTheta(deltaX - X_mm,  deltaY - Y_mm, theta_rad);
+            float deltaThetaCurrent = computeDeltaTheta(deltaX,  deltaY, theta_rad);
 
             return (deltaDist < m_gotoNoStopFullSpeedConsignDist_mm && fabs(deltaThetaNext) < m_gotoNoStopNextFullSpeedConsignAngle_rad && fabs(deltaThetaCurrent) < m_gotoNoStopNextFullSpeedConsignAngle_rad )
                     || (deltaDist < m_gotoNoStopMinDistNextConsign_mm);

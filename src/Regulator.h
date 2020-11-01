@@ -52,6 +52,11 @@ public:
         m_enabled = false;
     };
 
+    void limitMaxOutputToRatio(float ratio)
+    {
+        m_limitOutputRatio = ratio;
+    }
+
 
 private:
     double m_accumulator;
@@ -60,6 +65,7 @@ private:
     float m_output;
     float m_maxOutput;
     float m_enabled;
+    float m_limitOutputRatio;
 };
 
 #endif /* REGULATOR_H_ */

@@ -146,8 +146,8 @@ void AsservMain::mainLoop()
         USBStream::instance()->setSpeedOutputLeft(outputSpeedLeft);
         USBStream::instance()->setSpeedIntegratedOutputRight(m_speedControllerRight.getIntegratedOutput());
         USBStream::instance()->setSpeedIntegratedOutputLeft(m_speedControllerLeft.getIntegratedOutput());
-        USBStream::instance()->setSpeedKpRight(m_speedControllerRight.getCurrentKp());
-        USBStream::instance()->setSpeedKpLeft(m_speedControllerLeft.getCurrentKp());
+//        USBStream::instance()->setSpeedKpRight(m_speedControllerRight.getCurrentKp());
+//        USBStream::instance()->setSpeedKpLeft(m_speedControllerLeft.getCurrentKp());
         USBStream::instance()->setSpeedKiRight(m_speedControllerRight.getCurrentKi());
         USBStream::instance()->setSpeedKiLeft(m_speedControllerLeft.getCurrentKi());
 
