@@ -24,7 +24,7 @@
 
 
 
-#define ASSERV_THREAD_FREQUENCY (500)
+#define ASSERV_THREAD_FREQUENCY (300)
 #define ASSERV_THREAD_PERIOD_S (1.0/ASSERV_THREAD_FREQUENCY)
 #define ASSERV_POSITION_DIVISOR (5)
 
@@ -35,20 +35,20 @@
 #define MAX_SPEED_MM_PER_SEC (1500)
 
 #define DIST_REGULATOR_KP (3)
-#define DIST_REGULATOR_MAX_ACC ((3.0)/ASSERV_THREAD_PERIOD_S)
-#define DIST_REGULATOR_MAX_ACC_LOW_SPEED (1/ASSERV_THREAD_PERIOD_S)
-#define DIST_REGULATOR_LOW_SPEED_THRESHOLD (300)
+#define DIST_REGULATOR_MAX_ACC (1500)
+#define DIST_REGULATOR_MIN_ACC (500)
+#define DIST_REGULATOR_HIGH_SPEED_THRESHOLD (500)
 
 #define ANGLE_REGULATOR_KP (650)
-#define ANGLE_REGULATOR_MAX_ACC (3/ASSERV_THREAD_PERIOD_S)
+#define ANGLE_REGULATOR_MAX_ACC (1500)
 
 float speed_controller_right_Kp[NB_PI_SUBSET] = { 0.1, 0.1, 0.1};
 float speed_controller_right_Ki[NB_PI_SUBSET] = { 1.0, 0.8, 0.6};
-float speed_controller_right_SpeedRange[NB_PI_SUBSET] = { 0, 20, 50};
+float speed_controller_right_SpeedRange[NB_PI_SUBSET] = { 20, 50, 60};
 
 float speed_controller_left_Kp[NB_PI_SUBSET] = { 0.1, 0.1, 0.1};
 float speed_controller_left_Ki[NB_PI_SUBSET] = { 1.0, 0.8, 0.6};
-float speed_controller_left_SpeedRange[NB_PI_SUBSET] = { 0, 20, 50};
+float speed_controller_left_SpeedRange[NB_PI_SUBSET] = { 20, 50, 60};
 
 //float speed_controller_right_Kp = 0.1;
 //float speed_controller_right_Ki = 0.6;
@@ -89,7 +89,7 @@ Pll rightPll(PLL_BANDWIDTH);
 Pll leftPll(PLL_BANDWIDTH);
 
 SimpleAccelerationLimiter angleAccelerationlimiter(ANGLE_REGULATOR_MAX_ACC);
-AdvancedAccelerationLimiter distanceAccelerationLimiter(DIST_REGULATOR_MAX_ACC, DIST_REGULATOR_MAX_ACC_LOW_SPEED, DIST_REGULATOR_LOW_SPEED_THRESHOLD);
+AdvancedAccelerationLimiter distanceAccelerationLimiter(DIST_REGULATOR_MAX_ACC, DIST_REGULATOR_MIN_ACC, DIST_REGULATOR_HIGH_SPEED_THRESHOLD);
 
 CommandManager commandManager( COMMAND_MANAGER_ARRIVAL_ANGLE_THRESHOLD_RAD, COMMAND_MANAGER_ARRIVAL_DISTANCE_THRESHOLD_mm,
                                COMMAND_MANAGER_GOTO_ANGLE_THRESHOLD_RAD, COMMAND_MANAGER_GOTO_RETURN_THRESHOLD_mm,
