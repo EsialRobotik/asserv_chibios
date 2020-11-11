@@ -6,6 +6,7 @@
 #include "Odometry.h"
 #include "SpeedController/SpeedController.h"
 #include "AccelerationLimiter/AccelerationLimiter.h"
+#include "AccelerationLimiter/AccelerationDeccelerationLimiter.h"
 #include "Pll.h"
 #include "Regulator.h"
 #include <chprintf.h>
@@ -17,14 +18,14 @@ AsservMain::AsservMain(uint16_t loopFrequency, uint16_t speedPositionLoopDivisor
         float encoderWheelsDistance_mm, uint32_t encodersTicksByTurn, CommandManager &commandManager,
         MotorController &motorController, Encoders &encoders, Odometry &odometrie,
         Regulator &angleRegulator, Regulator &distanceRegulator,
-        AccelerationLimiter &angleRegulatorAccelerationLimiter, AccelerationLimiter &distanceRegulatorAccelerationLimiter,
+        AccelerationLimiter &angleRegulatorAccelerationLimiter, AccelerationLimiter &distanceRegulatorAccelerationLimiter,  AccelerationDeccelerationLimiter &accelerationDeccelerationLimiter,
         SpeedController &speedControllerRight, SpeedController &speedControllerLeft,
         Pll &rightPll, Pll &leftPll) :
 
         m_motorController(motorController), m_encoders(encoders), m_odometry(odometrie),
             m_speedControllerRight(speedControllerRight), m_speedControllerLeft(speedControllerLeft),
             m_angleRegulator(angleRegulator), m_distanceRegulator(distanceRegulator),
-            m_angleRegulatorAccelerationLimiter(angleRegulatorAccelerationLimiter), m_distanceRegulatorAccelerationLimiter(distanceRegulatorAccelerationLimiter),
+            m_angleRegulatorAccelerationLimiter(angleRegulatorAccelerationLimiter), m_distanceRegulatorAccelerationLimiter(distanceRegulatorAccelerationLimiter), m_accelerationDeccelerationLimiter(accelerationDeccelerationLimiter),
             m_commandManager(commandManager),
             m_pllRight(rightPll), m_pllLeft(leftPll),
             m_distanceByEncoderTurn_mm(M_2PI * wheelRadius_mm), m_encodersTicksByTurn(encodersTicksByTurn), m_encodermmByTicks(m_distanceByEncoderTurn_mm / m_encodersTicksByTurn),
@@ -79,12 +80,21 @@ void AsservMain::mainLoop()
         // Mise à jour de la position en polaire
         m_odometry.refresh(encoderDeltaRight * m_encodermmByTicks, encoderDeltaLeft * m_encodermmByTicks);
 
-        // Estimation & mise à jour des feedbacks
+        // Estimation & mise à jour des feedbacks de position
         float deltaAngle_radian = estimateDeltaAngle(encoderDeltaRight, encoderDeltaLeft);
         float deltaDistance_mm = estimateDeltaDistance(encoderDeltaRight, encoderDeltaLeft);
 
         m_angleRegulator.updateFeedback(deltaAngle_radian);
         m_distanceRegulator.updateFeedback(deltaDistance_mm);
+
+        // Estimation & mise à jour des feedbacks de vitesse
+        m_pllRight.update(encoderDeltaRight, m_loopPeriod);
+        float estimatedSpeedRight = convertSpeedTommSec(m_pllRight.getSpeed());
+
+        m_pllLeft.update(encoderDeltaLeft, m_loopPeriod);
+        float estimatedSpeedLeft = convertSpeedTommSec(m_pllLeft.getSpeed());
+
+
 
         /* Calculer une nouvelle consigne de vitesse a chaque  ASSERV_POSITION_DIVISOR tour de boucle
          * L'asserv en vitesse étant commandé par l'asserv en position, on laisse qq'e tours de boucle
@@ -96,7 +106,9 @@ void AsservMain::mainLoop()
             if (m_asservMode == normal_mode)
             {
                 m_angleRegulatorOutputSpeedConsign = m_angleRegulator.updateOutput( m_commandManager.getAngleGoal() );
-                m_distRegulatorOutputSpeedConsign  = m_distanceRegulator.updateOutput( m_commandManager.getDistanceGoal() );
+
+                float limitedDistanceGoal = m_accelerationDeccelerationLimiter.limitAccelerationDecceleration(m_commandManager.getDistanceGoal(), m_distanceRegulator.getAccumulator(), (estimatedSpeedRight+estimatedSpeedLeft)*0.5, m_loopPeriod*(m_speedPositionLoopDivisor));
+                m_distRegulatorOutputSpeedConsign  = m_distanceRegulator.updateOutput( limitedDistanceGoal );
             }
 
             m_asservCounter = 0;
@@ -105,15 +117,10 @@ void AsservMain::mainLoop()
         /*
          * Regulation en vitesse
          */
-        m_pllRight.update(encoderDeltaRight, m_loopPeriod);
-        float estimatedSpeedRight = convertSpeedTommSec(m_pllRight.getSpeed());
-
-        m_pllLeft.update(encoderDeltaLeft, m_loopPeriod);
-        float estimatedSpeedLeft = convertSpeedTommSec(m_pllLeft.getSpeed());
-
         if (m_asservMode == normal_mode || m_asservMode == regulator_output_control) {
             // On limite l'acceleration sur la sortie du regulateur de distance et d'angle
-            m_distSpeedLimited = m_distanceRegulatorAccelerationLimiter.limitAcceleration(m_loopPeriod, m_distRegulatorOutputSpeedConsign, (estimatedSpeedRight+estimatedSpeedLeft)*0.5 );
+//            m_distSpeedLimited = m_distanceRegulatorAccelerationLimiter.limitAcceleration(m_loopPeriod, m_distRegulatorOutputSpeedConsign, (estimatedSpeedRight+estimatedSpeedLeft)*0.5 );
+            m_distSpeedLimited = m_distRegulatorOutputSpeedConsign;
             m_angleSpeedLimited = m_angleRegulatorAccelerationLimiter.limitAcceleration(m_loopPeriod, m_angleRegulatorOutputSpeedConsign, (estimatedSpeedRight-estimatedSpeedLeft)/m_encoderWheelsDistance_mm );
 
             // Mise à jour des consignes en vitesse avec acceleration limitée
@@ -158,6 +165,7 @@ void AsservMain::mainLoop()
         USBStream::instance()->setAngleOutputLimited(m_angleSpeedLimited);
 
         USBStream::instance()->setDistGoal(m_commandManager.getDistanceGoal());
+        USBStream::instance()->setDistGoalLimited( m_accelerationDeccelerationLimiter.getLastOutputConsign() );
         USBStream::instance()->setDistAccumulator(m_distanceRegulator.getAccumulator());
         USBStream::instance()->setDistOutput(m_distRegulatorOutputSpeedConsign);
         USBStream::instance()->setDistOutputLimited(m_distSpeedLimited);

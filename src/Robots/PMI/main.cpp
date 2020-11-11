@@ -20,11 +20,12 @@
 #include "USBStream.h"
 #include "AccelerationLimiter/SimpleAccelerationLimiter.h"
 #include "AccelerationLimiter/AdvancedAccelerationLimiter.h"
+#include "AccelerationLimiter/AccelerationDeccelerationLimiter.h"
 #include "Pll.h"
 
 
 
-#define ASSERV_THREAD_FREQUENCY (500)
+#define ASSERV_THREAD_FREQUENCY (300)
 #define ASSERV_THREAD_PERIOD_S (1.0/ASSERV_THREAD_FREQUENCY)
 #define ASSERV_POSITION_DIVISOR (5)
 
@@ -34,13 +35,14 @@
 
 #define MAX_SPEED_MM_PER_SEC (1500)
 
-#define DIST_REGULATOR_KP (3)
-#define DIST_REGULATOR_MAX_ACC ((3.0)/ASSERV_THREAD_PERIOD_S)
-#define DIST_REGULATOR_MAX_ACC_LOW_SPEED (1/ASSERV_THREAD_PERIOD_S)
+#define DIST_REGULATOR_KP (6)
+#define DIST_REGULATOR_MAX_ACC (1200)
+#define DIST_REGULATOR_MAX_DECC (-2500)
+#define DIST_REGULATOR_MAX_ACC_LOW_SPEED (500)
 #define DIST_REGULATOR_LOW_SPEED_THRESHOLD (300)
 
 #define ANGLE_REGULATOR_KP (650)
-#define ANGLE_REGULATOR_MAX_ACC (3/ASSERV_THREAD_PERIOD_S)
+#define ANGLE_REGULATOR_MAX_ACC (1500)
 
 float speed_controller_right_Kp[NB_PI_SUBSET] = { 0.1, 0.1, 0.1};
 float speed_controller_right_Ki[NB_PI_SUBSET] = { 1.0, 0.8, 0.6};
@@ -57,7 +59,7 @@ float speed_controller_left_SpeedRange[NB_PI_SUBSET] = { 0, 20, 50};
 //float speed_controller_left_Ki = 0.6;
 
 
-#define PLL_BANDWIDTH (250)
+#define PLL_BANDWIDTH (150)
 
 
 #define COMMAND_MANAGER_ARRIVAL_ANGLE_THRESHOLD_RAD (1)
@@ -90,6 +92,7 @@ Pll leftPll(PLL_BANDWIDTH);
 
 SimpleAccelerationLimiter angleAccelerationlimiter(ANGLE_REGULATOR_MAX_ACC);
 AdvancedAccelerationLimiter distanceAccelerationLimiter(DIST_REGULATOR_MAX_ACC, DIST_REGULATOR_MAX_ACC_LOW_SPEED, DIST_REGULATOR_LOW_SPEED_THRESHOLD);
+AccelerationDeccelerationLimiter distanceAccelerationDeccelerationLimiter(DIST_REGULATOR_MAX_ACC, DIST_REGULATOR_MAX_DECC, 5, MAX_SPEED_MM_PER_SEC, distanceRegulator);
 
 CommandManager commandManager( COMMAND_MANAGER_ARRIVAL_ANGLE_THRESHOLD_RAD, COMMAND_MANAGER_ARRIVAL_DISTANCE_THRESHOLD_mm,
                                COMMAND_MANAGER_GOTO_ANGLE_THRESHOLD_RAD, COMMAND_MANAGER_GOTO_RETURN_THRESHOLD_mm,
@@ -100,7 +103,7 @@ AsservMain mainAsserv( ASSERV_THREAD_FREQUENCY, ASSERV_POSITION_DIVISOR,
                        ENCODERS_WHEELS_RADIUS_MM, ENCODERS_WHEELS_DISTANCE_MM, ENCODERS_TICKS_BY_TURN,
                        commandManager, md22MotorController, encoders, odometry,
                        angleRegulator, distanceRegulator,
-                       angleAccelerationlimiter, distanceAccelerationLimiter,
+                       angleAccelerationlimiter, distanceAccelerationLimiter, distanceAccelerationDeccelerationLimiter,
                        speedControllerRight, speedControllerLeft,
                        rightPll, leftPll);
 

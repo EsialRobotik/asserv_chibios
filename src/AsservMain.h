@@ -11,6 +11,8 @@ class Pll;
 class AccelerationLimiter;
 class SpeedController;
 class Regulator;
+class AccelerationDeccelerationLimiter;
+
 
 class AsservMain
 {
@@ -19,7 +21,7 @@ public:
             float encoderWheelsDistance_mm, uint32_t encodersTicksByTurn, CommandManager &commandManager,
             MotorController &motorController, Encoders &encoders, Odometry &odometrie,
             Regulator &angleRegulator, Regulator &distanceRegulator,
-            AccelerationLimiter &angleRegulatorAccelerationLimiter, AccelerationLimiter &distanceRegulatorAccelerationLimiter,
+            AccelerationLimiter &angleRegulatorAccelerationLimiter, AccelerationLimiter &distanceRegulatorAccelerationLimiter, AccelerationDeccelerationLimiter &accelerationDeccelerationLimiter,
             SpeedController &speedControllerRight, SpeedController &speedControllerLeft,
             Pll &rightPll, Pll &leftPll);
 
@@ -80,6 +82,7 @@ private:
     Regulator &m_distanceRegulator;
     AccelerationLimiter &m_angleRegulatorAccelerationLimiter;
     AccelerationLimiter &m_distanceRegulatorAccelerationLimiter;
+    AccelerationDeccelerationLimiter &m_accelerationDeccelerationLimiter;
     CommandManager &m_commandManager;
     Pll &m_pllRight;
     Pll &m_pllLeft;

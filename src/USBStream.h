@@ -35,6 +35,12 @@ typedef struct
     float value25;
     float value26;
     float value27;
+    float value28;
+    float value29;
+    float value30;
+    float value31;
+    float value32;
+    float value33;
 }__attribute__((packed)) UsbStreamSample;
 
 class USBStream
@@ -142,6 +148,10 @@ public:
     {
         setValue(&m_currentStruct.value14, goal);
     }
+    inline void setDistGoalLimited(float limitedGoal)
+    {
+        setValue(&m_currentStruct.value28, limitedGoal);
+    }
     inline void setDistAccumulator(float acc)
     {
         setValue(&m_currentStruct.value15, acc);
@@ -187,6 +197,29 @@ public:
     inline void setYGoal(float y)
     {
         setValue(&m_currentStruct.value23, y);
+    }
+
+
+
+    inline void setSpeedConsignForAccLimit(float x)
+    {
+        setValue(&m_currentStruct.value29, x);
+    }
+    inline void setstoppingDistance(float y)
+    {
+        setValue(&m_currentStruct.value30, y);
+    }
+    inline void setSlope(float y)
+    {
+        setValue(&m_currentStruct.value31, y);
+    }
+    inline void setDistanceSpeed(float y)
+    {
+        setValue(&m_currentStruct.value32, y);
+    }
+    inline void setStoppingTime(float y)
+    {
+        setValue(&m_currentStruct.value33, y);
     }
 
 private:
