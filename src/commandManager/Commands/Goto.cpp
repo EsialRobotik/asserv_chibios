@@ -66,7 +66,7 @@ void Goto::updateConsign(float X_mm, float Y_mm, float theta_rad, float *distanc
     return computeInitialConsign(X_mm, Y_mm, theta_rad, distanceConsig, angleConsign, angle_regulator, distance_regulator);
 }
 
-bool Goto::isGoalReached(float X_mm, float Y_mm, float theta_rad, const Regulator &angle_regulator, const Regulator &distance_regulator)
+bool Goto::isGoalReached(float X_mm, float Y_mm, float , const Regulator &, const Regulator &)
 {
     float deltaX = m_consignX_mm - X_mm;
     float deltaY = m_consignY_mm - Y_mm;

@@ -15,7 +15,7 @@
  */
 #include "Odometry.h"
 #include "AsservMain.h"
-#include "commandManager2/CommandManager.h"
+#include "commandManager/CommandManager.h"
 #include "motorController/Md22.h"
 #include "util/asservMath.h"
 extern BaseSequentialStream *outputStream;

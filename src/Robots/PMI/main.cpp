@@ -11,7 +11,7 @@
 #include "util/asservMath.h"
 #include "util/chibiOsAllocatorWrapper.h"
 #include "AsservMain.h"
-#include "commandManager2/CommandManager.h"
+#include "commandManager/CommandManager.h"
 #include "SpeedController/SpeedController.h"
 #include "SpeedController/AdaptativeSpeedController.h"
 #include "Encoders/QuadratureEncoder.h"
@@ -418,7 +418,7 @@ void asservCommandUSB(BaseSequentialStream *chp, int argc, char **argv)
         chprintf(outputStream, "Adding goto(%.2f,%.2f) consign\r\n", X, Y);
 
         mainAsserv->resetToNormalMode();
-        commandManager->addGoToAngle(X, Y);
+        commandManager->addGoTo(X, Y);
     }
     else if (!strcmp(argv[0], "gototest"))
     {
