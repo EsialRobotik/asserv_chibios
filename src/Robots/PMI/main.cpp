@@ -11,7 +11,7 @@
 #include "util/asservMath.h"
 #include "util/chibiOsAllocatorWrapper.h"
 #include "AsservMain.h"
-#include "commandManager/CommandManager.h"
+#include "commandManager2/CommandManager.h"
 #include "SpeedController/SpeedController.h"
 #include "SpeedController/AdaptativeSpeedController.h"
 #include "Encoders/QuadratureEncoder.h"
@@ -50,14 +50,7 @@ float speed_controller_left_Kp[NB_PI_SUBSET] = { 0.1, 0.1, 0.1};
 float speed_controller_left_Ki[NB_PI_SUBSET] = { 1.0, 0.8, 0.6};
 float speed_controller_left_SpeedRange[NB_PI_SUBSET] = { 20, 50, 60};
 
-//float speed_controller_right_Kp = 0.1;
-//float speed_controller_right_Ki = 0.6;
-//
-//float speed_controller_left_Kp = 0.1;
-//float speed_controller_left_Ki = 0.6;
-
-
-#define PLL_BANDWIDTH (250)
+#define PLL_BANDWIDTH (150)
 
 
 #define COMMAND_MANAGER_ARRIVAL_ANGLE_THRESHOLD_RAD (1)
@@ -67,6 +60,8 @@ float speed_controller_left_SpeedRange[NB_PI_SUBSET] = { 20, 50, 60};
 #define COMMAND_MANAGER_GOTONOSTOP_FULLSPEED_CONSIGN_DIST_mm (MAX_SPEED_MM_PER_SEC/DIST_REGULATOR_KP)
 #define COMMAND_MANAGER_GOTONOSTOP_MIN_DIST_NEXT_CONSIGN_mm (200)
 #define COMMAND_MANAGER_GOTONOSTOP_NEXT_FULLSPEED_CONSIGN_ANGLE_mm (M_PI/8)
+
+Goto::GotoConfiguration preciseGotoConf  = {COMMAND_MANAGER_GOTO_RETURN_THRESHOLD_mm, COMMAND_MANAGER_GOTO_ANGLE_THRESHOLD_RAD, COMMAND_MANAGER_ARRIVAL_DISTANCE_THRESHOLD_mm, COMMAND_MANAGER_ARRIVAL_ANGLE_THRESHOLD_RAD};
 
 
 
@@ -91,18 +86,23 @@ Pll leftPll(PLL_BANDWIDTH);
 SimpleAccelerationLimiter angleAccelerationlimiter(ANGLE_REGULATOR_MAX_ACC);
 AdvancedAccelerationLimiter distanceAccelerationLimiter(DIST_REGULATOR_MAX_ACC, DIST_REGULATOR_MIN_ACC, DIST_REGULATOR_HIGH_SPEED_THRESHOLD);
 
-CommandManager commandManager( COMMAND_MANAGER_ARRIVAL_ANGLE_THRESHOLD_RAD, COMMAND_MANAGER_ARRIVAL_DISTANCE_THRESHOLD_mm,
-                               COMMAND_MANAGER_GOTO_ANGLE_THRESHOLD_RAD, COMMAND_MANAGER_GOTO_RETURN_THRESHOLD_mm,
-                               COMMAND_MANAGER_GOTONOSTOP_FULLSPEED_CONSIGN_DIST_mm, COMMAND_MANAGER_GOTONOSTOP_MIN_DIST_NEXT_CONSIGN_mm, COMMAND_MANAGER_GOTONOSTOP_NEXT_FULLSPEED_CONSIGN_ANGLE_mm,
-                               angleRegulator, distanceRegulator);
+//CommandManager commandManager( COMMAND_MANAGER_ARRIVAL_DISTANCE_THRESHOLD_mm, COMMAND_MANAGER_ARRIVAL_ANGLE_THRESHOLD_RAD,
+//                               preciseGotoConf, preciseGotoConf,
+//                               angleRegulator, distanceRegulator);
+//
+//AsservMain mainAsserv( ASSERV_THREAD_FREQUENCY, ASSERV_POSITION_DIVISOR,
+//                       ENCODERS_WHEELS_RADIUS_MM, ENCODERS_WHEELS_DISTANCE_MM, ENCODERS_TICKS_BY_TURN,
+//                       commandManager, md22MotorController, encoders, odometry,
+//                       angleRegulator, distanceRegulator,
+//                       angleAccelerationlimiter, distanceAccelerationLimiter,
+//                       speedControllerRight, speedControllerLeft,
+//                       rightPll, leftPll);
 
-AsservMain mainAsserv( ASSERV_THREAD_FREQUENCY, ASSERV_POSITION_DIVISOR,
-                       ENCODERS_WHEELS_RADIUS_MM, ENCODERS_WHEELS_DISTANCE_MM, ENCODERS_TICKS_BY_TURN,
-                       commandManager, md22MotorController, encoders, odometry,
-                       angleRegulator, distanceRegulator,
-                       angleAccelerationlimiter, distanceAccelerationLimiter,
-                       speedControllerRight, speedControllerLeft,
-                       rightPll, leftPll);
+
+CommandManager *commandManager;
+
+AsservMain *mainAsserv;
+
 
 
 /*
@@ -125,7 +125,7 @@ static THD_FUNCTION(AsservThread, arg)
 
     chBSemSignal(&asservStarted_semaphore);
 
-    mainAsserv.mainLoop();
+    mainAsserv->mainLoop();
 }
 
 
@@ -147,6 +147,20 @@ int main(void)
 {
     halInit();
     chSysInit();
+
+
+    commandManager = new CommandManager( COMMAND_MANAGER_ARRIVAL_DISTANCE_THRESHOLD_mm, COMMAND_MANAGER_ARRIVAL_ANGLE_THRESHOLD_RAD,
+                                   preciseGotoConf, preciseGotoConf,
+                                   angleRegulator, distanceRegulator);
+
+    mainAsserv = new AsservMain( ASSERV_THREAD_FREQUENCY, ASSERV_POSITION_DIVISOR,
+                           ENCODERS_WHEELS_RADIUS_MM, ENCODERS_WHEELS_DISTANCE_MM, ENCODERS_TICKS_BY_TURN,
+                           *commandManager, md22MotorController, encoders, odometry,
+                           angleRegulator, distanceRegulator,
+                           angleAccelerationlimiter, distanceAccelerationLimiter,
+                           speedControllerRight, speedControllerLeft,
+                           rightPll, leftPll);
+
 
     sdStart(&SD2, NULL);
     shellInit();
@@ -263,9 +277,9 @@ void asservCommandUSB(BaseSequentialStream *chp, int argc, char **argv)
             speedRight = 0;
         }
 
-        mainAsserv.setWheelsSpeed(speedRight, speedLeft);
+        mainAsserv->setWheelsSpeed(speedRight, speedLeft);
         chThdSleepMilliseconds(time);
-        mainAsserv.setWheelsSpeed(0, 0);
+        mainAsserv->setWheelsSpeed(0, 0);
     }
     else if (!strcmp(argv[0], "robotfwspeedstep"))
     {
@@ -273,9 +287,9 @@ void asservCommandUSB(BaseSequentialStream *chp, int argc, char **argv)
         int time = atoi(argv[2]);
         chprintf(outputStream, "setting fw robot speed %.2f rad/s for %d ms\r\n", speedGoal, time);
 
-        mainAsserv.setRegulatorsSpeed(speedGoal, 0);
+        mainAsserv->setRegulatorsSpeed(speedGoal, 0);
         chThdSleepMilliseconds(time);
-        mainAsserv.setRegulatorsSpeed(0, 0);
+        mainAsserv->setRegulatorsSpeed(0, 0);
     }
     else if (!strcmp(argv[0], "robotangspeedstep"))
     {
@@ -283,9 +297,9 @@ void asservCommandUSB(BaseSequentialStream *chp, int argc, char **argv)
         int time = atoi(argv[2]);
         chprintf(outputStream, "setting angle robot speed %.2f rad/s for %d ms\r\n", speedGoal, time);
 
-        mainAsserv.setRegulatorsSpeed(0, speedGoal);
+        mainAsserv->setRegulatorsSpeed(0, speedGoal);
         chThdSleepMilliseconds(time);
-        mainAsserv.setRegulatorsSpeed(0, 0);
+        mainAsserv->setRegulatorsSpeed(0, 0);
     }
     else if (!strcmp(argv[0], "speedcontrol"))
     {
@@ -324,8 +338,8 @@ void asservCommandUSB(BaseSequentialStream *chp, int argc, char **argv)
         float angle = atof(argv[1]);
         chprintf(outputStream, "Adding angle %.2frad \r\n", angle);
 
-        mainAsserv.resetToNormalMode();
-        commandManager.addTurn(angle);
+        mainAsserv->resetToNormalMode();
+        commandManager->addTurn(angle);
     }
     else if (!strcmp(argv[0], "anglereset"))
     {
@@ -340,10 +354,11 @@ void asservCommandUSB(BaseSequentialStream *chp, int argc, char **argv)
     else if (!strcmp(argv[0], "adddist"))
     {
         float dist = atof(argv[1]);
-        chprintf(outputStream, "Adding distance %.2fmm \r\n", dist);
 
-        mainAsserv.resetToNormalMode();
-        commandManager.addStraightLine(dist);
+        mainAsserv->resetToNormalMode();
+        bool ok = commandManager->addStraightLine(dist);
+        chprintf(outputStream, "Adding distance %.2fmm %d\r\n", dist, ok );
+
     }
     else if (!strcmp(argv[0], "anglecontrol"))
     {
@@ -363,7 +378,7 @@ void asservCommandUSB(BaseSequentialStream *chp, int argc, char **argv)
     {
         bool enable = !(atoi(argv[1]) == 0);
         chprintf(outputStream, "%s motor output\r\n", (enable ? "enabling" : "disabling"));
-        mainAsserv.enableMotors(enable);
+        mainAsserv->enableMotors(enable);
     }
     else if (!strcmp(argv[0], "coders"))
     {
@@ -373,7 +388,7 @@ void asservCommandUSB(BaseSequentialStream *chp, int argc, char **argv)
     }
     else if (!strcmp(argv[0], "reset"))
     {
-        mainAsserv.reset();
+        mainAsserv->reset();
         chprintf(outputStream, "asserv resetted \r\n");
     }
     else if (!strcmp(argv[0], "motorspeed"))
@@ -393,7 +408,7 @@ void asservCommandUSB(BaseSequentialStream *chp, int argc, char **argv)
         bool enable = !(atoi(argv[1]) == 0);
         chprintf(outputStream, "%s polar control\r\n", (enable ? "enabling" : "disabling"));
 
-        mainAsserv.enablePolar(enable);
+        mainAsserv->enablePolar(enable);
 
     }
     else if (!strcmp(argv[0], "addgoto"))
@@ -402,21 +417,21 @@ void asservCommandUSB(BaseSequentialStream *chp, int argc, char **argv)
         float Y = atof(argv[2]);
         chprintf(outputStream, "Adding goto(%.2f,%.2f) consign\r\n", X, Y);
 
-        mainAsserv.resetToNormalMode();
-        commandManager.addGoTo(X, Y);
+        mainAsserv->resetToNormalMode();
+        commandManager->addGoToAngle(X, Y);
     }
     else if (!strcmp(argv[0], "gototest"))
     {
-        mainAsserv.resetToNormalMode();
-        commandManager.addGoToNoStop(500, 0);
-        commandManager.addGoToNoStop(900, 0);
-        commandManager.addGoToNoStop(1100, 0);
-        commandManager.addGoToNoStop(1100, 200);
-        commandManager.addGoToNoStop(1100, 400);
-        commandManager.addGoToNoStop(900, 400);
-        commandManager.addGoToNoStop(500, 400);
-        commandManager.addGoToNoStop(100, 200);
-        commandManager.addGoToAngle(500, 200);
+        mainAsserv->resetToNormalMode();
+        commandManager->addGoToNoStop(500, 0);
+        commandManager->addGoToNoStop(900, 0);
+        commandManager->addGoToNoStop(1100, 0);
+        commandManager->addGoToNoStop(1100, 200);
+        commandManager->addGoToNoStop(1100, 400);
+        commandManager->addGoToNoStop(900, 400);
+        commandManager->addGoToNoStop(500, 400);
+        commandManager->addGoToNoStop(100, 200);
+        commandManager->addGoToAngle(500, 200);
 
 
     }

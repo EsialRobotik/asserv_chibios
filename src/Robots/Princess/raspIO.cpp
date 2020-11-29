@@ -15,14 +15,14 @@
  */
 #include "Odometry.h"
 #include "AsservMain.h"
-#include "commandManager/CommandManager.h"
+#include "commandManager2/CommandManager.h"
 #include "motorController/Md22.h"
 #include "util/asservMath.h"
 extern BaseSequentialStream *outputStream;
 extern Odometry odometry;
-extern AsservMain mainAsserv;
+extern AsservMain *mainAsserv;
 extern Md22 md22MotorController;
-extern CommandManager commandManager;
+extern CommandManager *commandManager;
 
 
 static void serialReadLine(char *buffer, unsigned int buffer_size)
@@ -90,95 +90,95 @@ THD_FUNCTION(asservCommandSerial, p)
         switch (readChar) {
 
         case 'h': //Arrêt d'urgence
-            mainAsserv.setEmergencyStop();
+            mainAsserv->setEmergencyStop();
             serialReadLine(buffer, sizeof(buffer));
             chprintf(outputStream, "Arrêt d'urgence ! \r\n");
             break;
 
         case 'r': //Reset de l'arrêt d'urgence
-            mainAsserv.resetEmergencyStop();
+            mainAsserv->resetEmergencyStop();
             serialReadLine(buffer, sizeof(buffer));
             break;
 
         case 'z':
             // Go 20cm
             chprintf(outputStream, "consigne avant : 200mm\n");
-            commandManager.addStraightLine(200);
+            commandManager->addStraightLine(200);
             break;
 
         case 's':
             chprintf(outputStream, "consigne arrière : 200mm\n");
-            commandManager.addStraightLine(-200);
+            commandManager->addStraightLine(-200);
             break;
 
         case 'q':
             chprintf(outputStream, "consigne gauche : 45°\n");
-            commandManager.addTurn(degToRad(45));
+            commandManager->addTurn(degToRad(45));
             break;
 
         case 'd':
             chprintf(outputStream, "consigne gauche : 45°\n");
-             commandManager.addTurn(degToRad(-45));
+             commandManager->addTurn(degToRad(-45));
              break;
 
         case 'v': //aVance d'un certain nombre de mm
             serialReadLine(buffer, sizeof(buffer));
             sscanf(buffer, "%f", &consigneValue1);
-            commandManager.addStraightLine(consigneValue1);
+            commandManager->addStraightLine(consigneValue1);
             break;
 
         case 't': //Tourne d'un certain angle en degrés
             serialReadLine(buffer, sizeof(buffer));
             sscanf(buffer, "%f", &consigneValue1);
-            commandManager.addTurn(degToRad(consigneValue1));
+            commandManager->addTurn(degToRad(consigneValue1));
             break;
 
         case 'f': //faire Face à un point précis, mais ne pas y aller, juste se tourner
             serialReadLine(buffer, sizeof(buffer));
             sscanf(buffer, "%f#%f", &consigneValue1, &consigneValue2);
-            commandManager.addGoToAngle(consigneValue1, consigneValue2);
+            commandManager->addGoToAngle(consigneValue1, consigneValue2);
             break;
 
         case 'g': //Go : va à un point précis
             serialReadLine(buffer, sizeof(buffer));
             sscanf(buffer, "%f#%f", &consigneValue1, &consigneValue2);
-            commandManager.addGoTo(consigneValue1, consigneValue2);
+            commandManager->addGoTo(consigneValue1, consigneValue2);
             break;
 
         case 'b': //Go : va à un point précis
             serialReadLine(buffer, sizeof(buffer));
             sscanf(buffer, "%f#%f", &consigneValue1, &consigneValue2);
-            commandManager.addGoToBack(consigneValue1, consigneValue2);
+            commandManager->addGoToBack(consigneValue1, consigneValue2);
             break;
 
         case 'e': // goto, mais on s'autorise à Enchainer la consigne suivante sans s'arrêter
             serialReadLine(buffer, sizeof(buffer));
             sscanf(buffer, "%f#%f", &consigneValue1, &consigneValue2);
-            commandManager.addGoToNoStop(consigneValue1, consigneValue2);
+            commandManager->addGoToNoStop(consigneValue1, consigneValue2);
             break;
 
         case 'p': //retourne la Position et l'angle courants du robot
             chprintf(outputStream, "x%fy%fa%fs%d\r\n",
                     odometry.getX(), odometry.getY(), odometry.getTheta(),
-                    commandManager.getCommandStatus());
+                    commandManager->getCommandStatus());
             break;
 
         case 'P': // set la position et l'angle du robot
             serialReadLine(buffer, sizeof(buffer));
             sscanf(buffer, "%f#%f#%f", &consigneValue1, &consigneValue2, &consigneValue3);
-            mainAsserv.setPosition(consigneValue1, consigneValue2, consigneValue3);
+            mainAsserv->setPosition(consigneValue1, consigneValue2, consigneValue3);
             break;
 
         case 'M': // M0 = coupe les moteurs / M1 = remet les moteurs
             serialReadLine(buffer, sizeof(buffer));
             sscanf(buffer, "%f", &consigneValue1);
-            mainAsserv.enableMotors(consigneValue1 == 1);
+            mainAsserv->enableMotors(consigneValue1 == 1);
             break;
 
         case 'S': // Vitesse maximum en %
             serialReadLine(buffer, sizeof(buffer));
             sscanf(buffer, "%f", &consigneValue1);
-            mainAsserv.limitMotorControllerConsignToPercentage(consigneValue1);
+            mainAsserv->limitMotorControllerConsignToPercentage(consigneValue1);
             break;
 
 
@@ -199,7 +199,7 @@ THD_FUNCTION(asservPositionSerial, p)
     {
         chprintf(outputStream, "#%d;%d;%f;%d;%d;%d;%d\r\n",
             (int32_t)odometry.getX(), (int32_t)odometry.getY(), odometry.getTheta(),
-            commandManager.getCommandStatus(), commandManager.getPendingCommandCount(),
+            commandManager->getCommandStatus(), commandManager->getPendingCommandCount(),
             md22MotorController.getLeftSpeed(), md22MotorController.getRightSpeed());
 
         chThdSleepUntil(time);

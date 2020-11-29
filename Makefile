@@ -159,8 +159,12 @@ CPPSRC = $(ALLCPPSRC) \
        $(SRCDIR)/Pll.cpp \
        $(SRCDIR)/Regulator.cpp \
        $(SRCDIR)/Odometry.cpp \
-       $(SRCDIR)/commandManager/CommandManager.cpp \
-       $(SRCDIR)/commandManager/CMDList/CMDList.cpp \
+       $(SRCDIR)/commandManager2/CommandManager.cpp \
+       $(SRCDIR)/commandManager2/CommandList.cpp \
+       $(SRCDIR)/commandManager2/Commands/StraitLine.cpp \
+       $(SRCDIR)/commandManager2/Commands/Turn.cpp \
+       $(SRCDIR)/commandManager2/Commands/Goto.cpp \
+       $(SRCDIR)/commandManager2/Commands/GotoAngle.cpp \
        $(SRCDIR)/util/chibiOsAllocatorWrapper.cpp  \
        $(SRCDIR)/AccelerationLimiter/AbstractAccelerationLimiter.cpp \
        $(SRCDIR)/AccelerationLimiter/SimpleAccelerationLimiter.cpp \

@@ -1,7 +1,9 @@
 #ifndef COMMAND_MANAGER
 #define COMMAND_MANAGER
 
-#include "CMDList/CMDList.h"
+#include "CommandList.h"
+#include "Commands/StraitLine.h"
+#include "Commands/Goto.h"
 #include "Regulator.h"
 
 enum CommandStatus {
@@ -11,12 +13,13 @@ enum CommandStatus {
     STATUS_BLOCKED  = 3,
 };
 
+class Command;
+
 class CommandManager
 {
     public:
-        explicit CommandManager(float arrivalAngleThreshold_rad, float arrivalDistanceThreshold_mm,
-                float gotoAngleThreshold_rad, float gotoReturnThreshold_mm,
-                float gotoNoStopFullSpeedConsignDist_mm, float gotoNoStopMinDistNextConsign_mm, float gotoNoStopNextFullSpeedConsignAngle_rad,
+        explicit CommandManager(float straitLineArrivalWindows_mm, float turnArrivalWindows_rad,
+                Goto::GotoConfiguration preciseGotoConfiguration, Goto::GotoConfiguration waypointGotoConfiguration,
                 const Regulator &angle_regulator, const Regulator &distance_regulator);
         ~CommandManager() {};
 
@@ -58,7 +61,7 @@ class CommandManager
          * Permet au haut niveau de savoir où en est la commande actuelle
          */
         CommandStatus getCommandStatus();
-        int getPendingCommandCount();
+        uint8_t getPendingCommandCount();
 
         inline void reset()
         {
@@ -67,41 +70,27 @@ class CommandManager
         }
 
     private:
-        CMDList liste; //File d'attente des commandes
-        cmd_t currCMD; //commande courante
-        cmd_t nextCMD; //commande suivante
 
-        CommandStatus m_commandStatus;
+        void switchToNextCommand();
+        void tryToRetrieveNextCommand();
+
+        CommandList m_cmdList;
+        Command *m_currentCmd;
+        Command *m_currentCmdBuffer;
+        Command *m_nextCmd;
+
+        float m_straitLineArrivalWindows_mm;
+        float m_turnArrivalWindows_rad;
+        Goto::GotoConfiguration m_preciseGotoConfiguration;
+        Goto::GotoConfiguration m_waypointGotoConfiguration;
 
         const Regulator &m_angle_regulator;
         const Regulator &m_distance_regulator;
 
         bool m_emergencyStop;
 
-        float m_arrivalAngleThreshold_rad;
-        float m_arrivalDistanceThreshold_mm;
-
-        float m_gotoAngleThreshold_rad;
-        float m_gotoReturnThreshold_mm;
-
-        float m_gotoNoStopFullSpeedConsignDist_mm;
-        float m_gotoNoStopMinDistNextConsign_mm;
-        float m_gotoNoStopNextFullSpeedConsignAngle_rad;
-
         float m_angleRegulatorConsign;
         float m_distRegulatorConsign;
-
-        bool isGoalReach();
-        bool isGoalReach(float X_mm, float Y_mm, float theta_rad);
-
-        bool isBlocked();
-
-        float computeDeltaTheta(float deltaX, float deltaY, float theta_rad); // Calcul de l'angle à parcourir
-        float computeDeltaDist(float deltaX, float deltaY); // Calcul de la distance à parcourir
-        void computeGoTo(float X_mm, float Y_mm, float theta_rad);
-        void computeGoToBack(float X_mm, float Y_mm, float theta_rad);
-        void computeGoToAngle(float deltaX, float deltaY, float theta_rad);
-        void computeGotoNoStop(float X_mm, float Y_mm, float theta_rad);
 };
 
 #endif

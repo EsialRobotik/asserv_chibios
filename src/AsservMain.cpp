@@ -1,7 +1,7 @@
 #include "AsservMain.h"
 #include "ch.h"
 #include "hal.h"
-#include "commandManager/CommandManager.h"
+#include "commandManager2/CommandManager.h"
 #include "USBStream.h"
 #include "Odometry.h"
 #include "SpeedController/SpeedController.h"
