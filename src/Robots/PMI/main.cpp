@@ -53,7 +53,7 @@ float speed_controller_left_SpeedRange[NB_PI_SUBSET] = { 20, 50, 60};
 #define PLL_BANDWIDTH (150)
 
 
-#define COMMAND_MANAGER_ARRIVAL_ANGLE_THRESHOLD_RAD (1)
+#define COMMAND_MANAGER_ARRIVAL_ANGLE_THRESHOLD_RAD (M_PI/8)
 #define COMMAND_MANAGER_ARRIVAL_DISTANCE_THRESHOLD_mm (30)
 #define COMMAND_MANAGER_GOTO_ANGLE_THRESHOLD_RAD (M_PI/8)
 #define COMMAND_MANAGER_GOTO_RETURN_THRESHOLD_mm (20)
@@ -62,6 +62,7 @@ float speed_controller_left_SpeedRange[NB_PI_SUBSET] = { 20, 50, 60};
 #define COMMAND_MANAGER_GOTONOSTOP_NEXT_FULLSPEED_CONSIGN_ANGLE_mm (M_PI/8)
 
 Goto::GotoConfiguration preciseGotoConf  = {COMMAND_MANAGER_GOTO_RETURN_THRESHOLD_mm, COMMAND_MANAGER_GOTO_ANGLE_THRESHOLD_RAD, COMMAND_MANAGER_ARRIVAL_DISTANCE_THRESHOLD_mm, COMMAND_MANAGER_ARRIVAL_ANGLE_THRESHOLD_RAD};
+Goto::GotoConfiguration waypointGotoConf  = {COMMAND_MANAGER_GOTO_RETURN_THRESHOLD_mm, COMMAND_MANAGER_GOTO_ANGLE_THRESHOLD_RAD, COMMAND_MANAGER_ARRIVAL_DISTANCE_THRESHOLD_mm, COMMAND_MANAGER_ARRIVAL_ANGLE_THRESHOLD_RAD};
 
 
 
@@ -85,18 +86,6 @@ Pll leftPll(PLL_BANDWIDTH);
 
 SimpleAccelerationLimiter angleAccelerationlimiter(ANGLE_REGULATOR_MAX_ACC);
 AdvancedAccelerationLimiter distanceAccelerationLimiter(DIST_REGULATOR_MAX_ACC, DIST_REGULATOR_MIN_ACC, DIST_REGULATOR_HIGH_SPEED_THRESHOLD);
-
-//CommandManager commandManager( COMMAND_MANAGER_ARRIVAL_DISTANCE_THRESHOLD_mm, COMMAND_MANAGER_ARRIVAL_ANGLE_THRESHOLD_RAD,
-//                               preciseGotoConf, preciseGotoConf,
-//                               angleRegulator, distanceRegulator);
-//
-//AsservMain mainAsserv( ASSERV_THREAD_FREQUENCY, ASSERV_POSITION_DIVISOR,
-//                       ENCODERS_WHEELS_RADIUS_MM, ENCODERS_WHEELS_DISTANCE_MM, ENCODERS_TICKS_BY_TURN,
-//                       commandManager, md22MotorController, encoders, odometry,
-//                       angleRegulator, distanceRegulator,
-//                       angleAccelerationlimiter, distanceAccelerationLimiter,
-//                       speedControllerRight, speedControllerLeft,
-//                       rightPll, leftPll);
 
 
 CommandManager *commandManager;
@@ -150,7 +139,7 @@ int main(void)
 
 
     commandManager = new CommandManager( COMMAND_MANAGER_ARRIVAL_DISTANCE_THRESHOLD_mm, COMMAND_MANAGER_ARRIVAL_ANGLE_THRESHOLD_RAD,
-                                   preciseGotoConf, preciseGotoConf,
+                                   preciseGotoConf, waypointGotoConf,
                                    angleRegulator, distanceRegulator);
 
     mainAsserv = new AsservMain( ASSERV_THREAD_FREQUENCY, ASSERV_POSITION_DIVISOR,
