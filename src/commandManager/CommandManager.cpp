@@ -26,8 +26,6 @@ CommandManager::CommandManager(float straitLineArrivalWindows_mm, float turnArri
 {
     m_emergencyStop = false;
     m_currentCmd = nullptr;
-    m_currentCmdBuffer = (Command*) malloc( COMMAND_MAX_SIZE );
-    m_nextCmd = nullptr;
     m_angleRegulatorConsign = 0;
     m_distRegulatorConsign = 0;
 }
@@ -102,7 +100,6 @@ void CommandManager::setEmergencyStop()
 
     m_cmdList.flush();
     m_currentCmd = nullptr;
-    m_nextCmd = nullptr;
 
     m_emergencyStop = true;
 }
@@ -116,7 +113,7 @@ CommandStatus CommandManager::getCommandStatus()
 {
     if( m_emergencyStop )
         return STATUS_HALTED;
-    else if (m_nextCmd == nullptr)
+    else if (m_currentCmd == nullptr)
         return STATUS_IDLE;
     else
         return STATUS_RUNNING;
@@ -130,53 +127,29 @@ uint8_t CommandManager::getPendingCommandCount()
 
 void CommandManager::switchToNextCommand()
 {
-    if (m_nextCmd != nullptr)
-    {
-       // The next command was already retrieved, use it as current command and pop it.
-       m_nextCmd->cloneIn(m_currentCmdBuffer);
-       m_currentCmd = m_currentCmdBuffer;
+    if (m_currentCmd != nullptr)
        m_cmdList.pop();
-    }
-    else
-    {
-       // No next command retrieved, copy the head element (if any) of the list to the local buffer
-       m_currentCmd = m_cmdList.getFull();
-       if( m_currentCmd != nullptr)
-       {
-           m_currentCmd->cloneIn(m_currentCmdBuffer);
-           m_currentCmd = m_currentCmdBuffer;
-           m_cmdList.pop();
-       }
-    }
+
+    m_currentCmd = m_cmdList.getFirst();
+
 }
 
-void CommandManager::tryToRetrieveNextCommand()
-{
-    if( m_currentCmd == nullptr)
-        return;
-
-    if (m_nextCmd == nullptr)
-        m_nextCmd = m_cmdList.getFull();
-}
 void CommandManager::update(float X_mm, float Y_mm, float theta_rad)
 {
     if (m_emergencyStop)
     {
         m_cmdList.flush();
         m_currentCmd = nullptr;
-        m_nextCmd = nullptr;
         return;
     }
 
     if (m_currentCmd != nullptr && !m_currentCmd->isGoalReached(X_mm, Y_mm, theta_rad, m_angle_regulator, m_distance_regulator))
     {
-        tryToRetrieveNextCommand();
         m_currentCmd->updateConsign(X_mm, Y_mm, theta_rad, &m_distRegulatorConsign, &m_angleRegulatorConsign, m_angle_regulator, m_distance_regulator);
     }
     else
     {
         switchToNextCommand();
-        tryToRetrieveNextCommand();
         if( m_currentCmd != nullptr )
             m_currentCmd->computeInitialConsign(X_mm, Y_mm, theta_rad, &m_distRegulatorConsign, &m_angleRegulatorConsign, m_angle_regulator, m_distance_regulator);
     }

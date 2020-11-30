@@ -423,16 +423,20 @@ void asservCommandUSB(BaseSequentialStream *chp, int argc, char **argv)
     else if (!strcmp(argv[0], "gototest"))
     {
         mainAsserv->resetToNormalMode();
-        commandManager->addGoToNoStop(500, 0);
-        commandManager->addGoToNoStop(900, 0);
-        commandManager->addGoToNoStop(1100, 0);
-        commandManager->addGoToNoStop(1100, 200);
-        commandManager->addGoToNoStop(1100, 400);
-        commandManager->addGoToNoStop(900, 400);
-        commandManager->addGoToNoStop(500, 400);
-        commandManager->addGoToNoStop(100, 200);
-        commandManager->addGoToAngle(500, 200);
+//        commandManager->addGoToNoStop(500, 0);
+//        commandManager->addGoToNoStop(900, 0);
+//        commandManager->addGoToNoStop(1100, 0);
+//        commandManager->addGoToNoStop(1100, 200);
+//        commandManager->addGoToNoStop(1100, 400);
+//        commandManager->addGoToNoStop(900, 400);
+//        commandManager->addGoToNoStop(500, 400);
+//        commandManager->addGoToNoStop(100, 200);
+//        commandManager->addGoToAngle(500, 200);
 
+        commandManager->addGoTo(800, 0);
+        commandManager->addGoTo(800, -250);
+        commandManager->addGoTo(50, -250);
+        commandManager->addGoTo(50, 0);
 
     }
     else if (!strcmp(argv[0], "get_config"))

@@ -72,12 +72,9 @@ class CommandManager
     private:
 
         void switchToNextCommand();
-        void tryToRetrieveNextCommand();
 
         CommandList m_cmdList;
         Command *m_currentCmd;
-        Command *m_currentCmdBuffer;
-        Command *m_nextCmd;
 
         float m_straitLineArrivalWindows_mm;
         float m_turnArrivalWindows_rad;

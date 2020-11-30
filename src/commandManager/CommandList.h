@@ -15,7 +15,7 @@ public:
     Command* getFree();
     bool push();
 
-    Command* getFull();
+    Command* getFirst();
     void pop();
     
     uint8_t size();

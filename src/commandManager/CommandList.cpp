@@ -59,7 +59,7 @@ void CommandList::flush()
     full = false;
 }
 
-Command* CommandList::getFull()
+Command* CommandList::getFirst()
 {
     if (!full && nextFreePos == headPos) 
         return nullptr; // List is empty
