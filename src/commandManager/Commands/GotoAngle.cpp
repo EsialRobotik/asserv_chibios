@@ -12,18 +12,6 @@ GotoAngle::GotoAngle(float consignX_mm, float consignY_mm,
 {
 }
 
-GotoAngle::GotoAngle( GotoAngle const &line)
-{
-    m_consignX_mm = line.m_consignX_mm;
-    m_consignY_mm = line.m_consignY_mm;
-    m_arrivalAngleThreshold_rad = line.m_arrivalAngleThreshold_rad;
-}
-
-GotoAngle* GotoAngle::cloneIn(Command *ptr) const
-{
-    return new(ptr) GotoAngle(*this);
-}
-
 void GotoAngle::computeInitialConsign(float X_mm, float Y_mm, float theta_rad, float *, float *angleConsign, const Regulator &angle_regulator, const Regulator &)
 {
    float deltaX = m_consignX_mm - X_mm;

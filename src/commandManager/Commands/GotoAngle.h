@@ -9,10 +9,7 @@ class GotoAngle : public Command
         explicit GotoAngle(float consignX_mm, float consignY_mm,
                 float arrivalAngleThreshold_rad);
 
-        GotoAngle( GotoAngle const &command);
         virtual ~GotoAngle() {};
-
-        virtual GotoAngle* cloneIn(Command* ptr) const;
 
         virtual void computeInitialConsign(float X_mm, float Y_mm, float theta_rad, float *distanceConsig, float *angleConsign, const Regulator &angle_regulator, const Regulator &distance_regulator);
         virtual void updateConsign(float X_mm, float Y_mm, float theta_rad, float *distanceConsig, float *angleConsign, const Regulator &angle_regulator, const Regulator &distance_regulator);

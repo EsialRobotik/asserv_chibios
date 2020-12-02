@@ -6,7 +6,6 @@ class Command
 {
 public:
     virtual ~Command() {}
-    virtual Command* cloneIn(Command* ptr) const = 0;
 
     virtual void computeInitialConsign(float X_mm, float Y_mm, float theta_rad, float *distanceConsig, float *angleConsign, const Regulator &angle_regulator, const Regulator &distance_regulator) = 0;
     virtual void updateConsign(float X_mm, float Y_mm, float theta_rad, float *distanceConsig, float *angleConsign, const Regulator &angle_regulator, const Regulator &distance_regulator) = 0;

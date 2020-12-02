@@ -17,6 +17,7 @@ public:
 
     Command* getFirst();
     void pop();
+    Command const * getSecond();
     
     uint8_t size();
     void flush();

@@ -48,8 +48,10 @@ uint8_t CommandList::size()
 {
     if (full) 
         return nbElement;
-
-    return nextFreePos - headPos;
+    else if(headPos <= nextFreePos )
+        return nextFreePos - headPos;
+    else
+        return nextFreePos + nbElement - headPos;
 }
 
 void CommandList::flush()
@@ -79,4 +81,12 @@ void CommandList::pop()
         full = false;
 
     headPos = (headPos + 1) % nbElement;
+}
+
+Command const* CommandList::getSecond()
+{
+    if( size() < 2 )
+        return nullptr;
+
+    return commandList[(headPos + 1) % nbElement];
 }

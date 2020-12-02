@@ -1,9 +1,7 @@
-#ifndef Goto_H_
-#define Goto_H_
+#ifndef GOTO_H_
+#define GOTO_H_
 
 #include "Command.h"
-
-
 
 class Goto : public Command
 {
@@ -14,17 +12,13 @@ class Goto : public Command
             float gotoReturnThreshold_mm;
             float gotoAngleThreshold_rad;
             float arrivalDistanceThreshold_mm;
-            float arrivalAngleThreshold_rad;
         };
 
         explicit Goto(float consignX_mm, float consignY_mm,
                 GotoConfiguration const *configuration,
                 float backwardMode = false);
 
-        Goto( Goto const &command);
         virtual ~Goto() {};
-
-        virtual Goto* cloneIn(Command* ptr) const;
 
         virtual void computeInitialConsign(float X_mm, float Y_mm, float theta_rad, float *distanceConsig, float *angleConsign, const Regulator &angle_regulator, const Regulator &distance_regulator);
         virtual void updateConsign(float X_mm, float Y_mm, float theta_rad, float *distanceConsig, float *angleConsign, const Regulator &angle_regulator, const Regulator &distance_regulator);
@@ -43,4 +37,4 @@ class Goto : public Command
         float m_backModeCorrection;
 };
 
-#endif /* Goto_H_ */
+#endif /* GOTO_H_ */

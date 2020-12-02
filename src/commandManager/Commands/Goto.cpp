@@ -17,19 +17,6 @@ Goto::Goto(float consignX_mm, float consignY_mm,
         m_backModeCorrection = 1;
 }
 
-Goto::Goto( Goto const &line)
-{
-    m_consignX_mm = line.m_consignX_mm;
-    m_consignY_mm = line.m_consignY_mm;
-    m_configuration = line.m_configuration;
-    m_backModeCorrection = line.m_backModeCorrection;
-}
-
-Goto* Goto::cloneIn(Command *ptr) const
-{
-    return new(ptr) Goto(*this);
-}
-
 void Goto::computeInitialConsign(float X_mm, float Y_mm, float theta_rad, float *distanceConsig, float *angleConsign, const Regulator &angle_regulator, const Regulator &distance_regulator)
 {
    float deltaX = m_consignX_mm - X_mm;
@@ -41,12 +28,11 @@ void Goto::computeInitialConsign(float X_mm, float Y_mm, float theta_rad, float 
    // La différence entre le thetaCible (= cap à atteindre) et le theta (= cap actuel du robot) donne l'angle à parcourir
    float deltaTheta = computeDeltaTheta(m_backModeCorrection*deltaX, m_backModeCorrection*deltaY, theta_rad);
 
-   float projectedDist = deltaDist * cosf(deltaTheta);
-
    //TODO JGU: Fix pour ne pas se retourner après avoir dépassé un point sur un overshoot!
    //    mais y'a un bug, si le point est proche mais sur le coté, on va juste avancer !!!!
    if (deltaDist < m_configuration->gotoReturnThreshold_mm)
    {
+       float projectedDist = deltaDist * cosf(deltaTheta);
        *distanceConsig = distance_regulator.getAccumulator() + m_backModeCorrection*projectedDist ;
    }
    else
@@ -76,7 +62,7 @@ bool Goto::isGoalReached(float X_mm, float Y_mm, float , const Regulator &, cons
 
 bool Goto::noStop()
 {
-    return false;
+    return true;
 }
 
 float Goto::computeDeltaDist(float deltaX, float deltaY)

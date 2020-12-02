@@ -8,17 +8,6 @@ Turn::Turn(float consign_rad, float arrivalAngleThreshold_rad)
 {
 }
 
-Turn::Turn( Turn const &line)
-{
-    m_angleConsign = line.m_angleConsign;
-    m_arrivalAngleThreshold_rad = line.m_arrivalAngleThreshold_rad;
-}
-
-Turn* Turn::cloneIn(Command *ptr) const
-{
-    return new(ptr) Turn(*this);
-}
-
 void Turn::computeInitialConsign(float , float , float , float *, float *angleConsign, const Regulator &, const Regulator &)
 {
     *angleConsign += m_angleConsign;

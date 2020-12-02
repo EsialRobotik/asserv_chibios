@@ -8,17 +8,6 @@ StraitLine::StraitLine(float consign, float arrivalDistanceThreshold_mm)
 {
 }
 
-StraitLine::StraitLine( StraitLine const &line)
-{
-    m_straitLineConsign = line.m_straitLineConsign;
-    m_arrivalDistanceThreshold_mm = line.m_arrivalDistanceThreshold_mm;
-}
-
-Command* StraitLine::cloneIn(Command *ptr) const
-{
-    return new(ptr) StraitLine(*this);
-}
-
 void StraitLine::computeInitialConsign(float , float , float , float *distanceConsig, float *, const Regulator &, const Regulator &)
 {
     *distanceConsig += m_straitLineConsign;

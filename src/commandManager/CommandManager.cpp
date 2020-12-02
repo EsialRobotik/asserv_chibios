@@ -131,8 +131,8 @@ void CommandManager::switchToNextCommand()
        m_cmdList.pop();
 
     m_currentCmd = m_cmdList.getFirst();
-
 }
+
 
 void CommandManager::update(float X_mm, float Y_mm, float theta_rad)
 {
