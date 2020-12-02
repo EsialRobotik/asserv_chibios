@@ -84,7 +84,8 @@ bool GotoNoStop::isGoalReached(float X_mm, float Y_mm, float , const Regulator &
     float deltaX = m_consignX_mm - X_mm;
     float deltaY = m_consignY_mm - Y_mm;
 
-    float deltaDist =  Goto::computeDeltaDist(deltaX, deltaY);
+    float deltaDist = Goto::computeDeltaDist(deltaX, deltaY);
+
     if( nextCommand != nullptr && nextCommand->noStop())
     {
         return deltaDist < m_configuration->lowSpeedDistanceConsign_mm;
@@ -107,11 +108,11 @@ void GotoNoStop::computeConsignOnCircle(float X_mm, float Y_mm, float radius_mm,
     if ((m_consignX_mm - X_mm) != 0) // with an angle of M_PI/2 an divide by zero will occur. So handle this special case.
     {
         // Find a linear function that go from the current position to goal ...
-        float slope = (m_consignY_mm - Y_mm) / (radius_mm - X_mm); // offset of the function is useless
+        float slope = (m_consignY_mm - Y_mm) / (m_consignX_mm - X_mm); // offset of the function is useless
 
         // ... then find the angle between the previous linear function and a linear function y=0x+X_mm (parallel to the x abscissa)
         // see https://fr.wikipedia.org/wiki/Propri%C3%A9t%C3%A9s_m%C3%A9triques_des_droites_et_des_plans#Angles_de_deux_droites
-        angle = atan(abs(slope));
+        angle = atanf(abs(slope));
     }
 
     // Correct the angle if we are in the left side of the trigonometric circle

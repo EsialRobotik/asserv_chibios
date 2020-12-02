@@ -426,8 +426,8 @@ void asservCommandUSB(BaseSequentialStream *chp, int argc, char **argv)
 
         commandManager->addGoToNoStop(800, 0);
         commandManager->addGoToNoStop(800, -250);
-//        commandManager->addGoToNoStop(50, -250);
-//        commandManager->addGoToNoStop(50, 0);
+        commandManager->addGoToNoStop(50, -250);
+        commandManager->addGoToNoStop(50, 0);
 
 
     }

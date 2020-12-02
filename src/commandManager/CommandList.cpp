@@ -33,7 +33,8 @@ bool CommandList::push()
     if (full) 
     {
         return false;
-    } else 
+    }
+    else
     {
         nextFreePos = (nextFreePos + 1) % nbElement;
 
