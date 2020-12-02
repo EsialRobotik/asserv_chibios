@@ -17,12 +17,12 @@ void StraitLine::updateConsign(float , float , float , float *, float *, const R
 {
 }
 
-bool StraitLine::isGoalReached(float , float , float , const Regulator &, const Regulator &distance_regulator)
+bool StraitLine::isGoalReached(float , float , float , const Regulator &, const Regulator &distance_regulator, const Command* )
 {
     return fabs(distance_regulator.getError()) <= m_arrivalDistanceThreshold_mm;
 }
 
-bool StraitLine::noStop()
+bool StraitLine::noStop() const
 {
     return false;
 }

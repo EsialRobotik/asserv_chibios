@@ -4,6 +4,7 @@
 #include "CommandList.h"
 #include "Commands/StraitLine.h"
 #include "Commands/Goto.h"
+#include "Commands/GotoNoStop.h"
 #include "Regulator.h"
 
 enum CommandStatus {
@@ -19,7 +20,7 @@ class CommandManager
 {
     public:
         explicit CommandManager(float straitLineArrivalWindows_mm, float turnArrivalWindows_rad,
-                Goto::GotoConfiguration preciseGotoConfiguration, Goto::GotoConfiguration waypointGotoConfiguration,
+                Goto::GotoConfiguration &preciseGotoConfiguration, Goto::GotoConfiguration &waypointGotoConfiguration, GotoNoStop::GotoNoStopConfiguration &gotoNoStopConfiguration,
                 const Regulator &angle_regulator, const Regulator &distance_regulator);
         ~CommandManager() {};
 
@@ -80,6 +81,7 @@ class CommandManager
         float m_turnArrivalWindows_rad;
         Goto::GotoConfiguration m_preciseGotoConfiguration;
         Goto::GotoConfiguration m_waypointGotoConfiguration;
+        GotoNoStop::GotoNoStopConfiguration m_gotoNoStopConfiguration;
 
         const Regulator &m_angle_regulator;
         const Regulator &m_distance_regulator;

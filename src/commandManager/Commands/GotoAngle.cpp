@@ -29,7 +29,7 @@ void GotoAngle::updateConsign(float X_mm, float Y_mm, float theta_rad, float *di
 }
 
 
-bool GotoAngle::isGoalReached(float X_mm, float Y_mm, float theta_rad, const Regulator &, const Regulator &)
+bool GotoAngle::isGoalReached(float X_mm, float Y_mm, float theta_rad, const Regulator &, const Regulator &, const Command* )
 {
     float deltaX = m_consignX_mm - X_mm;
     float deltaY = m_consignY_mm - Y_mm;
@@ -37,7 +37,7 @@ bool GotoAngle::isGoalReached(float X_mm, float Y_mm, float theta_rad, const Reg
     return fabs(Goto::computeDeltaTheta(deltaX, deltaY, theta_rad)) < m_arrivalAngleThreshold_rad;
 }
 
-bool GotoAngle::noStop()
+bool GotoAngle::noStop() const
 {
     return false;
 }

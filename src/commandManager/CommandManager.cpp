@@ -14,14 +14,14 @@
 
 
 #define MAX(a,b) (((a)>(b))?(a):(b))
-#define COMMAND_MAX_SIZE MAX( MAX( MAX(sizeof(StraitLine), sizeof(Turn)), sizeof(Goto)), sizeof(GotoAngle) )
+#define COMMAND_MAX_SIZE MAX( MAX( MAX( MAX(sizeof(StraitLine), sizeof(Turn)), sizeof(Goto)), sizeof(GotoAngle) ), sizeof(GotoNoStop) )
 
 CommandManager::CommandManager(float straitLineArrivalWindows_mm, float turnArrivalWindows_rad,
-        Goto::GotoConfiguration preciseGotoConfiguration, Goto::GotoConfiguration waypointGotoConfiguration,
+        Goto::GotoConfiguration &preciseGotoConfiguration, Goto::GotoConfiguration &waypointGotoConfiguration, GotoNoStop::GotoNoStopConfiguration &gotoNoStopConfiguration,
         const Regulator &angle_regulator, const Regulator &distance_regulator):
 		m_cmdList(32,COMMAND_MAX_SIZE),
 		m_straitLineArrivalWindows_mm(straitLineArrivalWindows_mm), m_turnArrivalWindows_rad(turnArrivalWindows_rad),
-		m_preciseGotoConfiguration(preciseGotoConfiguration), m_waypointGotoConfiguration(waypointGotoConfiguration),
+		m_preciseGotoConfiguration(preciseGotoConfiguration), m_waypointGotoConfiguration(waypointGotoConfiguration), m_gotoNoStopConfiguration(gotoNoStopConfiguration),
 		m_angle_regulator(angle_regulator), m_distance_regulator(distance_regulator)
 {
     m_emergencyStop = false;
@@ -77,8 +77,14 @@ bool CommandManager::addGoToBack(float posXInmm, float posYInmm)
     return true;
 }
 
-bool CommandManager::addGoToNoStop(float , float )
+bool CommandManager::addGoToNoStop(float posXInmm, float posYInmm)
 {
+    Command *ptr = m_cmdList.getFree();
+    if(ptr == nullptr)
+        return false;
+
+    new (ptr) GotoNoStop(posXInmm, posYInmm, &m_gotoNoStopConfiguration, &m_preciseGotoConfiguration);
+    m_cmdList.push();
     return true;
 }
 
@@ -143,7 +149,7 @@ void CommandManager::update(float X_mm, float Y_mm, float theta_rad)
         return;
     }
 
-    if (m_currentCmd != nullptr && !m_currentCmd->isGoalReached(X_mm, Y_mm, theta_rad, m_angle_regulator, m_distance_regulator))
+    if (m_currentCmd != nullptr && !m_currentCmd->isGoalReached(X_mm, Y_mm, theta_rad, m_angle_regulator, m_distance_regulator, m_cmdList.getSecond()))
     {
         m_currentCmd->updateConsign(X_mm, Y_mm, theta_rad, &m_distRegulatorConsign, &m_angleRegulatorConsign, m_angle_regulator, m_distance_regulator);
     }

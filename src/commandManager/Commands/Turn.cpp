@@ -17,12 +17,12 @@ void Turn::updateConsign(float , float , float , float *, float *, const Regulat
 {
 }
 
-bool Turn::isGoalReached(float , float , float , const Regulator &angle_regulator, const Regulator &)
+bool Turn::isGoalReached(float , float , float , const Regulator &angle_regulator, const Regulator &, const Command* )
 {
     return fabs(angle_regulator.getError()) <= m_arrivalAngleThreshold_rad;
 }
 
-bool Turn::noStop()
+bool Turn::noStop() const
 {
     return false;
 }

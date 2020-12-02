@@ -1,43 +1,40 @@
-#ifndef Goto_H_
-#define Goto_H_
+#ifndef GOTONOSTOP_H_
+#define GOTONOSTOP_H_
 
 #include "Command.h"
-
-
+#include "Goto.h"
 
 class GotoNoStop : public Command
 {
     public:
 
-        struct GotoConfiguration
+        struct GotoNoStopConfiguration
         {
-            float gotoReturnThreshold_mm;
             float gotoAngleThreshold_rad;
-            float arrivalDistanceThreshold_mm;
-            float arrivalAngleThreshold_rad;
+            float lowSpeedDistanceConsign_mm;
         };
 
+
         explicit GotoNoStop(float consignX_mm, float consignY_mm,
-                GotoConfiguration const *configuration);
+                GotoNoStopConfiguration const *noStopConfiguration,
+                Goto::GotoConfiguration const *gotoconfiguration);
 
-        GotoNoStop( GotoNoStop const &command);
         virtual ~GotoNoStop() {};
-
-        virtual GotoNoStop* cloneIn(Command* ptr) const;
 
         virtual void computeInitialConsign(float X_mm, float Y_mm, float theta_rad, float *distanceConsig, float *angleConsign, const Regulator &angle_regulator, const Regulator &distance_regulator);
         virtual void updateConsign(float X_mm, float Y_mm, float theta_rad, float *distanceConsig, float *angleConsign, const Regulator &angle_regulator, const Regulator &distance_regulator);
-        virtual bool isGoalReached(float X_mm, float Y_mm, float theta_rad, const Regulator &angle_regulator, const Regulator &distance_regulator);
+        virtual bool isGoalReached(float X_mm, float Y_mm, float theta_rad, const Regulator &angle_regulator, const Regulator &distance_regulator, const Command* nextCommand);
 
-        virtual bool noStop();
-
-        static float computeDeltaDist(float deltaX, float deltaY);
-        static float computeDeltaTheta(float deltaX, float deltaY, float theta_rad);
+        virtual bool noStop() const;
     private:
+
+        void computeConsignOnCircle(float X_mm, float Y_mm, float dist_mm, float *XGoal_mm, float *YGoal_mm);
+
         float m_consignX_mm;
         float m_consignY_mm;
 
-        GotoConfiguration const *m_configuration;
+        GotoNoStopConfiguration const *m_configuration;
+        Goto::GotoConfiguration const *m_gotoConfiguration;
 };
 
 #endif /* Goto_H_ */

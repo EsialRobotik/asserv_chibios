@@ -54,15 +54,17 @@ float speed_controller_left_SpeedRange[NB_PI_SUBSET] = { 20, 50, 60};
 
 
 #define COMMAND_MANAGER_ARRIVAL_ANGLE_THRESHOLD_RAD (M_PI/8)
-#define COMMAND_MANAGER_ARRIVAL_DISTANCE_THRESHOLD_mm (30)
-#define COMMAND_MANAGER_GOTO_ANGLE_THRESHOLD_RAD (M_PI/8)
-#define COMMAND_MANAGER_GOTO_RETURN_THRESHOLD_mm (20)
-#define COMMAND_MANAGER_GOTONOSTOP_FULLSPEED_CONSIGN_DIST_mm (MAX_SPEED_MM_PER_SEC/DIST_REGULATOR_KP)
-#define COMMAND_MANAGER_GOTONOSTOP_MIN_DIST_NEXT_CONSIGN_mm (200)
-#define COMMAND_MANAGER_GOTONOSTOP_NEXT_FULLSPEED_CONSIGN_ANGLE_mm (M_PI/8)
+#define COMMAND_MANAGER_ARRIVAL_DISTANCE_THRESHOLD_mm (5)
 
-Goto::GotoConfiguration preciseGotoConf  = {COMMAND_MANAGER_GOTO_RETURN_THRESHOLD_mm, COMMAND_MANAGER_GOTO_ANGLE_THRESHOLD_RAD, COMMAND_MANAGER_ARRIVAL_DISTANCE_THRESHOLD_mm};
-Goto::GotoConfiguration waypointGotoConf  = {COMMAND_MANAGER_GOTO_RETURN_THRESHOLD_mm, COMMAND_MANAGER_GOTO_ANGLE_THRESHOLD_RAD, COMMAND_MANAGER_ARRIVAL_DISTANCE_THRESHOLD_mm};
+#define COMMAND_MANAGER_GOTO_RETURN_THRESHOLD_mm (20)
+#define COMMAND_MANAGER_GOTO_ANGLE_THRESHOLD_RAD (M_PI/8)
+#define COMMAND_MANAGER_GOTO_PRECISE_ARRIVAL_DISTANCE_mm (3)
+Goto::GotoConfiguration preciseGotoConf  = {COMMAND_MANAGER_GOTO_RETURN_THRESHOLD_mm, COMMAND_MANAGER_GOTO_ANGLE_THRESHOLD_RAD, COMMAND_MANAGER_GOTO_PRECISE_ARRIVAL_DISTANCE_mm};
+
+#define COMMAND_MANAGER_GOTO_WAYPOINT_ARRIVAL_DISTANCE_mm (10)
+Goto::GotoConfiguration waypointGotoConf  = {COMMAND_MANAGER_GOTO_RETURN_THRESHOLD_mm, COMMAND_MANAGER_GOTO_ANGLE_THRESHOLD_RAD, COMMAND_MANAGER_GOTO_WAYPOINT_ARRIVAL_DISTANCE_mm};
+
+GotoNoStop::GotoNoStopConfiguration gotoNoStopConf = {COMMAND_MANAGER_GOTO_ANGLE_THRESHOLD_RAD, (200/DIST_REGULATOR_KP)};
 
 
 
@@ -139,7 +141,7 @@ int main(void)
 
 
     commandManager = new CommandManager( COMMAND_MANAGER_ARRIVAL_DISTANCE_THRESHOLD_mm, COMMAND_MANAGER_ARRIVAL_ANGLE_THRESHOLD_RAD,
-                                   preciseGotoConf, waypointGotoConf,
+                                   preciseGotoConf, waypointGotoConf, gotoNoStopConf,
                                    angleRegulator, distanceRegulator);
 
     mainAsserv = new AsservMain( ASSERV_THREAD_FREQUENCY, ASSERV_POSITION_DIVISOR,
@@ -422,10 +424,11 @@ void asservCommandUSB(BaseSequentialStream *chp, int argc, char **argv)
 //        commandManager->addGoToNoStop(100, 200);
 //        commandManager->addGoToAngle(500, 200);
 
-        commandManager->addGoTo(800, 0);
-        commandManager->addGoTo(800, -250);
-        commandManager->addGoTo(50, -250);
-        commandManager->addGoTo(50, 0);
+        commandManager->addGoToNoStop(800, 0);
+        commandManager->addGoToNoStop(800, -250);
+//        commandManager->addGoToNoStop(50, -250);
+//        commandManager->addGoToNoStop(50, 0);
+
 
     }
     else if (!strcmp(argv[0], "get_config"))
