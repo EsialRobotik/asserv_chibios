@@ -34,6 +34,8 @@ QuadratureEncoder::QuadratureEncoder(bool is1EncoderRight, bool invertEncoderR, 
     m_encoder1Previous = 0;
     m_encoder2Previous = 0;
     m_is1EncoderRight = is1EncoderRight;
+    m_encoderLGain = 1;
+    m_encoderRGain = 1;
 }
 
 QuadratureEncoder::~QuadratureEncoder()
@@ -65,33 +67,36 @@ void QuadratureEncoder::stop()
     qeiDisable (&QEID2);
 }
 
-void QuadratureEncoder::getValues(int16_t *deltaEncoderRight, int16_t *deltaEncoderLeft)
+void QuadratureEncoder::getValues(float *deltaEncoderRight, float *deltaEncoderLeft)
 {
     int16_t encoder2 = qeiGetCount(&QEID2);
     int16_t encoder1 = qeiGetCount(&QEID3);
 
-    if (m_is1EncoderRight) {
-        *deltaEncoderRight = encoder1 - m_encoder1Previous;
-        *deltaEncoderLeft = encoder2 - m_encoder2Previous;
-    } else {
-        *deltaEncoderRight = encoder2 - m_encoder2Previous;
-        *deltaEncoderLeft = encoder1 - m_encoder1Previous;
+    int16_t deltaRight;
+    int16_t deltaLeft;
+
+    if (m_is1EncoderRight)
+    {
+        deltaRight = encoder1 - m_encoder1Previous;
+        deltaLeft = encoder2 - m_encoder2Previous;
+    }
+    else
+    {
+        deltaRight = encoder2 - m_encoder2Previous;
+        deltaLeft = encoder1 - m_encoder1Previous;
     }
 
     if (m_invertEncoderR)
-        *deltaEncoderRight = -*deltaEncoderRight;
+        deltaRight = -deltaRight;
     if (m_invertEncoderL)
-        *deltaEncoderLeft = -*deltaEncoderLeft;
+        deltaLeft = -deltaLeft;
 
-    m_encoderRSum += *deltaEncoderRight;
-    m_encoderLSum += *deltaEncoderLeft;
+    m_encoderRSum += deltaRight;
+    m_encoderLSum += deltaLeft;
+
+    *deltaEncoderRight = float(deltaRight) * m_encoderRGain;
+    *deltaEncoderLeft = float(deltaLeft) * m_encoderLGain;
 
     m_encoder1Previous = encoder1;
     m_encoder2Previous = encoder2;
-}
-
-void QuadratureEncoder::getEncodersTotalCount(int32_t *encoderRight, int32_t *encoderLeft)
-{
-    *encoderRight = m_encoderRSum;
-    *encoderLeft = m_encoderLSum;
 }

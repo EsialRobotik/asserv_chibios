@@ -78,13 +78,13 @@ void MagEncoders::stop()
     start();
 }
 
-void MagEncoders::getValues(int16_t *deltaEncoderRight, int16_t *deltaEncoderLeft)
+void MagEncoders::getValues(float *deltaEncoderRight, float *deltaEncoderLeft)
 {
     //chprintf(outputStream,"MagEncoders::getValues() done; %d %d\r\n", m_encoder1Previous, m_encoder2Previous);
     //utilisation du depassement d'un int16
     //[0;16383] -8192 * 4 = [-32768;32764]
-    int16_t encoder1 = (int16_t) ((m_mysensor1.angleR(U_RAW, true) - 8192.0) * 4.0);
-    int16_t encoder2 = (int16_t) ((m_mysensor2.angleR(U_RAW, true) - 8192.0) * 4.0);
+    float encoder1 = (m_mysensor1.angleR(U_RAW, true) - 8192.0) * 4.0;
+    float encoder2 = (m_mysensor2.angleR(U_RAW, true) - 8192.0) * 4.0;
 
     if (m_is1EncoderRight) {
         *deltaEncoderRight = encoder1 - m_encoder1Previous;

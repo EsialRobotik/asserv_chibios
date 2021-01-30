@@ -10,7 +10,7 @@ public:
     {
     }
 
-    virtual void getValues(int16_t *deltaEncoderRight, int16_t *deltaEncoderLeft) = 0;
+    virtual void getValues(float *deltaEncoderRight, float *deltaEncoderLeft) = 0;
 };
 
 #endif /* SRC_ENCODER_H_ */

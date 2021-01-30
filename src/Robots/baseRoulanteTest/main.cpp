@@ -341,15 +341,15 @@ void asservCommandUSB(BaseSequentialStream *chp, int argc, char **argv)
 //		commandManager.addGoTo(150,0);
 
 		mainAsserv.resetToNormalMode();
-		commandManager.addGoToEnchainement(365,-270);
-		commandManager.addGoToEnchainement(550,-385);
-		commandManager.addGoToEnchainement(490,-590);
-		commandManager.addGoToEnchainement(295,-720);
-		commandManager.addGoToEnchainement(180,-1000);
-		commandManager.addGoToEnchainement(390,-1100);
-		commandManager.addGoToEnchainement(550,-900);
-		commandManager.addGoToEnchainement(395,-630);
-		commandManager.addGoToEnchainement(300,-440);
+		commandManager.addGoToNoStop(365,-270);
+		commandManager.addGoToNoStop(550,-385);
+		commandManager.addGoToNoStop(490,-590);
+		commandManager.addGoToNoStop(295,-720);
+		commandManager.addGoToNoStop(180,-1000);
+		commandManager.addGoToNoStop(390,-1100);
+		commandManager.addGoToNoStop(550,-900);
+		commandManager.addGoToNoStop(395,-630);
+		commandManager.addGoToNoStop(300,-440);
 		commandManager.addGoTo(300,-250);
 		commandManager.addGoToAngle(1000,-250);
 		commandManager.addStraightLine(-200);

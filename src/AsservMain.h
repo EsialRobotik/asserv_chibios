@@ -2,25 +2,26 @@
 #define ASSERVMAIN_H_
 
 #include "motorController/MotorController.h"
-#include "SpeedController.h"
-#include "Regulator.h"
 #include <cstdint>
 
 class CommandManager;
 class Encoders;
 class Odometry;
-class SlopeFilter;
 class Pll;
+class AccelerationLimiter;
+class SpeedController;
+class Regulator;
 
 class AsservMain
 {
 public:
     explicit AsservMain(uint16_t loopFrequency, uint16_t speedPositionLoopDivisor, float wheelRadius_mm,
-            float encoderWheelsDistance_mm, float encodersTicksByTurn, CommandManager &commandManager,
-            MotorController &motorController, Encoders &encoders, Odometry &odometrie, Regulator &angleRegulator,
-            Regulator &distanceRegulator, SlopeFilter &angleRegulatorSlopeFilter,
-            SlopeFilter &distanceRegulatorSlopeFilter, SpeedController &speedControllerRight,
-            SpeedController &speedControllerLeft, Pll &rightPll, Pll &leftPll);
+            float encoderWheelsDistance_mm, uint32_t encodersTicksByTurn, CommandManager &commandManager,
+            MotorController &motorController, Encoders &encoders, Odometry &odometrie,
+            Regulator &angleRegulator, Regulator &distanceRegulator,
+            AccelerationLimiter &angleRegulatorAccelerationLimiter, AccelerationLimiter &distanceRegulatorAccelerationLimiter,
+            SpeedController &speedControllerRight, SpeedController &speedControllerLeft,
+            Pll &rightPll, Pll &leftPll);
 
     virtual ~AsservMain()
     {
@@ -49,6 +50,16 @@ public:
 
     void reset();
 
+    void setEmergencyStop();
+    void resetEmergencyStop();
+
+    void enableAngleRegulator();
+    void disableAngleRegulator();
+    void enableDistanceRegulator();
+    void disableDistanceRegulator();
+
+    void setPosition(float X_mm, float Y_mm, float theta_rad);
+    void limitMotorControllerConsignToPercentage(float percentage);
 private:
 
     float convertSpeedTommSec(float speed_ticksPerSec);
@@ -67,8 +78,8 @@ private:
     SpeedController &m_speedControllerLeft;
     Regulator &m_angleRegulator;
     Regulator &m_distanceRegulator;
-    SlopeFilter &m_angleRegulatorSlopeFilter;
-    SlopeFilter &m_distanceRegulatorSlopeFilter;
+    AccelerationLimiter &m_angleRegulatorAccelerationLimiter;
+    AccelerationLimiter &m_distanceRegulatorAccelerationLimiter;
     CommandManager &m_commandManager;
     Pll &m_pllRight;
     Pll &m_pllLeft;

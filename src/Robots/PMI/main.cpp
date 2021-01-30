@@ -5,83 +5,123 @@
 #include <cstdlib>
 #include <cstring>
 #include <cstdio>
+#include <cfloat>
 
+#include "raspIO.h"
 #include "util/asservMath.h"
 #include "util/chibiOsAllocatorWrapper.h"
 #include "AsservMain.h"
 #include "commandManager/CommandManager.h"
+#include "SpeedController/SpeedController.h"
+#include "SpeedController/AdaptativeSpeedController.h"
 #include "Encoders/QuadratureEncoder.h"
 #include "motorController/Md22.h"
 #include "Odometry.h"
 #include "USBStream.h"
-#include "SlopeFilter.h"
+#include "AccelerationLimiter/SimpleAccelerationLimiter.h"
+#include "AccelerationLimiter/AdvancedAccelerationLimiter.h"
 #include "Pll.h"
 
 
-#define ASSERV_THREAD_FREQUENCY (500)
+#define ASSERV_THREAD_FREQUENCY (300)
 #define ASSERV_THREAD_PERIOD_S (1.0/ASSERV_THREAD_FREQUENCY)
 #define ASSERV_POSITION_DIVISOR (5)
 
-#define ENCODERS_WHEELS_RADIUS_MM (47.2/2.0)
-#define ENCODERS_WHEELS_DISTANCE_MM (297)
-#define ENCODERS_TICKS_BY_TURN (1024*4)
+#define ENCODERS_WHEELS_RADIUS_MM (31.80/2.0)
+#define ENCODERS_WHEELS_DISTANCE_MM (264)
+#define ENCODERS_TICKS_BY_TURN (1440*4)
+
+#define MAX_SPEED_MM_PER_SEC (1500)
+
+#define DIST_REGULATOR_KP (3)
+#define DIST_REGULATOR_MAX_ACC (1200)
+#define DIST_REGULATOR_MIN_ACC (500)
+#define DIST_REGULATOR_HIGH_SPEED_THRESHOLD (500)
+
+#define ANGLE_REGULATOR_KP (700)
+#define ANGLE_REGULATOR_MAX_ACC (1500)
+
+float speed_controller_right_Kp[NB_PI_SUBSET] = { 0.1, 0.1, 0.1};
+float speed_controller_right_Ki[NB_PI_SUBSET] = { 1.0, 0.8, 0.6};
+float speed_controller_right_SpeedRange[NB_PI_SUBSET] = { 20, 50, 60};
+
+float speed_controller_left_Kp[NB_PI_SUBSET] = { 0.1, 0.1, 0.1};
+float speed_controller_left_Ki[NB_PI_SUBSET] = { 1.0, 0.8, 0.6};
+float speed_controller_left_SpeedRange[NB_PI_SUBSET] = { 20, 50, 60};
+
+#define PLL_BANDWIDTH (150)
 
 
-#define MAX_SPEED_MM_PER_SEC (500)
+#define COMMAND_MANAGER_ARRIVAL_ANGLE_THRESHOLD_RAD (M_PI/8)
+#define COMMAND_MANAGER_ARRIVAL_DISTANCE_THRESHOLD_mm (5)
 
-#define DIST_REGULATOR_KP (9)
-#define DIST_REGULATOR_MAX_DELTA (8/ASSERV_THREAD_PERIOD_S)
-#define ANGLE_REGULATOR_KP (1400)
-#define ANGLE_REGULATOR_MAX_DELTA (8/ASSERV_THREAD_PERIOD_S)
-
-float speed_controller_right_Kp[NB_PI_SUBSET] = {0.25, 0.25, 0.25};
-float speed_controller_right_Ki[NB_PI_SUBSET] = {0.45, 0.45, 0.45};
-float speed_controller_right_speed_set[NB_PI_SUBSET] = {500.0, 500.0, 500.0};
-
-float speed_controller_left_Kp[NB_PI_SUBSET] = {0.25, 0.25, 0.25};
-float speed_controller_left_Ki[NB_PI_SUBSET] = {0.45, 0.45, 0.45};
-float speed_controller_left_speed_set[NB_PI_SUBSET] = {500.0, 500.0, 500.0};
-
-#define PLL_BANDWIDTH (250)
-
-
-#define COMMAND_MANAGER_ARRIVAL_ANGLE_THRESHOLD_RAD (0.1)
-#define COMMAND_MANAGER_ARRIVAL_DISTANCE_THRESHOLD_mm (1)
+#define COMMAND_MANAGER_GOTO_RETURN_THRESHOLD_mm (20)
 #define COMMAND_MANAGER_GOTO_ANGLE_THRESHOLD_RAD (M_PI/8)
-#define COMMAND_MANAGER_GOTO_CHAIN_NEXT_CMD_DIST_mm (50)
+#define COMMAND_MANAGER_GOTO_PRECISE_ARRIVAL_DISTANCE_mm (3)
+Goto::GotoConfiguration preciseGotoConf  = {COMMAND_MANAGER_GOTO_RETURN_THRESHOLD_mm, COMMAND_MANAGER_GOTO_ANGLE_THRESHOLD_RAD, COMMAND_MANAGER_GOTO_PRECISE_ARRIVAL_DISTANCE_mm};
 
+#define COMMAND_MANAGER_GOTO_WAYPOINT_ARRIVAL_DISTANCE_mm (20)
+Goto::GotoConfiguration waypointGotoConf  = {COMMAND_MANAGER_GOTO_RETURN_THRESHOLD_mm, COMMAND_MANAGER_GOTO_ANGLE_THRESHOLD_RAD, COMMAND_MANAGER_GOTO_WAYPOINT_ARRIVAL_DISTANCE_mm};
 
+GotoNoStop::GotoNoStopConfiguration gotoNoStopConf = {COMMAND_MANAGER_GOTO_ANGLE_THRESHOLD_RAD, (100/DIST_REGULATOR_KP)};
 
-
-QuadratureEncoder encoders(true, true, true);
 Md22::I2cPinInit ESIALCardPinConf_SCL_SDA = {GPIOB, 6, GPIOB, 7};
-Md22 md22MotorController(true,true,false, &ESIALCardPinConf_SCL_SDA, 100000);
 
-Regulator angleRegulator(ANGLE_REGULATOR_KP, MAX_SPEED_MM_PER_SEC);
-Regulator distanceRegulator(DIST_REGULATOR_KP, MAX_SPEED_MM_PER_SEC);
 
-Odometry odometry(ENCODERS_WHEELS_DISTANCE_MM, 0, 0);
+QuadratureEncoder *encoders;
+Md22 *md22MotorController;
 
-SpeedController speedControllerRight(speed_controller_right_Kp, speed_controller_right_Ki, speed_controller_right_speed_set, 100, MAX_SPEED_MM_PER_SEC, ASSERV_THREAD_FREQUENCY);
-SpeedController speedControllerLeft(speed_controller_left_Kp, speed_controller_left_Ki, speed_controller_left_speed_set, 100, MAX_SPEED_MM_PER_SEC, ASSERV_THREAD_FREQUENCY);
+Regulator *angleRegulator;
+Regulator *distanceRegulator;
 
-Pll rightPll(PLL_BANDWIDTH);
-Pll leftPll(PLL_BANDWIDTH);
+Odometry *odometry;
 
-SlopeFilter angleSlopeFilter(ANGLE_REGULATOR_MAX_DELTA);
-SlopeFilter distSlopeFilter(DIST_REGULATOR_MAX_DELTA);
+AdaptativeSpeedController *speedControllerRight;
+AdaptativeSpeedController *speedControllerLeft;
 
-CommandManager commandManager(COMMAND_MANAGER_ARRIVAL_ANGLE_THRESHOLD_RAD, COMMAND_MANAGER_ARRIVAL_DISTANCE_THRESHOLD_mm,
-		COMMAND_MANAGER_GOTO_ANGLE_THRESHOLD_RAD, COMMAND_MANAGER_GOTO_CHAIN_NEXT_CMD_DIST_mm,
-		angleRegulator, distanceRegulator);
+Pll *rightPll;
+Pll *leftPll;
 
-AsservMain mainAsserv(ASSERV_THREAD_FREQUENCY, ASSERV_POSITION_DIVISOR,
-		ENCODERS_WHEELS_RADIUS_MM, ENCODERS_WHEELS_DISTANCE_MM, ENCODERS_TICKS_BY_TURN,
-		commandManager, md22MotorController, encoders, odometry,
-		angleRegulator, distanceRegulator,
-		angleSlopeFilter, distSlopeFilter,
-		speedControllerRight, speedControllerLeft,
-		rightPll, leftPll);
+SimpleAccelerationLimiter *angleAccelerationlimiter;
+AdvancedAccelerationLimiter *distanceAccelerationLimiter;
+
+CommandManager *commandManager;
+AsservMain *mainAsserv;
+
+
+static void initAsserv()
+{
+    encoders = new QuadratureEncoder(true, true, true);
+    md22MotorController = new Md22(true, true, true, &ESIALCardPinConf_SCL_SDA, 100000);
+
+    angleRegulator = new Regulator(ANGLE_REGULATOR_KP, MAX_SPEED_MM_PER_SEC);
+    distanceRegulator = new Regulator(DIST_REGULATOR_KP, MAX_SPEED_MM_PER_SEC);
+
+    rightPll = new Pll (PLL_BANDWIDTH);
+    leftPll = new Pll(PLL_BANDWIDTH);
+
+    odometry = new Odometry (ENCODERS_WHEELS_DISTANCE_MM, 0, 0);
+
+    speedControllerRight = new AdaptativeSpeedController(speed_controller_right_Kp, speed_controller_right_Ki, speed_controller_right_SpeedRange, 100, MAX_SPEED_MM_PER_SEC, ASSERV_THREAD_FREQUENCY);
+    speedControllerLeft = new AdaptativeSpeedController(speed_controller_left_Kp, speed_controller_left_Ki, speed_controller_left_SpeedRange, 100, MAX_SPEED_MM_PER_SEC, ASSERV_THREAD_FREQUENCY);
+
+
+    angleAccelerationlimiter = new SimpleAccelerationLimiter(ANGLE_REGULATOR_MAX_ACC);
+    distanceAccelerationLimiter = new AdvancedAccelerationLimiter(DIST_REGULATOR_MAX_ACC, DIST_REGULATOR_MIN_ACC, DIST_REGULATOR_HIGH_SPEED_THRESHOLD);
+
+    commandManager = new CommandManager( COMMAND_MANAGER_ARRIVAL_DISTANCE_THRESHOLD_mm, COMMAND_MANAGER_ARRIVAL_ANGLE_THRESHOLD_RAD,
+                                   preciseGotoConf, waypointGotoConf, gotoNoStopConf,
+                                   *angleRegulator, *distanceRegulator);
+
+    mainAsserv = new AsservMain( ASSERV_THREAD_FREQUENCY, ASSERV_POSITION_DIVISOR,
+                           ENCODERS_WHEELS_RADIUS_MM, ENCODERS_WHEELS_DISTANCE_MM, ENCODERS_TICKS_BY_TURN,
+                           *commandManager, *md22MotorController, *encoders, *odometry,
+                           *angleRegulator, *distanceRegulator,
+                           *angleAccelerationlimiter, *distanceAccelerationLimiter,
+                           *speedControllerRight, *speedControllerLeft,
+                           *rightPll, *leftPll);
+}
+
 
 
 /*
@@ -97,26 +137,25 @@ static THD_FUNCTION(AsservThread, arg)
     (void) arg;
     chRegSetThreadName("AsservThread");
 
-    md22MotorController.init();
-    encoders.init();
-    encoders.start();
+    md22MotorController->init();
+    encoders->init();
+    encoders->start();
     USBStream::init();
 
     chBSemSignal(&asservStarted_semaphore);
 
-    mainAsserv.mainLoop();
+    mainAsserv->mainLoop();
 }
 
 
-THD_WORKING_AREA(wa_shell, 1024);
+THD_WORKING_AREA(wa_shell, 2048);
 THD_WORKING_AREA(wa_controlPanel, 256);
 THD_FUNCTION(ControlPanelThread, p);
-THD_FUNCTION(asservCommandSerial, p);
-THD_FUNCTION(asservPositionSerial, p);
 
 char history_buffer[SHELL_MAX_HIST_BUFF];
 char *completion_buffer[SHELL_MAX_COMPLETIONS];
 
+float config_buffer[30];
 void asservCommandUSB(BaseSequentialStream *chp, int argc, char **argv);
 
 void asservCommandSerial();
@@ -128,12 +167,15 @@ int main(void)
     halInit();
     chSysInit();
 
-    chBSemObjectInit(&asservStarted_semaphore, true);
-    chThdCreateStatic(waAsservThread, sizeof(waAsservThread), HIGHPRIO, AsservThread, NULL);
-    chBSemWait(&asservStarted_semaphore);
+    initAsserv();
+
 
     sdStart(&SD2, NULL);
     shellInit();
+
+    chBSemObjectInit(&asservStarted_semaphore, true);
+    chThdCreateStatic(waAsservThread, sizeof(waAsservThread), HIGHPRIO, AsservThread, NULL);
+    chBSemWait(&asservStarted_semaphore);
 
     outputStream = reinterpret_cast<BaseSequentialStream*>(&SD2);
 
@@ -188,12 +230,12 @@ int main(void)
     }
 }
 
-
 void asservCommandUSB(BaseSequentialStream *chp, int argc, char **argv)
 {
     auto printUsage = []()
     {
         chprintf(outputStream,"Usage :");
+        chprintf(outputStream," - asserv wheelcalib \r\n");
         chprintf(outputStream," - asserv enablemotor 0|1\r\n");
         chprintf(outputStream," - asserv enablepolar 0|1\r\n");
         chprintf(outputStream," - asserv coders \r\n");
@@ -205,8 +247,8 @@ void asservCommandUSB(BaseSequentialStream *chp, int argc, char **argv)
         chprintf(outputStream," - asserv robotfwspeedstep [speed] [step time] \r\n");
         chprintf(outputStream," - asserv robotangspeedstep [speed] [step time] \r\n");
         chprintf(outputStream," - asserv speedcontrol [r|l] [Kp] [Ki] \r\n");
-        chprintf(outputStream," - asserv angleSlope delta_speed \r\n");
-        chprintf(outputStream," - asserv distSlope delta_speed \r\n");
+        chprintf(outputStream," - asserv angleacc delta_speed \r\n");
+        chprintf(outputStream," - asserv distacc delta_speed \r\n");
         chprintf(outputStream," ------------------- \r\n");
         chprintf(outputStream," - asserv addangle angle_rad \r\n");
         chprintf(outputStream," - asserv anglereset\r\n");
@@ -227,7 +269,74 @@ void asservCommandUSB(BaseSequentialStream *chp, int argc, char **argv)
         return;
     }
 
-    if (!strcmp(argv[0], "wheelspeedstep"))
+    if (!strcmp(argv[0], "wheelcalib"))
+    {
+        unsigned int count = 1;
+        chprintf(outputStream, "Wheel Calibration start\r\n");
+
+        auto alignWithWall = []() -> void
+        {
+            mainAsserv->limitMotorControllerConsignToPercentage(20);
+            mainAsserv->disableAngleRegulator();
+            commandManager->addStraightLine(-1000);
+            chThdSleepSeconds(5);
+            mainAsserv->limitMotorControllerConsignToPercentage(100);
+            mainAsserv->enableAngleRegulator();
+            mainAsserv->reset();
+        };
+
+        auto waitEndOFCommand = []() -> void
+        {
+            do
+            {
+                chThdSleepMilliseconds(50);
+            }
+            while( commandManager->getCommandStatus() != CommandManager::STATUS_IDLE );
+            chThdSleepMilliseconds(500);
+        };
+
+
+        alignWithWall();
+
+        int32_t encoderRightStart = encoders->getRightEncoderTotalCount();
+        int32_t encoderLeftStart =  encoders->getLeftEncoderTotalCount();
+        int32_t startDistance = (encoderRightStart+encoderLeftStart)/2.0;
+        int32_t startAngle = (encoderRightStart-encoderLeftStart);
+
+
+        commandManager->addStraightLine(200);
+        waitEndOFCommand();
+
+        for(unsigned int i=0; i<count; i++)
+        {
+            commandManager->addStraightLine(800);
+            waitEndOFCommand();
+            commandManager->addTurn(M_PI);
+            waitEndOFCommand();
+            commandManager->addStraightLine(800);
+            waitEndOFCommand();
+            commandManager->addTurn(-M_PI);
+            waitEndOFCommand();
+        }
+
+        alignWithWall();
+
+        int32_t encoderRightEnd = encoders->getRightEncoderTotalCount();
+        int32_t encoderLeftEnd =  encoders->getLeftEncoderTotalCount();
+        int32_t deltaDistance = startDistance - ((encoderRightEnd+encoderLeftEnd)/2.0);
+        int32_t deltaAngle = startAngle - (encoderRightEnd-encoderLeftEnd);
+
+        float factor = float(deltaAngle) / float(deltaDistance);
+        float leftGain = (1. + factor) * encoders->getLeftEncoderGain();
+        float rightGain = (1. - factor) * encoders->getRightEncoderGain();
+
+        chprintf(outputStream, "Wheel Calibration done with travel dist : %d step, delta %d steps \r\n", deltaDistance, deltaAngle);
+        chprintf(outputStream, "Suggested factors :\n");
+        chprintf(outputStream, "Left : %.8f (old gain was %f)\n", leftGain, encoders->getLeftEncoderGain());
+        chprintf(outputStream, "Right : %.8f (old gain was %f)\n", rightGain, encoders->getRightEncoderGain());
+
+    }
+    else if (!strcmp(argv[0], "wheelspeedstep"))
     {
         char side = *argv[1];
         float speedGoal = atof(argv[2]);
@@ -244,9 +353,9 @@ void asservCommandUSB(BaseSequentialStream *chp, int argc, char **argv)
             speedRight = 0;
         }
 
-        mainAsserv.setWheelsSpeed(speedRight, speedLeft);
+        mainAsserv->setWheelsSpeed(speedRight, speedLeft);
         chThdSleepMilliseconds(time);
-        mainAsserv.setWheelsSpeed(0, 0);
+        mainAsserv->setWheelsSpeed(0, 0);
     }
     else if (!strcmp(argv[0], "robotfwspeedstep"))
     {
@@ -254,9 +363,9 @@ void asservCommandUSB(BaseSequentialStream *chp, int argc, char **argv)
         int time = atoi(argv[2]);
         chprintf(outputStream, "setting fw robot speed %.2f rad/s for %d ms\r\n", speedGoal, time);
 
-        mainAsserv.setRegulatorsSpeed(speedGoal, 0);
+        mainAsserv->setRegulatorsSpeed(speedGoal, 0);
         chThdSleepMilliseconds(time);
-        mainAsserv.setRegulatorsSpeed(0, 0);
+        mainAsserv->setRegulatorsSpeed(0, 0);
     }
     else if (!strcmp(argv[0], "robotangspeedstep"))
     {
@@ -264,93 +373,97 @@ void asservCommandUSB(BaseSequentialStream *chp, int argc, char **argv)
         int time = atoi(argv[2]);
         chprintf(outputStream, "setting angle robot speed %.2f rad/s for %d ms\r\n", speedGoal, time);
 
-        mainAsserv.setRegulatorsSpeed(0, speedGoal);
+        mainAsserv->setRegulatorsSpeed(0, speedGoal);
         chThdSleepMilliseconds(time);
-        mainAsserv.setRegulatorsSpeed(0, 0);
+        mainAsserv->setRegulatorsSpeed(0, 0);
     }
     else if (!strcmp(argv[0], "speedcontrol"))
     {
         char side = *argv[1];
         float Kp = atof(argv[2]);
         float Ki = atof(argv[3]);
+        uint8_t range = atof(argv[4]);;
 
-        chprintf(outputStream, "setting speed control Kp:%.2f Ki:%.2f to side %c \r\n", Kp, Ki, side);
+        chprintf(outputStream, "setting speed control Kp:%.2f Ki:%.2f range:%d to side %c \r\n", Kp, Ki, range, side);
 
         if (side == 'r')
-            speedControllerRight.setGains(Kp, Ki);
+            speedControllerRight->setGains(Kp, Ki, range);
         else if (side == 'l')
-            speedControllerLeft.setGains(Kp, Ki);
+            speedControllerLeft->setGains(Kp, Ki, range);
     }
-    else if (!strcmp(argv[0], "angleSlope"))
+    else if (!strcmp(argv[0], "angleacc"))
     {
-        float slope = atof(argv[1]);
-        chprintf(outputStream, "setting angle slope delta %.2f \r\n", slope);
+        float acc = atof(argv[1]);
+        chprintf(outputStream, "setting angle acceleration limit to %.2f \r\n", acc);
 
-        angleSlopeFilter.setSlope(slope);
+        angleAccelerationlimiter->setMaxAcceleration(acc);
     }
-    else if (!strcmp(argv[0], "distSlope"))
+    else if (!strcmp(argv[0], "distacc"))
     {
-        float slope = atof(argv[1]);
-        chprintf(outputStream, "setting distance slope delta %.2f \r\n", slope);
+        float acc_max = atof(argv[1]);
+        float acc_min = atof(argv[2]);
+        float acc_threshold = atof(argv[3]);
+        chprintf(outputStream, "setting distance acceleration limiter max %.2f min %.2f threshold %.2f \r\n", acc_max, acc_min, acc_threshold);
 
-        distSlopeFilter.setSlope(slope);
+        distanceAccelerationLimiter->setMaxAcceleration(acc_max);
+        distanceAccelerationLimiter->setMaxAcceleration(acc_min);
+        distanceAccelerationLimiter->setHighSpeedThreshold(acc_threshold);
     }
     else if (!strcmp(argv[0], "addangle"))
     {
         float angle = atof(argv[1]);
         chprintf(outputStream, "Adding angle %.2frad \r\n", angle);
 
-        mainAsserv.resetToNormalMode();
-        commandManager.addTurn(angle);
+        mainAsserv->resetToNormalMode();
+        commandManager->addTurn(angle);
     }
     else if (!strcmp(argv[0], "anglereset"))
     {
         chprintf(outputStream, "Reseting angle accumulator \r\n");
-        angleRegulator.reset();
+        angleRegulator->reset();
     }
     else if (!strcmp(argv[0], "distreset"))
     {
         chprintf(outputStream, "Reseting distance accumulator \r\n");
-        distanceRegulator.reset();
+        distanceRegulator->reset();
     }
     else if (!strcmp(argv[0], "adddist"))
     {
         float dist = atof(argv[1]);
-        chprintf(outputStream, "Adding distance %.2fmm \r\n", dist);
 
-        mainAsserv.resetToNormalMode();
-        commandManager.addStraightLine(dist);
+        mainAsserv->resetToNormalMode();
+        bool ok = commandManager->addStraightLine(dist);
+        chprintf(outputStream, "Adding distance %.2fmm %d\r\n", dist, ok );
+
     }
     else if (!strcmp(argv[0], "anglecontrol"))
     {
         float Kp = atof(argv[1]);
         chprintf(outputStream, "setting angle Kp to %.2f \r\n", Kp);
 
-        angleRegulator.setGain(Kp);
+        angleRegulator->setGain(Kp);
     }
     else if (!strcmp(argv[0], "distcontrol"))
     {
         float Kp = atof(argv[1]);
         chprintf(outputStream, "setting dist Kp to %.2f \r\n", Kp);
 
-        distanceRegulator.setGain(Kp);
+        distanceRegulator->setGain(Kp);
     }
     else if (!strcmp(argv[0], "enablemotor"))
     {
         bool enable = !(atoi(argv[1]) == 0);
         chprintf(outputStream, "%s motor output\r\n", (enable ? "enabling" : "disabling"));
-
-        mainAsserv.enableMotors(enable);
+        mainAsserv->enableMotors(enable);
     }
     else if (!strcmp(argv[0], "coders"))
     {
-        int32_t encoderRight, encoderLeft;
-        encoders.getEncodersTotalCount(&encoderRight, &encoderLeft);
-        chprintf(outputStream, "Encoders count %d %d \r\n", encoderRight, encoderLeft);
+        chprintf(outputStream, "Encoders count %d %d \r\n", encoders->getRightEncoderTotalCount(), encoders->getLeftEncoderTotalCount());
     }
     else if (!strcmp(argv[0], "reset"))
     {
-        mainAsserv.reset();
+        mainAsserv->reset();
+        chprintf(outputStream, "asserv resetted \r\n");
     }
     else if (!strcmp(argv[0], "motorspeed"))
     {
@@ -360,16 +473,17 @@ void asservCommandUSB(BaseSequentialStream *chp, int argc, char **argv)
         chprintf(outputStream, "setting wheel %s to speed %.2f \r\n", (side == 'r') ? "right" : "left", speedGoal);
 
         if (side == 'l')
-            md22MotorController.setMotorLeftSpeed(speedGoal);
+            md22MotorController->setMotorLeftSpeed(speedGoal);
         else
-            md22MotorController.setMotorRightSpeed(speedGoal);
+            md22MotorController->setMotorRightSpeed(speedGoal);
     }
     else if (!strcmp(argv[0], "enablepolar"))
     {
         bool enable = !(atoi(argv[1]) == 0);
         chprintf(outputStream, "%s polar control\r\n", (enable ? "enabling" : "disabling"));
 
-        mainAsserv.enablePolar(enable);
+        mainAsserv->enablePolar(enable);
+
     }
     else if (!strcmp(argv[0], "addgoto"))
     {
@@ -377,30 +491,59 @@ void asservCommandUSB(BaseSequentialStream *chp, int argc, char **argv)
         float Y = atof(argv[2]);
         chprintf(outputStream, "Adding goto(%.2f,%.2f) consign\r\n", X, Y);
 
-        mainAsserv.resetToNormalMode();
-        commandManager.addGoTo(X, Y);
+        mainAsserv->resetToNormalMode();
+        commandManager->addGoTo(X, Y);
     }
     else if (!strcmp(argv[0], "gototest"))
     {
-//		commandManager.addGoToEnchainement(450,-200);
-//		commandManager.addGoToEnchainement(450,-600);
-//		commandManager.addGoToEnchainement(300,-400);
-//		commandManager.addGoTo(150,0);
+        mainAsserv->resetToNormalMode();
+//        commandManager->addGoToNoStop(500, 0);
+//        commandManager->addGoToNoStop(900, 0);
+//        commandManager->addGoToNoStop(1100, 0);
+//        commandManager->addGoToNoStop(1100, 200);
+//        commandManager->addGoToNoStop(1100, 400);
+//        commandManager->addGoToNoStop(900, 400);
+//        commandManager->addGoToNoStop(500, 400);
+//        commandManager->addGoToNoStop(100, 200);
+//        commandManager->addGoToAngle(500, 200);
 
-        mainAsserv.resetToNormalMode();
-        commandManager.addGoToEnchainement(365, -270);
-        commandManager.addGoToEnchainement(550, -385);
-        commandManager.addGoToEnchainement(490, -590);
-        commandManager.addGoToEnchainement(295, -720);
-        commandManager.addGoToEnchainement(180, -1000);
-        commandManager.addGoToEnchainement(390, -1100);
-        commandManager.addGoToEnchainement(550, -900);
-        commandManager.addGoToEnchainement(395, -630);
-        commandManager.addGoToEnchainement(300, -440);
-        commandManager.addGoTo(300, -250);
-        commandManager.addGoToAngle(1000, -250);
-        commandManager.addStraightLine(-200);
+        commandManager->addGoToNoStop(800, 0);
+        commandManager->addGoToNoStop(800, -250);
+        commandManager->addGoToNoStop(300, -250);
+        commandManager->addGoToNoStop(00, 0);
+        commandManager->addGoToAngle(100, 0);
 
+    }
+    else if (!strcmp(argv[0], "get_config"))
+    {
+        uint8_t index = 0;
+
+        // SpeedControllerLeft
+        for( int i=0; i<NB_PI_SUBSET; i++)
+        {
+            speedControllerLeft->getGainsForRange(i, &config_buffer[index], &config_buffer[index+1], &config_buffer[index+2] );
+            index += 3;
+        }
+
+        // SpeedControllerRight
+        for( int i=0; i<NB_PI_SUBSET; i++)
+        {
+            speedControllerRight->getGainsForRange(i, &config_buffer[index], &config_buffer[index+1], &config_buffer[index+2]);
+            index += 3;
+        }
+
+        //Regulators
+        config_buffer[index++] = distanceRegulator->getGain();
+        config_buffer[index++] = angleRegulator->getGain();
+
+        // accel limiter
+        config_buffer[index++] = angleAccelerationlimiter->getMaxAcceleration();
+        config_buffer[index++] = distanceAccelerationLimiter->getMaxAcceleration();
+        config_buffer[index++] = distanceAccelerationLimiter->getMinAcceleration();
+        config_buffer[index++] = distanceAccelerationLimiter->getHighSpeedThreshold();
+
+        chprintf(outputStream, "sending %d float of config !\r\n", index);
+        USBStream::instance()->sendConfig((uint8_t*)config_buffer, index*sizeof(config_buffer[0]));
     }
     else
     {
@@ -455,164 +598,5 @@ THD_FUNCTION(ControlPanelThread, p)
             }
             USBStream::instance()->releaseBuffer();
         }
-    }
-}
-
-
-
-static void serialReadLine(char *buffer, unsigned int buffer_size)
-{
-    unsigned int i;
-    for(i=0; i<buffer_size; i++)
-    {
-        buffer[i] = streamGet(&SD2);
-        if ( buffer[i] == '\r' )
-            break;
-    }
-    buffer[i] = '\0';
-}
-
-THD_FUNCTION(asservCommandSerial, p)
-{
-    (void) p;
-    /*
-     * Commande / Caractères à envoyer sur la série / Paramètres / Effets obtenus
-
-     g%x#%y\n / Goto / x, y : entiers, en mm /Le robot se déplace au point de coordonnée (x, y). Il tourne vers le point, puis avance en ligne droite. L'angle est sans cesse corrigé pour bien viser le point voulu.
-     e%x#%y\n / goto Enchaîné / x, y : entiers, en mm / Idem que le Goto, sauf que lorsque le robot est proche du point d'arrivée (x, y), on s'autorise à enchaîner directement la consigne suivante si c'est un Goto ou un Goto enchaîné, sans marquer d'arrêt.
-     v%d\n / aVancer / d : entier, en mm / Fait avancer le robot de d mm, tout droit
-     t%a\n / Tourner / a : entier, en degrées / Fait tourner le robot de a degrées. Le robot tournera dans le sens trigonométrique : si a est positif, il tourne à gauche, et vice-versa.
-     f%x#%y\n / faire Face / x, y : entiers, en mm / Fait tourner le robot pour être en face du point de coordonnées (x, y). En gros, ça réalise la première partie d'un Goto : on se tourne vers le point cible, mais on avance pas.
-     h / Halte ! / Arrêt d'urgence ! Le robot est ensuite systématiquement asservi à sa position actuelle. Cela devrait suffire à arrêter le robot correctement. La seule commande acceptée par la suite sera un Reset de l'arrêt d'urgence : toute autre commande sera ignorée.
-     r / Reset de l'arrêt d'urgence / Remet le robot dans son fonctionnement normal après un arrêt d'urgence. Les commandes en cours au moment de l'arrêt d'urgence NE sont PAS reprises. Si le robot n'est pas en arrêt d'urgence, cette commande n'a aucun effet.
-     --c%s%r / Calage bordure / s : sens du calage bordure, r : robot ('g' : gros ; 'p' : petit) / Effectue un calage bordure. Le robot doit être dans sa zone de départ au début du calage, dirigé vers la case de départ adverse en face de la table. Il doit être assez proche de la bordure derrière lui, et pas trop proche de la bordure sur le côté. A la fin du calage, le robot est prêt à partir pour un match dans sa case de départ.
-     Le choix du robot est possible, si on veut que deux robots asservis concourent en même temps sur la même table, pour qu'ils puissent faire un calage bordure en même temps sans se rentrer dedans.
-
-     p / get Position / Récupère la position et le cap du robot sur la connexion i2c, sous la forme de 3 types float (3 * 4 bytes), avec x, y, et a les coordonnées et l'angle du robot.
-     S / set Position / applique la nouvelle position du robot
-
-     z / avance de 20 cm
-     s / recule de 20 cm
-     q / tourne de 45° (gauche)
-     d / tourne de -45° (droite)
-
-     M / modifie la valeur d'un paramètre / name, value
-     R / réinitialiser l'asserv
-     D / dump la config du robot
-     G / lire la valeur d'un paramètre / name
-     L / recharge la config config.txt
-     W / sauvegarde la config courante  config~1.txt = config.default.txt
-
-     I / Active les actions dans la boucle d'asservissement (odo + managers)
-     ! / Stoppe actions dans la boucle d'asservissement
-     K / desactive le consignController et le commandManager
-     J / reactive le consignController et le commandManager
-
-     + / applique une valeur +1 sur les moteurs LEFT
-     - / applique une valeur -1 sur les moteurs LEFT
-     */
-
-    float consigneValue1 = 0;
-    float consigneValue2 = 0;
-    char buffer[64];
-
-    chprintf(outputStream, "Started\r\n");
-
-
-    while(true)
-    {
-        char readChar = streamGet(&SD2);
-
-        switch (readChar) {
-
-        case 'h': //Arrêt d'urgence
-            commandManager.setEmergencyStop();
-            chprintf(outputStream, "Arrêt d'urgence ! \r\n");
-            break;
-
-        case 'r': //Reset de l'arrêt d'urgence
-            commandManager.resetEmergencyStop();
-            break;
-
-        case 'z':
-            // Go 20cm
-            chprintf(outputStream, "consigne avant : 200mm\n");
-            commandManager.addStraightLine(200);
-            break;
-
-        case 's':
-            chprintf(outputStream, "consigne arrière : 200mm\n");
-            commandManager.addStraightLine(-200);
-            break;
-
-        case 'q':
-            chprintf(outputStream, "consigne gauche : 45°\n");
-            commandManager.addTurn(degToRad(45));
-            break;
-
-        case 'd':
-            chprintf(outputStream, "consigne gauche : 45°\n");
-             commandManager.addTurn(degToRad(-45));
-             break;
-
-        case 'v': //aVance d'un certain nombre de mm
-            serialReadLine(buffer, sizeof(buffer));
-            sscanf(buffer, "%f", &consigneValue1);
-            commandManager.addStraightLine(consigneValue1);
-            chprintf(outputStream, "v%f\r\n", consigneValue1);
-            break;
-
-        case 't': //Tourne d'un certain angle en degrés
-            serialReadLine(buffer, sizeof(buffer));
-            sscanf(buffer, "%f", &consigneValue1);
-            commandManager.addTurn(degToRad(consigneValue1));
-            break;
-
-        case 'f': //faire Face à un point précis, mais ne pas y aller, juste se tourner
-
-            serialReadLine(buffer, sizeof(buffer));
-            sscanf(buffer, "%f#%f", &consigneValue1, &consigneValue2);
-            commandManager.addGoToAngle(consigneValue1, consigneValue2);
-            break;
-
-        case 'g': //Go : va à un point précis
-            serialReadLine(buffer, sizeof(buffer));
-            sscanf(buffer, "%f#%f", &consigneValue1, &consigneValue2);
-            commandManager.addGoTo(consigneValue1, consigneValue2);
-            break;
-
-        case 'e': // goto, mais on s'autorise à Enchainer la consigne suivante sans s'arrêter
-            serialReadLine(buffer, sizeof(buffer));
-            sscanf(buffer, "%f#%f", &consigneValue1, &consigneValue2);
-            commandManager.addGoToEnchainement(consigneValue1, consigneValue2);
-            break;
-
-        case 'p': //retourne la Position et l'angle courants du robot
-            chprintf(outputStream, "x%fy%fa%fs%d\r\n",
-                    odometry.getX(), odometry.getY(), odometry.getTheta(),
-                    commandManager.getCommandStatus());
-            break;
-        default:
-            chprintf(outputStream, " - unexpected character\r\n");
-            break;
-        }
-    }
-}
-
-THD_FUNCTION(asservPositionSerial, p)
-{
-    (void) p;
-    const time_conv_t loopPeriod_ms = 20;
-    systime_t time = chVTGetSystemTime();
-    time += TIME_MS2I(loopPeriod_ms);
-    while(true)
-    {
-        chprintf(outputStream, "#%d;%d;%f;%d;%d;%d;%d\r\n",
-            (int32_t)odometry.getX(), (int32_t)odometry.getY(), odometry.getTheta(),
-            commandManager.getCommandStatus(), commandManager.getPendingCommandCount(),
-            md22MotorController.getLeftSpeed(), md22MotorController.getRightSpeed());
-
-        chThdSleepUntil(time);
-        time += TIME_MS2I(loopPeriod_ms);
     }
 }

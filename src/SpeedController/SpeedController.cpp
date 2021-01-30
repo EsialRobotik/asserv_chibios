@@ -1,23 +1,16 @@
 #include "SpeedController.h"
 #include "util/asservMath.h"
+#include "ch.h"
 #include <cmath>
 #include <cstdlib>
 #include <cstdint>
 
-SpeedController::SpeedController(float speedKpSet[NB_PI_SUBSET], float speedKiSet[NB_PI_SUBSET],
-        float setSpeedRange[NB_PI_SUBSET], float outputLimit, float maxInputSpeed, float measureFrequency)
+SpeedController::SpeedController(float speedKp, float speedKi, float outputLimit, float maxInputSpeed, float measureFrequency)
 {
     m_speedGoal = 0;
     m_integratedOutput = 0;
-    m_speedKp = 0;
-    m_speedKi = 0;
-
-    for (int i = 0; i < NB_PI_SUBSET; i++)
-    {
-        m_setSpeedRange[i] = setSpeedRange[i];
-        m_speedKpSet[i] = speedKpSet[i];
-        m_speedKiSet[i] = speedKiSet[i];
-    }
+    m_speedKp = speedKp;
+    m_speedKi = speedKi;
 
     m_outputLimit = outputLimit;
     m_inputLimit = maxInputSpeed;
@@ -28,8 +21,6 @@ float SpeedController::update(float actualSpeed)
 {
     float outputValue = 0;
     float speedError = m_speedGoal - actualSpeed;
-
-    computeGains(actualSpeed);
 
     // Regulateur en vitesse : un PI
     outputValue = speedError * m_speedKp;
@@ -86,28 +77,3 @@ void SpeedController::setGains(float Kp, float Ki)
     resetIntegral();
 }
 
-void SpeedController::computeGains(float actualSpeed)
-{
-    // D'abord, on cherche à quel set correspond la vitesse actuelle
-    uint8_t set = 0;
-    while (set < NB_PI_SUBSET && actualSpeed > m_setSpeedRange[set])
-        set++;
-
-    if (set == 0) {
-        // Le 1er set, on prend directement les valeurs
-        m_speedKp = m_speedKpSet[0];
-        m_speedKi = m_speedKiSet[0];
-    } else if (set == NB_PI_SUBSET) {
-        // Le dernier set, on prend directement les valeurs
-        m_speedKp = m_speedKpSet[NB_PI_SUBSET - 1];
-        m_speedKi = m_speedKiSet[NB_PI_SUBSET - 1];
-    } else {
-        // Si on se trouve entre 2 set, on fait varier linéaire les valeurs des gains
-        //  en fonction de la vitesse actuelle par rapport au set courant et précedent.
-        m_speedKp = fmap(actualSpeed, m_setSpeedRange[set - 1], m_setSpeedRange[set], m_speedKpSet[set - 1],
-                m_speedKpSet[set]);
-
-        m_speedKi = fmap(actualSpeed, m_setSpeedRange[set - 1], m_setSpeedRange[set], m_speedKiSet[set - 1],
-                m_speedKiSet[set]);
-    }
-}

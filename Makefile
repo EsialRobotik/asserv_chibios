@@ -124,17 +124,13 @@ LDSCRIPT= $(STARTUPLD)/STM32F446xE.ld
 
 # Custom part: Depending on a input variable ROBOT, the used main.cpp is different
 
-ifeq ($(ROBOT),)  # set the default ROBOT
-	ROBOT = PMI
-endif
-
 # Check if the specified ROBOT exist
-AVAILABLE_ROBOTS=$(shell find src/Robots -type d -exec basename {} \;)
+AVAILABLE_ROBOTS=$(shell find src/Robots -mindepth 1 -type d -exec basename {} \;)
 ifeq (,$(wildcard $(SRCDIR)/Robots/$(ROBOT)/main.cpp))
 $(error Unknown ROBOT specified! Knowns are : $(AVAILABLE_ROBOTS))
 endif
 
-ifeq ($(NO_SHELL),)  # Disable the shell
+ifneq ($(SHELL_ENABLE),)  # enable the shell
 	SHELL_MODE_DEFINE = -DENABLE_SHELL
 endif
 
@@ -158,14 +154,22 @@ CPPSRC = $(ALLCPPSRC) \
        $(SRCDIR)/Encoders/ams_as5048b.cpp \
        $(SRCDIR)/Encoders/MagEncoders.cpp \
        $(SRCDIR)/AsservMain.cpp \
-       $(SRCDIR)/SpeedController.cpp \
-       $(SRCDIR)/SlopeFilter.cpp \
+       $(SRCDIR)/SpeedController/SpeedController.cpp \
+       $(SRCDIR)/SpeedController/AdaptativeSpeedController.cpp \
        $(SRCDIR)/Pll.cpp \
        $(SRCDIR)/Regulator.cpp \
        $(SRCDIR)/Odometry.cpp \
        $(SRCDIR)/commandManager/CommandManager.cpp \
-       $(SRCDIR)/commandManager/CMDList/CMDList.cpp \
-       $(SRCDIR)/util/chibiOsAllocatorWrapper.cpp
+       $(SRCDIR)/commandManager/CommandList.cpp \
+       $(SRCDIR)/commandManager/Commands/StraitLine.cpp \
+       $(SRCDIR)/commandManager/Commands/Turn.cpp \
+       $(SRCDIR)/commandManager/Commands/Goto.cpp \
+       $(SRCDIR)/commandManager/Commands/GotoAngle.cpp \
+       $(SRCDIR)/commandManager/Commands/GotoNoStop.cpp \
+       $(SRCDIR)/util/chibiOsAllocatorWrapper.cpp  \
+       $(SRCDIR)/AccelerationLimiter/AbstractAccelerationLimiter.cpp \
+       $(SRCDIR)/AccelerationLimiter/SimpleAccelerationLimiter.cpp \
+       $(SRCDIR)/AccelerationLimiter/AdvancedAccelerationLimiter.cpp 
 
     
 
@@ -227,12 +231,12 @@ include $(RULESPATH)/rules.mk
 # Custom rules
 #
 help :
-	@echo "make                             :   build with default robot config"
-	@echo "make ROBOT=myRobot               :   build using the myRobot config. A myRobot dir must be present in src/Robots"
-	@echo "make ROBOT=myRobot NO_SHELL=true :   build using the myRobot config and disable the default shell (must be handled in src/Robots/myRobot/main.cpp ! ) "
-	@echo "make flash                       :   load the generated elf to the board"
-	@echo "make debug                       :   load the generated elf to the board & wait for a debugger to connect (with arm-none-eabi-gdb build/asservNucleo.elf -ex \"target remote :3333\" )"
-	@echo "make robots                      :   print the knows robots"
+	@echo "make                                 :   build with default robot config"
+	@echo "make ROBOT=myRobot                   :   build using the myRobot config. A myRobot dir must be present in src/Robots"
+	@echo "make ROBOT=myRobot SHELL_ENABLE=true :   build using the myRobot config and enable the shell (Ie: ENABLE_SHELL will be defined and must be handled in src/Robots/myRobot/main.cpp ! ) "
+	@echo "make flash                           :   load the generated elf to the board"
+	@echo "make debug                           :   load the generated elf to the board & wait for a debugger to connect (with arm-none-eabi-gdb build/asservNucleo.elf -ex \"target remote :3333\" )"
+	@echo "make robots                          :   print the knows robots"
 	
 robots :
 	@echo "Available robots :  $(AVAILABLE_ROBOTS)" 

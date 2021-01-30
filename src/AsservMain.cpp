@@ -4,27 +4,32 @@
 #include "commandManager/CommandManager.h"
 #include "USBStream.h"
 #include "Odometry.h"
-#include "SlopeFilter.h"
+#include "SpeedController/SpeedController.h"
+#include "AccelerationLimiter/AccelerationLimiter.h"
 #include "Pll.h"
+#include "Regulator.h"
 #include <chprintf.h>
+#include <cfloat>
 #include "Encoders/Encoder.h"
 #include "util/asservMath.h"
 
 AsservMain::AsservMain(uint16_t loopFrequency, uint16_t speedPositionLoopDivisor, float wheelRadius_mm,
-        float encoderWheelsDistance_mm, float encodersTicksByTurn, CommandManager &commandManager,
-        MotorController &motorController, Encoders &encoders, Odometry &odometrie, Regulator &angleRegulator,
-        Regulator &distanceRegulator, SlopeFilter &angleRegulatorSlopeFilter, SlopeFilter &distanceRegulatorSlopeFilter,
-        SpeedController &speedControllerRight, SpeedController &speedControllerLeft, Pll &rightPll, Pll &leftPll) :
+        float encoderWheelsDistance_mm, uint32_t encodersTicksByTurn, CommandManager &commandManager,
+        MotorController &motorController, Encoders &encoders, Odometry &odometrie,
+        Regulator &angleRegulator, Regulator &distanceRegulator,
+        AccelerationLimiter &angleRegulatorAccelerationLimiter, AccelerationLimiter &distanceRegulatorAccelerationLimiter,
+        SpeedController &speedControllerRight, SpeedController &speedControllerLeft,
+        Pll &rightPll, Pll &leftPll) :
 
-        m_motorController(motorController), m_encoders(encoders), m_odometry(odometrie), m_speedControllerRight(
-                speedControllerRight), m_speedControllerLeft(speedControllerLeft), m_angleRegulator(angleRegulator), m_distanceRegulator(
-                distanceRegulator), m_angleRegulatorSlopeFilter(angleRegulatorSlopeFilter), m_distanceRegulatorSlopeFilter(
-                distanceRegulatorSlopeFilter), m_commandManager(commandManager), m_pllRight(rightPll), m_pllLeft(
-                leftPll), m_distanceByEncoderTurn_mm(M_2PI * wheelRadius_mm), m_encodersTicksByTurn(
-                encodersTicksByTurn), m_encodermmByTicks(m_distanceByEncoderTurn_mm / m_encodersTicksByTurn), m_encoderWheelsDistance_mm(
-                encoderWheelsDistance_mm), m_encoderWheelsDistance_ticks(encoderWheelsDistance_mm / m_encodermmByTicks), m_loopFrequency(
-                loopFrequency), m_loopPeriod(1.0 / float(loopFrequency)), m_speedPositionLoopDivisor(
-                speedPositionLoopDivisor)
+        m_motorController(motorController), m_encoders(encoders), m_odometry(odometrie),
+            m_speedControllerRight(speedControllerRight), m_speedControllerLeft(speedControllerLeft),
+            m_angleRegulator(angleRegulator), m_distanceRegulator(distanceRegulator),
+            m_angleRegulatorAccelerationLimiter(angleRegulatorAccelerationLimiter), m_distanceRegulatorAccelerationLimiter(distanceRegulatorAccelerationLimiter),
+            m_commandManager(commandManager),
+            m_pllRight(rightPll), m_pllLeft(leftPll),
+            m_distanceByEncoderTurn_mm(M_2PI * wheelRadius_mm), m_encodersTicksByTurn(encodersTicksByTurn), m_encodermmByTicks(m_distanceByEncoderTurn_mm / m_encodersTicksByTurn),
+            m_encoderWheelsDistance_mm(encoderWheelsDistance_mm), m_encoderWheelsDistance_ticks(encoderWheelsDistance_mm / m_encodermmByTicks),
+            m_loopFrequency(loopFrequency), m_loopPeriod(1.0 / float(loopFrequency)), m_speedPositionLoopDivisor( speedPositionLoopDivisor)
 {
     m_asservCounter = 0;
     m_distRegulatorOutputSpeedConsign = 0;
@@ -67,8 +72,8 @@ void AsservMain::mainLoop()
     systime_t time = chVTGetSystemTime();
     time += TIME_MS2I(loopPeriod_ms);
     while (true) {
-        int16_t encoderDeltaRight;
-        int16_t encoderDeltaLeft;
+        float encoderDeltaRight;
+        float encoderDeltaLeft;
         m_encoders.getValues(&encoderDeltaRight, &encoderDeltaLeft);
 
         // Mise à jour de la position en polaire
@@ -88,10 +93,10 @@ void AsservMain::mainLoop()
         if (m_asservCounter == m_speedPositionLoopDivisor && m_enablePolar) {
             m_commandManager.update(m_odometry.getX(), m_odometry.getY(), m_odometry.getTheta());
 
-            if (m_asservMode == normal_mode) {
-                m_angleRegulatorOutputSpeedConsign = m_angleRegulator.updateOutput(m_commandManager.getAngleGoal());
-                m_distRegulatorOutputSpeedConsign = m_distanceRegulator.updateOutput(
-                        m_commandManager.getDistanceGoal());
+            if (m_asservMode == normal_mode)
+            {
+                m_angleRegulatorOutputSpeedConsign = m_angleRegulator.updateOutput( m_commandManager.getAngleGoal() );
+                m_distRegulatorOutputSpeedConsign  = m_distanceRegulator.updateOutput( m_commandManager.getDistanceGoal() );
             }
 
             m_asservCounter = 0;
@@ -108,8 +113,8 @@ void AsservMain::mainLoop()
 
         if (m_asservMode == normal_mode || m_asservMode == regulator_output_control) {
             // On limite l'acceleration sur la sortie du regulateur de distance et d'angle
-            m_distSpeedLimited = m_distanceRegulatorSlopeFilter.filter(m_loopPeriod, m_distRegulatorOutputSpeedConsign);
-            m_angleSpeedLimited = m_angleRegulatorSlopeFilter.filter(m_loopPeriod, m_angleRegulatorOutputSpeedConsign);
+            m_distSpeedLimited = m_distanceRegulatorAccelerationLimiter.limitAcceleration(m_loopPeriod, m_distRegulatorOutputSpeedConsign, (estimatedSpeedRight+estimatedSpeedLeft)*0.5 );
+            m_angleSpeedLimited = m_angleRegulatorAccelerationLimiter.limitAcceleration(m_loopPeriod, m_angleRegulatorOutputSpeedConsign, (estimatedSpeedRight-estimatedSpeedLeft)/m_encoderWheelsDistance_mm );
 
             // Mise à jour des consignes en vitesse avec acceleration limitée
             m_speedControllerRight.setSpeedGoal(m_distSpeedLimited + m_angleSpeedLimited);
@@ -119,9 +124,8 @@ void AsservMain::mainLoop()
              * C'est batard, et cela ne doit pas être utilisé autrement que pour faire du réglage
              *      on réutilise les filtres de pente pour ne pas avoir à en instancier d'autres
              */
-            float rightWheelSpeed = m_distanceRegulatorSlopeFilter.filter(m_loopPeriod,
-                    m_directSpeedMode_rightWheelSpeed);
-            float leftWheelSpeed = m_angleRegulatorSlopeFilter.filter(m_loopPeriod, m_directSpeedMode_leftWheelSpeed);
+            float rightWheelSpeed = m_distanceRegulatorAccelerationLimiter.limitAcceleration(m_loopPeriod, m_directSpeedMode_rightWheelSpeed, FLT_MAX);
+            float leftWheelSpeed = m_angleRegulatorAccelerationLimiter.limitAcceleration(m_loopPeriod, m_directSpeedMode_leftWheelSpeed, FLT_MAX);
             m_speedControllerRight.setSpeedGoal(rightWheelSpeed);
             m_speedControllerLeft.setSpeedGoal(leftWheelSpeed);
         }
@@ -142,6 +146,11 @@ void AsservMain::mainLoop()
         USBStream::instance()->setSpeedOutputLeft(outputSpeedLeft);
         USBStream::instance()->setSpeedIntegratedOutputRight(m_speedControllerRight.getIntegratedOutput());
         USBStream::instance()->setSpeedIntegratedOutputLeft(m_speedControllerLeft.getIntegratedOutput());
+        USBStream::instance()->setSpeedKpRight(m_speedControllerRight.getCurrentKp());
+        USBStream::instance()->setSpeedKpLeft(m_speedControllerLeft.getCurrentKp());
+        USBStream::instance()->setSpeedKiRight(m_speedControllerRight.getCurrentKi());
+        USBStream::instance()->setSpeedKiLeft(m_speedControllerLeft.getCurrentKi());
+
 
         USBStream::instance()->setAngleGoal(m_commandManager.getAngleGoal());
         USBStream::instance()->setAngleAccumulator(m_angleRegulator.getAccumulator());
@@ -160,7 +169,7 @@ void AsservMain::mainLoop()
         USBStream::instance()->setRawEncoderDeltaLeft((float) encoderDeltaLeft);
         USBStream::instance()->setRawEncoderDeltaRight((float) encoderDeltaRight);
 
-        USBStream::instance()->SendCurrentStream();
+        USBStream::instance()->sendCurrentStream();
 
         m_asservCounter++;
 
@@ -172,45 +181,133 @@ void AsservMain::mainLoop()
 
 void AsservMain::setRegulatorsSpeed(float distSpeed, float angleSpeed)
 {
+    chSysLock();
     m_asservMode = regulator_output_control;
     m_distRegulatorOutputSpeedConsign = distSpeed;
-    m_angleRegulatorOutputSpeedConsign = angleSpeed * m_encoderWheelsDistance_mm;
+    m_angleRegulatorOutputSpeedConsign = (angleSpeed * m_encoderWheelsDistance_mm) * 0.5;
+    chSysUnlock();
 }
 
 void AsservMain::setWheelsSpeed(float rightWheelSpeed, float leftWheelSpeed)
 {
+    chSysLock();
     m_asservMode = direct_speed_mode;
     m_directSpeedMode_rightWheelSpeed = rightWheelSpeed;
     m_directSpeedMode_leftWheelSpeed = leftWheelSpeed;
-    m_distanceRegulatorSlopeFilter.reset();
-    m_angleRegulatorSlopeFilter.reset();
+    m_distanceRegulatorAccelerationLimiter.reset();
+    m_angleRegulatorAccelerationLimiter.reset();
+    chSysUnlock();
 }
 
 void AsservMain::resetToNormalMode()
 {
+    chSysLock();
     if (m_asservMode != normal_mode) {
         m_asservMode = normal_mode;
-        m_distanceRegulatorSlopeFilter.reset();
-        m_angleRegulatorSlopeFilter.reset();
+        m_distanceRegulatorAccelerationLimiter.reset();
+        m_angleRegulatorAccelerationLimiter.reset();
     }
+    chSysUnlock();
 }
 
 void AsservMain::enableMotors(bool enable)
 {
+    chSysLock();
     m_enableMotors = enable;
-    if (enable) {
+    if (enable)
+    {
         // Ici, il faut reset les intégrateurs des asserv en vitesse
         m_speedControllerLeft.resetIntegral();
         m_speedControllerRight.resetIntegral();
-    } else {
+    }
+    chSysUnlock();
+
+    if (!enable)
+    {
         m_motorController.setMotorRightSpeed(0);
         m_motorController.setMotorLeftSpeed(0);
     }
 }
 
+void AsservMain::setEmergencyStop()
+{
+    chSysLock();
+    m_commandManager.setEmergencyStop();
+    m_angleRegulatorAccelerationLimiter.disable();
+    m_distanceRegulatorAccelerationLimiter.disable();
+    m_angleRegulator.disable();
+    m_distanceRegulator.disable();
+    chSysUnlock();
+}
+
+void AsservMain::resetEmergencyStop()
+{
+    chSysLock();
+    m_commandManager.resetEmergencyStop();
+    m_angleRegulatorAccelerationLimiter.enable();
+    m_distanceRegulatorAccelerationLimiter.enable();
+    m_angleRegulator.enable();
+    m_distanceRegulator.enable();
+    chSysUnlock();
+}
+
+void AsservMain::enableAngleRegulator()
+{
+    chSysLock();
+    m_angleRegulator.enable();
+    chSysUnlock();
+}
+
+void AsservMain::disableAngleRegulator()
+{
+    chSysLock();
+    m_angleRegulator.disable();
+    chSysUnlock();
+}
+
+void AsservMain::enableDistanceRegulator()
+{
+    chSysLock();
+    m_distanceRegulator.enable();
+    chSysUnlock();
+}
+
+void AsservMain::disableDistanceRegulator()
+{
+    chSysLock();
+    m_distanceRegulator.disable();
+    chSysUnlock();
+}
+
+void AsservMain::setPosition(float X_mm, float Y_mm, float theta_rad)
+{
+    chSysLock();
+    m_odometry.setPosition(X_mm, Y_mm, theta_rad);
+    /* CommandManager shall be reseted,
+     *    because when the current position is overrided in the odometry,
+     *    enqued consign in the commandManager are false
+     */
+    m_commandManager.reset();
+    chSysUnlock();
+}
+
+void AsservMain::limitMotorControllerConsignToPercentage(float percentage)
+{
+    /*
+     * Use this method to make an low speed for your robot
+     */
+    chDbgAssert(percentage >= 0 && percentage <= 100, "Percentage shall be in [0;100]");
+    chSysLock();
+    m_speedControllerLeft.setMaxOutputLimit(percentage);
+    m_speedControllerRight.setMaxOutputLimit(percentage);
+    chSysUnlock();
+}
+
 void AsservMain::enablePolar(bool enable)
 {
+    chSysLock();
     m_enablePolar = enable;
+    chSysUnlock();
 }
 
 void AsservMain::reset()
@@ -224,10 +321,13 @@ void AsservMain::reset()
     m_speedControllerLeft.resetIntegral();
     m_angleRegulator.reset();
     m_distanceRegulator.reset();
-    m_angleRegulatorSlopeFilter.reset();
-    m_distanceRegulatorSlopeFilter.reset();
+    m_angleRegulatorAccelerationLimiter.reset();
+    m_distanceRegulatorAccelerationLimiter.reset();
     m_commandManager.reset();
     m_pllRight.reset();
     m_pllLeft.reset();
     chSysUnlock();
 }
+
+
+
