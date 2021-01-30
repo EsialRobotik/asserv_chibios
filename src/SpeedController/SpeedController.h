@@ -43,6 +43,12 @@ public:
     {
         m_outputLimit = outputLimit;
     }
+
+    void setMaxInputLimit(float max)
+    {
+        m_inputLimit = max;
+    }
+
 protected:
     float m_speedKp;
     float m_speedKi;

@@ -7,18 +7,19 @@
 #include "Commands/GotoNoStop.h"
 #include "Regulator.h"
 
-enum CommandStatus {
-    STATUS_IDLE     = 0,
-    STATUS_RUNNING  = 1,
-    STATUS_HALTED   = 2,
-    STATUS_BLOCKED  = 3,
-};
-
 class Command;
 
 class CommandManager
 {
     public:
+
+        typedef enum {
+            STATUS_IDLE     = 0,
+            STATUS_RUNNING  = 1,
+            STATUS_HALTED   = 2,
+            STATUS_BLOCKED  = 3,
+        } CommandStatus;
+
         explicit CommandManager(float straitLineArrivalWindows_mm, float turnArrivalWindows_rad,
                 Goto::GotoConfiguration &preciseGotoConfiguration, Goto::GotoConfiguration &waypointGotoConfiguration, GotoNoStop::GotoNoStopConfiguration &gotoNoStopConfiguration,
                 const Regulator &angle_regulator, const Regulator &distance_regulator);
@@ -61,7 +62,7 @@ class CommandManager
         /*
          * Permet au haut niveau de savoir où en est la commande actuelle
          */
-        CommandStatus getCommandStatus();
+        CommandManager::CommandStatus getCommandStatus();
         uint8_t getPendingCommandCount();
 
         inline void reset()

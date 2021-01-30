@@ -72,8 +72,8 @@ void AsservMain::mainLoop()
     systime_t time = chVTGetSystemTime();
     time += TIME_MS2I(loopPeriod_ms);
     while (true) {
-        int16_t encoderDeltaRight;
-        int16_t encoderDeltaLeft;
+        float encoderDeltaRight;
+        float encoderDeltaLeft;
         m_encoders.getValues(&encoderDeltaRight, &encoderDeltaLeft);
 
         // Mise à jour de la position en polaire

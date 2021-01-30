@@ -34,11 +34,11 @@
 #define MAX_SPEED_MM_PER_SEC (1500)
 
 #define DIST_REGULATOR_KP (3)
-#define DIST_REGULATOR_MAX_ACC (1500)
+#define DIST_REGULATOR_MAX_ACC (1200)
 #define DIST_REGULATOR_MIN_ACC (500)
 #define DIST_REGULATOR_HIGH_SPEED_THRESHOLD (500)
 
-#define ANGLE_REGULATOR_KP (650)
+#define ANGLE_REGULATOR_KP (700)
 #define ANGLE_REGULATOR_MAX_ACC (1500)
 
 float speed_controller_right_Kp[NB_PI_SUBSET] = { 0.1, 0.1, 0.1};
@@ -63,7 +63,7 @@ Goto::GotoConfiguration preciseGotoConf  = {COMMAND_MANAGER_GOTO_RETURN_THRESHOL
 #define COMMAND_MANAGER_GOTO_WAYPOINT_ARRIVAL_DISTANCE_mm (20)
 Goto::GotoConfiguration waypointGotoConf  = {COMMAND_MANAGER_GOTO_RETURN_THRESHOLD_mm, COMMAND_MANAGER_GOTO_ANGLE_THRESHOLD_RAD, COMMAND_MANAGER_GOTO_WAYPOINT_ARRIVAL_DISTANCE_mm};
 
-GotoNoStop::GotoNoStopConfiguration gotoNoStopConf = {COMMAND_MANAGER_GOTO_ANGLE_THRESHOLD_RAD, (200/DIST_REGULATOR_KP)};
+GotoNoStop::GotoNoStopConfiguration gotoNoStopConf = {COMMAND_MANAGER_GOTO_ANGLE_THRESHOLD_RAD, (100/DIST_REGULATOR_KP)};
 
 Md22::I2cPinInit ESIALCardPinConf_SCL_SDA = {GPIOB, 6, GPIOB, 7};
 
@@ -235,6 +235,7 @@ void asservCommandUSB(BaseSequentialStream *chp, int argc, char **argv)
     auto printUsage = []()
     {
         chprintf(outputStream,"Usage :");
+        chprintf(outputStream," - asserv wheelcalib \r\n");
         chprintf(outputStream," - asserv enablemotor 0|1\r\n");
         chprintf(outputStream," - asserv enablepolar 0|1\r\n");
         chprintf(outputStream," - asserv coders \r\n");
@@ -268,7 +269,74 @@ void asservCommandUSB(BaseSequentialStream *chp, int argc, char **argv)
         return;
     }
 
-    if (!strcmp(argv[0], "wheelspeedstep"))
+    if (!strcmp(argv[0], "wheelcalib"))
+    {
+        unsigned int count = 1;
+        chprintf(outputStream, "Wheel Calibration start\r\n");
+
+        auto alignWithWall = []() -> void
+        {
+            mainAsserv->limitMotorControllerConsignToPercentage(20);
+            mainAsserv->disableAngleRegulator();
+            commandManager->addStraightLine(-1000);
+            chThdSleepSeconds(5);
+            mainAsserv->limitMotorControllerConsignToPercentage(100);
+            mainAsserv->enableAngleRegulator();
+            mainAsserv->reset();
+        };
+
+        auto waitEndOFCommand = []() -> void
+        {
+            do
+            {
+                chThdSleepMilliseconds(50);
+            }
+            while( commandManager->getCommandStatus() != CommandManager::STATUS_IDLE );
+            chThdSleepMilliseconds(500);
+        };
+
+
+        alignWithWall();
+
+        int32_t encoderRightStart = encoders->getRightEncoderTotalCount();
+        int32_t encoderLeftStart =  encoders->getLeftEncoderTotalCount();
+        int32_t startDistance = (encoderRightStart+encoderLeftStart)/2.0;
+        int32_t startAngle = (encoderRightStart-encoderLeftStart);
+
+
+        commandManager->addStraightLine(200);
+        waitEndOFCommand();
+
+        for(unsigned int i=0; i<count; i++)
+        {
+            commandManager->addStraightLine(800);
+            waitEndOFCommand();
+            commandManager->addTurn(M_PI);
+            waitEndOFCommand();
+            commandManager->addStraightLine(800);
+            waitEndOFCommand();
+            commandManager->addTurn(-M_PI);
+            waitEndOFCommand();
+        }
+
+        alignWithWall();
+
+        int32_t encoderRightEnd = encoders->getRightEncoderTotalCount();
+        int32_t encoderLeftEnd =  encoders->getLeftEncoderTotalCount();
+        int32_t deltaDistance = startDistance - ((encoderRightEnd+encoderLeftEnd)/2.0);
+        int32_t deltaAngle = startAngle - (encoderRightEnd-encoderLeftEnd);
+
+        float factor = float(deltaAngle) / float(deltaDistance);
+        float leftGain = (1. + factor) * encoders->getLeftEncoderGain();
+        float rightGain = (1. - factor) * encoders->getRightEncoderGain();
+
+        chprintf(outputStream, "Wheel Calibration done with travel dist : %d step, delta %d steps \r\n", deltaDistance, deltaAngle);
+        chprintf(outputStream, "Suggested factors :\n");
+        chprintf(outputStream, "Left : %.8f (old gain was %f)\n", leftGain, encoders->getLeftEncoderGain());
+        chprintf(outputStream, "Right : %.8f (old gain was %f)\n", rightGain, encoders->getRightEncoderGain());
+
+    }
+    else if (!strcmp(argv[0], "wheelspeedstep"))
     {
         char side = *argv[1];
         float speedGoal = atof(argv[2]);
@@ -390,9 +458,7 @@ void asservCommandUSB(BaseSequentialStream *chp, int argc, char **argv)
     }
     else if (!strcmp(argv[0], "coders"))
     {
-        int32_t encoderRight, encoderLeft;
-        encoders->getEncodersTotalCount(&encoderRight, &encoderLeft);
-        chprintf(outputStream, "Encoders count %d %d \r\n", encoderRight, encoderLeft);
+        chprintf(outputStream, "Encoders count %d %d \r\n", encoders->getRightEncoderTotalCount(), encoders->getLeftEncoderTotalCount());
     }
     else if (!strcmp(argv[0], "reset"))
     {
@@ -443,9 +509,9 @@ void asservCommandUSB(BaseSequentialStream *chp, int argc, char **argv)
 
         commandManager->addGoToNoStop(800, 0);
         commandManager->addGoToNoStop(800, -250);
-        commandManager->addGoToNoStop(50, -250);
-        commandManager->addGoToNoStop(50, 0);
-
+        commandManager->addGoToNoStop(300, -250);
+        commandManager->addGoToNoStop(00, 0);
+        commandManager->addGoToAngle(100, 0);
 
     }
     else if (!strcmp(argv[0], "get_config"))

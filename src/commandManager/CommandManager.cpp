@@ -40,7 +40,6 @@ bool CommandManager::addStraightLine(float valueInmm)
 
     new (ptr) StraitLine(valueInmm, m_straitLineArrivalWindows_mm);
 
-    chprintf(outputStream, "new StraitLine to %x (%f , %f)\r\n", ptr, valueInmm, m_straitLineArrivalWindows_mm);
     return m_cmdList.push();
 }
 
@@ -115,8 +114,9 @@ void CommandManager::resetEmergencyStop()
     m_emergencyStop = false;
 }
 
-CommandStatus CommandManager::getCommandStatus()
+CommandManager::CommandStatus CommandManager::getCommandStatus()
 {
+
     if( m_emergencyStop )
         return STATUS_HALTED;
     else if (m_currentCmd == nullptr)

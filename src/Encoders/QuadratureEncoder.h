@@ -13,9 +13,13 @@ public:
     void start();
     void stop();
 
-    void getEncodersTotalCount(int32_t *encoderRight, int32_t *encoderLeft);
+    int32_t getRightEncoderTotalCount() { return m_encoderRSum;};
+    int32_t getLeftEncoderTotalCount() {return m_encoderLSum;};
 
-    virtual void getValues(int16_t *deltaEncoderRight, int16_t *deltaEncoderLeft);
+    float getRightEncoderGain() { return m_encoderRGain; };
+    float getLeftEncoderGain() { return m_encoderLGain; };
+
+    virtual void getValues(float *deltaEncoderRight, float *deltaEncoderLeft);
 
 private:
     bool m_invertEncoderL;
@@ -24,6 +28,8 @@ private:
     int32_t m_encoderRSum;
     int16_t m_encoder1Previous;
     int16_t m_encoder2Previous;
+    float m_encoderLGain;
+    float m_encoderRGain;
     bool m_is1EncoderRight;
 };
 
