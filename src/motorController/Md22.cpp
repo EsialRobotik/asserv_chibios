@@ -11,7 +11,7 @@ constexpr uint8_t accReg = 0x03;
 
 constexpr uint8_t controlMode = 0x01; // Wanted value for mode register. Ie: -128 (full reverse)   0 (stop)   127 (full forward).
 
- Md22::Md22(bool is1motorRight, bool invertMotorRight, bool invertMotorLeft, I2cPinInit *i2cPins, uint32_t i2cFrequency) :
+ Md22::Md22(I2cPinInit *i2cPins, bool is1motorRight, bool invertMotorRight, bool invertMotorLeft, uint32_t i2cFrequency) :
         MotorController()
 {
     m_i2cPinConf = *i2cPins;
@@ -39,6 +39,7 @@ void Md22::init()
     palSetPadMode(m_i2cPinConf.GPIObaseSDA, m_i2cPinConf.pinNumberSDA,
             PAL_MODE_ALTERNATE(4) | PAL_STM32_OTYPE_OPENDRAIN);
 
+    //chThdSleepMilliseconds(500);
     i2cStart(&I2CD1, &m_i2cconfig);
 
     // When the stm32 and the Md22 are powered on at the same time,

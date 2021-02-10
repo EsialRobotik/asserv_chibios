@@ -68,8 +68,9 @@ Goto::GotoConfiguration waypointGotoConf  = {COMMAND_MANAGER_GOTO_RETURN_THRESHO
 
 GotoNoStop::GotoNoStopConfiguration gotoNoStopConf = {COMMAND_MANAGER_GOTO_ANGLE_THRESHOLD_RAD, (200/DIST_REGULATOR_KP)};
 
-//Md22::I2cPinInit PMXCardPinConf_SCL_SDA = { GPIOB, 8, GPIOB, 9 };
-Md22::I2cPinInit PMXCardPinConf_SCL_SDA = {GPIOB, 6, GPIOB, 7};
+Md22::I2cPinInit md22PMXCardPinConf_SCL_SDA = {GPIOB, 6, GPIOB, 7};
+QuadratureEncoder::GpioPinInit qePMXCardPinConf_E1ch1_E1ch2_E2ch1_E2ch2 = {GPIOC, 6, GPIOA, 7, GPIOA, 5, GPIOB, 9};
+
 QuadratureEncoder *encoders;
 MagEncoders *encoders_ext;
 Md22 *md22MotorController;
@@ -95,8 +96,8 @@ AsservMain *mainAsserv;
 
 static void initAsserv()
 {
-    md22MotorController= new Md22(false, true, true, &PMXCardPinConf_SCL_SDA, 400000);
-    encoders = new QuadratureEncoder(false, true, false);
+    md22MotorController= new Md22(&md22PMXCardPinConf_SCL_SDA, false, true, true, 100000); //100k ou 400k
+    encoders = new QuadratureEncoder(&qePMXCardPinConf_E1ch1_E1ch2_E2ch1_E2ch2, false, true, false);
     encoders_ext= new MagEncoders(false, false, true);
 
 

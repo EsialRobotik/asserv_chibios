@@ -16,7 +16,7 @@ public:
         uint8_t pinNumberSDA;
     };
 
-    explicit Md22(bool is1motorRight, bool invertMotorRight, bool invertMotorLeft, I2cPinInit *i2cPins, uint32_t i2cFrequency);
+    explicit Md22(I2cPinInit *i2cPins, bool is1motorRight, bool invertMotorRight, bool invertMotorLeft, uint32_t i2cFrequency);
     virtual ~Md22() {};
 
     void init();
