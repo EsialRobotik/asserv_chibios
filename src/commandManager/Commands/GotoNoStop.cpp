@@ -27,8 +27,7 @@ void GotoNoStop::computeInitialConsign(float X_mm, float Y_mm, float theta_rad, 
    if(deltaDist < m_configuration->lowSpeedDistanceConsign_mm)
    {
        /* If the distance is lower than lowSpeedDistanceConsign_mm,
-        *  it means that the next point isn't a nostop point, so we need go precisely to the goal.
-        *  For this, use a classic goto
+        *  We want to go precisely to the goal, use a classic goto algorithm
         */
        float projectedDist = deltaDist * cosf(deltaTheta);
        if (deltaDist < m_gotoConfiguration->gotoReturnThreshold_mm)
@@ -112,7 +111,7 @@ void GotoNoStop::computeConsignOnCircle(float X_mm, float Y_mm, float radius_mm,
 
         // ... then find the angle between the previous linear function and a linear function y=0x+X_mm (parallel to the x abscissa)
         // see https://fr.wikipedia.org/wiki/Propri%C3%A9t%C3%A9s_m%C3%A9triques_des_droites_et_des_plans#Angles_de_deux_droites
-        angle = atanf(abs(slope));
+        angle = atanf(fabs(slope));
     }
 
     // Correct the angle if we are in the left side of the trigonometric circle
