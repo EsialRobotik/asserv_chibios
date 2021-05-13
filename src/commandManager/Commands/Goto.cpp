@@ -9,7 +9,7 @@ Goto::Goto(float consignX_mm, float consignY_mm,
         GotoConfiguration const *configuration,
         float backwardMode)
 : m_consignX_mm(consignX_mm), m_consignY_mm(consignY_mm),
-  m_configuration(configuration)
+  m_configuration(configuration), m_alignOnly(false)
 {
     if( backwardMode)
         m_backModeCorrection = -1;
@@ -28,9 +28,28 @@ void Goto::computeInitialConsign(float X_mm, float Y_mm, float theta_rad, float 
    // La différence entre le thetaCible (= cap à atteindre) et le theta (= cap actuel du robot) donne l'angle à parcourir
    float deltaTheta = computeDeltaTheta(m_backModeCorrection*deltaX, m_backModeCorrection*deltaY, theta_rad);
 
-   //TODO JGU: Fix pour ne pas se retourner après avoir dépassé un point sur un overshoot!
-   //    mais y'a un bug, si le point est proche mais sur le coté, on va juste avancer !!!!
+   // Si on veut aller au prochain, mais qu'il est trop proche, on essaye d'abord de s'alligner ! 
    if (deltaDist < m_configuration->gotoReturnThreshold_mm)
+   {
+       m_alignOnly = true;
+   }
+
+    updateConsign( X_mm, Y_mm, theta_rad, distanceConsig, angleConsign, angle_regulator, distance_regulator);
+}
+
+void Goto::updateConsign(float X_mm, float Y_mm, float theta_rad, float *distanceConsig, float *angleConsign, const Regulator &angle_regulator, const Regulator &distance_regulator)
+{
+   float deltaX = m_consignX_mm - X_mm;
+   float deltaY = m_consignY_mm - Y_mm;
+
+   // Valeur absolue de la distance à parcourir en allant tout droit pour atteindre la consigne
+   float deltaDist = computeDeltaDist(deltaX, deltaY);
+
+   // La différence entre le thetaCible (= cap à atteindre) et le theta (= cap actuel du robot) donne l'angle à parcourir
+   float deltaTheta = computeDeltaTheta(m_backModeCorrection*deltaX, m_backModeCorrection*deltaY, theta_rad);
+
+   //  Si la distance est faible, on ne s'asservit plus qu'en distance en partant du principe qu'on est assez alligné.
+   if (deltaDist < m_configuration->gotoReturnThreshold_mm && !m_alignOnly)
    {
        float projectedDist = deltaDist * cosf(deltaTheta);
        *distanceConsig = distance_regulator.getAccumulator() + m_backModeCorrection*projectedDist ;
@@ -40,17 +59,14 @@ void Goto::computeInitialConsign(float X_mm, float Y_mm, float theta_rad, float 
        *angleConsign = angle_regulator.getAccumulator() + deltaTheta;
 
        if (fabs(deltaTheta) < m_configuration->gotoAngleThreshold_rad)
+       {
            *distanceConsig = distance_regulator.getAccumulator() + m_backModeCorrection*deltaDist;
+           m_alignOnly = false;
+       }
    }
 
    USBStream::instance()->setXGoal(m_consignX_mm);
-   USBStream::instance()->setYGoal(m_consignY_mm);
-}
-
-void Goto::updateConsign(float X_mm, float Y_mm, float theta_rad, float *distanceConsig, float *angleConsign, const Regulator &angle_regulator, const Regulator &distance_regulator)
-{
-    return computeInitialConsign(X_mm, Y_mm, theta_rad, distanceConsig, angleConsign, angle_regulator, distance_regulator);
-}
+   USBStream::instance()->setYGoal(m_consignY_mm);}
 
 bool Goto::isGoalReached(float X_mm, float Y_mm, float , const Regulator &, const Regulator &, const Command* )
 {
