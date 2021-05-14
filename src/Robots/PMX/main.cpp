@@ -25,34 +25,34 @@
 
 #define ENABLE_SHELL
 
-#define ASSERV_THREAD_FREQUENCY (300)
+#define ASSERV_THREAD_FREQUENCY (200) //200=>5ms 300=>3ms
 #define ASSERV_THREAD_PERIOD_S (1.0/ASSERV_THREAD_FREQUENCY)
 #define ASSERV_POSITION_DIVISOR (5)
 
-#define ENCODERS_WHEELS_RADIUS_MM (31.83/2.0)
-#define ENCODERS_WHEELS_DISTANCE_MM (268.5)
-#define ENCODERS_TICKS_BY_TURN (1024*4)
+#define ENCODERS_WHEELS_RADIUS_MM (40.0/2.0) // le rayon de vos roues codeuses
+#define ENCODERS_WHEELS_DISTANCE_MM (235) //distance entre les 2 roues codeuses
+#define ENCODERS_TICKS_BY_TURN (16384) //nombre de ticks par tour de vos encodeurs.
 
-#define MAX_SPEED_MM_PER_SEC (1200)
+#define MAX_SPEED_MM_PER_SEC (900)
 
-#define DIST_REGULATOR_KP (3.2)
-#define DIST_REGULATOR_MAX_ACC (1200)
+#define DIST_REGULATOR_KP (1.95)
+#define DIST_REGULATOR_MAX_ACC (900)
 #define DIST_REGULATOR_MIN_ACC (500)
 #define DIST_REGULATOR_HIGH_SPEED_THRESHOLD (500)
 
 
-#define ANGLE_REGULATOR_KP (700)
-#define ANGLE_REGULATOR_MAX_ACC (1500)
+#define ANGLE_REGULATOR_KP (400) //480
+#define ANGLE_REGULATOR_MAX_ACC (900)
 
-float speed_controller_right_Kp[NB_PI_SUBSET] = { 0.1, 0.1, 0.1};
-float speed_controller_right_Ki[NB_PI_SUBSET] = { 1.0, 0.8, 0.6};
+float speed_controller_right_Kp[NB_PI_SUBSET] = { 0.3, 0.2, 0.1};
+float speed_controller_right_Ki[NB_PI_SUBSET] = { 3.0, 4.2, 1.5};
 float speed_controller_right_SpeedRange[NB_PI_SUBSET] = { 20, 50, 60};
 
-float speed_controller_left_Kp[NB_PI_SUBSET] = { 0.1, 0.1, 0.1};
-float speed_controller_left_Ki[NB_PI_SUBSET] = { 1.0, 0.8, 0.6};
+float speed_controller_left_Kp[NB_PI_SUBSET] = { 0.3, 0.2, 0.1}; //0.08
+float speed_controller_left_Ki[NB_PI_SUBSET] = { 3.0, 4.2, 1.5}; //1.0
 float speed_controller_left_SpeedRange[NB_PI_SUBSET] = { 20, 50, 60};
 
-#define PLL_BANDWIDTH (150)
+#define PLL_BANDWIDTH (100) //verifpour garder un minimum de variation sur la vitesse
 
 
 #define COMMAND_MANAGER_ARRIVAL_ANGLE_THRESHOLD_RAD (0.02)
@@ -96,9 +96,9 @@ AsservMain *mainAsserv;
 
 static void initAsserv()
 {
-    md22MotorController= new Md22(&md22PMXCardPinConf_SCL_SDA, false, true, true, 100000); //100k ou 400k
+    md22MotorController= new Md22(&md22PMXCardPinConf_SCL_SDA, false, false, false, 400000); //100k ou 400k
     encoders = new QuadratureEncoder(&qePMXCardPinConf_E1ch1_E1ch2_E2ch1_E2ch2, false, true, false);
-    encoders_ext= new MagEncoders(false, false, true);
+    encoders_ext = new MagEncoders(false, false, true);
 
 
     angleRegulator = new Regulator(ANGLE_REGULATOR_KP, MAX_SPEED_MM_PER_SEC);
@@ -122,13 +122,15 @@ static void initAsserv()
 
     mainAsserv = new AsservMain( ASSERV_THREAD_FREQUENCY, ASSERV_POSITION_DIVISOR,
                            ENCODERS_WHEELS_RADIUS_MM, ENCODERS_WHEELS_DISTANCE_MM, ENCODERS_TICKS_BY_TURN,
-                           *commandManager, *md22MotorController, *encoders, *odometry,
+                           *commandManager, *md22MotorController, *encoders_ext, *odometry,
                            *angleRegulator, *distanceRegulator,
                            *angleAccelerationlimiter, *distanceAccelerationLimiter,
                            *speedControllerRight, *speedControllerLeft,
                            *rightPll, *leftPll);
 }
 
+BaseSequentialStream *outputStream;
+BaseSequentialStream *outputStreamSd4;
 
 
 /*
@@ -144,14 +146,28 @@ static THD_FUNCTION(AsservThread, arg)
     (void) arg;
     chRegSetThreadName("AsservThread");
 
+
     md22MotorController->init();
+
     encoders->init();
     encoders->start();
+
+    encoders_ext->init();
+    encoders_ext->start();
+
     USBStream::init();
 
     chBSemSignal(&asservStarted_semaphore);
 
     mainAsserv->mainLoop();
+
+//    while (true)
+//    {
+//        palClearPad(GPIOA, GPIOA_ARD_D12);
+//        chThdSleepMilliseconds(200);
+//        palSetPad(GPIOA, GPIOA_ARD_D12);
+//        chThdSleepMilliseconds(200);
+//    }
 }
 
 
@@ -168,30 +184,36 @@ void asservCommandUSB(BaseSequentialStream *chp, int argc, char **argv);
 void asservCommandSerial();
 
 
-BaseSequentialStream *outputStream;
+
 int main(void)
 {
+
     halInit();
     chSysInit();
+    //Config des PINs pour LEDs
+    palSetPadMode(GPIOA, 6, PAL_MODE_OUTPUT_PUSHPULL );
+    palSetPadMode(GPIOA, 9, PAL_MODE_OUTPUT_PUSHPULL );
 
-    initAsserv();
+    //init de l'USB debug
+    sdStart(&SD2, NULL);
+    outputStream = reinterpret_cast<BaseSequentialStream*>(&SD2);
 
-    //config UART4
+    //config UART4 for raspIO
     palSetPadMode(GPIOA, 0, PAL_MODE_ALTERNATE(8));
     palSetPadMode(GPIOA, 1, PAL_MODE_ALTERNATE(8));
     sdStart(&SD4, NULL);
     BaseSequentialStream *outputStreamSd4 = reinterpret_cast<BaseSequentialStream*>(&SD4);
-
     chprintf(outputStreamSd4,"Test :\r\n");
 
-    sdStart(&SD2, NULL);
-    shellInit();
+    //creation de tous les objets
+    initAsserv();
 
     chBSemObjectInit(&asservStarted_semaphore, true);
     chThdCreateStatic(waAsservThread, sizeof(waAsservThread), HIGHPRIO, AsservThread, NULL);
     chBSemWait(&asservStarted_semaphore);
 
-    outputStream = reinterpret_cast<BaseSequentialStream*>(&SD2);
+
+    shellInit();
 
     // Custom commands
     const ShellCommand shellCommands[] = { { "asserv", &(asservCommandUSB) }, { nullptr, nullptr } };
@@ -235,12 +257,17 @@ int main(void)
     deactivateHeapAllocation();
 
     chThdSetPriority(LOWPRIO);
+
     while (true)
     {
-        palClearPad(GPIOA, GPIOA_LED_GREEN);
-        chThdSleepMilliseconds(250);
-        palSetPad(GPIOA, GPIOA_LED_GREEN);
-        chThdSleepMilliseconds(250);
+        palClearPad(GPIOA, GPIOA_ARD_D8);
+        palClearPad(GPIOA, GPIOA_ARD_D12);
+        chThdSleepMilliseconds(1000);
+        palSetPad(GPIOA, GPIOA_ARD_D8);
+        palSetPad(GPIOA, GPIOA_ARD_D12);
+        chThdSleepMilliseconds(1000);
+
+
     }
 }
 
@@ -253,6 +280,7 @@ void asservCommandUSB(BaseSequentialStream *chp, int argc, char **argv)
         chprintf(outputStream," - asserv enablemotor 0|1\r\n");
         chprintf(outputStream," - asserv enablepolar 0|1\r\n");
         chprintf(outputStream," - asserv coders \r\n");
+        chprintf(outputStream," - asserv ext (coders) \r\n");
         chprintf(outputStream," - asserv reset \r\n");
         chprintf(outputStream," - asserv motorspeed [r|l] speed \r\n");
         chprintf(outputStream," -------------- \r\n");
@@ -329,7 +357,7 @@ void asservCommandUSB(BaseSequentialStream *chp, int argc, char **argv)
         char side = *argv[1];
         float Kp = atof(argv[2]);
         float Ki = atof(argv[3]);
-        uint8_t range = atof(argv[4]);;
+        uint8_t range = atof(argv[4]);
 
         chprintf(outputStream, "setting speed control Kp:%.2f Ki:%.2f range:%d to side %c \r\n", Kp, Ki, range, side);
 
@@ -405,12 +433,21 @@ void asservCommandUSB(BaseSequentialStream *chp, int argc, char **argv)
     }
     else if (!strcmp(argv[0], "coders"))
     {
+        float deltaEncoderRight;
+        float deltaEncoderLeft;
+        encoders->getValues(&deltaEncoderRight, &deltaEncoderLeft);
+        chprintf(outputStream, "Encoders count R %d L %d \r\n", encoders->getRightEncoderTotalCount(), encoders->getLeftEncoderTotalCount());
 
-        chprintf(outputStream, "Encoders count %d %d \r\n", encoders->getRightEncoderTotalCount(), encoders->getLeftEncoderTotalCount());
-        //int32_t encoderRight, encoderLeft;
-        //encoders->getEncodersTotalCount(&encoderRight, &encoderLeft);
-        //chprintf(outputStream, "Encoders count %d %d \r\n", encoderRight, encoderLeft);
     }
+    else if (!strcmp(argv[0], "ext"))
+        {
+            float deltaEncoderRight;
+            float deltaEncoderLeft;
+            int32_t encoderRight, encoderLeft;
+            encoders_ext->getValues(&deltaEncoderRight, &deltaEncoderLeft);
+            encoders_ext->getEncodersTotalCount(&encoderRight, &encoderLeft);
+            chprintf(outputStream, "Encoders count R %d  L %d \r\n", encoderRight, encoderLeft);
+        }
     else if (!strcmp(argv[0], "reset"))
     {
         mainAsserv->reset();

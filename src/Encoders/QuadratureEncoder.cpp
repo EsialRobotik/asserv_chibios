@@ -70,6 +70,11 @@ void QuadratureEncoder::start()
 {
     qeiEnable (&QEID3);
     qeiEnable (&QEID2);
+    m_encoder1Previous = qeiGetCount(&QEID3);
+    m_encoder2Previous = qeiGetCount(&QEID2);
+    m_encoderRSum = 0;
+    m_encoderLSum = 0;
+
 }
 
 void QuadratureEncoder::stop()
