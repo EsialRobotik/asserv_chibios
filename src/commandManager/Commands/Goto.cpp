@@ -25,9 +25,6 @@ void Goto::computeInitialConsign(float X_mm, float Y_mm, float theta_rad, float 
    // Valeur absolue de la distance à parcourir en allant tout droit pour atteindre la consigne
    float deltaDist = computeDeltaDist(deltaX, deltaY);
 
-   // La différence entre le thetaCible (= cap à atteindre) et le theta (= cap actuel du robot) donne l'angle à parcourir
-   float deltaTheta = computeDeltaTheta(m_backModeCorrection*deltaX, m_backModeCorrection*deltaY, theta_rad);
-
    // Si on veut aller au prochain, mais qu'il est trop proche, on essaye d'abord de s'alligner ! 
    if (deltaDist < m_configuration->gotoReturnThreshold_mm)
    {
