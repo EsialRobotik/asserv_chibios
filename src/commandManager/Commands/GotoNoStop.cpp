@@ -27,8 +27,7 @@ void GotoNoStop::computeInitialConsign(float X_mm, float Y_mm, float theta_rad, 
    if(deltaDist < m_configuration->lowSpeedDistanceConsign_mm)
    {
        /* If the distance is lower than lowSpeedDistanceConsign_mm,
-        *  it means that the next point isn't a nostop point, so we need go precisely to the goal.
-        *  For this, use a classic goto
+        *  We want to go precisely to the goal, use a classic goto algorithm
         */
        float projectedDist = deltaDist * cosf(deltaTheta);
        if (deltaDist < m_gotoConfiguration->gotoReturnThreshold_mm)
@@ -51,6 +50,14 @@ void GotoNoStop::computeInitialConsign(float X_mm, float Y_mm, float theta_rad, 
         */
        *angleConsign = angle_regulator.getAccumulator() + deltaTheta;
        *distanceConsig = distance_regulator.getAccumulator() + deltaDist;
+   }
+   else if (fabs(deltaTheta) > m_configuration->tooBigAngleThreshold_rad)
+   {
+        /*  Here we are absolutly not pointing to the right direction (the goal is behind the robot for example)
+        *   just compute a angle consign.
+        *   A distance consign will generate a big overshot to the trajectory
+        */
+        *angleConsign = angle_regulator.getAccumulator() + deltaTheta;
    }
    else
    {

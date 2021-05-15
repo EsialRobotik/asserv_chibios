@@ -65,6 +65,17 @@ bool CommandManager::addGoTo(float posXInmm, float posYInmm)
     return true;
 }
 
+bool CommandManager::addGoToWaypoint(float posXInmm, float posYInmm)
+{
+    Command *ptr = m_cmdList.getFree();
+    if(ptr == nullptr)
+        return false;
+
+    new (ptr) Goto(posXInmm, posYInmm, &m_waypointGotoConfiguration);
+    m_cmdList.push();
+    return true;
+}
+
 bool CommandManager::addGoToBack(float posXInmm, float posYInmm)
 {
     Command *ptr = m_cmdList.getFree();

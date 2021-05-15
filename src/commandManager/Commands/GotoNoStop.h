@@ -11,6 +11,7 @@ class GotoNoStop : public Command
         struct GotoNoStopConfiguration
         {
             float gotoAngleThreshold_rad;
+            float tooBigAngleThreshold_rad;
             float lowSpeedDistanceConsign_mm;
         };
 

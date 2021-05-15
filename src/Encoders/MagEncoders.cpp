@@ -61,8 +61,8 @@ void MagEncoders::init()
     chprintf(outputStream, "1.0x%02x agc=%d diag=%d mag=%d raw=%d\r\n", m_mysensor1.chipAddress(), agc, diag, mag, raw);
 //}
     chDbgAssert((diag == 1), "init() m_mysensor1 MagEncoders - getAllData (diag != 1) NOK\r\n");
-    chDbgAssert((agc >= 30 && agc <= 75),
-            "init() m_mysensor1 MagEncoders - getAllData (agc >= 30 && agc <= 75) NOK\r\n");
+    chDbgAssert((agc >= 30 && agc <= 79),
+            "init() m_mysensor1 MagEncoders - getAllData (agc >= 30 && agc <= 79) NOK\r\n");
 
 
     int connect2 = m_mysensor2.begin();

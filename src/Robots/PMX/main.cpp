@@ -29,11 +29,11 @@
 #define ASSERV_THREAD_PERIOD_S (1.0/ASSERV_THREAD_FREQUENCY)
 #define ASSERV_POSITION_DIVISOR (5)
 
-#define ENCODERS_WHEELS_RADIUS_MM (40.0/2.0) // le rayon de vos roues codeuses
-#define ENCODERS_WHEELS_DISTANCE_MM (235) //distance entre les 2 roues codeuses
+#define ENCODERS_WHEELS_RADIUS_MM (39.93/2.0) // le rayon de vos roues codeuses 39.88, 39.93
+#define ENCODERS_WHEELS_DISTANCE_MM (234.4) //distance entre les 2 roues codeuses
 #define ENCODERS_TICKS_BY_TURN (16384) //nombre de ticks par tour de vos encodeurs.
 
-#define MAX_SPEED_MM_PER_SEC (900)
+#define MAX_SPEED_MM_PER_SEC (1500)
 
 #define DIST_REGULATOR_KP (1.95)
 #define DIST_REGULATOR_MAX_ACC (900)
@@ -57,16 +57,17 @@ float speed_controller_left_SpeedRange[NB_PI_SUBSET] = { 20, 50, 60};
 
 #define COMMAND_MANAGER_ARRIVAL_ANGLE_THRESHOLD_RAD (0.02)
 #define COMMAND_MANAGER_ARRIVAL_DISTANCE_THRESHOLD_mm (2.5)
-#define COMMAND_MANAGER_GOTO_ANGLE_THRESHOLD_RAD (M_PI/8)
-#define COMMAND_MANAGER_GOTO_RETURN_THRESHOLD_mm (20)
 
+#define COMMAND_MANAGER_GOTO_RETURN_THRESHOLD_mm (20)
+#define COMMAND_MANAGER_GOTO_ANGLE_THRESHOLD_RAD (M_PI/8)
 #define COMMAND_MANAGER_GOTO_PRECISE_ARRIVAL_DISTANCE_mm (3)
 Goto::GotoConfiguration preciseGotoConf  = {COMMAND_MANAGER_GOTO_RETURN_THRESHOLD_mm, COMMAND_MANAGER_GOTO_ANGLE_THRESHOLD_RAD, COMMAND_MANAGER_GOTO_PRECISE_ARRIVAL_DISTANCE_mm};
 
 #define COMMAND_MANAGER_GOTO_WAYPOINT_ARRIVAL_DISTANCE_mm (20)
 Goto::GotoConfiguration waypointGotoConf  = {COMMAND_MANAGER_GOTO_RETURN_THRESHOLD_mm, COMMAND_MANAGER_GOTO_ANGLE_THRESHOLD_RAD, COMMAND_MANAGER_GOTO_WAYPOINT_ARRIVAL_DISTANCE_mm};
 
-GotoNoStop::GotoNoStopConfiguration gotoNoStopConf = {COMMAND_MANAGER_GOTO_ANGLE_THRESHOLD_RAD, (200/DIST_REGULATOR_KP)};
+#define COMMAND_MANAGER_GOTONOSTOP_TOO_BIG_ANGLE_THRESHOLD_RAD (M_PI/2)
+GotoNoStop::GotoNoStopConfiguration gotoNoStopConf = {COMMAND_MANAGER_GOTO_ANGLE_THRESHOLD_RAD, COMMAND_MANAGER_GOTONOSTOP_TOO_BIG_ANGLE_THRESHOLD_RAD, (100/DIST_REGULATOR_KP)};
 
 Md22::I2cPinInit md22PMXCardPinConf_SCL_SDA = {GPIOB, 6, GPIOB, 7};
 QuadratureEncoder::GpioPinInit qePMXCardPinConf_E1ch1_E1ch2_E2ch1_E2ch2 = {GPIOC, 6, GPIOA, 7, GPIOA, 5, GPIOB, 9};
@@ -381,7 +382,7 @@ void asservCommandUSB(BaseSequentialStream *chp, int argc, char **argv)
         chprintf(outputStream, "setting distance acceleration limiter max %.2f min %.2f threshold %.2f \r\n", acc_max, acc_min, acc_threshold);
 
         distanceAccelerationLimiter->setMaxAcceleration(acc_max);
-        distanceAccelerationLimiter->setMaxAcceleration(acc_min);
+        distanceAccelerationLimiter->setMinAcceleration(acc_min);
         distanceAccelerationLimiter->setHighSpeedThreshold(acc_threshold);
     }
     else if (!strcmp(argv[0], "addangle"))
@@ -485,10 +486,12 @@ void asservCommandUSB(BaseSequentialStream *chp, int argc, char **argv)
     else if (!strcmp(argv[0], "gototest"))
     {
         mainAsserv->resetToNormalMode();
-        commandManager->addGoToNoStop(200, -200);
-        commandManager->addGoToNoStop(200, -400);
-        commandManager->addGoToNoStop(400, -400);
-
+        mainAsserv->limitMotorControllerConsignToPercentage(50);
+        commandManager->addGoToNoStop(200, 200);
+        commandManager->addGoToNoStop(300, 400);
+        commandManager->addGoToNoStop(200, -100);
+        commandManager->addGoTo(0, 0);
+        commandManager->addGoToAngle(100,0);
 
     }
     else if (!strcmp(argv[0], "get_config"))
