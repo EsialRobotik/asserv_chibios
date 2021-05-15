@@ -23,7 +23,7 @@
 #include "Pll.h"
 #include "Encoders/MagEncoders.h"
 
-#define ENABLE_SHELL
+//#define ENABLE_SHELL
 
 #define ASSERV_THREAD_FREQUENCY (200) //200=>5ms 300=>3ms
 #define ASSERV_THREAD_PERIOD_S (1.0/ASSERV_THREAD_FREQUENCY)
@@ -174,6 +174,8 @@ static THD_FUNCTION(AsservThread, arg)
 
 THD_WORKING_AREA(wa_shell, 2048);
 THD_WORKING_AREA(wa_controlPanel, 256);
+THD_WORKING_AREA(wa_shell_serie, 2048);
+THD_WORKING_AREA(wa_controlPanel_serie, 256);
 THD_FUNCTION(ControlPanelThread, p);
 
 char history_buffer[SHELL_MAX_HIST_BUFF];
@@ -203,8 +205,8 @@ int main(void)
     palSetPadMode(GPIOA, 0, PAL_MODE_ALTERNATE(8));
     palSetPadMode(GPIOA, 1, PAL_MODE_ALTERNATE(8));
     sdStart(&SD4, NULL);
-    BaseSequentialStream *outputStreamSd4 = reinterpret_cast<BaseSequentialStream*>(&SD4);
-    chprintf(outputStreamSd4,"Test :\r\n");
+    outputStreamSd4 = reinterpret_cast<BaseSequentialStream*>(&SD4);
+    chprintf(outputStreamSd4,"Start OK\r\n");
 
     //creation de tous les objets
     initAsserv();
@@ -238,6 +240,7 @@ int main(void)
 #endif
     if (startShell)
     {
+
         thread_t *shellThd = chThdCreateStatic(wa_shell, sizeof(wa_shell), LOWPRIO, shellThread, &shellCfg);
         chRegSetThreadNameX(shellThd, "shell");
 
@@ -247,11 +250,20 @@ int main(void)
     }
     else
     {
-        thread_t *asserCmdSerialThread = chThdCreateStatic(wa_shell, sizeof(wa_shell), LOWPRIO, asservCommandSerial, nullptr);
+
+        thread_t *shellThd = chThdCreateStatic(wa_shell, sizeof(wa_shell), LOWPRIO, shellThread, &shellCfg);
+        chRegSetThreadNameX(shellThd, "shell");
+
+        // Le thread controlPanel n'a de sens que quand le shell tourne
+        thread_t *controlPanelThd = chThdCreateStatic(wa_controlPanel, sizeof(wa_controlPanel), LOWPRIO, ControlPanelThread, nullptr);
+        chRegSetThreadNameX(controlPanelThd, "controlPanel");
+
+
+        thread_t *asserCmdSerialThread = chThdCreateStatic(wa_shell_serie, sizeof(wa_shell_serie), LOWPRIO, asservCommandSerial, nullptr);
         chRegSetThreadNameX(asserCmdSerialThread, "asserv Command serial");
 
-        thread_t *controlPanelThd = chThdCreateStatic(wa_controlPanel, sizeof(wa_controlPanel), LOWPRIO, asservPositionSerial, nullptr);
-        chRegSetThreadNameX(controlPanelThd, "asserv position update serial");
+        thread_t *controlPanelThdSerial = chThdCreateStatic(wa_controlPanel_serie, sizeof(wa_controlPanel_serie), LOWPRIO, asservPositionSerial, nullptr);
+        chRegSetThreadNameX(controlPanelThdSerial, "asserv position update serial");
 
     }
 

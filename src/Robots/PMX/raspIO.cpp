@@ -18,12 +18,14 @@
 #include "commandManager/CommandManager.h"
 #include "motorController/Md22.h"
 #include "util/asservMath.h"
-extern BaseSequentialStream *outputStream;
+
 extern Odometry *odometry;
 extern AsservMain *mainAsserv;
 extern Md22 *md22MotorController;
 extern CommandManager *commandManager;
 
+extern BaseSequentialStream *outputStream;
+extern BaseSequentialStream *outputStreamSd4;
 
 static void serialReadLine(char *buffer, unsigned int buffer_size)
 {
@@ -79,8 +81,8 @@ THD_FUNCTION(asservCommandSerial, p)
     float consigneValue2 = 0;
     float consigneValue3 = 0;
     char buffer[64];
-
-    chprintf(outputStream, "Started\r\n");
+    //chprintf(outputStream, "Started\r\n");
+    chprintf(outputStreamSd4, "Started\r\n");
 
 
     while(true)
@@ -92,7 +94,7 @@ THD_FUNCTION(asservCommandSerial, p)
         case 'h': //Arrêt d'urgence
             mainAsserv->setEmergencyStop();
             serialReadLine(buffer, sizeof(buffer));
-            chprintf(outputStream, "Arrêt d'urgence ! \r\n");
+            chprintf(outputStreamSd4, "Arrêt d'urgence ! \r\n");
             break;
 
         case 'r': //Reset de l'arrêt d'urgence
@@ -102,22 +104,22 @@ THD_FUNCTION(asservCommandSerial, p)
 
         case 'z':
             // Go 20cm
-            chprintf(outputStream, "consigne avant : 200mm\n");
+            chprintf(outputStreamSd4, "consigne avant : 200mm\n");
             commandManager->addStraightLine(200);
             break;
 
         case 's':
-            chprintf(outputStream, "consigne arrière : 200mm\n");
+            chprintf(outputStreamSd4, "consigne arrière : 200mm\n");
             commandManager->addStraightLine(-200);
             break;
 
         case 'q':
-            chprintf(outputStream, "consigne gauche : 45°\n");
+            chprintf(outputStreamSd4, "consigne gauche : 45°\n");
             commandManager->addTurn(degToRad(45));
             break;
 
         case 'd':
-            chprintf(outputStream, "consigne gauche : 45°\n");
+            chprintf(outputStreamSd4, "consigne gauche : 45°\n");
              commandManager->addTurn(degToRad(-45));
              break;
 
@@ -158,7 +160,7 @@ THD_FUNCTION(asservCommandSerial, p)
             break;
 
         case 'p': //retourne la Position et l'angle courants du robot
-            chprintf(outputStream, "x%fy%fa%fs%d\r\n",
+            chprintf(outputStreamSd4, "x%fy%fa%fs%d\r\n",
                     odometry->getX(), odometry->getY(), odometry->getTheta(),
                     commandManager->getCommandStatus());
             break;
@@ -183,7 +185,7 @@ THD_FUNCTION(asservCommandSerial, p)
 
 
         default:
-            chprintf(outputStream, " - unexpected character\r\n");
+            chprintf(outputStreamSd4, " - unexpected character\r\n");
             break;
         }
     }
@@ -197,7 +199,7 @@ THD_FUNCTION(asservPositionSerial, p)
     time += TIME_MS2I(loopPeriod_ms);
     while(true)
     {
-        chprintf(outputStream, "#%d;%d;%f;%d;%d;%d;%d\r\n",
+        chprintf(outputStreamSd4, "#%d;%d;%f;%d;%d;%d;%d\r\n",
             (int32_t)odometry->getX(), (int32_t)odometry->getY(), odometry->getTheta(),
             commandManager->getCommandStatus(), commandManager->getPendingCommandCount(),
             md22MotorController->getLeftSpeed(), md22MotorController->getRightSpeed());
