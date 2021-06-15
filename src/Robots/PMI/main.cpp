@@ -92,7 +92,7 @@ AsservMain *mainAsserv;
 
 static void initAsserv()
 {
-    encoders = new QuadratureEncoder(true, true, true, 1.0, 1.0 );
+    encoders = new QuadratureEncoder(true, true, true);
     md22MotorController = new Md22(true, true, true, &ESIALCardPinConf_SCL_SDA, 100000);
 
     angleRegulator = new Regulator(ANGLE_REGULATOR_KP, MAX_SPEED_MM_PER_SEC);

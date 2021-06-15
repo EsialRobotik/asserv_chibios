@@ -34,6 +34,7 @@ class CommandManager
         bool addGoToWaypoint(float posXInmm, float posYInmm);
         bool addGoToBack(float posXInmm, float posYInmm);
         bool addGoToNoStop(float posXInmm, float posYInmm);
+        bool addGoToNoStopBack(float posXInmm, float posYInmm);
         bool addGoToAngle(float posXInmm, float posYInmm);
 
         /*

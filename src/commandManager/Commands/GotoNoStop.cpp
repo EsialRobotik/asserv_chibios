@@ -7,10 +7,15 @@
 
 GotoNoStop::GotoNoStop(float consignX_mm, float consignY_mm,
         GotoNoStopConfiguration const *configuration,
-        Goto::GotoConfiguration const *gotoconfiguration)
+        Goto::GotoConfiguration const *gotoconfiguration,
+        float backwardMode)
 : m_consignX_mm(consignX_mm), m_consignY_mm(consignY_mm),
   m_configuration(configuration), m_gotoConfiguration(gotoconfiguration)
 {
+    if( backwardMode)
+        m_backModeCorrection = -1;
+    else
+        m_backModeCorrection = 1;
 }
 
 void GotoNoStop::computeInitialConsign(float X_mm, float Y_mm, float theta_rad, float *distanceConsig, float *angleConsign, const Regulator &angle_regulator, const Regulator &distance_regulator)
@@ -22,7 +27,7 @@ void GotoNoStop::computeInitialConsign(float X_mm, float Y_mm, float theta_rad, 
    float deltaY = m_consignY_mm - Y_mm;
 
    float deltaDist = Goto::computeDeltaDist(deltaX, deltaY);
-   float deltaTheta = Goto::computeDeltaTheta(deltaX, deltaY, theta_rad);
+   float deltaTheta = Goto::computeDeltaTheta(m_backModeCorrection * deltaX, m_backModeCorrection * deltaY, theta_rad);
 
    if(deltaDist < m_configuration->lowSpeedDistanceConsign_mm)
    {
@@ -32,14 +37,14 @@ void GotoNoStop::computeInitialConsign(float X_mm, float Y_mm, float theta_rad, 
        float projectedDist = deltaDist * cosf(deltaTheta);
        if (deltaDist < m_gotoConfiguration->gotoReturnThreshold_mm)
        {
-           *distanceConsig = distance_regulator.getAccumulator() + projectedDist ;
+           *distanceConsig = distance_regulator.getAccumulator() + m_backModeCorrection * projectedDist ;
        }
        else
        {
          *angleConsign = angle_regulator.getAccumulator() + deltaTheta;
 
          if (fabs(deltaTheta) < m_gotoConfiguration->gotoAngleThreshold_rad)
-             *distanceConsig = distance_regulator.getAccumulator() + deltaDist;
+             *distanceConsig = distance_regulator.getAccumulator() + m_backModeCorrection * deltaDist;
        }
 
    }
@@ -49,7 +54,7 @@ void GotoNoStop::computeInitialConsign(float X_mm, float Y_mm, float theta_rad, 
         *    use a basic goto command
         */
        *angleConsign = angle_regulator.getAccumulator() + deltaTheta;
-       *distanceConsig = distance_regulator.getAccumulator() + deltaDist;
+       *distanceConsig = distance_regulator.getAccumulator() + m_backModeCorrection * deltaDist;
    }
    else if (fabs(deltaTheta) > m_configuration->tooBigAngleThreshold_rad)
    {
@@ -70,9 +75,9 @@ void GotoNoStop::computeInitialConsign(float X_mm, float Y_mm, float theta_rad, 
        deltaY = Y_goal - Y_mm;
 
        deltaDist = Goto::computeDeltaDist(deltaX, deltaY);
-       deltaTheta = Goto::computeDeltaTheta(deltaX, deltaY, theta_rad);
+       deltaTheta = Goto::computeDeltaTheta(m_backModeCorrection * deltaX, m_backModeCorrection * deltaY, theta_rad);
        *angleConsign = angle_regulator.getAccumulator() + deltaTheta;
-       *distanceConsig = distance_regulator.getAccumulator() + deltaDist;
+       *distanceConsig = distance_regulator.getAccumulator() + m_backModeCorrection * deltaDist;
 
        USBStream::instance()->setXGoal(X_goal);
        USBStream::instance()->setYGoal(Y_goal);

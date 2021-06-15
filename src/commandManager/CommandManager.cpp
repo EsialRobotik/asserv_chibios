@@ -98,6 +98,17 @@ bool CommandManager::addGoToNoStop(float posXInmm, float posYInmm)
     return true;
 }
 
+bool CommandManager::addGoToNoStopBack(float posXInmm, float posYInmm)
+{
+    Command *ptr = m_cmdList.getFree();
+    if(ptr == nullptr)
+        return false;
+
+    new (ptr) GotoNoStop(posXInmm, posYInmm, &m_gotoNoStopConfiguration, &m_preciseGotoConfiguration, true);
+    m_cmdList.push();
+    return true;
+}
+
 bool CommandManager::addGoToAngle(float posXInmm, float posYInmm)
 {
     Command *ptr = m_cmdList.getFree();

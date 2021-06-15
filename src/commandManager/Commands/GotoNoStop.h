@@ -18,7 +18,8 @@ class GotoNoStop : public Command
 
         explicit GotoNoStop(float consignX_mm, float consignY_mm,
                 GotoNoStopConfiguration const *noStopConfiguration,
-                Goto::GotoConfiguration const *gotoconfiguration);
+                Goto::GotoConfiguration const *gotoconfiguration,
+                float backwardMode = false);
 
         virtual ~GotoNoStop() {};
 
@@ -33,6 +34,8 @@ class GotoNoStop : public Command
 
         float m_consignX_mm;
         float m_consignY_mm;
+
+        float m_backModeCorrection;
 
         GotoNoStopConfiguration const *m_configuration;
         Goto::GotoConfiguration const *m_gotoConfiguration;
