@@ -53,17 +53,6 @@ void QuadratureEncoder::init()
     palSetPadMode(m_gpioPinConf.GPIObaseE2ch2, m_gpioPinConf.pinNumberE2ch2, PAL_MODE_ALTERNATE(1)); //TIM2_chan2
     palSetPadMode(m_gpioPinConf.GPIObaseE2ch1, m_gpioPinConf.pinNumberE2ch1, PAL_MODE_ALTERNATE(1)); //TIM2_chan1
     qeiStart(&QEID2, &qeicfg2);
-//    // Encoder 1
-//    palSetPadMode(GPIOA, 7, PAL_MODE_ALTERNATE(2)); //TIM3_chan2
-//    palSetPadMode(GPIOC, 6, PAL_MODE_ALTERNATE(2)); //TIM3_chan1
-//    qeiStart(&QEID3, &qeicfg1);
-//
-//    // Encoder 2
-//    //palSetPadMode(GPIOA, 1, PAL_MODE_ALTERNATE(1)); //TIM2_chan2
-//    //palSetPadMode(GPIOA, 0, PAL_MODE_ALTERNATE(1)); //TIM2_chan1
-//    palSetPadMode(GPIOA, 5, PAL_MODE_ALTERNATE(1)); //TIM2_chan1
-//    palSetPadMode(GPIOB, 9, PAL_MODE_ALTERNATE(1)); //TIM2_chan2
-//    qeiStart(&QEID2, &qeicfg2);
 }
 
 void QuadratureEncoder::start()
