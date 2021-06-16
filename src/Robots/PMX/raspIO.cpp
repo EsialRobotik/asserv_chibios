@@ -53,7 +53,7 @@ THD_FUNCTION(asservCommandSerial, p)
      h / Halte ! / Arrêt d'urgence ! Le robot est ensuite systématiquement asservi à sa position actuelle. Cela devrait suffire à arrêter le robot correctement. La seule commande acceptée par la suite sera un Reset de l'arrêt d'urgence : toute autre commande sera ignorée.
      r / Reset de l'arrêt d'urgence / Remet le robot dans son fonctionnement normal après un arrêt d'urgence. Les commandes en cours au moment de l'arrêt d'urgence NE sont PAS reprises. Si le robot n'est pas en arrêt d'urgence, cette commande n'a aucun effet.
 
-     p / get Position / Récupère la position et le cap du robot sur la connexion i2c, sous la forme de 3 types float (3 * 4 bytes), avec x, y, et a les coordonnées et l'angle du robot.
+     p / get Position / Récupère la position et le cap du robot, sous la forme de 3 types float (3 * 4 bytes), avec x, y, et a les coordonnées et l'angle du robot.
      S%x#%y#%a\n / set Position / applique la nouvelle position du robot
 
      z / avance de 20 cm
@@ -163,6 +163,9 @@ THD_FUNCTION(asservCommandSerial, p)
             chprintf(outputStreamSd4, "x%fy%fa%fs%d\r\n",
                     odometry->getX(), odometry->getY(), odometry->getTheta(),
                     commandManager->getCommandStatus());
+            chprintf(outputStream, "x%fy%fa%fs%d\r\n",
+                                odometry->getX(), odometry->getY(), odometry->getTheta(),
+                                commandManager->getCommandStatus());
             break;
 
         case 'P': // set la position et l'angle du robot
@@ -183,6 +186,15 @@ THD_FUNCTION(asservCommandSerial, p)
             mainAsserv->limitMotorControllerConsignToPercentage(consigneValue1);
             break;
 
+        case 'I':
+            break;
+
+        case '!':
+            break;
+
+        case 'R':
+            mainAsserv->reset();
+            break;
 
         default:
             chprintf(outputStreamSd4, " - unexpected character\r\n");
@@ -197,14 +209,20 @@ THD_FUNCTION(asservPositionSerial, p)
     const time_conv_t loopPeriod_ms = 100;
     systime_t time = chVTGetSystemTime();
     time += TIME_MS2I(loopPeriod_ms);
+    unsigned int debg = 0;
     while(true)
     {
-        chprintf(outputStreamSd4, "#%d;%d;%f;%d;%d;%d;%d\r\n",
+        chprintf(outputStreamSd4, "#%d;%d;%f;%d;%d;%d;%d;%d\r\n",
             (int32_t)odometry->getX(), (int32_t)odometry->getY(), odometry->getTheta(),
             commandManager->getCommandStatus(), commandManager->getPendingCommandCount(),
-            md22MotorController->getLeftSpeed(), md22MotorController->getRightSpeed());
+            md22MotorController->getLeftSpeed(), md22MotorController->getRightSpeed(), debg);
+//        chprintf(outputStream,    "#%d;%d;%f;%d;%d;%d;%d;%d\r\n",
+//                    (int32_t)odometry->getX(), (int32_t)odometry->getY(), odometry->getTheta(),
+//                    commandManager->getCommandStatus(), commandManager->getPendingCommandCount(),
+//                    md22MotorController->getLeftSpeed(), md22MotorController->getRightSpeed(), debg);
 
         chThdSleepUntil(time);
         time += TIME_MS2I(loopPeriod_ms);
+        debg++;
     }
 }

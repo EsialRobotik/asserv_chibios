@@ -23,7 +23,7 @@
 #include "Pll.h"
 #include "Encoders/MagEncoders.h"
 
-//#define ENABLE_SHELL
+#define ENABLE_SHELL
 
 #define ASSERV_THREAD_FREQUENCY (200) //200=>5ms 300=>3ms
 #define ASSERV_THREAD_PERIOD_S (1.0/ASSERV_THREAD_FREQUENCY)
@@ -128,6 +128,8 @@ static void initAsserv()
                            *angleAccelerationlimiter, *distanceAccelerationLimiter,
                            *speedControllerRight, *speedControllerLeft,
                            *rightPll, *leftPll);
+
+
 }
 
 BaseSequentialStream *outputStream;
@@ -159,6 +161,9 @@ static THD_FUNCTION(AsservThread, arg)
     USBStream::init();
 
     chBSemSignal(&asservStarted_semaphore);
+
+    //desactivation au demarraga
+    mainAsserv->enableMotors(false);
 
     mainAsserv->mainLoop();
 
@@ -239,16 +244,6 @@ int main(void)
     bool startShell = false;
 #endif
     if (startShell)
-    {
-
-        thread_t *shellThd = chThdCreateStatic(wa_shell, sizeof(wa_shell), LOWPRIO, shellThread, &shellCfg);
-        chRegSetThreadNameX(shellThd, "shell");
-
-        // Le thread controlPanel n'a de sens que quand le shell tourne
-        thread_t *controlPanelThd = chThdCreateStatic(wa_controlPanel, sizeof(wa_controlPanel), LOWPRIO, ControlPanelThread, nullptr);
-        chRegSetThreadNameX(controlPanelThd, "controlPanel");
-    }
-    else
     {
 
         thread_t *shellThd = chThdCreateStatic(wa_shell, sizeof(wa_shell), LOWPRIO, shellThread, &shellCfg);
@@ -499,9 +494,23 @@ void asservCommandUSB(BaseSequentialStream *chp, int argc, char **argv)
     {
         mainAsserv->resetToNormalMode();
         mainAsserv->limitMotorControllerConsignToPercentage(50);
-        commandManager->addGoToNoStop(200, 200);
-        commandManager->addGoToNoStop(300, 400);
-        commandManager->addGoToNoStop(200, -100);
+
+
+        commandManager->addGoTo(200, 0);
+        commandManager->addGoTo(300, -50);
+        commandManager->addGoTo(400, 100);
+        commandManager->addGoTo(400, 300);
+        commandManager->addGoTo(0, 300);
+
+        commandManager->addGoTo(0, 0);
+        commandManager->addGoToAngle(100,0);
+
+        commandManager->addGoToNoStop(200, 0);
+        commandManager->addGoToNoStop(300, -50);
+        commandManager->addGoToNoStop(400, 100);
+        commandManager->addGoToNoStop(400, 300);
+        commandManager->addGoToNoStop(0, 300);
+
         commandManager->addGoTo(0, 0);
         commandManager->addGoToAngle(100,0);
 
