@@ -34,9 +34,9 @@
 #define MAX_SPEED_MM_PER_SEC (1500)
 
 #define DIST_REGULATOR_KP (3)
-#define DIST_REGULATOR_MAX_ACC (1200)
+#define DIST_REGULATOR_MAX_ACC (1300)
 #define DIST_REGULATOR_MIN_ACC (500)
-#define DIST_REGULATOR_HIGH_SPEED_THRESHOLD (500)
+#define DIST_REGULATOR_HIGH_SPEED_THRESHOLD (400)
 
 #define ANGLE_REGULATOR_KP (700)
 #define ANGLE_REGULATOR_MAX_ACC (1500)
@@ -63,7 +63,8 @@ Goto::GotoConfiguration preciseGotoConf  = {COMMAND_MANAGER_GOTO_RETURN_THRESHOL
 #define COMMAND_MANAGER_GOTO_WAYPOINT_ARRIVAL_DISTANCE_mm (20)
 Goto::GotoConfiguration waypointGotoConf  = {COMMAND_MANAGER_GOTO_RETURN_THRESHOLD_mm, COMMAND_MANAGER_GOTO_ANGLE_THRESHOLD_RAD, COMMAND_MANAGER_GOTO_WAYPOINT_ARRIVAL_DISTANCE_mm};
 
-GotoNoStop::GotoNoStopConfiguration gotoNoStopConf = {COMMAND_MANAGER_GOTO_ANGLE_THRESHOLD_RAD, (100/DIST_REGULATOR_KP)};
+#define COMMAND_MANAGER_GOTONOSTOP_TOO_BIG_ANGLE_THRESHOLD_RAD (M_PI/2)
+GotoNoStop::GotoNoStopConfiguration gotoNoStopConf = {COMMAND_MANAGER_GOTO_ANGLE_THRESHOLD_RAD, COMMAND_MANAGER_GOTONOSTOP_TOO_BIG_ANGLE_THRESHOLD_RAD, (100/DIST_REGULATOR_KP)};
 
 Md22::I2cPinInit ESIALCardPinConf_SCL_SDA = {GPIOB, 6, GPIOB, 7};
 
@@ -271,16 +272,18 @@ void asservCommandUSB(BaseSequentialStream *chp, int argc, char **argv)
 
     if (!strcmp(argv[0], "wheelcalib"))
     {
-        unsigned int count = 1;
+        unsigned int count = 5;
         chprintf(outputStream, "Wheel Calibration start\r\n");
+
+            mainAsserv->limitMotorControllerConsignToPercentage(40);
 
         auto alignWithWall = []() -> void
         {
-            mainAsserv->limitMotorControllerConsignToPercentage(20);
+            mainAsserv->limitMotorControllerConsignToPercentage(15);
             mainAsserv->disableAngleRegulator();
             commandManager->addStraightLine(-1000);
             chThdSleepSeconds(5);
-            mainAsserv->limitMotorControllerConsignToPercentage(100);
+            mainAsserv->limitMotorControllerConsignToPercentage(40);
             mainAsserv->enableAngleRegulator();
             mainAsserv->reset();
         };
@@ -406,7 +409,7 @@ void asservCommandUSB(BaseSequentialStream *chp, int argc, char **argv)
         chprintf(outputStream, "setting distance acceleration limiter max %.2f min %.2f threshold %.2f \r\n", acc_max, acc_min, acc_threshold);
 
         distanceAccelerationLimiter->setMaxAcceleration(acc_max);
-        distanceAccelerationLimiter->setMaxAcceleration(acc_min);
+        distanceAccelerationLimiter->setMinAcceleration(acc_min);
         distanceAccelerationLimiter->setHighSpeedThreshold(acc_threshold);
     }
     else if (!strcmp(argv[0], "addangle"))
@@ -497,21 +500,70 @@ void asservCommandUSB(BaseSequentialStream *chp, int argc, char **argv)
     else if (!strcmp(argv[0], "gototest"))
     {
         mainAsserv->resetToNormalMode();
-//        commandManager->addGoToNoStop(500, 0);
-//        commandManager->addGoToNoStop(900, 0);
-//        commandManager->addGoToNoStop(1100, 0);
-//        commandManager->addGoToNoStop(1100, 200);
-//        commandManager->addGoToNoStop(1100, 400);
-//        commandManager->addGoToNoStop(900, 400);
-//        commandManager->addGoToNoStop(500, 400);
-//        commandManager->addGoToNoStop(100, 200);
-//        commandManager->addGoToAngle(500, 200);
+        
+        commandManager->addGoToNoStop(500, 0);
+        commandManager->addGoToNoStop(500, 500);
+        commandManager->addGoToNoStop(0, 500);
+        commandManager->addGoToNoStop(0, 0);
+        // commandManager->addGoToNoStop(800, 0);
+        // commandManager->addGoToNoStop(800, -250);
+        // commandManager->addGoToNoStop(300, -250);
+        // commandManager->addGoToNoStop(00, 0);
+        // commandManager->addGoToAngle(100, 0);
 
-        commandManager->addGoToNoStop(800, 0);
-        commandManager->addGoToNoStop(800, -250);
-        commandManager->addGoToNoStop(300, -250);
-        commandManager->addGoToNoStop(00, 0);
-        commandManager->addGoToAngle(100, 0);
+
+
+    // mainAsserv->setPosition(800,200, M_PI/2.0);
+
+#if 0
+    commandManager->addGoTo(800,200);
+    commandManager->addGoTo(720,280);
+    commandManager->addGoTo(720,370);
+    commandManager->addGoTo(710,380);
+    commandManager->addGoTo(710,600);
+    commandManager->addGoTo(610,700);
+    commandManager->addGoTo(540,700);
+    commandManager->addGoTo(540,700);
+    commandManager->addGoTo(490,650);
+    commandManager->addGoTo(350,650);
+    commandManager->addGoTo(250,550);
+    commandManager->addGoTo(250,450);
+    commandManager->addGoTo(700,450);
+#endif
+
+#if 0
+    commandManager->addGoToWaypoint(800,200);
+    commandManager->addGoToWaypoint(720,280);
+    commandManager->addGoToWaypoint(720,370);
+    commandManager->addGoToWaypoint(710,380);
+    commandManager->addGoToWaypoint(710,600);
+    commandManager->addGoToWaypoint(610,700);
+    commandManager->addGoToWaypoint(540,700);
+    commandManager->addGoToWaypoint(540,700);
+    commandManager->addGoToWaypoint(490,650);
+    commandManager->addGoToWaypoint(350,650);
+    commandManager->addGoToWaypoint(250,550);
+    commandManager->addGoToWaypoint(250,450);
+    commandManager->addGoToWaypoint(700,450);
+#endif
+
+#if 0
+    commandManager->addGoToNoStop(800,200);
+    commandManager->addGoToNoStop(720,280);
+    commandManager->addGoToNoStop(720,370);
+    commandManager->addGoToNoStop(710,380);
+    commandManager->addGoToNoStop(710,600);
+    commandManager->addGoToNoStop(610,700);
+    commandManager->addGoToNoStop(540,700);
+    commandManager->addGoToNoStop(540,700);
+    commandManager->addGoToNoStop(490,650);
+    commandManager->addGoToNoStop(350,650);
+    commandManager->addGoToNoStop(250,550);
+    commandManager->addGoToNoStop(250,450);
+    commandManager->addGoToNoStop(250,1000);
+#endif
+
+
 
     }
     else if (!strcmp(argv[0], "get_config"))

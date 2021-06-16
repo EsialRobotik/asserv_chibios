@@ -35,6 +35,8 @@ class Goto : public Command
         GotoConfiguration const *m_configuration;
 
         float m_backModeCorrection;
+
+        bool m_alignOnly;
 };
 
 #endif /* GOTO_H_ */
