@@ -183,6 +183,17 @@ void CommandManager::update(float X_mm, float Y_mm, float theta_rad)
     }
 }
 
+std::string CommandManager::getCurrentCommandName()
+{
+	std::string res("");
+    chSysLock();
+    if( m_currentCmd != nullptr )
+    {
+    	res = m_currentCmd->commandName();
+    }
+    chSysUnlock();
+    return res;
+}
 
 
 

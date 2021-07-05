@@ -73,6 +73,9 @@ class CommandManager
             resetEmergencyStop();
         }
 
+        std::string getCurrentCommandName();
+
+
     private:
 
         void switchToNextCommand();

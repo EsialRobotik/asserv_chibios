@@ -210,12 +210,14 @@ THD_FUNCTION(asservPositionSerial, p)
     systime_t time = chVTGetSystemTime();
     time += TIME_MS2I(loopPeriod_ms);
     unsigned int debg = 0;
+
     while(true)
     {
-        chprintf(outputStreamSd4, "#%d;%d;%f;%d;%d;%d;%d;%d\r\n",
+        chprintf(outputStreamSd4, "#%d;%d;%f;%d;%d;%d;%d;%d;%s\r\n",
             (int32_t)odometry->getX(), (int32_t)odometry->getY(), odometry->getTheta(),
             commandManager->getCommandStatus(), commandManager->getPendingCommandCount(),
-            md22MotorController->getLeftSpeed(), md22MotorController->getRightSpeed(), debg);
+            md22MotorController->getLeftSpeed(), md22MotorController->getRightSpeed(), debg,
+			commandManager->getCurrentCommandName().c_str());
 //        chprintf(outputStream,    "#%d;%d;%f;%d;%d;%d;%d;%d\r\n",
 //                    (int32_t)odometry->getX(), (int32_t)odometry->getY(), odometry->getTheta(),
 //                    commandManager->getCommandStatus(), commandManager->getPendingCommandCount(),

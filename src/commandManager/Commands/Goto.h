@@ -26,6 +26,8 @@ class Goto : public Command
 
         virtual bool noStop() const;
 
+        virtual std::string commandName() const { return std::string("Goto");};
+
         static float computeDeltaDist(float deltaX, float deltaY);
         static float computeDeltaTheta(float deltaX, float deltaY, float theta_rad);
     private:

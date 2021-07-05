@@ -16,6 +16,8 @@ class GotoAngle : public Command
         virtual bool isGoalReached(float X_mm, float Y_mm, float theta_rad, const Regulator &angle_regulator, const Regulator &distance_regulator, const Command* nextCommand);
 
         virtual bool noStop() const;
+
+        virtual std::string commandName() const { return std::string("Face");};
     private:
         float m_consignX_mm;
         float m_consignY_mm;
