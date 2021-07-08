@@ -13,6 +13,7 @@ SpeedController::SpeedController(float speedKp, float speedKi, float outputLimit
     m_speedKi = speedKi;
 
     m_outputLimit = outputLimit;
+    m_outputLimitRatio = 1.0;
     m_inputLimit = maxInputSpeed;
     m_measureFrequency = measureFrequency;
 }
@@ -28,12 +29,13 @@ float SpeedController::update(float actualSpeed)
 
     // On limite la sortie entre -m_outputLimit et m_outputLimit...
     bool limited = false;
-    if (outputValue > m_outputLimit) {
-        outputValue = m_outputLimit;
+    float outputLimitWithRatio = m_outputLimit*m_outputLimitRatio;
+    if (outputValue > outputLimitWithRatio) {
+        outputValue = outputLimitWithRatio;
         limited = true;
     }
-    if (outputValue < -m_outputLimit) {
-        outputValue = -m_outputLimit;
+    if (outputValue < -outputLimitWithRatio) {
+        outputValue = -outputLimitWithRatio;
         limited = true;
     }
 
@@ -49,10 +51,10 @@ float SpeedController::update(float actualSpeed)
     }
 
     // Protection antiWindup, surement inutile avec la désaturation au dessus, mais on garde ceinture & bretelles !
-    if (m_integratedOutput > m_outputLimit)
-        m_integratedOutput = m_outputLimit;
-    else if (m_integratedOutput < -m_outputLimit)
-        m_integratedOutput = -m_outputLimit;
+    if (m_integratedOutput > outputLimitWithRatio)
+        m_integratedOutput = outputLimitWithRatio;
+    else if (m_integratedOutput < -outputLimitWithRatio)
+        m_integratedOutput = -outputLimitWithRatio;
 
     return outputValue;
 }

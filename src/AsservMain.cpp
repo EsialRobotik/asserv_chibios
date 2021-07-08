@@ -306,8 +306,8 @@ void AsservMain::limitMotorControllerConsignToPercentage(float percentage)
      */
     chDbgAssert(percentage >= 0 && percentage <= 100, "Percentage shall be in [0;100]");
     chSysLock();
-    m_speedControllerLeft.setMaxOutputLimit(percentage);
-    m_speedControllerRight.setMaxOutputLimit(percentage);
+    m_speedControllerLeft.setMaxOutputLimitRatio(percentage);
+    m_speedControllerRight.setMaxOutputLimitRatio(percentage);
     chSysUnlock();
 }
 

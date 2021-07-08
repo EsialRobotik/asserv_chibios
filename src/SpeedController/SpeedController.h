@@ -39,9 +39,9 @@ public:
         m_integratedOutput = 0;
     }
 
-    void setMaxOutputLimit(float outputLimit)
+    void setMaxOutputLimitRatio(float outputLimitPercentage)
     {
-        m_outputLimit = outputLimit;
+    	m_outputLimitRatio = outputLimitPercentage/100.0;
     }
 
     void setMaxInputLimit(float max)
@@ -59,6 +59,7 @@ private:
     float m_integratedOutput;
 
     float m_outputLimit;
+    float m_outputLimitRatio;
     float m_inputLimit;
 
     float m_measureFrequency;
