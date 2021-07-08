@@ -35,21 +35,39 @@
 
 #define MAX_SPEED_MM_PER_SEC (1500)
 
-#define DIST_REGULATOR_KP (1.95)
-#define DIST_REGULATOR_MAX_ACC (900)
+#define DIST_REGULATOR_KP (3)
+#define DIST_REGULATOR_MAX_ACC (600)
 #define DIST_REGULATOR_MIN_ACC (500)
 #define DIST_REGULATOR_HIGH_SPEED_THRESHOLD (500)
 
 
 #define ANGLE_REGULATOR_KP (400) //480
-#define ANGLE_REGULATOR_MAX_ACC (900)
+#define ANGLE_REGULATOR_MAX_ACC (1200)
 
-float speed_controller_right_Kp[NB_PI_SUBSET] = { 0.3, 0.2, 0.1};
-float speed_controller_right_Ki[NB_PI_SUBSET] = { 3.0, 4.2, 1.5};
+//float speed_controller_right_Kp[NB_PI_SUBSET] = { 0.3, 0.2, 0.1};
+//float speed_controller_right_Ki[NB_PI_SUBSET] = { 3.0, 4.2, 1.5};
+//float speed_controller_right_SpeedRange[NB_PI_SUBSET] = { 20, 50, 60};
+//
+//float speed_controller_left_Kp[NB_PI_SUBSET] = { 0.4, 0.2, 0.1}; //0.08
+//float speed_controller_left_Ki[NB_PI_SUBSET] = { 5.0, 4.2, 1.5}; //1.0
+//float speed_controller_left_SpeedRange[NB_PI_SUBSET] = { 20, 50, 60};
+
+////Config sur Secteur
+//float speed_controller_right_Kp[NB_PI_SUBSET] = { 0.5, 0.4, 0.4};
+//float speed_controller_right_Ki[NB_PI_SUBSET] = { 7.0, 8.2, 2};
+//float speed_controller_right_SpeedRange[NB_PI_SUBSET] = { 20, 50, 60};
+//
+//float speed_controller_left_Kp[NB_PI_SUBSET] = { 0.5, 0.4, 0.4};
+//float speed_controller_left_Ki[NB_PI_SUBSET] = { 7.0, 8.2, 2};
+//float speed_controller_left_SpeedRange[NB_PI_SUBSET] = { 20, 50, 60};
+
+//Config sur Batterie 15V
+float speed_controller_right_Kp[NB_PI_SUBSET] = { 0.5, 0.4, 0.2};
+float speed_controller_right_Ki[NB_PI_SUBSET] = { 2.0, 2.2, 2};
 float speed_controller_right_SpeedRange[NB_PI_SUBSET] = { 20, 50, 60};
 
-float speed_controller_left_Kp[NB_PI_SUBSET] = { 0.3, 0.2, 0.1}; //0.08
-float speed_controller_left_Ki[NB_PI_SUBSET] = { 3.0, 4.2, 1.5}; //1.0
+float speed_controller_left_Kp[NB_PI_SUBSET] = { 0.5, 0.4, 0.2};
+float speed_controller_left_Ki[NB_PI_SUBSET] = { 2.0, 2.2, 2};
 float speed_controller_left_SpeedRange[NB_PI_SUBSET] = { 20, 50, 60};
 
 #define PLL_BANDWIDTH (100) //verifpour garder un minimum de variation sur la vitesse

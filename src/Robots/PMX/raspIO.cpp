@@ -72,6 +72,7 @@ THD_FUNCTION(asservCommandSerial, p)
      ! / Stoppe actions dans la boucle d'asservissement
      K / desactive le consignController et le commandManager
      J / reactive le consignController et le commandManager
+     S / change la vitesse
 
      + / applique une valeur +1 sur les moteurs LEFT
      - / applique une valeur -1 sur les moteurs LEFT
