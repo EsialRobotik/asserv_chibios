@@ -184,5 +184,3 @@ void CommandManager::update(float X_mm, float Y_mm, float theta_rad)
 }
 
 
-
-

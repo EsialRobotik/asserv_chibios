@@ -93,6 +93,7 @@ class CommandManager
 
         float m_angleRegulatorConsign;
         float m_distRegulatorConsign;
+
 };
 
 #endif

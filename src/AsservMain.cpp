@@ -19,17 +19,19 @@ AsservMain::AsservMain(uint16_t loopFrequency, uint16_t speedPositionLoopDivisor
         Regulator &angleRegulator, Regulator &distanceRegulator,
         AccelerationLimiter &angleRegulatorAccelerationLimiter, AccelerationLimiter &distanceRegulatorAccelerationLimiter,
         SpeedController &speedControllerRight, SpeedController &speedControllerLeft,
-        Pll &rightPll, Pll &leftPll) :
+        Pll &rightPll, Pll &leftPll,
+        float BLOCK_TICK_THRESHOLD, float BLOCK_DIST_SPEED_THRESHOLD, float BLOCK_ANGLE_SPEED_THRESHOLD):
 
         m_motorController(motorController), m_encoders(encoders), m_odometry(odometrie),
-            m_speedControllerRight(speedControllerRight), m_speedControllerLeft(speedControllerLeft),
-            m_angleRegulator(angleRegulator), m_distanceRegulator(distanceRegulator),
-            m_angleRegulatorAccelerationLimiter(angleRegulatorAccelerationLimiter), m_distanceRegulatorAccelerationLimiter(distanceRegulatorAccelerationLimiter),
-            m_commandManager(commandManager),
-            m_pllRight(rightPll), m_pllLeft(leftPll),
-            m_distanceByEncoderTurn_mm(M_2PI * wheelRadius_mm), m_encodersTicksByTurn(encodersTicksByTurn), m_encodermmByTicks(m_distanceByEncoderTurn_mm / m_encodersTicksByTurn),
-            m_encoderWheelsDistance_mm(encoderWheelsDistance_mm), m_encoderWheelsDistance_ticks(encoderWheelsDistance_mm / m_encodermmByTicks),
-            m_loopFrequency(loopFrequency), m_loopPeriod(1.0 / float(loopFrequency)), m_speedPositionLoopDivisor( speedPositionLoopDivisor)
+        m_speedControllerRight(speedControllerRight), m_speedControllerLeft(speedControllerLeft),
+        m_angleRegulator(angleRegulator), m_distanceRegulator(distanceRegulator),
+        m_angleRegulatorAccelerationLimiter(angleRegulatorAccelerationLimiter), m_distanceRegulatorAccelerationLimiter(distanceRegulatorAccelerationLimiter),
+        m_commandManager(commandManager),
+        m_pllRight(rightPll), m_pllLeft(leftPll),
+        m_distanceByEncoderTurn_mm(M_2PI * wheelRadius_mm), m_encodersTicksByTurn(encodersTicksByTurn), m_encodermmByTicks(m_distanceByEncoderTurn_mm / m_encodersTicksByTurn),
+        m_encoderWheelsDistance_mm(encoderWheelsDistance_mm), m_encoderWheelsDistance_ticks(encoderWheelsDistance_mm / m_encodermmByTicks),
+        m_loopFrequency(loopFrequency), m_loopPeriod(1.0 / float(loopFrequency)), m_speedPositionLoopDivisor( speedPositionLoopDivisor),
+        m_BLOCK_TICK_THRESHOLD(BLOCK_TICK_THRESHOLD), m_BLOCK_DIST_SPEED_THRESHOLD(BLOCK_DIST_SPEED_THRESHOLD), m_BLOCK_ANGLE_SPEED_THRESHOLD(BLOCK_ANGLE_SPEED_THRESHOLD)
 {
     m_asservCounter = 0;
     m_distRegulatorOutputSpeedConsign = 0;
@@ -41,6 +43,7 @@ AsservMain::AsservMain(uint16_t loopFrequency, uint16_t speedPositionLoopDivisor
     m_asservMode = normal_mode;
     m_directSpeedMode_rightWheelSpeed = 0;
     m_directSpeedMode_leftWheelSpeed = 0;
+    m_blocked_ticks = 0;
 }
 
 float AsservMain::convertSpeedTommSec(float speed_ticksPerSec)
@@ -63,6 +66,7 @@ float AsservMain::estimateDeltaDistance(int16_t deltaCountRight, int16_t deltaCo
     return float(deltaCountRight + deltaCountLeft) * (1.0 / 2.0) * m_encodermmByTicks;
 }
 
+
 void AsservMain::mainLoop()
 {
     m_motorController.setMotorRightSpeed(0.0);
@@ -74,18 +78,20 @@ void AsservMain::mainLoop()
 //    m_motorController.setMotorLeftSpeed(40.0);
 //    chThdSleepMilliseconds(1 );
 //    }
+
     const time_conv_t loopPeriod_ms = (m_loopPeriod * 1000.0);
     systime_t time = chVTGetSystemTime();
     time += TIME_MS2I(loopPeriod_ms);
     while (true) {
+
         float encoderDeltaRight;
         float encoderDeltaLeft;
         m_encoders.getValues(&encoderDeltaRight, &encoderDeltaLeft);
 
-
-
+        chSysLock();
         // Mise à jour de la position en polaire
         m_odometry.refresh(encoderDeltaRight * m_encodermmByTicks, encoderDeltaLeft * m_encodermmByTicks);
+        chSysUnlock();
 
         // Estimation & mise à jour des feedbacks
         float deltaAngle_radian = estimateDeltaAngle(encoderDeltaRight, encoderDeltaLeft);
@@ -145,6 +151,26 @@ void AsservMain::mainLoop()
             m_motorController.setMotorRightSpeed(outputSpeedRight);
             m_motorController.setMotorLeftSpeed(outputSpeedLeft);
         }
+
+        // On vérifie si on n'est pas bloqué. Note: on utilise les getters
+        // du MotorsController parce qu'il peut mettre les vitesses à 0
+        // si elles sont trop faibles.
+        if ((abs(estimatedSpeedLeft) >= 1 || abs(estimatedSpeedRight) >= 1)
+                && (((estimatedSpeedLeft * estimatedSpeedRight >= 0) && (abs(deltaDistance_mm) < m_BLOCK_DIST_SPEED_THRESHOLD))
+                 || ((estimatedSpeedLeft * estimatedSpeedRight <= 0) && (abs(deltaAngle_radian) < m_BLOCK_ANGLE_SPEED_THRESHOLD))))
+
+        {
+            // Bloqué !
+            if (m_blocked_ticks < INT32_MAX) {
+                // On n'incrémente pas en continue pour éviter l'overflow (au bout de 124 jours...)
+                m_blocked_ticks++;
+            }
+        } else {
+            // Moteurs arrêtés ou robot qui bouge: on n'est pas bloqué
+            m_blocked_ticks = 0;
+        }
+
+
 
         USBStream::instance()->setSpeedEstimatedRight(estimatedSpeedRight);
         USBStream::instance()->setSpeedEstimatedLeft(estimatedSpeedLeft);
@@ -256,6 +282,7 @@ void AsservMain::resetEmergencyStop()
     m_distanceRegulatorAccelerationLimiter.enable();
     m_angleRegulator.enable();
     m_distanceRegulator.enable();
+    m_blocked_ticks = 0;
     chSysUnlock();
 }
 
@@ -334,7 +361,14 @@ void AsservMain::reset()
     m_commandManager.reset();
     m_pllRight.reset();
     m_pllLeft.reset();
+    m_blocked_ticks = 0;
     chSysUnlock();
+}
+
+bool AsservMain::isBlocked()
+{
+    // Si on est bloqué pendant un certain temps, on le signale
+    return m_blocked_ticks >= m_BLOCK_TICK_THRESHOLD;
 }
 
 

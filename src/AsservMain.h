@@ -21,12 +21,11 @@ public:
             Regulator &angleRegulator, Regulator &distanceRegulator,
             AccelerationLimiter &angleRegulatorAccelerationLimiter, AccelerationLimiter &distanceRegulatorAccelerationLimiter,
             SpeedController &speedControllerRight, SpeedController &speedControllerLeft,
-            Pll &rightPll, Pll &leftPll);
+            Pll &rightPll, Pll &leftPll,
+            float BLOCK_TICK_THRESHOLD, float BLOCK_DIST_SPEED_THRESHOLD, float BLOCK_ANGLE_SPEED_THRESHOLD);
 
     virtual ~AsservMain()
-    {
-    }
-    ;
+    {};
 
     void mainLoop();
 
@@ -60,6 +59,12 @@ public:
 
     void setPosition(float X_mm, float Y_mm, float theta_rad);
     void limitMotorControllerConsignToPercentage(float percentage);
+
+    /*
+     * renvoi true s'il y a un blocage
+     */
+    bool isBlocked();
+
 private:
 
     float convertSpeedTommSec(float speed_ticksPerSec);
@@ -105,6 +110,13 @@ private:
     asserv_mode_t m_asservMode;
     float m_directSpeedMode_rightWheelSpeed;
     float m_directSpeedMode_leftWheelSpeed;
+
+    // Compteur de blocage
+    int32_t m_blocked_ticks;
+    float m_BLOCK_TICK_THRESHOLD;
+    float m_BLOCK_DIST_SPEED_THRESHOLD;
+    float m_BLOCK_ANGLE_SPEED_THRESHOLD;
+
 };
 
 #endif /* ASSERVMAIN_H_ */

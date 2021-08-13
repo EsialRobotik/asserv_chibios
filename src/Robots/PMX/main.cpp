@@ -30,18 +30,18 @@
 #define ASSERV_POSITION_DIVISOR (5)
 
 #define ENCODERS_WHEELS_RADIUS_MM (39.93/2.0) // le rayon de vos roues codeuses 39.88, 39.93
-#define ENCODERS_WHEELS_DISTANCE_MM (234.4) //distance entre les 2 roues codeuses
+#define ENCODERS_WHEELS_DISTANCE_MM (234.6) //distance entre les 2 roues codeuses
 #define ENCODERS_TICKS_BY_TURN (16384) //nombre de ticks par tour de vos encodeurs.
 
-#define MAX_SPEED_MM_PER_SEC (1500)
+#define MAX_SPEED_MM_PER_SEC (900)
 
-#define DIST_REGULATOR_KP (3)
+#define DIST_REGULATOR_KP (1.7)
 #define DIST_REGULATOR_MAX_ACC (600)
 #define DIST_REGULATOR_MIN_ACC (500)
 #define DIST_REGULATOR_HIGH_SPEED_THRESHOLD (500)
 
 
-#define ANGLE_REGULATOR_KP (400) //480
+#define ANGLE_REGULATOR_KP (350) //480
 #define ANGLE_REGULATOR_MAX_ACC (1200)
 
 //float speed_controller_right_Kp[NB_PI_SUBSET] = { 0.3, 0.2, 0.1};
@@ -62,21 +62,44 @@
 //float speed_controller_left_SpeedRange[NB_PI_SUBSET] = { 20, 50, 60};
 
 //Config sur Batterie 15V
-float speed_controller_right_Kp[NB_PI_SUBSET] = { 0.5, 0.4, 0.2};
-float speed_controller_right_Ki[NB_PI_SUBSET] = { 2.0, 2.2, 2};
+//float speed_controller_right_Kp[NB_PI_SUBSET] = { 0.5, 0.4, 0.2};
+//float speed_controller_right_Ki[NB_PI_SUBSET] = { 2.0, 2.2, 2};
+//float speed_controller_right_SpeedRange[NB_PI_SUBSET] = { 20, 50, 60};
+//
+//float speed_controller_left_Kp[NB_PI_SUBSET] = { 0.5, 0.4, 0.2};
+//float speed_controller_left_Ki[NB_PI_SUBSET] = { 2.0, 2.2, 2};
+//float speed_controller_left_SpeedRange[NB_PI_SUBSET] = { 20, 50, 60};
+
+
+
+//coef avec Jeff
+float speed_controller_right_Kp[NB_PI_SUBSET] = { 0.2, 0.2, 0.2};
+float speed_controller_right_Ki[NB_PI_SUBSET] = { 2.2, 1.7, 1.4};
 float speed_controller_right_SpeedRange[NB_PI_SUBSET] = { 20, 50, 60};
 
-float speed_controller_left_Kp[NB_PI_SUBSET] = { 0.5, 0.4, 0.2};
-float speed_controller_left_Ki[NB_PI_SUBSET] = { 2.0, 2.2, 2};
+float speed_controller_left_Kp[NB_PI_SUBSET] = { 0.2, 0.2, 0.2};
+float speed_controller_left_Ki[NB_PI_SUBSET] = {2.2, 1.7, 1.4};
 float speed_controller_left_SpeedRange[NB_PI_SUBSET] = { 20, 50, 60};
 
 #define PLL_BANDWIDTH (100) //verifpour garder un minimum de variation sur la vitesse
 
 
+//--------------------------//
+//   Detection de blocage   //
+//--------------------------//
+// Seuil de détection du blocage pour la distance (en mm)
+#define BLOCK_DIST_SPEED_THRESHOLD  (1.0)
+// Seuil de détection du blocage pour l'angle (en rad) 0,0174rad=1deg
+#define BLOCK_ANGLE_SPEED_THRESHOLD (0.036)
+// Si on ne bouge pas pendant ce nombre de tick (every ASSERV_THREAD_FREQUENCY), on signale l'info :
+#define BLOCK_TICK_THRESHOLD  (50.0)
+
+
+
 #define COMMAND_MANAGER_ARRIVAL_ANGLE_THRESHOLD_RAD (0.02)
 #define COMMAND_MANAGER_ARRIVAL_DISTANCE_THRESHOLD_mm (2.5)
 
-#define COMMAND_MANAGER_GOTO_RETURN_THRESHOLD_mm (20)
+#define COMMAND_MANAGER_GOTO_RETURN_THRESHOLD_mm (10)
 #define COMMAND_MANAGER_GOTO_ANGLE_THRESHOLD_RAD (M_PI/8)
 #define COMMAND_MANAGER_GOTO_PRECISE_ARRIVAL_DISTANCE_mm (3)
 Goto::GotoConfiguration preciseGotoConf  = {COMMAND_MANAGER_GOTO_RETURN_THRESHOLD_mm, COMMAND_MANAGER_GOTO_ANGLE_THRESHOLD_RAD, COMMAND_MANAGER_GOTO_PRECISE_ARRIVAL_DISTANCE_mm};
@@ -145,7 +168,8 @@ static void initAsserv()
                            *angleRegulator, *distanceRegulator,
                            *angleAccelerationlimiter, *distanceAccelerationLimiter,
                            *speedControllerRight, *speedControllerLeft,
-                           *rightPll, *leftPll);
+                           *rightPll, *leftPll,
+                           BLOCK_TICK_THRESHOLD, BLOCK_DIST_SPEED_THRESHOLD, BLOCK_ANGLE_SPEED_THRESHOLD);
 
 
 }
@@ -162,6 +186,7 @@ BaseSequentialStream *outputStreamSd4;
 static binary_semaphore_t asservStarted_semaphore;
 
 static THD_WORKING_AREA(waAsservThread, 512);
+
 static THD_FUNCTION(AsservThread, arg)
 {
     (void) arg;
@@ -289,11 +314,16 @@ int main(void)
         palClearPad(GPIOA, GPIOA_ARD_D8);
         palClearPad(GPIOA, GPIOA_ARD_D12);
         chThdSleepMilliseconds(1000);
+
         palSetPad(GPIOA, GPIOA_ARD_D8);
         palSetPad(GPIOA, GPIOA_ARD_D12);
-        chThdSleepMilliseconds(1000);
-
-
+        chThdSleepMilliseconds(200);
+        palClearPad(GPIOA, GPIOA_ARD_D8);
+        palClearPad(GPIOA, GPIOA_ARD_D12);
+        chThdSleepMilliseconds(100);
+        palSetPad(GPIOA, GPIOA_ARD_D8);
+        palSetPad(GPIOA, GPIOA_ARD_D12);
+        chThdSleepMilliseconds(200);
     }
 }
 
