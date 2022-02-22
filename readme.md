@@ -26,9 +26,9 @@ Le compilateur arm-none-eabi est nécessaire pour la compilation et openocd pour
 ## compiler
 
 ```
-make ROBOT=THE_FUCKING_ROBOT_TO_BUILD
+make ROBOT=THE_ROBOT_TO_BUILD
 ```
-THE_FUCKING_ROBOT_TO_BUILD : Princess, PMI, baseRoulanteTest, PMX
+THE_ROBOT_TO_BUILD : Princess, PMI, baseRoulanteTest, PMX
 
 ## Lancer
 
