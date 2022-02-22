@@ -5,6 +5,9 @@
 #ifndef _AMS_AS5048B_H_
 #define _AMS_AS5048B_H_
 
+// Address depending on the two DIL switches
+#define AS5048B_ADDR(a1,a2)  (uint8_t)(0x40 | ( !a1 ? 0x2 : 0 ) | ( !a2 ? 0x1 : 0 ))
+
 // Default addresses for AS5048B
 #define AS5048_ADDRESS 0x40 // 0b10000 + ( A1 & A2 to GND)
 #define AS5048B_PROG_REG 0x03
@@ -42,7 +45,13 @@ class AMS_AS5048B
 public:
     AMS_AS5048B(uint8_t chipAddress);
 
-    void begin(void); // to init the object, must be called in the setup loop
+    uint8_t chipAddress(void)
+    {
+        return _chipAddress;
+    }
+    int begin(void); // to init the object, must be called in the setup loop
+    int ping(void);
+    void reset(void);
     void toggleDebug(void); // start / stop debug through serial at anytime
     void setClockWise(bool cw = true); //set clockwise counting, default is false (native sensor)
     void progRegister(uint8_t regVal); //nothing so far - manipulate the OTP register
@@ -54,17 +63,22 @@ public:
     void zeroRegW(uint16_t regVal); //write Zero register value
     uint16_t zeroRegR(void); //read Zero register value
     uint16_t angleRegR(void); //read raw value of the angle register
-    uint8_t diagR(void); //read diagnostic register
+    //uint8_t diagR(void); //read diagnostic register
     uint16_t magnitudeR(void); //read current magnitude
     float angleR(int unit = U_RAW, bool newVal = true); //Read current angle or get last measure with unit conversion : RAW, TRN, DEG, RAD, GRAD, MOA, SOA, MILNATO, MILSE, MILRU
     uint8_t getAutoGain(void);
-    uint8_t getDiagReg(void);
+    uint8_t getDiagReg(void); //read diagnostic register
 
     void updateMovingAvgExp(void); //measure the current angle and feed the Exponential Moving Average calculation
     float getMovingAvgExp(int unit = U_RAW); //get Exponential Moving Average calculation
     void resetMovingAvgExp(void); //reset Exponential Moving Average calculation values
 
+    uint8_t getAllData(uint8_t *agc, uint8_t *diag, uint16_t *mag, uint16_t *raw);
+
+
+private:
     //variables
+    bool connected_;
     bool _debugFlag;
     bool _clockWise;
     uint8_t _chipAddress;
@@ -80,12 +94,19 @@ public:
     //methods
     uint8_t readReg8(uint8_t address);
     uint16_t readReg16(uint8_t address); //16 bit value got from 2x8bits registers (7..0 MSB + 5..0 LSB) => 14 bits value
-    uint8_t readRegs(uint8_t address, uint8_t len, uint8_t* data);
-    void writeReg(uint8_t address, uint8_t value);
+    int readRegs(uint8_t address, uint8_t len, uint8_t* data);
+    int writeReg(uint8_t address, uint8_t value);
     float convertAngle(int unit, float angle); //RAW, TRN, DEG, RAD, GRAD, MOA, SOA, MILNATO, MILSE, MILRU
     float getExpAvgRawAngle(void);
-    uint8_t getAllData(uint8_t *agc, uint8_t *diag, uint16_t *mag, uint16_t *raw);
     void printDebug(void);
+
+    msg_t i2cMasterTransmitTimeoutTimes(I2CDriver *i2cp,
+                                   i2caddr_t addr,
+                                   const uint8_t *txbuf,
+                                   size_t txbytes,
+                                   uint8_t *rxbuf,
+                                   size_t rxbytes,
+                                   sysinterval_t timeout, int times);
 };
 
 #endif

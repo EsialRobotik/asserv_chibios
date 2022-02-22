@@ -23,9 +23,9 @@
 #include "string.h"
 #include "ch.h"
 #include "hal.h"
-//#include <chprintf.h>
+#include <chprintf.h>
 
-//extern BaseSequentialStream *outputStream;
+extern BaseSequentialStream *outputStream;
 
 /*========================================================================*/
 /*                            CONSTRUCTORS                                */
@@ -39,6 +39,7 @@
 
 AMS_AS5048B::AMS_AS5048B(uint8_t chipAddress)
 {
+    connected_ = 0;
     _chipAddress = chipAddress;
     _debugFlag = false;
     _zeroRegVal = 0;
@@ -58,6 +59,31 @@ AMS_AS5048B::AMS_AS5048B(uint8_t chipAddress)
 
 /**************************************************************************/
 /*!
+ @brief  ping
+
+ @params
+ none
+ @returns
+ none
+ */
+/**************************************************************************/
+int AMS_AS5048B::ping()
+{
+    msg_t msg = MSG_OK;
+    uint8_t cmd[] = { 0x00 };
+    i2cAcquireBus (&I2CD2);
+    msg = i2cMasterTransmitTimeout(&I2CD2, _chipAddress, cmd, 1, NULL, 0, TIME_MS2I(1));
+    //chprintf(outputStream, "msg=%d\r\n", msg);
+    i2cReleaseBus(&I2CD2);
+
+    if (msg == MSG_OK)
+        return 0;
+    else
+        return -1;
+}
+
+/**************************************************************************/
+/*!
  @brief  init values and overall behaviors for AS5948B use
 
  @params
@@ -67,16 +93,34 @@ AMS_AS5048B::AMS_AS5048B(uint8_t chipAddress)
  */
 /**************************************************************************/
 
-void AMS_AS5048B::begin(void)
+int AMS_AS5048B::begin(void)
 {
+    if (ping()<0)
+        return -1;
+    connected_ = 1;
     _clockWise = false;
+    _lastAngleRaw = 0.0;
+    reset();
+    return 0;
+}
+
+/**************************************************************************/
+/*!
+ @brief  reset values and overall behaviors for AS5948B use
+
+ @params
+ none
+ @returns
+ none
+ */
+/**************************************************************************/
+void AMS_AS5048B::reset(void)
+{
     _lastAngleRaw = 0.0;
     _zeroRegVal = AMS_AS5048B::zeroRegR();
     _addressRegVal = AMS_AS5048B::addressRegR();
     AMS_AS5048B::resetMovingAvgExp();
-    return;
 }
-
 /**************************************************************************/
 /*!
  *
@@ -422,7 +466,7 @@ void AMS_AS5048B::resetMovingAvgExp(void)
 
 uint8_t AMS_AS5048B::readReg8(uint8_t address)
 {
-    uint8_t readValue;
+    uint8_t readValue = 0;
     readRegs(address, 1, &readValue);
     return readValue;
 }
@@ -430,7 +474,7 @@ uint8_t AMS_AS5048B::readReg8(uint8_t address)
 uint16_t AMS_AS5048B::readReg16(uint8_t address)
 {
     //16 bit value got from 2 8bits registers (7..0 MSB + 5..0 LSB) => 14 bits value
-    uint8_t readArray[2];
+    uint8_t readArray[2] = { 0 };
     uint16_t readValue = 0;
     readRegs(address, 2, readArray);
     readValue = (((uint16_t) readArray[0]) << 6);
@@ -438,24 +482,46 @@ uint16_t AMS_AS5048B::readReg16(uint8_t address)
     return readValue;
 }
 
-uint8_t AMS_AS5048B::readRegs(uint8_t address, uint8_t len, uint8_t* data)
+msg_t AMS_AS5048B::i2cMasterTransmitTimeoutTimes(I2CDriver *i2cp,
+                               i2caddr_t addr,
+                               const uint8_t *txbuf,
+                               size_t txbytes,
+                               uint8_t *rxbuf,
+                               size_t rxbytes,
+                               sysinterval_t timeout, int times)
 {
-    i2cAcquireBus (&I2CD2);
-    uint8_t cmd[] = { address };
-    int i = 0;
-    msg_t msg = MSG_OK;
-    do {
-        i++;
-        msg = i2cMasterTransmitTimeout(&I2CD2, _chipAddress, cmd, sizeof(cmd), data, len, TIME_MS2I(1));
-        //chprintf(outputStream, "i=%d\r\n", i);
-        if (i > 5)
-            break;
-    } while (msg != MSG_OK );
-    //std::string message = "AMS_AS5048B - i2cMasterReceiveTimeout readRegs ERROR after";
+    msg_t r;
+   for(int i = 0; i <= times ; i++)
+   {
+       if (i2cp->state != I2C_READY)
+       {
+           i2cStart(i2cp, i2cp->config);
+       }
+       r = i2cMasterTransmitTimeout(i2cp, addr, txbuf, txbytes, rxbuf, rxbytes, timeout);
+       if (r == MSG_OK)
+           return r;
+       else
+           chprintf(outputStream,"...AMS_AS5048B::i2cMasterTransmitTimeoutTimes try... %d  \r\n", i);
+       chThdSleepMilliseconds(1);
+   }
 
-    chDbgAssert(msg == MSG_OK, "AMS_AS5048B - i2cMasterReceiveTimeout readRegs ERROR after 5 requests NOK\r\n");
-    i2cReleaseBus(&I2CD2);
-    return 0;
+   return r;
+}
+
+int AMS_AS5048B::readRegs(uint8_t address, uint8_t len, uint8_t* data)
+{
+    uint8_t cmd[] = { address };
+    msg_t msg = MSG_OK;
+    for (int i = 0; i < 3; i++) {
+        i2cAcquireBus (&I2CD2);
+        msg = i2cMasterTransmitTimeoutTimes(&I2CD2, _chipAddress, cmd, sizeof(cmd), data, len, TIME_MS2I(1),10);
+        i2cReleaseBus(&I2CD2);
+        //chprintf(outputStream, "i=%d\r\n", i);
+        if (msg == MSG_OK)
+            return 0;
+
+    }
+    return -1;
 }
 
 uint8_t AMS_AS5048B::getAllData(uint8_t *agc, uint8_t *diag, uint16_t *mag, uint16_t *raw)
@@ -470,24 +536,25 @@ uint8_t AMS_AS5048B::getAllData(uint8_t *agc, uint8_t *diag, uint16_t *mag, uint
     return r;
 }
 
-void AMS_AS5048B::writeReg(uint8_t address, uint8_t value)
+int AMS_AS5048B::writeReg(uint8_t address, uint8_t value)
 {
-    i2cAcquireBus (&I2CD2);
+
     uint8_t cmd[] = { address, value };
     int i = 0;
     msg_t msg = MSG_OK;
     do {
         i++;
+        i2cAcquireBus (&I2CD2);
         msg = i2cMasterTransmitTimeout(&I2CD2, _chipAddress, cmd, sizeof(cmd), NULL, 0, TIME_MS2I(1));
+        i2cReleaseBus(&I2CD2);
         //chprintf(outputStream, "i=%d\r\n", i);
-        if (i > 5)
-            break;
+        if (i > 10)
+            return -1;
     } while (msg != MSG_OK );
 
-    chDbgAssert(msg == MSG_OK, "AMS_AS5048B - i2cMasterTransmitTimeout writeReg after 5 requests ERROR NOK\r\n");
-    i2cReleaseBus(&I2CD2);
+    //chDbgAssert(msg == MSG_OK, "AMS_AS5048B - i2cMasterTransmitTimeout writeReg after 5 requests ERROR NOK\r\n");
 
-    return;
+    return 0;
 }
 
 float AMS_AS5048B::convertAngle(int unit, float angle)

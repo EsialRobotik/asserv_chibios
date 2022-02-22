@@ -67,7 +67,7 @@ Goto::GotoConfiguration waypointGotoConf  = {COMMAND_MANAGER_GOTO_RETURN_THRESHO
 GotoNoStop::GotoNoStopConfiguration gotoNoStopConf = {COMMAND_MANAGER_GOTO_ANGLE_THRESHOLD_RAD, COMMAND_MANAGER_GOTONOSTOP_TOO_BIG_ANGLE_THRESHOLD_RAD, (150/DIST_REGULATOR_KP)};
 
 Md22::I2cPinInit ESIALCardPinConf_SCL_SDA = {GPIOB, 6, GPIOB, 7};
-
+QuadratureEncoder::GpioPinInit qeESIALCardPinConf_E1ch1_E1ch2_E2ch1_E2ch2 = {GPIOC, 6, GPIOA, 7, GPIOA, 1, GPIOA, 0};
 
 
 QuadratureEncoder *encoders;
@@ -93,8 +93,8 @@ AsservMain *mainAsserv;
 
 static void initAsserv()
 {
-    encoders = new QuadratureEncoder(true, true, true);
-    md22MotorController = new Md22(false, false, true, &ESIALCardPinConf_SCL_SDA, 100000);
+    encoders = new QuadratureEncoder(&qeESIALCardPinConf_E1ch1_E1ch2_E2ch1_E2ch2, true, true, true);
+    md22MotorController = new Md22(&ESIALCardPinConf_SCL_SDA, false, false, true, 100000);
 
     angleRegulator = new Regulator(ANGLE_REGULATOR_KP, MAX_SPEED_MM_PER_SEC);
     distanceRegulator = new Regulator(DIST_REGULATOR_KP, MAX_SPEED_MM_PER_SEC);

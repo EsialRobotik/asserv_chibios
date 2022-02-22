@@ -65,9 +65,15 @@ float AsservMain::estimateDeltaDistance(int16_t deltaCountRight, int16_t deltaCo
 
 void AsservMain::mainLoop()
 {
-    m_motorController.setMotorRightSpeed(0);
-    m_motorController.setMotorLeftSpeed(0);
-
+    m_motorController.setMotorRightSpeed(0.0);
+    m_motorController.setMotorLeftSpeed(0.0);
+//    chThdSleepMilliseconds(2000);
+//    while(1)
+//    {
+//    m_motorController.setMotorRightSpeed(40.0);
+//    m_motorController.setMotorLeftSpeed(40.0);
+//    chThdSleepMilliseconds(1 );
+//    }
     const time_conv_t loopPeriod_ms = (m_loopPeriod * 1000.0);
     systime_t time = chVTGetSystemTime();
     time += TIME_MS2I(loopPeriod_ms);
@@ -75,6 +81,8 @@ void AsservMain::mainLoop()
         float encoderDeltaRight;
         float encoderDeltaLeft;
         m_encoders.getValues(&encoderDeltaRight, &encoderDeltaLeft);
+
+
 
         // Mise à jour de la position en polaire
         m_odometry.refresh(encoderDeltaRight * m_encodermmByTicks, encoderDeltaLeft * m_encodermmByTicks);

@@ -1,0 +1,28 @@
+@startuml
+:PC with Plotjuggler:
+:Raspberry PI:
+
+usecase nucleo as "nucleo F446-RE 
+--
+Where our code instance is running
+"
+
+usecase MD22 as "MD22
+--
+Power motor driver"
+
+(right motor)
+(left motor)
+(right quadrature encoder)
+(left quadrature encoder)
+
+
+
+:PC with Plotjuggler: --> (nucleo) : plugged on additional USB port
+:Raspberry PI: --> (nucleo) : plugged on presoldered USB port
+(nucleo) --> (MD22)
+(MD22) --> (right motor)
+(MD22) --> (left motor)
+(nucleo) --> (right quadrature encoder)
+(nucleo) --> (left quadrature encoder)
+@enduml

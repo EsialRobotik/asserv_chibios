@@ -64,6 +64,14 @@ void GotoNoStop::computeInitialConsign(float X_mm, float Y_mm, float theta_rad, 
         */
         *angleConsign = angle_regulator.getAccumulator() + deltaTheta;
    }
+   else if (fabs(deltaTheta) > m_configuration->tooBigAngleThreshold_rad)
+   {
+        /*  Here we are absolutly not pointing to the right direction (the goal is behind the robot for example)
+        *   just compute a angle consign.
+        *   A distance consign will generate a big overshot to the trajectory
+        */
+        *angleConsign = angle_regulator.getAccumulator() + deltaTheta;
+   }
    else
    {
        /*  We aren't pointing enough to the right direction yet.
