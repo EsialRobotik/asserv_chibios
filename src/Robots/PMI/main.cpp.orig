@@ -24,6 +24,10 @@
 #include "Pll.h"
 
 
+<<<<<<< HEAD
+
+=======
+>>>>>>> master
 #define ASSERV_THREAD_FREQUENCY (300)
 #define ASSERV_THREAD_PERIOD_S (1.0/ASSERV_THREAD_FREQUENCY)
 #define ASSERV_POSITION_DIVISOR (5)
@@ -34,12 +38,22 @@
 
 #define MAX_SPEED_MM_PER_SEC (1200)
 
+<<<<<<< HEAD
 #define DIST_REGULATOR_KP (6)
 #define DIST_REGULATOR_MAX_ACC (1200)
 #define DIST_REGULATOR_MAX_DECC (-2500)
 #define DIST_REGULATOR_MAX_ACC_LOW_SPEED (500)
+#define DIST_REGULATOR_LOW_SPEED_THRESHOLD (300)
+
+#define ANGLE_REGULATOR_KP (650)
+=======
+#define DIST_REGULATOR_KP (3)
+#define DIST_REGULATOR_MAX_ACC (1300)
+#define DIST_REGULATOR_MIN_ACC (500)
+#define DIST_REGULATOR_HIGH_SPEED_THRESHOLD (400)
 
 #define ANGLE_REGULATOR_KP (700)
+>>>>>>> master
 #define ANGLE_REGULATOR_MAX_ACC (1500)
 
 float speed_controller_right_Kp[NB_PI_SUBSET] = { 0.1, 0.1, 0.1};
@@ -53,11 +67,14 @@ float speed_controller_left_SpeedRange[NB_PI_SUBSET] = { 20, 50, 60};
 #define PLL_BANDWIDTH (150)
 
 
+<<<<<<< HEAD
 #define PLL_BANDWIDTH (150)
+=======
 #define COMMAND_MANAGER_ARRIVAL_ANGLE_THRESHOLD_RAD (0.02)
 #define COMMAND_MANAGER_ARRIVAL_DISTANCE_THRESHOLD_mm (5)
 #define COMMAND_MANAGER_GOTO_ANGLE_THRESHOLD_RAD (M_PI/8)
 #define COMMAND_MANAGER_GOTO_RETURN_THRESHOLD_mm (10)
+>>>>>>> master
 
 #define COMMAND_MANAGER_GOTO_PRECISE_ARRIVAL_DISTANCE_mm (3)
 Goto::GotoConfiguration preciseGotoConf  = {COMMAND_MANAGER_GOTO_RETURN_THRESHOLD_mm, COMMAND_MANAGER_GOTO_ANGLE_THRESHOLD_RAD, COMMAND_MANAGER_GOTO_PRECISE_ARRIVAL_DISTANCE_mm};
@@ -91,9 +108,13 @@ AdvancedAccelerationLimiter *distanceAccelerationLimiter;
 
 CommandManager *commandManager;
 AsservMain *mainAsserv;
-AccelerationDeccelerationLimiter *distanceAccelerationDeccelerationLimiter;
 
 
+<<<<<<< HEAD
+SimpleAccelerationLimiter angleAccelerationlimiter(ANGLE_REGULATOR_MAX_ACC);
+AdvancedAccelerationLimiter distanceAccelerationLimiter(DIST_REGULATOR_MAX_ACC, DIST_REGULATOR_MAX_ACC_LOW_SPEED, DIST_REGULATOR_LOW_SPEED_THRESHOLD);
+AccelerationDeccelerationLimiter distanceAccelerationDeccelerationLimiter(DIST_REGULATOR_MAX_ACC, DIST_REGULATOR_MAX_DECC, 5, MAX_SPEED_MM_PER_SEC, distanceRegulator);
+=======
 static void initAsserv()
 {
     encoders = new QuadratureEncoder(&ESIALCardPinConf_Encoders, true, true, true);
@@ -104,6 +125,7 @@ static void initAsserv()
 
     rightPll = new Pll (PLL_BANDWIDTH);
     leftPll = new Pll(PLL_BANDWIDTH);
+>>>>>>> master
 
     odometry = new Odometry (ENCODERS_WHEELS_DISTANCE_MM, 0, 0);
 
@@ -112,9 +134,7 @@ static void initAsserv()
 
 
     angleAccelerationlimiter = new SimpleAccelerationLimiter(ANGLE_REGULATOR_MAX_ACC);
-
-    distanceAccelerationDeccelerationLimiter = new AccelerationDeccelerationLimiter(DIST_REGULATOR_MAX_ACC, DIST_REGULATOR_MAX_DECC, 5, MAX_SPEED_MM_PER_SEC, *distanceRegulator);
-
+    distanceAccelerationLimiter = new AdvancedAccelerationLimiter(DIST_REGULATOR_MAX_ACC, DIST_REGULATOR_MIN_ACC, DIST_REGULATOR_HIGH_SPEED_THRESHOLD);
 
     commandManager = new CommandManager( COMMAND_MANAGER_ARRIVAL_DISTANCE_THRESHOLD_mm, COMMAND_MANAGER_ARRIVAL_ANGLE_THRESHOLD_RAD,
                                    preciseGotoConf, waypointGotoConf, gotoNoStopConf,
@@ -124,11 +144,21 @@ static void initAsserv()
                            ENCODERS_WHEELS_RADIUS_MM, ENCODERS_WHEELS_DISTANCE_MM, ENCODERS_TICKS_BY_TURN,
                            *commandManager, *md22MotorController, *encoders, *odometry,
                            *angleRegulator, *distanceRegulator,
-                           *angleAccelerationlimiter, *distanceAccelerationDeccelerationLimiter,
+                           *angleAccelerationlimiter, *distanceAccelerationLimiter,
                            *speedControllerRight, *speedControllerLeft,
                            *rightPll, *leftPll);
 }
 
+<<<<<<< HEAD
+AsservMain mainAsserv( ASSERV_THREAD_FREQUENCY, ASSERV_POSITION_DIVISOR,
+                       ENCODERS_WHEELS_RADIUS_MM, ENCODERS_WHEELS_DISTANCE_MM, ENCODERS_TICKS_BY_TURN,
+                       commandManager, md22MotorController, encoders, odometry,
+                       angleRegulator, distanceRegulator,
+                       angleAccelerationlimiter, distanceAccelerationLimiter, distanceAccelerationDeccelerationLimiter,
+                       speedControllerRight, speedControllerLeft,
+                       rightPll, leftPll);
+=======
+>>>>>>> master
 
 
 /*

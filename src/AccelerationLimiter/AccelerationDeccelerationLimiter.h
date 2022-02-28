@@ -14,6 +14,11 @@ public:
 
     inline float getLastOutputConsign() const { return m_prevOutputPositionConsign; };
 
+    virtual void reset(){m_prevOutputPositionConsign = 0;};
+
+    virtual void enable() {m_enabled = true;};
+    virtual void disable() {m_enabled = false;};
+
 private:
     const Regulator &m_regulator;
     float m_maxAcceleration;
@@ -23,6 +28,8 @@ private:
 
     float m_currentSpeedConsign;
     float m_prevOutputPositionConsign;
+
+    bool m_enabled;
 
 };
 

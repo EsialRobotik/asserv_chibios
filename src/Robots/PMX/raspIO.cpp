@@ -18,19 +18,21 @@
 #include "commandManager/CommandManager.h"
 #include "motorController/Md22.h"
 #include "util/asservMath.h"
-extern BaseSequentialStream *outputStream;
+
 extern Odometry *odometry;
 extern AsservMain *mainAsserv;
 extern Md22 *md22MotorController;
 extern CommandManager *commandManager;
 
+extern BaseSequentialStream *outputStream;
+extern BaseSequentialStream *outputStreamSd4;
 
 static void serialReadLine(char *buffer, unsigned int buffer_size)
 {
     unsigned int i;
     for(i=0; i<buffer_size; i++)
     {
-        buffer[i] = streamGet(&SD2);
+        buffer[i] = streamGet(&SD4);
         if ( buffer[i] == '\n' || buffer[i] == '\r')
             break;
     }
@@ -51,7 +53,7 @@ THD_FUNCTION(asservCommandSerial, p)
      h / Halte ! / Arrêt d'urgence ! Le robot est ensuite systématiquement asservi à sa position actuelle. Cela devrait suffire à arrêter le robot correctement. La seule commande acceptée par la suite sera un Reset de l'arrêt d'urgence : toute autre commande sera ignorée.
      r / Reset de l'arrêt d'urgence / Remet le robot dans son fonctionnement normal après un arrêt d'urgence. Les commandes en cours au moment de l'arrêt d'urgence NE sont PAS reprises. Si le robot n'est pas en arrêt d'urgence, cette commande n'a aucun effet.
 
-     p / get Position / Récupère la position et le cap du robot sur la connexion i2c, sous la forme de 3 types float (3 * 4 bytes), avec x, y, et a les coordonnées et l'angle du robot.
+     p / get Position / Récupère la position et le cap du robot, sous la forme de 3 types float (3 * 4 bytes), avec x, y, et a les coordonnées et l'angle du robot.
      S%x#%y#%a\n / set Position / applique la nouvelle position du robot
 
      z / avance de 20 cm
@@ -79,20 +81,20 @@ THD_FUNCTION(asservCommandSerial, p)
     float consigneValue2 = 0;
     float consigneValue3 = 0;
     char buffer[64];
-
-    chprintf(outputStream, "Started\r\n");
+    //chprintf(outputStream, "Started\r\n");
+    chprintf(outputStreamSd4, "Started\r\n");
 
 
     while(true)
     {
-        char readChar = streamGet(&SD2);
+        char readChar = streamGet(&SD4);
 
         switch (readChar) {
 
         case 'h': //Arrêt d'urgence
             mainAsserv->setEmergencyStop();
             serialReadLine(buffer, sizeof(buffer));
-            chprintf(outputStream, "Arrêt d'urgence ! \r\n");
+            chprintf(outputStreamSd4, "Arrêt d'urgence ! \r\n");
             break;
 
         case 'r': //Reset de l'arrêt d'urgence
@@ -102,22 +104,22 @@ THD_FUNCTION(asservCommandSerial, p)
 
         case 'z':
             // Go 20cm
-            chprintf(outputStream, "consigne avant : 200mm\n");
+            chprintf(outputStreamSd4, "consigne avant : 200mm\n");
             commandManager->addStraightLine(200);
             break;
 
         case 's':
-            chprintf(outputStream, "consigne arrière : 200mm\n");
+            chprintf(outputStreamSd4, "consigne arrière : 200mm\n");
             commandManager->addStraightLine(-200);
             break;
 
         case 'q':
-            chprintf(outputStream, "consigne gauche : 45°\n");
+            chprintf(outputStreamSd4, "consigne gauche : 45°\n");
             commandManager->addTurn(degToRad(45));
             break;
 
         case 'd':
-            chprintf(outputStream, "consigne gauche : 45°\n");
+            chprintf(outputStreamSd4, "consigne gauche : 45°\n");
              commandManager->addTurn(degToRad(-45));
              break;
 
@@ -158,9 +160,12 @@ THD_FUNCTION(asservCommandSerial, p)
             break;
 
         case 'p': //retourne la Position et l'angle courants du robot
-            chprintf(outputStream, "x%fy%fa%fs%d\r\n",
+            chprintf(outputStreamSd4, "x%fy%fa%fs%d\r\n",
                     odometry->getX(), odometry->getY(), odometry->getTheta(),
                     commandManager->getCommandStatus());
+            chprintf(outputStream, "x%fy%fa%fs%d\r\n",
+                                odometry->getX(), odometry->getY(), odometry->getTheta(),
+                                commandManager->getCommandStatus());
             break;
 
         case 'P': // set la position et l'angle du robot
@@ -181,15 +186,18 @@ THD_FUNCTION(asservCommandSerial, p)
             mainAsserv->limitMotorControllerConsignToPercentage(consigneValue1);
             break;
 
-        case 'C': // Reglage de l'entraxe des Codeurs ( C comme Connard )
-            serialReadLine(buffer, sizeof(buffer));
-            sscanf(buffer, "%f", &consigneValue1);
-            odometry->setEncoderWheelsDistance(consigneValue1);
+        case 'I':
             break;
 
+        case '!':
+            break;
+
+        case 'R':
+            mainAsserv->reset();
+            break;
 
         default:
-            chprintf(outputStream, " - unexpected character\r\n");
+            chprintf(outputStreamSd4, " - unexpected character\r\n");
             break;
         }
     }
@@ -201,14 +209,20 @@ THD_FUNCTION(asservPositionSerial, p)
     const time_conv_t loopPeriod_ms = 100;
     systime_t time = chVTGetSystemTime();
     time += TIME_MS2I(loopPeriod_ms);
+    unsigned int debg = 0;
     while(true)
     {
-        chprintf(outputStream, "#%d;%d;%f;%d;%d;%d;%d\r\n",
+        chprintf(outputStreamSd4, "#%d;%d;%f;%d;%d;%d;%d;%d\r\n",
             (int32_t)odometry->getX(), (int32_t)odometry->getY(), odometry->getTheta(),
             commandManager->getCommandStatus(), commandManager->getPendingCommandCount(),
-            md22MotorController->getLeftSpeed(), md22MotorController->getRightSpeed());
+            md22MotorController->getLeftSpeed(), md22MotorController->getRightSpeed(), debg);
+//        chprintf(outputStream,    "#%d;%d;%f;%d;%d;%d;%d;%d\r\n",
+//                    (int32_t)odometry->getX(), (int32_t)odometry->getY(), odometry->getTheta(),
+//                    commandManager->getCommandStatus(), commandManager->getPendingCommandCount(),
+//                    md22MotorController->getLeftSpeed(), md22MotorController->getRightSpeed(), debg);
 
         chThdSleepUntil(time);
         time += TIME_MS2I(loopPeriod_ms);
+        debg++;
     }
 }

@@ -11,7 +11,7 @@ constexpr uint8_t accReg = 0x03;
 
 constexpr uint8_t controlMode = 0x01; // Wanted value for mode register. Ie: -128 (full reverse)   0 (stop)   127 (full forward).
 
- Md22::Md22(bool is1motorRight, bool invertMotorRight, bool invertMotorLeft, I2cPinInit *i2cPins, uint32_t i2cFrequency) :
+ Md22::Md22(I2cPinInit *i2cPins, bool is1motorRight, bool invertMotorRight, bool invertMotorLeft, uint32_t i2cFrequency) :
         MotorController()
 {
     m_i2cPinConf = *i2cPins;
@@ -39,6 +39,7 @@ void Md22::init()
     palSetPadMode(m_i2cPinConf.GPIObaseSDA, m_i2cPinConf.pinNumberSDA,
             PAL_MODE_ALTERNATE(4) | PAL_STM32_OTYPE_OPENDRAIN);
 
+
     i2cStart(&I2CD1, &m_i2cconfig);
 
     // When the stm32 and the Md22 are powered on at the same time,
@@ -46,32 +47,49 @@ void Md22::init()
     // So wait a few ms !
     chThdSleepMilliseconds(100);
 
+
+    sysinterval_t tmo = TIME_MS2I(10);
+    msg_t msg = 0;
+    uint8_t cmd[] = {0,0};
+
     i2cAcquireBus (&I2CD1);
 
-    sysinterval_t tmo = TIME_MS2I(4);
+    /*
+     * Keep this hacky part from PMRobotix
+     *     because they tries to get rid of interference with software.....
+     * TODO: check if this is REALLY necessary
+     */
+    for(int i=0; i<10; i++)
+    {
+        if (I2CD1.state != I2C_READY)
+        {
+           i2cStart(&I2CD1, I2CD1.config);
+           chThdSleepMilliseconds(2);
+        }
+    }
 
     // Set mode
-    uint8_t cmd[] = { modeReg, controlMode };
-    msg_t msg = i2cMasterTransmitTimeout(&I2CD1, md22Address, cmd, sizeof(cmd), NULL, 0, tmo);
-
-    chDbgAssert(msg == MSG_OK, "Config MD22 - i2cMasterTransmitTimeout ERROR NOK\r\n");
+    cmd[0] = modeReg;
+    cmd[1] = controlMode;
+    msg = i2cMasterTransmitTimeout(&I2CD1, md22Address, cmd, sizeof(cmd), NULL, 0, tmo);
+    chDbgAssert(msg == MSG_OK, "Config MD22 - i2cMasterTransmitTimeout Set mode ERROR NOK\r\n");
 
     // Set acceleration
     cmd[0] = accReg;
     cmd[1] = 0;
     msg = i2cMasterTransmitTimeout(&I2CD1, md22Address, cmd, sizeof(cmd), NULL, 0, tmo);
-    chDbgAssert(msg == MSG_OK, "Config MD22 - i2cMasterTransmitTimeout ERROR NOK\r\n");
+    chDbgAssert(msg == MSG_OK, "Config MD22 - i2cMasterTransmitTimeout Set acceleration ERROR NOK\r\n");
 
     // Set motor speed to zero
     cmd[0] = motor1Reg;
     cmd[1] = 0;
     msg = i2cMasterTransmitTimeout(&I2CD1, md22Address, cmd, sizeof(cmd), NULL, 0, tmo);
-    chDbgAssert(msg == MSG_OK, "Config MD22 - i2cMasterTransmitTimeout ERROR NOK\r\n");
+    chDbgAssert(msg == MSG_OK, "Config MD22 - i2cMasterTransmitTimeout motor1Reg ERROR NOK\r\n");
 
     cmd[0] = motor2Reg;
     cmd[1] = 0;
     msg = i2cMasterTransmitTimeout(&I2CD1, md22Address, cmd, sizeof(cmd), NULL, 0, tmo);
-    chDbgAssert(msg == MSG_OK, "Config MD22 - i2cMasterTransmitTimeout ERROR NOK\r\n");
+    chDbgAssert(msg == MSG_OK, "Config MD22 - i2cMasterTransmitTimeout motor2Reg ERROR NOK\r\n");
 
     i2cReleaseBus(&I2CD1);
 }

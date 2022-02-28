@@ -36,6 +36,10 @@ public:
 
     void setPosition(float X_mm, float Y_mm, float theta_rad);
 
+    void setEncoderWheelsDistance(float encoderWheelsDistance_mm)
+    {
+        m_encoderWheelsDistance_mm =  encoderWheelsDistance_mm;
+    }
 
 private:
 

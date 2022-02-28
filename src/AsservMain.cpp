@@ -18,14 +18,14 @@ AsservMain::AsservMain(uint16_t loopFrequency, uint16_t speedPositionLoopDivisor
         float encoderWheelsDistance_mm, uint32_t encodersTicksByTurn, CommandManager &commandManager,
         MotorController &motorController, Encoders &encoders, Odometry &odometrie,
         Regulator &angleRegulator, Regulator &distanceRegulator,
-        AccelerationLimiter &angleRegulatorAccelerationLimiter, AccelerationLimiter &distanceRegulatorAccelerationLimiter,  AccelerationDeccelerationLimiter &accelerationDeccelerationLimiter,
+        AccelerationLimiter &angleRegulatorAccelerationLimiter,   AccelerationDeccelerationLimiter &accelerationDeccelerationLimiter,
         SpeedController &speedControllerRight, SpeedController &speedControllerLeft,
         Pll &rightPll, Pll &leftPll) :
 
         m_motorController(motorController), m_encoders(encoders), m_odometry(odometrie),
             m_speedControllerRight(speedControllerRight), m_speedControllerLeft(speedControllerLeft),
             m_angleRegulator(angleRegulator), m_distanceRegulator(distanceRegulator),
-            m_angleRegulatorAccelerationLimiter(angleRegulatorAccelerationLimiter), m_distanceRegulatorAccelerationLimiter(distanceRegulatorAccelerationLimiter), m_accelerationDeccelerationLimiter(accelerationDeccelerationLimiter),
+            m_angleRegulatorAccelerationLimiter(angleRegulatorAccelerationLimiter),  m_accelerationDeccelerationLimiter(accelerationDeccelerationLimiter),
             m_commandManager(commandManager),
             m_pllRight(rightPll), m_pllLeft(leftPll),
             m_distanceByEncoderTurn_mm(M_2PI * wheelRadius_mm), m_encodersTicksByTurn(encodersTicksByTurn), m_encodermmByTicks(m_distanceByEncoderTurn_mm / m_encodersTicksByTurn),
@@ -66,16 +66,18 @@ float AsservMain::estimateDeltaDistance(int16_t deltaCountRight, int16_t deltaCo
 
 void AsservMain::mainLoop()
 {
-    m_motorController.setMotorRightSpeed(0);
-    m_motorController.setMotorLeftSpeed(0);
+    m_motorController.setMotorRightSpeed(0.0);
+    m_motorController.setMotorLeftSpeed(0.0);
 
     const time_conv_t loopPeriod_ms = (m_loopPeriod * 1000.0);
     systime_t time = chVTGetSystemTime();
     time += TIME_MS2I(loopPeriod_ms);
     while (true) {
-        int16_t encoderDeltaRight;
-        int16_t encoderDeltaLeft;
+        float encoderDeltaRight;
+        float encoderDeltaLeft;
         m_encoders.getValues(&encoderDeltaRight, &encoderDeltaLeft);
+
+
 
         // Mise à jour de la position en polaire
         m_odometry.refresh(encoderDeltaRight * m_encodermmByTicks, encoderDeltaLeft * m_encodermmByTicks);
@@ -131,10 +133,10 @@ void AsservMain::mainLoop()
              * C'est batard, et cela ne doit pas être utilisé autrement que pour faire du réglage
              *      on réutilise les filtres de pente pour ne pas avoir à en instancier d'autres
              */
-            float rightWheelSpeed = m_distanceRegulatorAccelerationLimiter.limitAcceleration(m_loopPeriod, m_directSpeedMode_rightWheelSpeed, FLT_MAX);
-            float leftWheelSpeed = m_angleRegulatorAccelerationLimiter.limitAcceleration(m_loopPeriod, m_directSpeedMode_leftWheelSpeed, FLT_MAX);
-            m_speedControllerRight.setSpeedGoal(rightWheelSpeed);
-            m_speedControllerLeft.setSpeedGoal(leftWheelSpeed);
+//            float rightWheelSpeed = m_distanceRegulatorAccelerationLimiter.limitAcceleration(m_loopPeriod, m_directSpeedMode_rightWheelSpeed, FLT_MAX);
+//            float leftWheelSpeed = m_angleRegulatorAccelerationLimiter.limitAcceleration(m_loopPeriod, m_directSpeedMode_leftWheelSpeed, FLT_MAX);
+//            m_speedControllerRight.setSpeedGoal(rightWheelSpeed);
+//            m_speedControllerLeft.setSpeedGoal(leftWheelSpeed);
         }
 
         float outputSpeedRight = m_speedControllerRight.update(estimatedSpeedRight);
@@ -202,7 +204,8 @@ void AsservMain::setWheelsSpeed(float rightWheelSpeed, float leftWheelSpeed)
     m_asservMode = direct_speed_mode;
     m_directSpeedMode_rightWheelSpeed = rightWheelSpeed;
     m_directSpeedMode_leftWheelSpeed = leftWheelSpeed;
-    m_distanceRegulatorAccelerationLimiter.reset();
+//    m_distanceRegulatorAccelerationLimiter.reset();
+    m_accelerationDeccelerationLimiter.reset();
     m_angleRegulatorAccelerationLimiter.reset();
     chSysUnlock();
 }
@@ -212,7 +215,8 @@ void AsservMain::resetToNormalMode()
     chSysLock();
     if (m_asservMode != normal_mode) {
         m_asservMode = normal_mode;
-        m_distanceRegulatorAccelerationLimiter.reset();
+//        m_distanceRegulatorAccelerationLimiter.reset();
+        m_accelerationDeccelerationLimiter.reset();
         m_angleRegulatorAccelerationLimiter.reset();
     }
     chSysUnlock();
@@ -242,7 +246,8 @@ void AsservMain::setEmergencyStop()
     chSysLock();
     m_commandManager.setEmergencyStop();
     m_angleRegulatorAccelerationLimiter.disable();
-    m_distanceRegulatorAccelerationLimiter.disable();
+//    m_distanceRegulatorAccelerationLimiter.disable();
+    m_accelerationDeccelerationLimiter.disable();
     m_angleRegulator.disable();
     m_distanceRegulator.disable();
     chSysUnlock();
@@ -253,7 +258,8 @@ void AsservMain::resetEmergencyStop()
     chSysLock();
     m_commandManager.resetEmergencyStop();
     m_angleRegulatorAccelerationLimiter.enable();
-    m_distanceRegulatorAccelerationLimiter.enable();
+    m_accelerationDeccelerationLimiter.enable();
+//    m_distanceRegulatorAccelerationLimiter.enable();
     m_angleRegulator.enable();
     m_distanceRegulator.enable();
     chSysUnlock();
@@ -330,7 +336,8 @@ void AsservMain::reset()
     m_angleRegulator.reset();
     m_distanceRegulator.reset();
     m_angleRegulatorAccelerationLimiter.reset();
-    m_distanceRegulatorAccelerationLimiter.reset();
+//    m_distanceRegulatorAccelerationLimiter.reset();
+    m_accelerationDeccelerationLimiter.reset();
     m_commandManager.reset();
     m_pllRight.reset();
     m_pllLeft.reset();

@@ -24,9 +24,10 @@ static QEIConfig qeicfg2 = {
 		.overflow_cb = nullptr
 };
 
-QuadratureEncoder::QuadratureEncoder(bool is1EncoderRight, bool invertEncoderR, bool invertEncoderL) :
+QuadratureEncoder::QuadratureEncoder(GpioPinInit *gpioPins, bool is1EncoderRight, bool invertEncoderR, bool invertEncoderL) :
         Encoders()
 {
+    m_gpioPinConf = *gpioPins;
     m_invertEncoderR = invertEncoderR;
     m_invertEncoderL = invertEncoderL;
     m_encoderRSum = 0;
@@ -34,6 +35,8 @@ QuadratureEncoder::QuadratureEncoder(bool is1EncoderRight, bool invertEncoderR, 
     m_encoder1Previous = 0;
     m_encoder2Previous = 0;
     m_is1EncoderRight = is1EncoderRight;
+    m_encoderLGain = 1;
+    m_encoderRGain = 1;
 }
 
 QuadratureEncoder::~QuadratureEncoder()
@@ -43,13 +46,12 @@ QuadratureEncoder::~QuadratureEncoder()
 void QuadratureEncoder::init()
 {
     // Encoder 1
-    palSetPadMode(GPIOA, 7, PAL_MODE_ALTERNATE(2)); //TIM3_chan2
-    palSetPadMode(GPIOC, 6, PAL_MODE_ALTERNATE(2)); //TIM3_chan1
+    palSetPadMode(m_gpioPinConf.GPIObaseE1ch2, m_gpioPinConf.pinNumberE1ch2, PAL_MODE_ALTERNATE(2)); //TIM3_chan2
+    palSetPadMode(m_gpioPinConf.GPIObaseE1ch1, m_gpioPinConf.pinNumberE1ch1, PAL_MODE_ALTERNATE(2)); //TIM3_chan1
     qeiStart(&QEID3, &qeicfg1);
-
     // Encoder 2
-    palSetPadMode(GPIOA, 1, PAL_MODE_ALTERNATE(1)); //TIM2_chan1
-    palSetPadMode(GPIOA, 0, PAL_MODE_ALTERNATE(1)); //TIM2_chan2
+    palSetPadMode(m_gpioPinConf.GPIObaseE2ch2, m_gpioPinConf.pinNumberE2ch2, PAL_MODE_ALTERNATE(1)); //TIM2_chan2
+    palSetPadMode(m_gpioPinConf.GPIObaseE2ch1, m_gpioPinConf.pinNumberE2ch1, PAL_MODE_ALTERNATE(1)); //TIM2_chan1
     qeiStart(&QEID2, &qeicfg2);
 }
 
@@ -57,6 +59,11 @@ void QuadratureEncoder::start()
 {
     qeiEnable (&QEID3);
     qeiEnable (&QEID2);
+    m_encoder1Previous = qeiGetCount(&QEID3);
+    m_encoder2Previous = qeiGetCount(&QEID2);
+    m_encoderRSum = 0;
+    m_encoderLSum = 0;
+
 }
 
 void QuadratureEncoder::stop()
@@ -65,33 +72,36 @@ void QuadratureEncoder::stop()
     qeiDisable (&QEID2);
 }
 
-void QuadratureEncoder::getValues(int16_t *deltaEncoderRight, int16_t *deltaEncoderLeft)
+void QuadratureEncoder::getValues(float *deltaEncoderRight, float *deltaEncoderLeft)
 {
     int16_t encoder2 = qeiGetCount(&QEID2);
     int16_t encoder1 = qeiGetCount(&QEID3);
 
-    if (m_is1EncoderRight) {
-        *deltaEncoderRight = encoder1 - m_encoder1Previous;
-        *deltaEncoderLeft = encoder2 - m_encoder2Previous;
-    } else {
-        *deltaEncoderRight = encoder2 - m_encoder2Previous;
-        *deltaEncoderLeft = encoder1 - m_encoder1Previous;
+    int16_t deltaRight;
+    int16_t deltaLeft;
+
+    if (m_is1EncoderRight)
+    {
+        deltaRight = encoder1 - m_encoder1Previous;
+        deltaLeft = encoder2 - m_encoder2Previous;
+    }
+    else
+    {
+        deltaRight = encoder2 - m_encoder2Previous;
+        deltaLeft = encoder1 - m_encoder1Previous;
     }
 
     if (m_invertEncoderR)
-        *deltaEncoderRight = -*deltaEncoderRight;
+        deltaRight = -deltaRight;
     if (m_invertEncoderL)
-        *deltaEncoderLeft = -*deltaEncoderLeft;
+        deltaLeft = -deltaLeft;
 
-    m_encoderRSum += *deltaEncoderRight;
-    m_encoderLSum += *deltaEncoderLeft;
+    m_encoderRSum += deltaRight;
+    m_encoderLSum += deltaLeft;
+
+    *deltaEncoderRight = float(deltaRight) * m_encoderRGain;
+    *deltaEncoderLeft = float(deltaLeft) * m_encoderLGain;
 
     m_encoder1Previous = encoder1;
     m_encoder2Previous = encoder2;
-}
-
-void QuadratureEncoder::getEncodersTotalCount(int32_t *encoderRight, int32_t *encoderLeft)
-{
-    *encoderRight = m_encoderRSum;
-    *encoderLeft = m_encoderLSum;
 }

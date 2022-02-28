@@ -5,7 +5,7 @@
 
 
 AccelerationDeccelerationLimiter::AccelerationDeccelerationLimiter(float maxAcceleration, float maxDecceleration, float arrivalWindow, float maxSpeed, const Regulator &regulator)
-: m_regulator(regulator)
+: m_regulator(regulator), m_enabled(true)
 {
     m_maxAcceleration = maxAcceleration;
     m_maxDecceleration = maxDecceleration;

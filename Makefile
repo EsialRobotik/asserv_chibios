@@ -91,7 +91,7 @@ MCU  = cortex-m4
 # Imported source files and paths.
 CHIBIOS  := ./ChibiOS/
 CHIBIOS_CONTRIB = ./ChibiOS-Contrib/
-CONFDIR  := ./cfg_chibios
+CONFDIR  := ./src/Robots/$(ROBOT)/cfg_chibios
 BUILDDIR := ./build
 DEPDIR   := ./.dep
 SRCDIR   := ./src
@@ -160,7 +160,12 @@ CPPSRC = $(ALLCPPSRC) \
        $(SRCDIR)/Regulator.cpp \
        $(SRCDIR)/Odometry.cpp \
        $(SRCDIR)/commandManager/CommandManager.cpp \
-       $(SRCDIR)/commandManager/CMDList/CMDList.cpp \
+       $(SRCDIR)/commandManager/CommandList.cpp \
+       $(SRCDIR)/commandManager/Commands/StraitLine.cpp \
+       $(SRCDIR)/commandManager/Commands/Turn.cpp \
+       $(SRCDIR)/commandManager/Commands/Goto.cpp \
+       $(SRCDIR)/commandManager/Commands/GotoAngle.cpp \
+       $(SRCDIR)/commandManager/Commands/GotoNoStop.cpp \
        $(SRCDIR)/util/chibiOsAllocatorWrapper.cpp  \
        $(SRCDIR)/AccelerationLimiter/AbstractAccelerationLimiter.cpp \
        $(SRCDIR)/AccelerationLimiter/SimpleAccelerationLimiter.cpp \
