@@ -41,6 +41,7 @@ typedef struct
     float value31;
     float value32;
     float value33;
+    float value34;
 }__attribute__((packed)) UsbStreamSample;
 
 class USBStream
@@ -209,7 +210,11 @@ public:
     {
         setValue(&m_currentStruct.value30, y);
     }
-    inline void setSlope(float y)
+    inline void setstoppingDistanceDelay(float y)
+  {
+	  setValue(&m_currentStruct.value34, y);
+  }
+    inline void setRawSpeedConsignForAccLimit(float y)
     {
         setValue(&m_currentStruct.value31, y);
     }

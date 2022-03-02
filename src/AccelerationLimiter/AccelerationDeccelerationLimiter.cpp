@@ -20,6 +20,8 @@ AccelerationDeccelerationLimiter::AccelerationDeccelerationLimiter(float maxAcce
 float AccelerationDeccelerationLimiter::limitAccelerationDecceleration(float positionConsign, float currentPosition, float currentSpeed, float dt)
 {
     float stoppingDistance = (currentSpeed * currentSpeed) / (2.0 * -m_maxDecceleration);
+    float stoppingTime = currentSpeed/-m_maxDecceleration;
+    float stoppingDistanceWithDelay = ((stoppingTime+0.140)*currentSpeed) / (2.0);
     float positionError = positionConsign - currentPosition;
     float positionErrorAbs = fabs(positionError);
 
@@ -29,12 +31,11 @@ float AccelerationDeccelerationLimiter::limitAccelerationDecceleration(float pos
 
     float outputPositionConsign;
 
-    USBStream::instance()->setSlope(0);
     if( positionErrorAbs < m_arrivalWindow) // In this we are to close to the goal, just let the regulator do its job
     {
         m_currentSpeedConsign = way*positionError;
     }
-    else if( positionErrorAbs > stoppingDistance) // In this case accelerate or travel at constant speed
+    else if( positionErrorAbs > stoppingDistanceWithDelay) // In this case accelerate or travel at constant speed
     {
         float maxSpeedConsign = m_maxSpeed / m_regulator.getGain();
         m_currentSpeedConsign += m_maxAcceleration / m_regulator.getGain() * dt;
@@ -60,7 +61,9 @@ float AccelerationDeccelerationLimiter::limitAccelerationDecceleration(float pos
     outputPositionConsign =  currentPosition + way*m_currentSpeedConsign;
 
     USBStream::instance()->setSpeedConsignForAccLimit(m_currentSpeedConsign);
+    USBStream::instance()->setRawSpeedConsignForAccLimit(m_currentSpeedConsign*m_regulator.getGain());
     USBStream::instance()->setstoppingDistance(stoppingDistance);
+    USBStream::instance()->setstoppingDistanceDelay(stoppingDistanceWithDelay);
     USBStream::instance()->setDistanceSpeed(currentSpeed);
 
     m_prevOutputPositionConsign = outputPositionConsign;
