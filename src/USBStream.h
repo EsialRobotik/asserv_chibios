@@ -35,6 +35,15 @@ typedef struct
     float value25;
     float value26;
     float value27;
+    float value28;
+    float value29;
+    float value30;
+    float value31;
+    float value32;
+    float value33;
+    float value34;
+    float value35;
+
 }__attribute__((packed)) UsbStreamSample;
 
 class USBStream
@@ -187,6 +196,48 @@ public:
     inline void setYGoal(float y)
     {
         setValue(&m_currentStruct.value23, y);
+    }
+
+    // Acc & dec limiter
+    inline void setAngleLimiterVelocityAtDecTime(float val)
+    {
+        setValue(&m_currentStruct.value28, val);
+    }
+    inline void setAngleLimiterVelocityCompensation(float val)
+    {
+        setValue(&m_currentStruct.value29, val);
+    }
+    inline void setAngleLimiterVelocityCompensated(float val)
+    {
+//        setValue(&m_currentStruct.value30, val);
+    }
+    inline void setAngleLimiterOutput(float val)
+    {
+//        setValue(&m_currentStruct.value31, val);
+    }
+    inline void setDistanceLimiterVelocityAtDecTime(float val)
+    {
+        setValue(&m_currentStruct.value32, val);
+    }
+    inline void setDistanceLimiterVelocityCompensation(float val)
+    {
+        setValue(&m_currentStruct.value33, val);
+    }
+    inline void setDistanceLimiterVelocityCompensated(float val)
+    {
+        setValue(&m_currentStruct.value34, val);
+    }
+    inline void setDistanceLimiterOutput(float val)
+    {
+        setValue(&m_currentStruct.value35, val);
+    }
+    inline void setDistanceLimiterInitialPosError(float val)
+    {
+        setValue(&m_currentStruct.value31, val);
+    }
+    inline void setDistanceLimiterTargetSpeed(float val)
+    {
+        setValue(&m_currentStruct.value30, val);
     }
 
 private:

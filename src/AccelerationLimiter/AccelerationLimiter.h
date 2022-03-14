@@ -8,7 +8,7 @@ public:
     {
     }
 
-    virtual float limitAcceleration(float dt, float targetSpeed, float currentSpeed) = 0;
+    virtual float limitAcceleration(float dt, float targetSpeed, float currentSpeed, float positionGoal, float positionError) = 0;
 
     virtual void enable() = 0;
     virtual void disable() = 0;

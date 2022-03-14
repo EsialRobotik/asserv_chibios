@@ -421,7 +421,7 @@
  *          buffers.
  */
 #if !defined(SERIAL_USB_BUFFERS_SIZE) || defined(__DOXYGEN__)
-#define SERIAL_USB_BUFFERS_SIZE             128
+#define SERIAL_USB_BUFFERS_SIZE             256
 #endif
 
 /**
@@ -429,7 +429,7 @@
  * @note    The default is 2 buffers.
  */
 #if !defined(SERIAL_USB_BUFFERS_NUMBER) || defined(__DOXYGEN__)
-#define SERIAL_USB_BUFFERS_NUMBER           32
+#define SERIAL_USB_BUFFERS_NUMBER           16
 #endif
 
 #define BOARD_OTG_NOVBUSSENS

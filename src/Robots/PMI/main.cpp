@@ -21,6 +21,7 @@
 #include "AccelerationLimiter/SimpleAccelerationLimiter.h"
 #include "AccelerationLimiter/AdvancedAccelerationLimiter.h"
 #include "Pll.h"
+#include "AccelerationLimiter/AccelerationDecelerationLimiter.h"
 
 
 #define ASSERV_THREAD_FREQUENCY (300)
@@ -33,7 +34,7 @@
 
 #define MAX_SPEED_MM_PER_SEC (1200)
 
-#define DIST_REGULATOR_KP (3)
+#define DIST_REGULATOR_KP (6)
 #define DIST_REGULATOR_MAX_ACC (1300)
 #define DIST_REGULATOR_MIN_ACC (500)
 #define DIST_REGULATOR_HIGH_SPEED_THRESHOLD (400)
@@ -85,7 +86,8 @@ Pll *rightPll;
 Pll *leftPll;
 
 SimpleAccelerationLimiter *angleAccelerationlimiter;
-AdvancedAccelerationLimiter *distanceAccelerationLimiter;
+//AdvancedAccelerationLimiter *distanceAccelerationLimiter;
+AccelerationDecelerationLimiter *distanceAccelerationLimiter;
 
 CommandManager *commandManager;
 AsservMain *mainAsserv;
@@ -109,7 +111,8 @@ static void initAsserv()
 
 
     angleAccelerationlimiter = new SimpleAccelerationLimiter(ANGLE_REGULATOR_MAX_ACC);
-    distanceAccelerationLimiter = new AdvancedAccelerationLimiter(DIST_REGULATOR_MAX_ACC, DIST_REGULATOR_MIN_ACC, DIST_REGULATOR_HIGH_SPEED_THRESHOLD);
+//    distanceAccelerationLimiter = new AdvancedAccelerationLimiter(DIST_REGULATOR_MAX_ACC, DIST_REGULATOR_MIN_ACC, DIST_REGULATOR_HIGH_SPEED_THRESHOLD);
+    distanceAccelerationLimiter = new AccelerationDecelerationLimiter(500, MAX_SPEED_MM_PER_SEC,  DIST_REGULATOR_KP, false);
 
     commandManager = new CommandManager( COMMAND_MANAGER_ARRIVAL_DISTANCE_THRESHOLD_mm, COMMAND_MANAGER_ARRIVAL_ANGLE_THRESHOLD_RAD,
                                    preciseGotoConf, waypointGotoConf, gotoNoStopConf,
@@ -409,9 +412,9 @@ void asservCommandUSB(BaseSequentialStream *chp, int argc, char **argv)
         float acc_threshold = atof(argv[3]);
         chprintf(outputStream, "setting distance acceleration limiter max %.2f min %.2f threshold %.2f \r\n", acc_max, acc_min, acc_threshold);
 
-        distanceAccelerationLimiter->setMaxAcceleration(acc_max);
-        distanceAccelerationLimiter->setMinAcceleration(acc_min);
-        distanceAccelerationLimiter->setHighSpeedThreshold(acc_threshold);
+//        distanceAccelerationLimiter->setMaxAcceleration(acc_max);
+//        distanceAccelerationLimiter->setMinAcceleration(acc_min);
+//        distanceAccelerationLimiter->setHighSpeedThreshold(acc_threshold);
     }
     else if (!strcmp(argv[0], "addangle"))
     {
@@ -591,9 +594,9 @@ void asservCommandUSB(BaseSequentialStream *chp, int argc, char **argv)
 
         // accel limiter
         config_buffer[index++] = angleAccelerationlimiter->getMaxAcceleration();
-        config_buffer[index++] = distanceAccelerationLimiter->getMaxAcceleration();
-        config_buffer[index++] = distanceAccelerationLimiter->getMinAcceleration();
-        config_buffer[index++] = distanceAccelerationLimiter->getHighSpeedThreshold();
+//        config_buffer[index++] = distanceAccelerationLimiter->getMaxAcceleration();
+//        config_buffer[index++] = distanceAccelerationLimiter->getMinAcceleration();
+//        config_buffer[index++] = distanceAccelerationLimiter->getHighSpeedThreshold();
 
         chprintf(outputStream, "sending %d float of config !\r\n", index);
         USBStream::instance()->sendConfig((uint8_t*)config_buffer, index*sizeof(config_buffer[0]));

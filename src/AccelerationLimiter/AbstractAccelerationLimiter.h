@@ -10,7 +10,7 @@ public:
     AbstractAccelerationLimiter();
     virtual ~AbstractAccelerationLimiter(){};
 
-    virtual float limitAcceleration(float dt, float targetSpeed, float currentSpeed);
+    virtual float limitAcceleration(float dt, float targetSpeed, float currentSpeed, float positionGoal, float positionError);
 
     virtual void enable();
     virtual void disable();
