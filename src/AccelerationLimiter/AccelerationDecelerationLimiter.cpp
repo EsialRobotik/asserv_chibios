@@ -4,7 +4,7 @@
 #include "USBStream.h"
 
 
-AccelerationDecelerationLimiter::AccelerationDecelerationLimiter(float maxAcceleration, float maxSpeed, float positionCorrectorKp, bool isAngleLimiter) : AccelerationLimiter()
+AccelerationDecelerationLimiter::AccelerationDecelerationLimiter(float maxAcceleration, float maxDeceleration, float maxSpeed, float positionCorrectorKp, bool isAngleLimiter) : AccelerationLimiter()
 {
 	m_enabled = true;
 	m_initialPositionError = 0;
@@ -13,7 +13,10 @@ AccelerationDecelerationLimiter::AccelerationDecelerationLimiter(float maxAccele
 	m_velocityCompensation = 0;
 	m_CompensatedOutput = 0;
 	m_velocityAtDecTime = 0;
-    m_maxAcceleration = maxAcceleration;
+    m_maxAccelerationForward = maxAcceleration;
+    m_maxDecelerationForward = maxDeceleration;
+    m_maxAccelerationBackward = maxAcceleration;
+    m_maxDecelerationBackward = maxDeceleration;
     m_maxSpeed = maxSpeed;
     m_positionCorrectorKp = positionCorrectorKp;
     m_isAngleLimiter = isAngleLimiter;
@@ -30,20 +33,39 @@ float AccelerationDecelerationLimiter::limitAcceleration(float dt, float targetS
 		m_previousPositionGoal = positionGoal;
 	}
 
-	// 1st compute the velocity estimator at deceleration time
-	m_velocityAtDecTime = std::min( sqrt(m_maxAcceleration*m_initialPositionError*1.1f) , m_maxSpeed );
-	if( m_velocityAtDecTime == 0)
-		m_velocityAtDecTime = 1e-5; // In this case, avoid division by zero !
+	float maxAcceleration = m_maxAccelerationForward;
+	float maxDeceleration = m_maxDecelerationForward;
+	float way = 1.0f;
+	bool forward = true;
+	if(positionError < 0.0f)
+	{
+		maxAcceleration = m_maxAccelerationBackward;
+		maxDeceleration = m_maxDecelerationBackward;
+		way = -1.0f;
+		forward = false;
+	}
 
-	m_velocityCompensation = ((m_positionCorrectorKp*1.1f)/(2.0*m_maxAcceleration) - 1.0/m_velocityAtDecTime ) * (m_previousLimitedOutput*m_previousLimitedOutput);
+	// 1st compute the velocity estimator at deceleration time
+	m_velocityAtDecTime = std::min( sqrt(fabs(maxDeceleration*m_initialPositionError*1.0f)) , m_maxSpeed );
+	if( m_velocityAtDecTime == 0)
+		m_velocityAtDecTime = 1e5; // In this case, avoid division by zero !
+
+	m_velocityCompensation = way*((m_positionCorrectorKp*1.4f)/(maxAcceleration+maxDeceleration) - 1.0/m_velocityAtDecTime ) * (m_previousLimitedOutput*m_previousLimitedOutput);
 
 	m_CompensatedOutput = targetSpeed - m_velocityCompensation;
 
-	float max_delta = m_maxAcceleration*dt;
-	if(m_CompensatedOutput > m_previousLimitedOutput+max_delta)
-		m_CompensatedOutput = m_previousLimitedOutput+max_delta;
-	if(m_CompensatedOutput < m_previousLimitedOutput-max_delta)
-		m_CompensatedOutput = m_previousLimitedOutput-max_delta;
+	float max_delta_up = (forward) ? (maxAcceleration*dt) : (maxDeceleration*dt);
+	float max_delta_down = (forward) ? (maxDeceleration*dt) : (maxAcceleration*dt);
+
+	if(m_CompensatedOutput > m_previousLimitedOutput+max_delta_up)
+		m_CompensatedOutput = m_previousLimitedOutput+max_delta_up;
+	if(m_CompensatedOutput < m_previousLimitedOutput-max_delta_down)
+		m_CompensatedOutput = m_previousLimitedOutput-max_delta_down;
+
+	if( m_CompensatedOutput > m_maxSpeed)
+		m_CompensatedOutput = m_maxSpeed;
+	else if( m_CompensatedOutput < -m_maxSpeed)
+		m_CompensatedOutput = -m_maxSpeed;
 
 	if( m_isAngleLimiter )
 	{

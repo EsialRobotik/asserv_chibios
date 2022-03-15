@@ -35,7 +35,8 @@
 #define MAX_SPEED_MM_PER_SEC (1200)
 
 #define DIST_REGULATOR_KP (6)
-#define DIST_REGULATOR_MAX_ACC (1300)
+#define DIST_REGULATOR_MAX_ACC (1200)
+#define DIST_REGULATOR_MAX_DEC (1200)
 #define DIST_REGULATOR_MIN_ACC (500)
 #define DIST_REGULATOR_HIGH_SPEED_THRESHOLD (400)
 
@@ -99,7 +100,7 @@ static void initAsserv()
     md22MotorController = new Md22(&ESIALCardPinConf_md22, true, true, true, 100000);
 
     angleRegulator = new Regulator(ANGLE_REGULATOR_KP, MAX_SPEED_MM_PER_SEC);
-    distanceRegulator = new Regulator(DIST_REGULATOR_KP, MAX_SPEED_MM_PER_SEC);
+    distanceRegulator = new Regulator(DIST_REGULATOR_KP, FLT_MAX);
 
     rightPll = new Pll (PLL_BANDWIDTH);
     leftPll = new Pll(PLL_BANDWIDTH);
@@ -112,7 +113,7 @@ static void initAsserv()
 
     angleAccelerationlimiter = new SimpleAccelerationLimiter(ANGLE_REGULATOR_MAX_ACC);
 //    distanceAccelerationLimiter = new AdvancedAccelerationLimiter(DIST_REGULATOR_MAX_ACC, DIST_REGULATOR_MIN_ACC, DIST_REGULATOR_HIGH_SPEED_THRESHOLD);
-    distanceAccelerationLimiter = new AccelerationDecelerationLimiter(500, MAX_SPEED_MM_PER_SEC,  DIST_REGULATOR_KP, false);
+    distanceAccelerationLimiter = new AccelerationDecelerationLimiter(DIST_REGULATOR_MAX_ACC, DIST_REGULATOR_MAX_DEC, MAX_SPEED_MM_PER_SEC-300,  DIST_REGULATOR_KP, false);
 
     commandManager = new CommandManager( COMMAND_MANAGER_ARRIVAL_DISTANCE_THRESHOLD_mm, COMMAND_MANAGER_ARRIVAL_ANGLE_THRESHOLD_RAD,
                                    preciseGotoConf, waypointGotoConf, gotoNoStopConf,
