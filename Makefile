@@ -169,7 +169,8 @@ CPPSRC = $(ALLCPPSRC) \
        $(SRCDIR)/util/chibiOsAllocatorWrapper.cpp  \
        $(SRCDIR)/AccelerationLimiter/AbstractAccelerationLimiter.cpp \
        $(SRCDIR)/AccelerationLimiter/SimpleAccelerationLimiter.cpp \
-       $(SRCDIR)/AccelerationLimiter/AdvancedAccelerationLimiter.cpp 
+       $(SRCDIR)/AccelerationLimiter/AdvancedAccelerationLimiter.cpp \
+       $(SRCDIR)/blockingDetection/SpeedErrorBlockingDetection.cpp 
 
     
 

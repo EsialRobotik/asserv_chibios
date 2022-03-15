@@ -6,6 +6,7 @@
 #include "Odometry.h"
 #include "SpeedController/SpeedController.h"
 #include "AccelerationLimiter/AccelerationLimiter.h"
+#include "blockingDetection/BlockingDetection.h"
 #include "Pll.h"
 #include "Regulator.h"
 #include <chprintf.h>
@@ -19,7 +20,8 @@ AsservMain::AsservMain(uint16_t loopFrequency, uint16_t speedPositionLoopDivisor
         Regulator &angleRegulator, Regulator &distanceRegulator,
         AccelerationLimiter &angleRegulatorAccelerationLimiter, AccelerationLimiter &distanceRegulatorAccelerationLimiter,
         SpeedController &speedControllerRight, SpeedController &speedControllerLeft,
-        Pll &rightPll, Pll &leftPll) :
+        Pll &rightPll, Pll &leftPll,
+        BlockingDetection *blockingDetection) :
 
         m_motorController(motorController), m_encoders(encoders), m_odometry(odometrie),
             m_speedControllerRight(speedControllerRight), m_speedControllerLeft(speedControllerLeft),
@@ -27,6 +29,7 @@ AsservMain::AsservMain(uint16_t loopFrequency, uint16_t speedPositionLoopDivisor
             m_angleRegulatorAccelerationLimiter(angleRegulatorAccelerationLimiter), m_distanceRegulatorAccelerationLimiter(distanceRegulatorAccelerationLimiter),
             m_commandManager(commandManager),
             m_pllRight(rightPll), m_pllLeft(leftPll),
+            m_blockingDetection(blockingDetection),
             m_distanceByEncoderTurn_mm(M_2PI * wheelRadius_mm), m_encodersTicksByTurn(encodersTicksByTurn), m_encodermmByTicks(m_distanceByEncoderTurn_mm / m_encodersTicksByTurn),
             m_encoderWheelsDistance_mm(encoderWheelsDistance_mm), m_encoderWheelsDistance_ticks(encoderWheelsDistance_mm / m_encodermmByTicks),
             m_loopFrequency(loopFrequency), m_loopPeriod(1.0 / float(loopFrequency)), m_speedPositionLoopDivisor( speedPositionLoopDivisor)
@@ -138,6 +141,11 @@ void AsservMain::mainLoop()
         if (m_enableMotors) {
             m_motorController.setMotorRightSpeed(outputSpeedRight);
             m_motorController.setMotorLeftSpeed(outputSpeedLeft);
+        }
+
+        if( m_blockingDetection )
+        {
+            m_blockingDetection->isBlocked();
         }
 
         USBStream::instance()->setSpeedEstimatedRight(estimatedSpeedRight);

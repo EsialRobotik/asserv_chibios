@@ -9,6 +9,7 @@ SpeedController::SpeedController(float speedKp, float speedKi, float outputLimit
 {
     m_speedGoal = 0;
     m_integratedOutput = 0;
+    m_speedError = 0;
     m_speedKp = speedKp;
     m_speedKi = speedKi;
 
@@ -20,10 +21,10 @@ SpeedController::SpeedController(float speedKp, float speedKi, float outputLimit
 float SpeedController::update(float actualSpeed)
 {
     float outputValue = 0;
-    float speedError = m_speedGoal - actualSpeed;
+    m_speedError = m_speedGoal - actualSpeed;
 
     // Regulateur en vitesse : un PI
-    outputValue = speedError * m_speedKp;
+    outputValue = m_speedError * m_speedKp;
     outputValue += m_integratedOutput;
 
     // On limite la sortie entre -m_outputLimit et m_outputLimit...
@@ -43,8 +44,8 @@ float SpeedController::update(float actualSpeed)
     }
     else	// .. Sinon, on integre l'erreur
     {
-        m_integratedOutput += m_speedKi * speedError / m_measureFrequency;
-        if (std::fabs(speedError) < 0.1) // Quand l'erreur de vitesse est proche de zero(ie: consigne à 0 et le robot ne bouge pas..), on désature l'intégrale
+        m_integratedOutput += m_speedKi * m_speedError / m_measureFrequency;
+        if (std::fabs(m_speedError) < 0.1) // Quand l'erreur de vitesse est proche de zero(ie: consigne à 0 et le robot ne bouge pas..), on désature l'intégrale
             m_integratedOutput *= 0.95;
     }
 
