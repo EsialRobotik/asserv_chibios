@@ -24,7 +24,7 @@
 #include "AccelerationLimiter/AccelerationDecelerationLimiter.h"
 
 
-#define ASSERV_THREAD_FREQUENCY (300)
+#define ASSERV_THREAD_FREQUENCY (600)
 #define ASSERV_THREAD_PERIOD_S (1.0/ASSERV_THREAD_FREQUENCY)
 #define ASSERV_POSITION_DIVISOR (5)
 
@@ -32,16 +32,17 @@
 #define ENCODERS_WHEELS_DISTANCE_MM (264.7)
 #define ENCODERS_TICKS_BY_TURN (1440*4)
 
-#define MAX_SPEED_MM_PER_SEC (1200)
+#define MAX_SPEED_MM_PER_SEC (300)
 
 #define DIST_REGULATOR_KP (6)
-#define DIST_REGULATOR_MAX_ACC (1200)
-#define DIST_REGULATOR_MAX_DEC (1200)
-#define DIST_REGULATOR_MIN_ACC (500)
-#define DIST_REGULATOR_HIGH_SPEED_THRESHOLD (400)
+#define DIST_REGULATOR_MAX_ACC_FW (800)
+#define DIST_REGULATOR_MAX_DEC_FW (800)
+#define DIST_REGULATOR_MAX_ACC_BW (800)
+#define DIST_REGULATOR_MAX_DEC_BW (800)
+
 
 #define ANGLE_REGULATOR_KP (700)
-#define ANGLE_REGULATOR_MAX_ACC (1500)
+#define ANGLE_REGULATOR_MAX_ACC (1100)
 
 float speed_controller_right_Kp[NB_PI_SUBSET] = { 0.1, 0.1, 0.1};
 float speed_controller_right_Ki[NB_PI_SUBSET] = { 1.0, 0.8, 0.6};
@@ -51,7 +52,7 @@ float speed_controller_left_Kp[NB_PI_SUBSET] = { 0.1, 0.1, 0.1};
 float speed_controller_left_Ki[NB_PI_SUBSET] = { 1.0, 0.8, 0.6};
 float speed_controller_left_SpeedRange[NB_PI_SUBSET] = { 20, 50, 60};
 
-#define PLL_BANDWIDTH (150)
+#define PLL_BANDWIDTH (200)
 
 
 #define COMMAND_MANAGER_ARRIVAL_ANGLE_THRESHOLD_RAD (0.02)
@@ -66,7 +67,7 @@ Goto::GotoConfiguration preciseGotoConf  = {COMMAND_MANAGER_GOTO_RETURN_THRESHOL
 Goto::GotoConfiguration waypointGotoConf  = {COMMAND_MANAGER_GOTO_RETURN_THRESHOLD_mm, COMMAND_MANAGER_GOTO_ANGLE_THRESHOLD_RAD, COMMAND_MANAGER_GOTO_WAYPOINT_ARRIVAL_DISTANCE_mm};
 
 #define COMMAND_MANAGER_GOTONOSTOP_TOO_BIG_ANGLE_THRESHOLD_RAD (M_PI/2)
-GotoNoStop::GotoNoStopConfiguration gotoNoStopConf = {COMMAND_MANAGER_GOTO_ANGLE_THRESHOLD_RAD, COMMAND_MANAGER_GOTONOSTOP_TOO_BIG_ANGLE_THRESHOLD_RAD, (100/DIST_REGULATOR_KP)};
+GotoNoStop::GotoNoStopConfiguration gotoNoStopConf = {COMMAND_MANAGER_GOTO_ANGLE_THRESHOLD_RAD, COMMAND_MANAGER_GOTONOSTOP_TOO_BIG_ANGLE_THRESHOLD_RAD, (150/DIST_REGULATOR_KP)};
 
 Md22::I2cPinInit ESIALCardPinConf_md22 = {GPIOB, 6, GPIOB, 7};
 QuadratureEncoder::GpioPinInit ESIALCardPinConf_Encoders = {GPIOC, 6, GPIOA, 7, GPIOA, 1, GPIOA, 0};
@@ -107,13 +108,12 @@ static void initAsserv()
 
     odometry = new Odometry (ENCODERS_WHEELS_DISTANCE_MM, 0, 0);
 
-    speedControllerRight = new AdaptativeSpeedController(speed_controller_right_Kp, speed_controller_right_Ki, speed_controller_right_SpeedRange, 100, MAX_SPEED_MM_PER_SEC, ASSERV_THREAD_FREQUENCY);
-    speedControllerLeft = new AdaptativeSpeedController(speed_controller_left_Kp, speed_controller_left_Ki, speed_controller_left_SpeedRange, 100, MAX_SPEED_MM_PER_SEC, ASSERV_THREAD_FREQUENCY);
+    speedControllerRight = new AdaptativeSpeedController(speed_controller_right_Kp, speed_controller_right_Ki, speed_controller_right_SpeedRange, 100, FLT_MAX, ASSERV_THREAD_FREQUENCY);
+    speedControllerLeft = new AdaptativeSpeedController(speed_controller_left_Kp, speed_controller_left_Ki, speed_controller_left_SpeedRange, 100, FLT_MAX, ASSERV_THREAD_FREQUENCY);
 
 
     angleAccelerationlimiter = new SimpleAccelerationLimiter(ANGLE_REGULATOR_MAX_ACC);
-//    distanceAccelerationLimiter = new AdvancedAccelerationLimiter(DIST_REGULATOR_MAX_ACC, DIST_REGULATOR_MIN_ACC, DIST_REGULATOR_HIGH_SPEED_THRESHOLD);
-    distanceAccelerationLimiter = new AccelerationDecelerationLimiter(DIST_REGULATOR_MAX_ACC, DIST_REGULATOR_MAX_DEC, MAX_SPEED_MM_PER_SEC-300,  DIST_REGULATOR_KP, false);
+    distanceAccelerationLimiter = new AccelerationDecelerationLimiter(DIST_REGULATOR_MAX_ACC_FW, DIST_REGULATOR_MAX_DEC_FW, DIST_REGULATOR_MAX_ACC_BW, DIST_REGULATOR_MAX_DEC_BW, MAX_SPEED_MM_PER_SEC,  DIST_REGULATOR_KP, false);
 
     commandManager = new CommandManager( COMMAND_MANAGER_ARRIVAL_DISTANCE_THRESHOLD_mm, COMMAND_MANAGER_ARRIVAL_ANGLE_THRESHOLD_RAD,
                                    preciseGotoConf, waypointGotoConf, gotoNoStopConf,
@@ -266,6 +266,8 @@ void asservCommandUSB(BaseSequentialStream *chp, int argc, char **argv)
         chprintf(outputStream," -------------- \r\n");
         chprintf(outputStream," - asserv addgoto X Y\r\n");
         chprintf(outputStream," - asserv gototest\r\n");
+        chprintf(outputStream," -------------- \r\n");
+        chprintf(outputStream," - asserv pll freq\r\n");
     };
     (void) chp;
 
@@ -502,19 +504,37 @@ void asservCommandUSB(BaseSequentialStream *chp, int argc, char **argv)
         mainAsserv->resetToNormalMode();
         commandManager->addGoTo(X, Y);
     }
+    else if (!strcmp(argv[0], "pll"))
+    {
+        float bw = atof(argv[1]);
+        chprintf(outputStream, "Set PLL bandwidth to %.2f \r\n", bw);
+        rightPll->setBandwidth(bw);
+        leftPll->setBandwidth(bw);
+        rightPll->reset();
+        leftPll->reset();
+    }
     else if (!strcmp(argv[0], "gototest"))
     {
         mainAsserv->resetToNormalMode();
         
-        commandManager->addGoToNoStop(500, 0);
-        commandManager->addGoToNoStop(500, 500);
-        commandManager->addGoToNoStop(0, 500);
-        commandManager->addGoToNoStop(0, 0);
-        // commandManager->addGoToNoStop(800, 0);
-        // commandManager->addGoToNoStop(800, -250);
-        // commandManager->addGoToNoStop(300, -250);
-        // commandManager->addGoToNoStop(00, 0);
-        // commandManager->addGoToAngle(100, 0);
+//        commandManager->addGoToNoStop(500, 0);
+//        commandManager->addGoToNoStop(500, 300);
+//        commandManager->addGoToNoStop(0, 300);
+//        commandManager->addGoToNoStop(0, 0);
+
+//        commandManager->addGoToWaypoint(300, 0);
+//        commandManager->addGoToWaypoint(300, 300);
+//        commandManager->addGoToWaypoint(0, 300);
+//        commandManager->addGoToWaypoint(0, 0);
+
+
+        commandManager->addGoTo(500, 0);
+        commandManager->addGoTo(500, 300);
+        commandManager->addGoTo(0, 300);
+        commandManager->addGoTo(0, 0);
+
+        commandManager->addGoToAngle(1000, 0);
+
 
 
 

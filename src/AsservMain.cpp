@@ -68,9 +68,9 @@ void AsservMain::mainLoop()
     m_motorController.setMotorRightSpeed(0.0);
     m_motorController.setMotorLeftSpeed(0.0);
 
-    const time_conv_t loopPeriod_ms = (m_loopPeriod * 1000.0);
+    const time_usecs_t loopPeriod_us = (m_loopPeriod * 1000000.0);
     systime_t time = chVTGetSystemTime();
-    time += TIME_MS2I(loopPeriod_ms);
+    time += TIME_US2I(loopPeriod_us);
     while (true) {
         float encoderDeltaRight;
         float encoderDeltaLeft;
@@ -179,7 +179,7 @@ void AsservMain::mainLoop()
 
         chDbgAssert(chVTGetSystemTime() < time, "asserv thread missed deadline !");
         chThdSleepUntil(time);
-        time += TIME_MS2I(loopPeriod_ms);
+        time += TIME_US2I(loopPeriod_us);
     }
 }
 

@@ -43,6 +43,7 @@ typedef struct
     float value33;
     float value34;
     float value35;
+    float value36;
 
 }__attribute__((packed)) UsbStreamSample;
 
@@ -201,11 +202,11 @@ public:
     // Acc & dec limiter
     inline void setAngleLimiterVelocityAtDecTime(float val)
     {
-        setValue(&m_currentStruct.value28, val);
+//        setValue(&m_currentStruct.value28, val);
     }
     inline void setAngleLimiterVelocityCompensation(float val)
     {
-        setValue(&m_currentStruct.value29, val);
+//        setValue(&m_currentStruct.value29, val);
     }
     inline void setAngleLimiterVelocityCompensated(float val)
     {
@@ -239,6 +240,20 @@ public:
     {
         setValue(&m_currentStruct.value30, val);
     }
+    inline void setDistanceLimiterMaxAcc(float val)
+    {
+        setValue(&m_currentStruct.value29, val);
+    }
+    inline void setDistanceLimiterMaxDec(float val)
+    {
+        setValue(&m_currentStruct.value28, val);
+    }
+    inline void setDistanceLimitercurrentSpeed(float val)
+    {
+        setValue(&m_currentStruct.value36, val);
+    }
+
+
 
 private:
     USBStream();

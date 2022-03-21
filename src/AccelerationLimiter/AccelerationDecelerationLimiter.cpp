@@ -4,7 +4,17 @@
 #include "USBStream.h"
 
 
-AccelerationDecelerationLimiter::AccelerationDecelerationLimiter(float maxAcceleration, float maxDeceleration, float maxSpeed, float positionCorrectorKp, bool isAngleLimiter) : AccelerationLimiter()
+AccelerationDecelerationLimiter::AccelerationDecelerationLimiter(
+		float maxAcceleration, float maxDeceleration,
+		float maxSpeed, float positionCorrectorKp, bool isAngleLimiter)
+	: AccelerationDecelerationLimiter(maxAcceleration, maxDeceleration, maxAcceleration, maxDeceleration, maxSpeed, positionCorrectorKp, isAngleLimiter)
+{
+}
+
+AccelerationDecelerationLimiter::AccelerationDecelerationLimiter(
+		float maxAccelerationForward, float maxDecelerationForward,
+		float maxAccelerationBackward, float maxDecelerationBackward,
+		float maxSpeed, float positionCorrectorKp, bool isAngleLimiter): AccelerationLimiter()
 {
 	m_enabled = true;
 	m_initialPositionError = 0;
@@ -12,26 +22,21 @@ AccelerationDecelerationLimiter::AccelerationDecelerationLimiter(float maxAccele
 	m_previousLimitedOutput = 0;
 	m_velocityCompensation = 0;
 	m_CompensatedOutput = 0;
-	m_velocityAtDecTime = 0;
-    m_maxAccelerationForward = maxAcceleration;
-    m_maxDecelerationForward = maxDeceleration;
-    m_maxAccelerationBackward = maxAcceleration;
-    m_maxDecelerationBackward = maxDeceleration;
+	m_velocityAtDecTime = maxSpeed;
+    m_maxAccelerationForward = maxAccelerationForward;
+    m_maxDecelerationForward = maxDecelerationForward;
+    m_maxAccelerationBackward = maxAccelerationBackward;
+    m_maxDecelerationBackward = maxDecelerationBackward;
     m_maxSpeed = maxSpeed;
     m_positionCorrectorKp = positionCorrectorKp;
     m_isAngleLimiter = isAngleLimiter;
+    m_damplingFactor = 2.8f;
 }
 
-float AccelerationDecelerationLimiter::limitAcceleration(float dt, float targetSpeed, float , float positionGoal, float positionError)
+float AccelerationDecelerationLimiter::limitAcceleration(float dt, float targetSpeed, float currentSpeed, float positionGoal, float positionError)
 {
 	if (!m_enabled)
 		return targetSpeed;
-
-	if( m_previousPositionGoal != positionGoal )
-	{
-		m_initialPositionError = positionError;
-		m_previousPositionGoal = positionGoal;
-	}
 
 	float maxAcceleration = m_maxAccelerationForward;
 	float maxDeceleration = m_maxDecelerationForward;
@@ -45,12 +50,19 @@ float AccelerationDecelerationLimiter::limitAcceleration(float dt, float targetS
 		forward = false;
 	}
 
-	// 1st compute the velocity estimator at deceleration time
-	m_velocityAtDecTime = std::min( sqrt(fabs(maxDeceleration*m_initialPositionError*1.0f)) , m_maxSpeed );
-	if( m_velocityAtDecTime == 0)
-		m_velocityAtDecTime = 1e5; // In this case, avoid division by zero !
+	if( fabs(m_previousPositionGoal-positionGoal) > 5   )
+	{
+		m_initialPositionError = positionError;
+		m_previousPositionGoal = positionGoal;
 
-	m_velocityCompensation = way*((m_positionCorrectorKp*1.4f)/(maxAcceleration+maxDeceleration) - 1.0/m_velocityAtDecTime ) * (m_previousLimitedOutput*m_previousLimitedOutput);
+		// compute the velocity estimator at deceleration time
+		if (m_initialPositionError != 0)
+			m_velocityAtDecTime = std::min( sqrt(fabs(maxAcceleration*m_initialPositionError*m_damplingFactor)) , m_maxSpeed );
+		else
+			m_velocityAtDecTime = m_maxSpeed;
+	}
+
+	m_velocityCompensation = way*((m_positionCorrectorKp*m_damplingFactor)/(2.0*maxDeceleration) - 1.0/m_velocityAtDecTime ) * (m_previousLimitedOutput*m_previousLimitedOutput);
 
 	m_CompensatedOutput = targetSpeed - m_velocityCompensation;
 
@@ -80,13 +92,17 @@ float AccelerationDecelerationLimiter::limitAcceleration(float dt, float targetS
 		USBStream::instance()->setDistanceLimiterVelocityCompensation(m_velocityCompensation);
 		USBStream::instance()->setDistanceLimiterVelocityCompensated(targetSpeed - m_velocityCompensation);
 		USBStream::instance()->setDistanceLimiterOutput(m_CompensatedOutput);
+		USBStream::instance()->setDistanceLimitercurrentSpeed(currentSpeed);
 		USBStream::instance()->setDistanceLimiterInitialPosError(m_initialPositionError);
 		USBStream::instance()->setDistanceLimiterTargetSpeed(targetSpeed);
+		USBStream::instance()->setDistanceLimiterMaxAcc(maxAcceleration);
+		USBStream::instance()->setDistanceLimiterMaxDec(maxDeceleration);
 	}
 
 	m_previousLimitedOutput = m_CompensatedOutput;
 	return m_CompensatedOutput;
 }
+
 
 void AccelerationDecelerationLimiter::enable()
 {

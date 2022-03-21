@@ -8,6 +8,7 @@ class AccelerationDecelerationLimiter : public AccelerationLimiter
 
 public:
     explicit AccelerationDecelerationLimiter(float maxAcceleration, float maxDeceleration, float maxSpeed, float positionCorrectorKp, bool isAngleLimiter);
+    explicit AccelerationDecelerationLimiter(float maxAccelerationForward, float maxDecelerationForward, float maxAccelerationBackward, float maxDecelerationBackward, float maxSpeed, float positionCorrectorKp, bool isAngleLimiter);
     virtual ~AccelerationDecelerationLimiter(){};
 
     virtual float limitAcceleration(float dt, float targetSpeed, float currentSpeed, float positionGoal, float positionError);
@@ -32,6 +33,8 @@ private:
     float m_CompensatedOutput;
     float m_velocityAtDecTime;
     bool m_isAngleLimiter;
+
+    float m_damplingFactor;
 };
 
 #endif /* SRC_ACCELERATIONDECELERATIONLIMITER_SIMPLEACCELERATIONLIMITER_H_ */
