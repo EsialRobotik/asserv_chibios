@@ -71,11 +71,13 @@ void AsservMain::mainLoop()
     const time_usecs_t loopPeriod_us = (m_loopPeriod * 1000000.0);
     systime_t time = chVTGetSystemTime();
     time += TIME_US2I(loopPeriod_us);
+
+    float polarRegulationPeriod = m_loopPeriod*m_speedPositionLoopDivisor;
+
     while (true) {
         float encoderDeltaRight;
         float encoderDeltaLeft;
         m_encoders.getValues(&encoderDeltaRight, &encoderDeltaLeft);
-
 
 
         // Mise à jour de la position en polaire
@@ -88,6 +90,14 @@ void AsservMain::mainLoop()
         m_angleRegulator.updateFeedback(deltaAngle_radian);
         m_distanceRegulator.updateFeedback(deltaDistance_mm);
 
+        // Estimation des vitesses de chaque roue
+        m_pllRight.update(encoderDeltaRight, m_loopPeriod);
+        float estimatedSpeedRight = convertSpeedTommSec(m_pllRight.getSpeed());
+
+        m_pllLeft.update(encoderDeltaLeft, m_loopPeriod);
+        float estimatedSpeedLeft = convertSpeedTommSec(m_pllLeft.getSpeed());
+
+
         /* Calculer une nouvelle consigne de vitesse a chaque  ASSERV_POSITION_DIVISOR tour de boucle
          * L'asserv en vitesse étant commandé par l'asserv en position, on laisse qq'e tours de boucle
          * à l'asserv en vitesse pour atteindre sa consigne.
@@ -99,6 +109,10 @@ void AsservMain::mainLoop()
             {
                 m_angleRegulatorOutputSpeedConsign = m_angleRegulator.updateOutput( m_commandManager.getAngleGoal() );
                 m_distRegulatorOutputSpeedConsign  = m_distanceRegulator.updateOutput( m_commandManager.getDistanceGoal() );
+
+                // On limite l'acceleration sur la sortie du regulateur de distance et d'angle
+                m_distSpeedLimited  = m_distanceRegulatorAccelerationLimiter.limitAcceleration(polarRegulationPeriod, m_distRegulatorOutputSpeedConsign, (estimatedSpeedRight+estimatedSpeedLeft)*0.5,  m_commandManager.getDistanceGoal(), m_distanceRegulator.getError());
+                m_angleSpeedLimited = m_angleRegulatorAccelerationLimiter.limitAcceleration(polarRegulationPeriod, m_angleRegulatorOutputSpeedConsign, (estimatedSpeedRight-estimatedSpeedLeft)/m_encoderWheelsDistance_mm, m_commandManager.getAngleGoal(), m_angleRegulator.getError());
             }
 
             m_asservCounter = 0;
@@ -107,31 +121,16 @@ void AsservMain::mainLoop()
         /*
          * Regulation en vitesse
          */
-        m_pllRight.update(encoderDeltaRight, m_loopPeriod);
-        float estimatedSpeedRight = convertSpeedTommSec(m_pllRight.getSpeed());
-
-        m_pllLeft.update(encoderDeltaLeft, m_loopPeriod);
-        float estimatedSpeedLeft = convertSpeedTommSec(m_pllLeft.getSpeed());
-
         if (m_asservMode == normal_mode || m_asservMode == regulator_output_control) {
-            // On limite l'acceleration sur la sortie du regulateur de distance et d'angle
-            m_distSpeedLimited = m_distanceRegulatorAccelerationLimiter.limitAcceleration(m_loopPeriod, m_distRegulatorOutputSpeedConsign, (estimatedSpeedRight+estimatedSpeedLeft)*0.5,  m_commandManager.getDistanceGoal(), m_distanceRegulator.getError());
-            m_angleSpeedLimited = m_angleRegulatorAccelerationLimiter.limitAcceleration(m_loopPeriod, m_angleRegulatorOutputSpeedConsign, (estimatedSpeedRight-estimatedSpeedLeft)/m_encoderWheelsDistance_mm, m_commandManager.getAngleGoal(), m_angleRegulator.getError());
-
             // Mise à jour des consignes en vitesse avec acceleration limitée
             m_speedControllerRight.setSpeedGoal(m_distSpeedLimited + m_angleSpeedLimited);
             m_speedControllerLeft.setSpeedGoal(m_distSpeedLimited - m_angleSpeedLimited);
         } else {
             /* Ici, on ajoute un mode de fonctionnement pour pouvoir controler indépendamment les roues avec l'IHM ou le shell.
              * C'est batard, et cela ne doit pas être utilisé autrement que pour faire du réglage
-             *      on réutilise les filtres de pente pour ne pas avoir à en instancier d'autres
              */
-//            float rightWheelSpeed = m_distanceRegulatorAccelerationLimiter.limitAcceleration(m_loopPeriod, m_directSpeedMode_rightWheelSpeed, FLT_MAX);
-//            float leftWheelSpeed = m_angleRegulatorAccelerationLimiter.limitAcceleration(m_loopPeriod, m_directSpeedMode_leftWheelSpeed, FLT_MAX);
-            float rightWheelSpeed = 0;
-            float leftWheelSpeed = 0;
-            m_speedControllerRight.setSpeedGoal(rightWheelSpeed);
-            m_speedControllerLeft.setSpeedGoal(leftWheelSpeed);
+            m_speedControllerRight.setSpeedGoal(m_directSpeedMode_rightWheelSpeed);
+            m_speedControllerLeft.setSpeedGoal(m_directSpeedMode_leftWheelSpeed);
         }
 
         float outputSpeedRight = m_speedControllerRight.update(estimatedSpeedRight);
