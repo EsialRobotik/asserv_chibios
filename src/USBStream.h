@@ -200,22 +200,6 @@ public:
     }
 
     // Acc & dec limiter
-    inline void setAngleLimiterVelocityAtDecTime(float val)
-    {
-//        setValue(&m_currentStruct.value28, val);
-    }
-    inline void setAngleLimiterVelocityCompensation(float val)
-    {
-//        setValue(&m_currentStruct.value29, val);
-    }
-    inline void setAngleLimiterVelocityCompensated(float val)
-    {
-//        setValue(&m_currentStruct.value30, val);
-    }
-    inline void setAngleLimiterOutput(float val)
-    {
-//        setValue(&m_currentStruct.value31, val);
-    }
     inline void setDistanceLimiterVelocityAtDecTime(float val)
     {
         setValue(&m_currentStruct.value32, val);
@@ -232,7 +216,7 @@ public:
     {
         setValue(&m_currentStruct.value35, val);
     }
-    inline void setDistanceLimiterInitialPosError(float val)
+    inline void setDistanceLimiterTimeFromVmaxToZero(float val)
     {
         setValue(&m_currentStruct.value31, val);
     }
@@ -240,11 +224,11 @@ public:
     {
         setValue(&m_currentStruct.value30, val);
     }
-    inline void setDistanceLimiterMaxAcc(float val)
+    inline void setDistanceLimiterTimeToVMax(float val)
     {
         setValue(&m_currentStruct.value29, val);
     }
-    inline void setDistanceLimiterMaxDec(float val)
+    inline void setDistanceLimiterMaxAttainableSpeed(float val)
     {
         setValue(&m_currentStruct.value28, val);
     }

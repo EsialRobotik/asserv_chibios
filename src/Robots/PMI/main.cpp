@@ -32,17 +32,17 @@
 #define ENCODERS_WHEELS_DISTANCE_MM (264.7)
 #define ENCODERS_TICKS_BY_TURN (1440*4)
 
-#define MAX_SPEED_MM_PER_SEC (300)
+#define MAX_SPEED_MM_PER_SEC (1200)
 
 #define DIST_REGULATOR_KP (6)
-#define DIST_REGULATOR_MAX_ACC_FW (800)
-#define DIST_REGULATOR_MAX_DEC_FW (800)
-#define DIST_REGULATOR_MAX_ACC_BW (800)
-#define DIST_REGULATOR_MAX_DEC_BW (800)
+#define DIST_REGULATOR_MAX_ACC_FW (1200)
+#define DIST_REGULATOR_MAX_DEC_FW (1200)
+#define DIST_REGULATOR_MAX_ACC_BW (1200)
+#define DIST_REGULATOR_MAX_DEC_BW (1200)
 
 
 #define ANGLE_REGULATOR_KP (700)
-#define ANGLE_REGULATOR_MAX_ACC (1100)
+#define ANGLE_REGULATOR_MAX_ACC (1200)
 
 float speed_controller_right_Kp[NB_PI_SUBSET] = { 0.1, 0.1, 0.1};
 float speed_controller_right_Ki[NB_PI_SUBSET] = { 1.0, 0.8, 0.6};
@@ -113,7 +113,7 @@ static void initAsserv()
 
 
     angleAccelerationlimiter = new SimpleAccelerationLimiter(ANGLE_REGULATOR_MAX_ACC);
-    distanceAccelerationLimiter = new AccelerationDecelerationLimiter(DIST_REGULATOR_MAX_ACC_FW, DIST_REGULATOR_MAX_DEC_FW, DIST_REGULATOR_MAX_ACC_BW, DIST_REGULATOR_MAX_DEC_BW, MAX_SPEED_MM_PER_SEC,  DIST_REGULATOR_KP, false);
+    distanceAccelerationLimiter = new AccelerationDecelerationLimiter(DIST_REGULATOR_MAX_ACC_FW, DIST_REGULATOR_MAX_DEC_FW, DIST_REGULATOR_MAX_ACC_BW, DIST_REGULATOR_MAX_DEC_BW, MAX_SPEED_MM_PER_SEC,  DIST_REGULATOR_KP);
 
     commandManager = new CommandManager( COMMAND_MANAGER_ARRIVAL_DISTANCE_THRESHOLD_mm, COMMAND_MANAGER_ARRIVAL_ANGLE_THRESHOLD_RAD,
                                    preciseGotoConf, waypointGotoConf, gotoNoStopConf,
@@ -513,6 +513,12 @@ void asservCommandUSB(BaseSequentialStream *chp, int argc, char **argv)
         rightPll->reset();
         leftPll->reset();
     }
+    else if (!strcmp(argv[0], "damp"))
+    {
+        float value = atof(argv[1]);
+        chprintf(outputStream, "Set acce/dec limiter dampling factor to %.2f \r\n", value);
+        distanceAccelerationLimiter->setDamplingFactor(value);
+    }
     else if (!strcmp(argv[0], "gototest"))
     {
         mainAsserv->resetToNormalMode();
@@ -522,23 +528,20 @@ void asservCommandUSB(BaseSequentialStream *chp, int argc, char **argv)
 //        commandManager->addGoToNoStop(0, 300);
 //        commandManager->addGoToNoStop(0, 0);
 
-//        commandManager->addGoToWaypoint(300, 0);
-//        commandManager->addGoToWaypoint(300, 300);
-//        commandManager->addGoToWaypoint(0, 300);
-//        commandManager->addGoToWaypoint(0, 0);
+        commandManager->addGoToWaypoint(500, 0);
+        commandManager->addGoToWaypoint(500, 300);
+        commandManager->addGoToWaypoint(0, 300);
+        commandManager->addGoToWaypoint(0, 0);
 
 
-        commandManager->addGoTo(500, 0);
-        commandManager->addGoTo(500, 300);
-        commandManager->addGoTo(0, 300);
-        commandManager->addGoTo(0, 0);
+//        commandManager->addGoTo(500, 0);
+//        commandManager->addGoTo(500, 300);
+//        commandManager->addGoTo(0, 300);
+//        commandManager->addGoTo(0, 0);
 
         commandManager->addGoToAngle(1000, 0);
 
 
-
-
-    // mainAsserv->setPosition(800,200, M_PI/2.0);
 
 #if 0
     commandManager->addGoTo(800,200);

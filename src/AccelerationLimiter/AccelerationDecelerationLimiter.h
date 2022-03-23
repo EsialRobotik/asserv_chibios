@@ -7,8 +7,8 @@ class AccelerationDecelerationLimiter : public AccelerationLimiter
 {
 
 public:
-    explicit AccelerationDecelerationLimiter(float maxAcceleration, float maxDeceleration, float maxSpeed, float positionCorrectorKp, bool isAngleLimiter);
-    explicit AccelerationDecelerationLimiter(float maxAccelerationForward, float maxDecelerationForward, float maxAccelerationBackward, float maxDecelerationBackward, float maxSpeed, float positionCorrectorKp, bool isAngleLimiter);
+    explicit AccelerationDecelerationLimiter(float maxAcceleration, float maxDeceleration, float maxSpeed, float positionCorrectorKp);
+    explicit AccelerationDecelerationLimiter(float maxAccelerationForward, float maxDecelerationForward, float maxAccelerationBackward, float maxDecelerationBackward, float maxSpeed, float positionCorrectorKp);
     virtual ~AccelerationDecelerationLimiter(){};
 
     virtual float limitAcceleration(float dt, float targetSpeed, float currentSpeed, float positionGoal, float positionError);
@@ -16,6 +16,8 @@ public:
     virtual void enable();
     virtual void disable();
     virtual void reset();
+
+    inline void setDamplingFactor(float value ){m_damplingFactor = value;};
 
 private:
 
@@ -32,7 +34,9 @@ private:
     float m_velocityCompensation;
     float m_CompensatedOutput;
     float m_velocityAtDecTime;
-    bool m_isAngleLimiter;
+    float m_maxAttainableSpeed;
+    float m_timeToVmax;
+    float m_timeFromVmaxToZero;
 
     float m_damplingFactor;
 };
