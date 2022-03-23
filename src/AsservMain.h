@@ -31,16 +31,16 @@ public:
     void mainLoop();
 
     /*
-     *	On peut donner une vitesse par roue en utilisant la fonction: setWheelsSpeed
-     *	Le mode de fonctionnement change et doit être remis à la normal en utilisant: resetToNormalMode
-     *	 avant de donner une consigne via setRegulatorsSpeed ou via le CommandManager
+     *    On peut donner une vitesse par roue en utilisant la fonction: setWheelsSpeed
+     *    Le mode de fonctionnement change et doit être remis à la normal en utilisant: resetToNormalMode
+     *     avant de donner une consigne via setRegulatorsSpeed ou via le CommandManager
      */
     void setWheelsSpeed(float rightWheelSpeed, float leftWheelSpeed);
 
     /*
-     *	On peut donner une commande de vitesse tel qu'elle sortirait des régulateur d'angle/distance
-     *	Le mode de fonctionnement change et doit être remis à la normal en utilisant: resetToNormalMode
-     *	 avant de donner une consigne via setRegulatorsSpeed ou via le CommandManager
+     *    On peut donner une commande de vitesse tel qu'elle sortirait des régulateur d'angle/distance
+     *    Le mode de fonctionnement change et doit être remis à la normal en utilisant: resetToNormalMode
+     *     avant de donner une consigne via setRegulatorsSpeed ou via le CommandManager
      */
     void setRegulatorsSpeed(float distSpeed, float angleSpeed);
     void resetToNormalMode();

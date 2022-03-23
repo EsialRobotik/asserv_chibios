@@ -3,25 +3,25 @@
 #include "hal.h"
 
 __extension__ static QEIConfig qeicfg1 = {
-		.mode = QEI_MODE_QUADRATURE,
-		.resolution = QEI_BOTH_EDGES,
-		.dirinv = QEI_DIRINV_FALSE,
-		.overflow = QEI_OVERFLOW_WRAP,
-		.min = 0,
-		.max = 0,
-		.notify_cb = nullptr,
-		.overflow_cb = nullptr
+        .mode = QEI_MODE_QUADRATURE,
+        .resolution = QEI_BOTH_EDGES,
+        .dirinv = QEI_DIRINV_FALSE,
+        .overflow = QEI_OVERFLOW_WRAP,
+        .min = 0,
+        .max = 0,
+        .notify_cb = nullptr,
+        .overflow_cb = nullptr
 };
 
 static QEIConfig qeicfg2 = {
-		.mode = QEI_MODE_QUADRATURE,
-		.resolution = QEI_BOTH_EDGES,
-		.dirinv = QEI_DIRINV_FALSE,
-		.overflow = QEI_OVERFLOW_WRAP,
-		.min = 0,
-		.max = 0,
-		.notify_cb = nullptr,
-		.overflow_cb = nullptr
+        .mode = QEI_MODE_QUADRATURE,
+        .resolution = QEI_BOTH_EDGES,
+        .dirinv = QEI_DIRINV_FALSE,
+        .overflow = QEI_OVERFLOW_WRAP,
+        .min = 0,
+        .max = 0,
+        .notify_cb = nullptr,
+        .overflow_cb = nullptr
 };
 
 QuadratureEncoder::QuadratureEncoder(GpioPinInit *gpioPins, bool is1EncoderRight, bool invertEncoderR, bool invertEncoderL) :

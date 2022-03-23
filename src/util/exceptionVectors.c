@@ -8,8 +8,8 @@
 /**
  * Permet au débugger de fonctionner et d'avor les assertions qui sortent dans la consele
  * Voir les pages suivantes pour plus d'infos :
- * 	   http://www.chibios.com/forum/viewtopic.php?f=16&t=2506#p20099
- * 	   http://www.chibios.com/forum/viewtopic.php?f=3&t=1305&start=20#p28854
+ *        http://www.chibios.com/forum/viewtopic.php?f=16&t=2506#p20099
+ *        http://www.chibios.com/forum/viewtopic.php?f=3&t=1305&start=20#p28854
  */
 
 /**
@@ -144,16 +144,16 @@ static mutex_t mutex;
 
 void dbg_assert(const char* const assertion, const char* const file, const unsigned line, const char* const func, const char* const reason) {
     chMtxObjectInit(&mutex);
-	chSysUnconditionalLock();
-	chMtxLockS(&mutex);
-	chSysUnconditionalUnlock();
+    chSysUnconditionalLock();
+    chMtxLockS(&mutex);
+    chSysUnconditionalUnlock();
 
     CH_CFG_SYSTEM_HALT_HOOK(reason);
 
     // Let some time to the uart device to clear its buffer
-	chThdSleep(chTimeMS2I(5));
+    chThdSleep(chTimeMS2I(5));
     chprintf(outputStream, "%s:%i (%s): assertion (%s) failed ; reason = %s", file, line, func, assertion, reason);
-	chThdSleep(chTimeMS2I(5));
+    chThdSleep(chTimeMS2I(5));
 
     //Cause debugger to stop. Ignored if no debugger is attached
     bkpt();
@@ -164,17 +164,17 @@ void dbg_assert(const char* const assertion, const char* const file, const unsig
 // Permet aussi de lier le assert de la libc a l'assert de chibiOs
 void __assert_func(const char * assertion, const char * file, unsigned int line, const char * function)
 {
-	dbg_assert(assertion, file, line, function, "\n");
+    dbg_assert(assertion, file, line, function, "\n");
 }
 
 /*
  * Gros hack des enfers !
  *  Je ne sais pas pourquoi/comment, mais à un moment j'ai eu cette erreur au link :
- *  	libg.a(lib_a-fini.o): In function `__libc_fini_array':
- *			fini.c:(.text.__libc_fini_array+0x26): undefined reference to `_fini'
+ *      libg.a(lib_a-fini.o): In function `__libc_fini_array':
+ *            fini.c:(.text.__libc_fini_array+0x26): undefined reference to `_fini'
  *
- *	C'est une vieille étiquette obsolète, donc je ne sais pas pourquoi on se trimbale ça..
- *	 Et Giovanni il est d'accord avec moi en plus ==> http://www.chibios.com/forum/viewtopic.php?t=4172
+ *    C'est une vieille étiquette obsolète, donc je ne sais pas pourquoi on se trimbale ça..
+ *     Et Giovanni il est d'accord avec moi en plus ==> http://www.chibios.com/forum/viewtopic.php?t=4172
  */
 __attribute__((used))
 void _fini(void)

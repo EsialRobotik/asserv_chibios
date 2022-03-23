@@ -25,7 +25,7 @@
 // Moving Exponential Average on angle - beware heavy calculation for some Arduino boards
 // This is a 1st order low pass filter
 // Moving average is calculated on Sine et Cosine values of the angle to provide an extrapolated accurate angle value.
-#define EXP_MOVAVG_N 5	//history length impact on moving average impact - keep in mind the moving average will be impacted by the measurement frequency too
+#define EXP_MOVAVG_N 5    //history length impact on moving average impact - keep in mind the moving average will be impacted by the measurement frequency too
 #define EXP_MOVAVG_LOOP 1 //number of measurements before starting mobile Average - starting with a simple average - 1 allows a quick start. Value must be 1 minimum
 
 //unit consts - just to make the units more readable

@@ -65,7 +65,7 @@ public:
     /*
      * DIRTY HACK !!
      *   as uart over usb doesn't seems to like zeros,
-     *   	replace them by NaN that will be replaced by zeros in Plotjuggler
+     *       replace them by NaN that will be replaced by zeros in Plotjuggler
      */
     inline static void setValue(void *ptr, float value)
     {

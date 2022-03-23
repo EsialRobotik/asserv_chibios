@@ -21,7 +21,7 @@ static PWMConfig pwmcfg2 = {
    1000,
    NULL,
    {
-	  {PWM_OUTPUT_ACTIVE_HIGH, NULL},
+      {PWM_OUTPUT_ACTIVE_HIGH, NULL},
       {PWM_OUTPUT_DISABLED, NULL},
       {PWM_OUTPUT_DISABLED, NULL},
       {PWM_OUTPUT_DISABLED, NULL}
@@ -76,7 +76,7 @@ void Vnh5019::setMotorRightSpeed(float percentage)
     else if (reverse)
     {
         palClearPad(GPIOA, 10); //M1INA
-        palSetPad(GPIOB, 5); 	  //M1INB
+        palSetPad(GPIOB, 5);       //M1INB
     }
     else
     {

@@ -19,10 +19,10 @@
 CommandManager::CommandManager(float straitLineArrivalWindows_mm, float turnArrivalWindows_rad,
         Goto::GotoConfiguration &preciseGotoConfiguration, Goto::GotoConfiguration &waypointGotoConfiguration, GotoNoStop::GotoNoStopConfiguration &gotoNoStopConfiguration,
         const Regulator &angle_regulator, const Regulator &distance_regulator):
-		m_cmdList(32,COMMAND_MAX_SIZE),
-		m_straitLineArrivalWindows_mm(straitLineArrivalWindows_mm), m_turnArrivalWindows_rad(turnArrivalWindows_rad),
-		m_preciseGotoConfiguration(preciseGotoConfiguration), m_waypointGotoConfiguration(waypointGotoConfiguration), m_gotoNoStopConfiguration(gotoNoStopConfiguration),
-		m_angle_regulator(angle_regulator), m_distance_regulator(distance_regulator)
+        m_cmdList(32,COMMAND_MAX_SIZE),
+        m_straitLineArrivalWindows_mm(straitLineArrivalWindows_mm), m_turnArrivalWindows_rad(turnArrivalWindows_rad),
+        m_preciseGotoConfiguration(preciseGotoConfiguration), m_waypointGotoConfiguration(waypointGotoConfiguration), m_gotoNoStopConfiguration(gotoNoStopConfiguration),
+        m_angle_regulator(angle_regulator), m_distance_regulator(distance_regulator)
 {
     m_emergencyStop = false;
     m_currentCmd = nullptr;
