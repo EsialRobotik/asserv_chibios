@@ -35,6 +35,16 @@ typedef struct
     float value25;
     float value26;
     float value27;
+    float value28;
+    float value29;
+    float value30;
+    float value31;
+    float value32;
+    float value33;
+    float value34;
+    float value35;
+    float value36;
+
 }__attribute__((packed)) UsbStreamSample;
 
 class USBStream
@@ -55,7 +65,7 @@ public:
     /*
      * DIRTY HACK !!
      *   as uart over usb doesn't seems to like zeros,
-     *   	replace them by NaN that will be replaced by zeros in Plotjuggler
+     *       replace them by NaN that will be replaced by zeros in Plotjuggler
      */
     inline static void setValue(void *ptr, float value)
     {
@@ -188,6 +198,46 @@ public:
     {
         setValue(&m_currentStruct.value23, y);
     }
+
+    // Acc & dec limiter
+    inline void setDistanceLimiterVelocityAtDecTime(float val)
+    {
+        setValue(&m_currentStruct.value32, val);
+    }
+    inline void setDistanceLimiterVelocityCompensation(float val)
+    {
+        setValue(&m_currentStruct.value33, val);
+    }
+    inline void setDistanceLimiterVelocityCompensated(float val)
+    {
+        setValue(&m_currentStruct.value34, val);
+    }
+    inline void setDistanceLimiterOutput(float val)
+    {
+        setValue(&m_currentStruct.value35, val);
+    }
+    inline void setDistanceLimiterTimeFromVmaxToZero(float val)
+    {
+        setValue(&m_currentStruct.value31, val);
+    }
+    inline void setDistanceLimiterTargetSpeed(float val)
+    {
+        setValue(&m_currentStruct.value30, val);
+    }
+    inline void setDistanceLimiterTimeToVMax(float val)
+    {
+        setValue(&m_currentStruct.value29, val);
+    }
+    inline void setDistanceLimiterMaxAttainableSpeed(float val)
+    {
+        setValue(&m_currentStruct.value28, val);
+    }
+    inline void setDistanceLimitercurrentSpeed(float val)
+    {
+        setValue(&m_currentStruct.value36, val);
+    }
+
+
 
 private:
     USBStream();

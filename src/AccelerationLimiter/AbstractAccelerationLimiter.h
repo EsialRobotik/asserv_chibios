@@ -1,16 +1,16 @@
 #ifndef SRC_ACCELERATIONLIMITER_ABSTRACTACCELERATIONLIMITER_H_
 #define SRC_ACCELERATIONLIMITER_ABSTRACTACCELERATIONLIMITER_H_
 
-#include "AccelerationLimiter.h"
+#include "AccelerationDecelerationLimiterInterface.h"
 
-class AbstractAccelerationLimiter : public AccelerationLimiter
+class AbstractAccelerationLimiter : public AccelerationDecelerationLimiterInterface
 {
 
 public:
     AbstractAccelerationLimiter();
     virtual ~AbstractAccelerationLimiter(){};
 
-    virtual float limitAcceleration(float dt, float targetSpeed, float currentSpeed);
+    virtual float limitAcceleration(float dt, float targetSpeed, float currentSpeed, float positionGoal, float positionError);
 
     virtual void enable();
     virtual void disable();

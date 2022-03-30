@@ -7,19 +7,19 @@ Pll::Pll(float bandwidth)
     reset();
 }
 
-// Voir ce thread pour plus de détails sur le fonctionnement
+// Look at this thread for more informations
 // https://discourse.odriverobotics.com/t/rotor-encoder-pll-and-velocity/224
 
 void Pll::update(int16_t deltaTicks, float deltaT)
 {
-// Prediction
+    // Prediction
     m_position += deltaT * m_speed;
 
-    // Calul de l'erreur entre la prediction et l'info codeur
+    // Compute error between prediction and encoder information
     m_count += deltaTicks;
     float deltaPos = (float) (m_count - (int64_t) floor(m_position));
 
-    // Correction de la PLL
+    // PLL correction
     m_position += deltaT * m_kp * deltaPos;
     m_speed += deltaT * m_ki * deltaPos;
 

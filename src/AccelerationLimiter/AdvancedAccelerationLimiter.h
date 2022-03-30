@@ -6,6 +6,20 @@
 class AdvancedAccelerationLimiter : public AbstractAccelerationLimiter
 {
 
+    /*
+     * Advanced acceleration limiter is a bit more complex!
+     *
+     *   When the robot is accelerating
+     *   ( determined by the upper part of the class, ie: AbstractAccelerationLimiter),
+     *    the next output speed consign is limited considering the current speed.
+     *
+     *  As the robot can accelerate more when it's already moving than when it's almost stationary.
+     *  So we determine a max acceleration that will be used when the robot speed reach highSpeedThreshold.
+     *  Below this speed, a linear interpolation between minAcceleration and maxAcceleration will be use !
+     *
+     *  This implementation will limit the jerk of the robot.
+     */
+
 public:
     explicit AdvancedAccelerationLimiter(float maxAcceleration, float minAcceleration, float highSpeedThreshold);
     virtual ~AdvancedAccelerationLimiter(){};

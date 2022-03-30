@@ -42,7 +42,7 @@ float SpeedController::update(float actualSpeed)
     {
         m_integratedOutput *= 0.9;
     }
-    else	// .. Sinon, on integre l'erreur
+    else    // .. Sinon, on integre l'erreur
     {
         m_integratedOutput += m_speedKi * m_speedError / m_measureFrequency;
         if (std::fabs(m_speedError) < 0.1) // Quand l'erreur de vitesse est proche de zero(ie: consigne à 0 et le robot ne bouge pas..), on désature l'intégrale

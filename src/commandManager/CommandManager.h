@@ -45,7 +45,7 @@ class CommandManager
 
         /*
          * Mise à jour des consignes de sorties en fonction
-         * 	de la nouvelle position du robot
+         *     de la nouvelle position du robot
          */
         void update(float X_mm, float Y_mm, float theta_rad);
 

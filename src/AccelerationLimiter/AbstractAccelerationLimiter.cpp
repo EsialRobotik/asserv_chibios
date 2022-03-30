@@ -1,12 +1,12 @@
 #include "AbstractAccelerationLimiter.h"
 
-AbstractAccelerationLimiter::AbstractAccelerationLimiter() : AccelerationLimiter()
+AbstractAccelerationLimiter::AbstractAccelerationLimiter() : AccelerationDecelerationLimiterInterface()
 {
     m_enabled = true;
     m_lastOutput = 0;
 }
 
-float AbstractAccelerationLimiter::limitAcceleration(float dt, float targetSpeed, float currentSpeed)
+float AbstractAccelerationLimiter::limitAcceleration(float dt, float targetSpeed, float currentSpeed, float , float )
 {
     // First of all, if this limiter is disabled, just return the targeted speed
     if( !m_enabled)

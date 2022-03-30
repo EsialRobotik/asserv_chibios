@@ -8,7 +8,7 @@ class CommandManager;
 class Encoders;
 class Odometry;
 class Pll;
-class AccelerationLimiter;
+class AccelerationDecelerationLimiterInterface;
 class SpeedController;
 class Regulator;
 class BlockingDetection;
@@ -20,7 +20,7 @@ public:
             float encoderWheelsDistance_mm, uint32_t encodersTicksByTurn, CommandManager &commandManager,
             MotorController &motorController, Encoders &encoders, Odometry &odometrie,
             Regulator &angleRegulator, Regulator &distanceRegulator,
-            AccelerationLimiter &angleRegulatorAccelerationLimiter, AccelerationLimiter &distanceRegulatorAccelerationLimiter,
+            AccelerationDecelerationLimiterInterface &angleRegulatorAccelerationLimiter, AccelerationDecelerationLimiterInterface &distanceRegulatorAccelerationLimiter,
             SpeedController &speedControllerRight, SpeedController &speedControllerLeft,
             Pll &rightPll, Pll &leftPll,
             BlockingDetection *blockingDetection = nullptr);
@@ -33,16 +33,16 @@ public:
     void mainLoop();
 
     /*
-     *	On peut donner une vitesse par roue en utilisant la fonction: setWheelsSpeed
-     *	Le mode de fonctionnement change et doit être remis à la normal en utilisant: resetToNormalMode
-     *	 avant de donner une consigne via setRegulatorsSpeed ou via le CommandManager
+     *    On peut donner une vitesse par roue en utilisant la fonction: setWheelsSpeed
+     *    Le mode de fonctionnement change et doit être remis à la normal en utilisant: resetToNormalMode
+     *     avant de donner une consigne via setRegulatorsSpeed ou via le CommandManager
      */
     void setWheelsSpeed(float rightWheelSpeed, float leftWheelSpeed);
 
     /*
-     *	On peut donner une commande de vitesse tel qu'elle sortirait des régulateur d'angle/distance
-     *	Le mode de fonctionnement change et doit être remis à la normal en utilisant: resetToNormalMode
-     *	 avant de donner une consigne via setRegulatorsSpeed ou via le CommandManager
+     *    On peut donner une commande de vitesse tel qu'elle sortirait des régulateur d'angle/distance
+     *    Le mode de fonctionnement change et doit être remis à la normal en utilisant: resetToNormalMode
+     *     avant de donner une consigne via setRegulatorsSpeed ou via le CommandManager
      */
     void setRegulatorsSpeed(float distSpeed, float angleSpeed);
     void resetToNormalMode();
@@ -80,8 +80,8 @@ private:
     SpeedController &m_speedControllerLeft;
     Regulator &m_angleRegulator;
     Regulator &m_distanceRegulator;
-    AccelerationLimiter &m_angleRegulatorAccelerationLimiter;
-    AccelerationLimiter &m_distanceRegulatorAccelerationLimiter;
+    AccelerationDecelerationLimiterInterface &m_angleRegulatorAccelerationLimiter;
+    AccelerationDecelerationLimiterInterface &m_distanceRegulatorAccelerationLimiter;
     CommandManager &m_commandManager;
     Pll &m_pllRight;
     Pll &m_pllLeft;
