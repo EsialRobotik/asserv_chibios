@@ -1,10 +1,10 @@
 #ifndef SRC_ACCELERATIONLIMITER_H_
 #define SRC_ACCELERATIONLIMITER_H_
 
-class AccelerationLimiter
+class AccelerationDecelerationLimiterInterface
 {
 public:
-    virtual ~AccelerationLimiter()
+    virtual ~AccelerationDecelerationLimiterInterface()
     {
     }
 

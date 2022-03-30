@@ -8,7 +8,7 @@ class CommandManager;
 class Encoders;
 class Odometry;
 class Pll;
-class AccelerationLimiter;
+class AccelerationDecelerationLimiterInterface;
 class SpeedController;
 class Regulator;
 
@@ -19,7 +19,7 @@ public:
             float encoderWheelsDistance_mm, uint32_t encodersTicksByTurn, CommandManager &commandManager,
             MotorController &motorController, Encoders &encoders, Odometry &odometrie,
             Regulator &angleRegulator, Regulator &distanceRegulator,
-            AccelerationLimiter &angleRegulatorAccelerationLimiter, AccelerationLimiter &distanceRegulatorAccelerationLimiter,
+            AccelerationDecelerationLimiterInterface &angleRegulatorAccelerationLimiter, AccelerationDecelerationLimiterInterface &distanceRegulatorAccelerationLimiter,
             SpeedController &speedControllerRight, SpeedController &speedControllerLeft,
             Pll &rightPll, Pll &leftPll);
 
@@ -78,8 +78,8 @@ private:
     SpeedController &m_speedControllerLeft;
     Regulator &m_angleRegulator;
     Regulator &m_distanceRegulator;
-    AccelerationLimiter &m_angleRegulatorAccelerationLimiter;
-    AccelerationLimiter &m_distanceRegulatorAccelerationLimiter;
+    AccelerationDecelerationLimiterInterface &m_angleRegulatorAccelerationLimiter;
+    AccelerationDecelerationLimiterInterface &m_distanceRegulatorAccelerationLimiter;
     CommandManager &m_commandManager;
     Pll &m_pllRight;
     Pll &m_pllLeft;

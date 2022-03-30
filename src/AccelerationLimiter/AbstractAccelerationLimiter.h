@@ -3,7 +3,7 @@
 
 #include "AccelerationLimiter.h"
 
-class AbstractAccelerationLimiter : public AccelerationLimiter
+class AbstractAccelerationLimiter : public AccelerationDecelerationLimiterInterface
 {
 
 public:

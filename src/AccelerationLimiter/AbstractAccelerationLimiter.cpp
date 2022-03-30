@@ -1,6 +1,6 @@
 #include "AbstractAccelerationLimiter.h"
 
-AbstractAccelerationLimiter::AbstractAccelerationLimiter() : AccelerationLimiter()
+AbstractAccelerationLimiter::AbstractAccelerationLimiter() : AccelerationDecelerationLimiterInterface()
 {
     m_enabled = true;
     m_lastOutput = 0;

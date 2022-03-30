@@ -14,7 +14,7 @@ AccelerationDecelerationLimiter::AccelerationDecelerationLimiter(
 AccelerationDecelerationLimiter::AccelerationDecelerationLimiter(
         float maxAccelerationForward, float maxDecelerationForward,
         float maxAccelerationBackward, float maxDecelerationBackward,
-        float maxSpeed, float positionCorrectorKp): AccelerationLimiter()
+        float maxSpeed, float positionCorrectorKp): AccelerationDecelerationLimiterInterface()
 {
     m_enabled = true;
     m_initialPositionError = 0;

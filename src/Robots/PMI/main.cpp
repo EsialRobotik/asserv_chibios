@@ -88,7 +88,6 @@ Pll *rightPll;
 Pll *leftPll;
 
 SimpleAccelerationLimiter *angleAccelerationlimiter;
-//AdvancedAccelerationLimiter *distanceAccelerationLimiter;
 AccelerationDecelerationLimiter *distanceAccelerationLimiter;
 
 CommandManager *commandManager;

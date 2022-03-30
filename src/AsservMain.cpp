@@ -17,7 +17,7 @@ AsservMain::AsservMain(uint16_t loopFrequency, uint16_t speedPositionLoopDivisor
         float encoderWheelsDistance_mm, uint32_t encodersTicksByTurn, CommandManager &commandManager,
         MotorController &motorController, Encoders &encoders, Odometry &odometrie,
         Regulator &angleRegulator, Regulator &distanceRegulator,
-        AccelerationLimiter &angleRegulatorAccelerationLimiter, AccelerationLimiter &distanceRegulatorAccelerationLimiter,
+        AccelerationDecelerationLimiterInterface &angleRegulatorAccelerationLimiter, AccelerationDecelerationLimiterInterface &distanceRegulatorAccelerationLimiter,
         SpeedController &speedControllerRight, SpeedController &speedControllerLeft,
         Pll &rightPll, Pll &leftPll) :
 
