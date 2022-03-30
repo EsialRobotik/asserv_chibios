@@ -15,11 +15,10 @@ void getValuesAndReset(int16_t *encoder1, int16_t *encoder2);
 class AsservMain
 note left : Cette classe est au centre de l'asserv, c'est le chef d'orchestre du système.
 
-class SlopeFilter {
-float filter(float dt, float value)
-void setSlope(float slope)
+interface AccelerationDecelerationLimiterInterface {
+float limitAcceleration(float dt, float targetSpeed, [...])
 }
-Note bottom : Permet de limiter la "pente" des consignes en \nsortie des Regulator( et donc de limiter l'acceleration )
+
 
 
 class Odometry {
@@ -58,11 +57,17 @@ MotorController <|-- Vnh5019
 MotorController <|-- Md22
 
 AsservMain --> Encoders
-Encoders <|-- xxxQuadratureEncoder
+Encoders <|-- QuadratureEncoder
+Encoders <|-- MagEncoders
+Encoders <|-- ams_as5048b
+
+AccelerationDecelerationLimiterInterface <|-- AccelerationDecelerationLimiter
+AccelerationDecelerationLimiterInterface <|-- SimpleAccelerationLimiter
+AccelerationDecelerationLimiterInterface <|-- AdvancedAccelerationLimiter
 
 AsservMain -up-> Odometry
 AsservMain --> "2" SpeedController : Un par côté du robot
 AsservMain --> "2" Regulator : Pour le contrôle en cap et distance
-AsservMain --> "2" SlopeFilter
+AsservMain --> "2" AccelerationDecelerationLimiterInterface
 AsservMain -up-> CommandManager
 @enduml
