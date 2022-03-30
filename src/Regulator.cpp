@@ -16,7 +16,7 @@ void Regulator::updateFeedback(float feedback)
 }
 
 /*
- * Regulator proportionnel 'simple'
+ * simple proportional regulator
  */
 
 float Regulator::updateOutput(float goal)
