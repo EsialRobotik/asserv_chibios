@@ -1,7 +1,7 @@
 #ifndef SRC_ACCELERATIONDECELERATIONLIMITER_SIMPLEACCELERATIONLIMITER_H_
 #define SRC_ACCELERATIONDECELERATIONLIMITER_SIMPLEACCELERATIONLIMITER_H_
 
-#include "AccelerationLimiter.h"
+#include "AccelerationDecelerationLimiterInterface.h"
 
 class AccelerationDecelerationLimiter : public AccelerationDecelerationLimiterInterface
 {
