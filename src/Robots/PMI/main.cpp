@@ -42,7 +42,7 @@
 
 
 #define ANGLE_REGULATOR_KP (700)
-#define ANGLE_REGULATOR_MAX_ACC (1200)
+#define ANGLE_REGULATOR_MAX_ACC (1800)
 
 float speed_controller_right_Kp[NB_PI_SUBSET] = { 0.1, 0.1, 0.1};
 float speed_controller_right_Ki[NB_PI_SUBSET] = { 1.0, 0.8, 0.6};
@@ -67,7 +67,7 @@ Goto::GotoConfiguration preciseGotoConf  = {COMMAND_MANAGER_GOTO_RETURN_THRESHOL
 Goto::GotoConfiguration waypointGotoConf  = {COMMAND_MANAGER_GOTO_RETURN_THRESHOLD_mm, COMMAND_MANAGER_GOTO_ANGLE_THRESHOLD_RAD, COMMAND_MANAGER_GOTO_WAYPOINT_ARRIVAL_DISTANCE_mm};
 
 #define COMMAND_MANAGER_GOTONOSTOP_TOO_BIG_ANGLE_THRESHOLD_RAD (M_PI/2)
-GotoNoStop::GotoNoStopConfiguration gotoNoStopConf = {COMMAND_MANAGER_GOTO_ANGLE_THRESHOLD_RAD, COMMAND_MANAGER_GOTONOSTOP_TOO_BIG_ANGLE_THRESHOLD_RAD, (150/DIST_REGULATOR_KP)};
+GotoNoStop::GotoNoStopConfiguration gotoNoStopConf = {COMMAND_MANAGER_GOTO_ANGLE_THRESHOLD_RAD, COMMAND_MANAGER_GOTONOSTOP_TOO_BIG_ANGLE_THRESHOLD_RAD, (150/DIST_REGULATOR_KP), 85 };
 
 Md22::I2cPinInit ESIALCardPinConf_md22 = {GPIOB, 6, GPIOB, 7};
 QuadratureEncoder::GpioPinInit ESIALCardPinConf_Encoders = {GPIOC, 6, GPIOA, 7, GPIOA, 1, GPIOA, 0};
@@ -116,7 +116,8 @@ static void initAsserv()
 
     commandManager = new CommandManager( COMMAND_MANAGER_ARRIVAL_DISTANCE_THRESHOLD_mm, COMMAND_MANAGER_ARRIVAL_ANGLE_THRESHOLD_RAD,
                                    preciseGotoConf, waypointGotoConf, gotoNoStopConf,
-                                   *angleRegulator, *distanceRegulator);
+                                   *angleRegulator, *distanceRegulator,
+                                   distanceAccelerationLimiter);
 
     mainAsserv = new AsservMain( ASSERV_THREAD_FREQUENCY, ASSERV_POSITION_DIVISOR,
                            ENCODERS_WHEELS_RADIUS_MM, ENCODERS_WHEELS_DISTANCE_MM, ENCODERS_TICKS_BY_TURN,
@@ -522,23 +523,23 @@ void asservCommandUSB(BaseSequentialStream *chp, int argc, char **argv)
     {
         mainAsserv->resetToNormalMode();
         
-//        commandManager->addGoToNoStop(500, 0);
-//        commandManager->addGoToNoStop(500, 300);
-//        commandManager->addGoToNoStop(0, 300);
-//        commandManager->addGoToNoStop(0, 0);
+        commandManager->addGoToNoStop(500, 0);
+        commandManager->addGoToNoStop(500, 300);
+        commandManager->addGoToNoStop(0, 300);
+        commandManager->addGoToNoStop(0, 0);
+        commandManager->addGoToAngle(1000, 0);
 
-        commandManager->addGoToWaypoint(500, 0);
-        commandManager->addGoToWaypoint(500, 300);
-        commandManager->addGoToWaypoint(0, 300);
-        commandManager->addGoToWaypoint(0, 0);
-
-
+//        commandManager->addGoToWaypoint(500, 0);
+//        commandManager->addGoToWaypoint(500, 300);
+//        commandManager->addGoToWaypoint(0, 300);
+//        commandManager->addGoToWaypoint(0, 0);
+//        commandManager->addGoToAngle(1000, 0);
+//
 //        commandManager->addGoTo(500, 0);
 //        commandManager->addGoTo(500, 300);
 //        commandManager->addGoTo(0, 300);
 //        commandManager->addGoTo(0, 0);
-
-        commandManager->addGoToAngle(1000, 0);
+//        commandManager->addGoToAngle(1000, 0);
 
 
 

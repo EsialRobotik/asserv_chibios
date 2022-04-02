@@ -2,13 +2,15 @@
 #include "Regulator.h"
 #include "util/asservMath.h"
 #include "USBStream.h"
+#include "AccelerationLimiter/AccelerationDecelerationLimiter.h"
 #include <new>
 #include <cmath>
 
 GotoNoStop::GotoNoStop(float consignX_mm, float consignY_mm,
         GotoNoStopConfiguration const *configuration,
         Goto::GotoConfiguration const *gotoconfiguration,
-        float backwardMode)
+        float backwardMode,
+        AccelerationDecelerationLimiter *accelerationDecelerationLimiter)
 : m_consignX_mm(consignX_mm), m_consignY_mm(consignY_mm),
   m_configuration(configuration), m_gotoConfiguration(gotoconfiguration)
 {
@@ -16,6 +18,7 @@ GotoNoStop::GotoNoStop(float consignX_mm, float consignY_mm,
         m_backModeCorrection = -1;
     else
         m_backModeCorrection = 1;
+    m_accelerationDecelerationLimiter = accelerationDecelerationLimiter;
 }
 
 void GotoNoStop::computeInitialConsign(float X_mm, float Y_mm, float theta_rad, float *distanceConsig, float *angleConsign, const Regulator &angle_regulator, const Regulator &distance_regulator)
@@ -29,9 +32,12 @@ void GotoNoStop::computeInitialConsign(float X_mm, float Y_mm, float theta_rad, 
    float deltaDist = Goto::computeDeltaDist(deltaX, deltaY);
    float deltaTheta = Goto::computeDeltaTheta(m_backModeCorrection * deltaX, m_backModeCorrection * deltaY, theta_rad);
 
-   if(deltaDist < m_configuration->lowSpeedDistanceConsign_mm)
+   if(deltaDist < m_configuration->nextDistanceConsign_mm)
    {
-       /* If the distance is lower than lowSpeedDistanceConsign_mm,
+       if( m_accelerationDecelerationLimiter )
+           m_accelerationDecelerationLimiter->enable();
+
+       /* If the distance is lower than nextDistanceConsign_mm,
         *  We want to go precisely to the goal, use a classic goto algorithm
         */
        float projectedDist = deltaDist * cosf(deltaTheta);
@@ -50,6 +56,9 @@ void GotoNoStop::computeInitialConsign(float X_mm, float Y_mm, float theta_rad, 
    }
    else if (fabs(deltaTheta) < m_configuration->gotoAngleThreshold_rad)
    {
+       if( m_accelerationDecelerationLimiter )
+           m_accelerationDecelerationLimiter->enable();
+
        /*  Here we are pointing enough to the right direction to go strait to the goal
         *    use a basic goto command
         */
@@ -58,6 +67,9 @@ void GotoNoStop::computeInitialConsign(float X_mm, float Y_mm, float theta_rad, 
    }
    else if (fabs(deltaTheta) > m_configuration->tooBigAngleThreshold_rad)
    {
+       if( m_accelerationDecelerationLimiter )
+           m_accelerationDecelerationLimiter->disable();
+
         /*  Here we are absolutly not pointing to the right direction (the goal is behind the robot for example)
         *   just compute a angle consign.
         *   A distance consign will generate a big overshot to the trajectory
@@ -66,6 +78,9 @@ void GotoNoStop::computeInitialConsign(float X_mm, float Y_mm, float theta_rad, 
    }
    else
    {
+       if( m_accelerationDecelerationLimiter )
+           m_accelerationDecelerationLimiter->disable();
+
        /*  We aren't pointing enough to the right direction yet.
         *  So turn to the right direction while going at low speed
         */
@@ -78,6 +93,7 @@ void GotoNoStop::computeInitialConsign(float X_mm, float Y_mm, float theta_rad, 
        deltaTheta = Goto::computeDeltaTheta(m_backModeCorrection * deltaX, m_backModeCorrection * deltaY, theta_rad);
        *angleConsign = angle_regulator.getAccumulator() + deltaTheta;
        *distanceConsig = distance_regulator.getAccumulator() + m_backModeCorrection * deltaDist;
+
 
        USBStream::instance()->setXGoal(X_goal);
        USBStream::instance()->setYGoal(Y_goal);
@@ -97,15 +113,21 @@ bool GotoNoStop::isGoalReached(float X_mm, float Y_mm, float , const Regulator &
     float deltaY = m_consignY_mm - Y_mm;
 
     float deltaDist = Goto::computeDeltaDist(deltaX, deltaY);
+    bool result;
 
     if( nextCommand != nullptr && nextCommand->noStop())
     {
-        return deltaDist < m_configuration->lowSpeedDistanceConsign_mm;
+        result = (deltaDist < m_configuration->nextDistanceConsign_mm);
     }
     else
     {
-        return deltaDist < m_gotoConfiguration->arrivalDistanceThreshold_mm;
+        result = (deltaDist < m_gotoConfiguration->arrivalDistanceThreshold_mm);
+        if( m_accelerationDecelerationLimiter && result )
+                m_accelerationDecelerationLimiter->enable();
     }
+
+
+    return result;
 }
 
 bool GotoNoStop::noStop() const
