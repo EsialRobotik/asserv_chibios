@@ -8,6 +8,7 @@
 #include "Regulator.h"
 
 class Command;
+class AccelerationDecelerationLimiter;
 
 class CommandManager
 {
@@ -22,7 +23,8 @@ class CommandManager
 
         explicit CommandManager(float straitLineArrivalWindows_mm, float turnArrivalWindows_rad,
                 Goto::GotoConfiguration &preciseGotoConfiguration, Goto::GotoConfiguration &waypointGotoConfiguration, GotoNoStop::GotoNoStopConfiguration &gotoNoStopConfiguration,
-                const Regulator &angle_regulator, const Regulator &distance_regulator);
+                const Regulator &angle_regulator, const Regulator &distance_regulator,
+                AccelerationDecelerationLimiter *accelerationDecelerationLimiter = nullptr);
         ~CommandManager() {};
 
         /*
@@ -85,6 +87,7 @@ class CommandManager
         Goto::GotoConfiguration m_preciseGotoConfiguration;
         Goto::GotoConfiguration m_waypointGotoConfiguration;
         GotoNoStop::GotoNoStopConfiguration m_gotoNoStopConfiguration;
+        AccelerationDecelerationLimiter *m_accelerationDecelerationLimiter;
 
         const Regulator &m_angle_regulator;
         const Regulator &m_distance_regulator;

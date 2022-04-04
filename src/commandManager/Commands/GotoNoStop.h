@@ -4,6 +4,8 @@
 #include "Command.h"
 #include "Goto.h"
 
+class AccelerationDecelerationLimiter;
+
 class GotoNoStop : public Command
 {
     public:
@@ -13,13 +15,15 @@ class GotoNoStop : public Command
             float gotoAngleThreshold_rad;
             float tooBigAngleThreshold_rad;
             float lowSpeedDistanceConsign_mm;
+            float nextDistanceConsign_mm;
         };
 
 
         explicit GotoNoStop(float consignX_mm, float consignY_mm,
                 GotoNoStopConfiguration const *noStopConfiguration,
                 Goto::GotoConfiguration const *gotoconfiguration,
-                float backwardMode = false);
+                float backwardMode = false,
+                AccelerationDecelerationLimiter *accelerationDecelerationLimiter = nullptr);
 
         virtual ~GotoNoStop() {};
 
@@ -36,6 +40,8 @@ class GotoNoStop : public Command
         float m_consignY_mm;
 
         float m_backModeCorrection;
+
+        AccelerationDecelerationLimiter *m_accelerationDecelerationLimiter;
 
         GotoNoStopConfiguration const *m_configuration;
         Goto::GotoConfiguration const *m_gotoConfiguration;
