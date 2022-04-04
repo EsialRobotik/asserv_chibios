@@ -1,7 +1,7 @@
-#include "SpeedErrorBlockingDetection.h"
+#include "blockingDetector/SpeedErrorBlockingDetector.h"
 #include "SpeedController/SpeedController.h"
 
-SpeedErrorBlockingDetection::SpeedErrorBlockingDetection(
+SpeedErrorBlockingDetector::SpeedErrorBlockingDetector(
         float dt, SpeedController & rightSpeedController, SpeedController & leftSpeedController,
         float movingIntegralDuration, float movingIntegralErrorThreshold)
 : m_rightSpeedController(rightSpeedController), m_leftSpeedController(leftSpeedController)
@@ -14,18 +14,21 @@ SpeedErrorBlockingDetection::SpeedErrorBlockingDetection(
     m_movingIntegralErrorThreshold  = movingIntegralErrorThreshold;
 }
 
-SpeedErrorBlockingDetection::~SpeedErrorBlockingDetection()
+SpeedErrorBlockingDetector::~SpeedErrorBlockingDetector()
 {
     delete m_errorValues;
 }
 
 
-bool SpeedErrorBlockingDetection::isBlocked()
+void SpeedErrorBlockingDetector::update()
 {
     float currentError = (m_leftSpeedController.getSpeedError() + m_rightSpeedController.getSpeedError()) / 2.0f;
     float outError = m_errorValues[m_currentIdx];
     m_errorValues[m_currentIdx] = currentError;
     m_movingIntegralError += (currentError-outError)*m_dt;
+}
 
+bool SpeedErrorBlockingDetector::isBlocked()
+{
     return m_movingIntegralError > m_movingIntegralErrorThreshold;
 }

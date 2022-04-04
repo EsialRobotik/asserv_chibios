@@ -7,6 +7,7 @@
 #include <cstdio>
 #include <cfloat>
 
+#include "../../blockingDetector/SpeedErrorBlockingDetector.h"
 #include "raspIO.h"
 #include "util/asservMath.h"
 #include "util/chibiOsAllocatorWrapper.h"
@@ -22,7 +23,6 @@
 #include "AccelerationLimiter/AdvancedAccelerationLimiter.h"
 #include "Pll.h"
 #include "Encoders/MagEncoders.h"
-#include "blockingDetection/SpeedErrorBlockingDetection.h"
 
 
 #define ENABLE_SHELL
@@ -90,7 +90,7 @@ AdaptativeSpeedController *speedControllerLeft;
 Pll *rightPll;
 Pll *leftPll;
 
-SpeedErrorBlockingDetection *blockingDetection;
+SpeedErrorBlockingDetector *blockingDetection;
 
 SimpleAccelerationLimiter *angleAccelerationlimiter;
 AdvancedAccelerationLimiter *distanceAccelerationLimiter;
@@ -125,7 +125,7 @@ static void initAsserv()
                                    preciseGotoConf, waypointGotoConf, gotoNoStopConf,
                                    *angleRegulator, *distanceRegulator);
 
-    blockingDetection = new SpeedErrorBlockingDetection(ASSERV_THREAD_PERIOD_S, *speedControllerRight, *speedControllerLeft, 1.0f, 666.f);
+    blockingDetection = new SpeedErrorBlockingDetector(ASSERV_THREAD_PERIOD_S, *speedControllerRight, *speedControllerLeft, 1.0f, 666.f);
 
     mainAsserv = new AsservMain( ASSERV_THREAD_FREQUENCY, ASSERV_POSITION_DIVISOR,
                            ENCODERS_WHEELS_RADIUS_MM, ENCODERS_WHEELS_DISTANCE_MM, ENCODERS_TICKS_BY_TURN,

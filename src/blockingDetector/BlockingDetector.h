@@ -1,13 +1,14 @@
 #ifndef SRC_BLOCKINGDETECTION_H_
 #define SRC_BLOCKINGDETECTION_H_
 
-class BlockingDetection
+class BlockingDetector
 {
 public:
-    virtual ~BlockingDetection()
+    virtual ~BlockingDetector()
     {
     }
 
+    virtual void update() = 0;
     virtual bool isBlocked() = 0;
 };
 

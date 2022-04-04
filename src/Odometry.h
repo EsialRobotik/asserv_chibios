@@ -41,9 +41,21 @@ public:
         m_encoderWheelsDistance_mm =  encoderWheelsDistance_mm;
     }
 
+    float getDeltaTheta() const
+    {
+        return m_deltaTheta;
+    }
+    float getDeltaDist() const
+    {
+        return m_deltaDist;
+    }
+
 private:
 
     float m_encoderWheelsDistance_mm;
+
+    double m_deltaTheta;
+    float m_deltaDist;
 
     // Position actuelle
     float m_X_mm, m_Y_mm; // En mm

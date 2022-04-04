@@ -32,6 +32,9 @@ public:
     void setMotorRightSpeed(float percentage);
     void setMotorLeftSpeed(float percentage);
 
+    virtual float getMotorRightSpeed() const { return m_rightMotorPercentage; };
+    virtual float getMotorLeftSpeed() const { return m_leftMotorPercentage; };
+
     inline int8_t getRightSpeed() { return m_lastRightConsign; }
     inline int8_t getLeftSpeed() { return m_lastLeftConsign; }
 
@@ -44,6 +47,9 @@ private:
 
     int8_t m_lastRightConsign;
     int8_t m_lastLeftConsign;
+
+    float m_rightMotorPercentage;
+    float m_leftMotorPercentage;
 };
 
 #endif /* MD22_H_ */
