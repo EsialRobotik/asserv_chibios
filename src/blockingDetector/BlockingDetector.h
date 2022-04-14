@@ -9,7 +9,7 @@ public:
     }
 
     virtual void update() = 0;
-    virtual bool isBlocked() = 0;
+    virtual bool isBlocked() const = 0;
 };
 
 #endif /* SRC_BLOCKINGDETECTION_H_ */

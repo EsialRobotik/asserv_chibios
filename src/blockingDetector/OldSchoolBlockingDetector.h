@@ -8,21 +8,21 @@
 class MotorController;
 class Odometry;
 
-class OldSchoolBlockingDetector : BlockingDetector
+class OldSchoolBlockingDetector : public BlockingDetector
 {
     public:
         explicit OldSchoolBlockingDetector(
-                float dt, MotorController const *motorController, Odometry const *odometry,
+                float dt, MotorController const &motorController, Odometry const &odometry,
                 float block_angle_speed_threshold, float block_dist_speed_threshold, float blocking_detected_duration_threshold);
         virtual ~OldSchoolBlockingDetector();
 
-        virtual bool isBlocked();
+        virtual bool isBlocked() const;
         virtual void update();
 
     private:
         float m_dt;
-        MotorController const *m_motorController;
-        Odometry const *m_odometry;
+        MotorController const &m_motorController;
+        Odometry const &m_odometry;
 
         float m_blocking_detected_duration;
 

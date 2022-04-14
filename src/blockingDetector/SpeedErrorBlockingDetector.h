@@ -8,13 +8,13 @@
 
 class SpeedController;
 
-class SpeedErrorBlockingDetector : BlockingDetector
+class SpeedErrorBlockingDetector : public BlockingDetector
 {
     public:
         explicit SpeedErrorBlockingDetector(float dt,  SpeedController& rightSpeedController, SpeedController& leftSpeedController, float movingIntegralDuration, float movingIntegralErrorThreshold);
         virtual ~SpeedErrorBlockingDetector();
 
-        virtual bool isBlocked();
+        virtual bool isBlocked() const;
         virtual void update();
 
     private:

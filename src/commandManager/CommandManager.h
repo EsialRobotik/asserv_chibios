@@ -27,7 +27,7 @@ class CommandManager
                 Goto::GotoConfiguration &preciseGotoConfiguration, Goto::GotoConfiguration &waypointGotoConfiguration, GotoNoStop::GotoNoStopConfiguration &gotoNoStopConfiguration,
                 const Regulator &angle_regulator, const Regulator &distance_regulator,
                 AccelerationDecelerationLimiter *accelerationDecelerationLimiter = nullptr,
-                BlockingDetector *blockingDetector = nullptr);
+                BlockingDetector const *blockingDetector = nullptr);
         ~CommandManager() {};
 
         /*
@@ -97,7 +97,7 @@ class CommandManager
 
         bool m_emergencyStop;
 
-        BlockingDetector *m_blockingDetector;
+        BlockingDetector const *m_blockingDetector;
 
         float m_angleRegulatorConsign;
         float m_distRegulatorConsign;

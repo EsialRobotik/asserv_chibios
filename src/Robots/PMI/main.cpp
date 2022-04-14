@@ -22,6 +22,7 @@
 #include "AccelerationLimiter/AdvancedAccelerationLimiter.h"
 #include "Pll.h"
 #include "AccelerationLimiter/AccelerationDecelerationLimiter.h"
+#include "blockingDetector/SpeedErrorBlockingDetector.h"
 
 
 #define ASSERV_THREAD_FREQUENCY (600)
@@ -87,6 +88,9 @@ AdaptativeSpeedController *speedControllerLeft;
 Pll *rightPll;
 Pll *leftPll;
 
+SpeedErrorBlockingDetector *blockingDetector;
+
+
 SimpleAccelerationLimiter *angleAccelerationlimiter;
 AccelerationDecelerationLimiter *distanceAccelerationLimiter;
 
@@ -114,10 +118,13 @@ static void initAsserv()
     angleAccelerationlimiter = new SimpleAccelerationLimiter(ANGLE_REGULATOR_MAX_ACC);
     distanceAccelerationLimiter = new AccelerationDecelerationLimiter(DIST_REGULATOR_MAX_ACC_FW, DIST_REGULATOR_MAX_DEC_FW, DIST_REGULATOR_MAX_ACC_BW, DIST_REGULATOR_MAX_DEC_BW, MAX_SPEED_MM_PER_SEC,  DIST_REGULATOR_KP);
 
+    blockingDetector = new SpeedErrorBlockingDetector(ASSERV_THREAD_PERIOD_S, *speedControllerRight, *speedControllerLeft, 1.f, 0.8f);
+
     commandManager = new CommandManager( COMMAND_MANAGER_ARRIVAL_DISTANCE_THRESHOLD_mm, COMMAND_MANAGER_ARRIVAL_ANGLE_THRESHOLD_RAD,
                                    preciseGotoConf, waypointGotoConf, gotoNoStopConf,
                                    *angleRegulator, *distanceRegulator,
-                                   distanceAccelerationLimiter);
+                                   distanceAccelerationLimiter,
+                                   blockingDetector);
 
     mainAsserv = new AsservMain( ASSERV_THREAD_FREQUENCY, ASSERV_POSITION_DIVISOR,
                            ENCODERS_WHEELS_RADIUS_MM, ENCODERS_WHEELS_DISTANCE_MM, ENCODERS_TICKS_BY_TURN,
@@ -125,7 +132,8 @@ static void initAsserv()
                            *angleRegulator, *distanceRegulator,
                            *angleAccelerationlimiter, *distanceAccelerationLimiter,
                            *speedControllerRight, *speedControllerLeft,
-                           *rightPll, *leftPll);
+                           *rightPll, *leftPll,
+                           blockingDetector);
 }
 
 
