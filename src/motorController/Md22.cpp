@@ -20,6 +20,8 @@ constexpr uint8_t controlMode = 0x01; // Wanted value for mode register. Ie: -12
     m_is1motorRight = is1motorRight;
     m_lastRightConsign = 0;
     m_lastLeftConsign = 0;
+    m_rightMotorPercentage = 0;
+    m_leftMotorPercentage = 0;
 
     chDbgAssert(i2cFrequency <= 400000, "Md22: i2cFrequency shall be lower than 400khz \r\n");
 
@@ -96,12 +98,12 @@ void Md22::init()
 
 void Md22::setMotorLeftSpeed(float percentage)
 {
-    percentage = limit(percentage, -100.0, 100.0);
+    m_leftMotorPercentage = limit(percentage, -100.0, 100.0);
 
     if (m_invertMotorLeft)
-        percentage = -percentage;
+        m_leftMotorPercentage = -m_leftMotorPercentage;
 
-    int8_t md22SpeedConsign = (int8_t) fmap(percentage, -100.0, 100.0, -128.0, 127.0);
+    int8_t md22SpeedConsign = (int8_t) fmap(m_leftMotorPercentage, -100.0, 100.0, -128.0, 127.0);
     uint8_t reg ;
     if (m_is1motorRight)
         reg = motor2Reg;
@@ -117,12 +119,12 @@ void Md22::setMotorLeftSpeed(float percentage)
 
 void Md22::setMotorRightSpeed(float percentage)
 {
-    percentage = limit(percentage, -100.0, 100.0);
+    m_rightMotorPercentage = limit(percentage, -100.0, 100.0);
 
     if (m_invertMotorRight)
-        percentage = -percentage;
+        m_rightMotorPercentage = -m_rightMotorPercentage;
 
-    int8_t md22SpeedConsign = (int8_t) fmap(percentage, -100.0, 100.0, -128.0, 127.0);
+    int8_t md22SpeedConsign = (int8_t) fmap(m_rightMotorPercentage, -100.0, 100.0, -128.0, 127.0);
     uint8_t reg;
     if (m_is1motorRight)
         reg = motor1Reg;

@@ -3,6 +3,7 @@
 #include "Commands/Turn.h"
 #include "Commands/Goto.h"
 #include "Commands/GotoAngle.h"
+#include "blockingDetector/BlockingDetector.h"
 #include <cstdlib>
 #include <cmath>
 #include <new>
@@ -19,7 +20,8 @@
 CommandManager::CommandManager(float straitLineArrivalWindows_mm, float turnArrivalWindows_rad,
         Goto::GotoConfiguration &preciseGotoConfiguration, Goto::GotoConfiguration &waypointGotoConfiguration, GotoNoStop::GotoNoStopConfiguration &gotoNoStopConfiguration,
         const Regulator &angle_regulator, const Regulator &distance_regulator,
-        AccelerationDecelerationLimiter *accelerationDecelerationLimiter):
+        AccelerationDecelerationLimiter *accelerationDecelerationLimiter,
+        BlockingDetector const *blockingDetector):
         m_cmdList(32,COMMAND_MAX_SIZE),
         m_straitLineArrivalWindows_mm(straitLineArrivalWindows_mm), m_turnArrivalWindows_rad(turnArrivalWindows_rad),
         m_preciseGotoConfiguration(preciseGotoConfiguration), m_waypointGotoConfiguration(waypointGotoConfiguration), m_gotoNoStopConfiguration(gotoNoStopConfiguration),
@@ -30,6 +32,7 @@ CommandManager::CommandManager(float straitLineArrivalWindows_mm, float turnArri
     m_angleRegulatorConsign = 0;
     m_distRegulatorConsign = 0;
     m_accelerationDecelerationLimiter = accelerationDecelerationLimiter;
+    m_blockingDetector = blockingDetector;
 }
 
 bool CommandManager::addStraightLine(float valueInmm)
@@ -143,6 +146,8 @@ CommandManager::CommandStatus CommandManager::getCommandStatus()
         return STATUS_HALTED;
     else if (m_currentCmd == nullptr)
         return STATUS_IDLE;
+    else if( m_blockingDetector && m_blockingDetector->isBlocked())
+        return STATUS_BLOCKED;
     else
         return STATUS_RUNNING;
 }

@@ -11,7 +11,7 @@ class Pll;
 class AccelerationDecelerationLimiterInterface;
 class SpeedController;
 class Regulator;
-class BlockingDetection;
+class BlockingDetector;
 
 class AsservMain
 {
@@ -23,7 +23,7 @@ public:
             AccelerationDecelerationLimiterInterface &angleRegulatorAccelerationLimiter, AccelerationDecelerationLimiterInterface &distanceRegulatorAccelerationLimiter,
             SpeedController &speedControllerRight, SpeedController &speedControllerLeft,
             Pll &rightPll, Pll &leftPll,
-            BlockingDetection *blockingDetection = nullptr);
+            BlockingDetector *blockingDetector = nullptr);
 
     virtual ~AsservMain()
     {
@@ -85,7 +85,7 @@ private:
     CommandManager &m_commandManager;
     Pll &m_pllRight;
     Pll &m_pllLeft;
-    BlockingDetection *m_blockingDetection;
+    BlockingDetector *m_blockingDetector;
 
     const float m_distanceByEncoderTurn_mm;
     const float m_encodersTicksByTurn;

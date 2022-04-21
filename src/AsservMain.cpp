@@ -5,14 +5,15 @@
 #include "USBStream.h"
 #include "Odometry.h"
 #include "SpeedController/SpeedController.h"
-#include "blockingDetection/BlockingDetection.h"
 #include "Pll.h"
 #include "Regulator.h"
 #include "AccelerationLimiter/AccelerationDecelerationLimiterInterface.h"
 #include "Encoders/Encoder.h"
+#include "blockingDetector/BlockingDetector.h"
 #include "util/asservMath.h"
 #include <chprintf.h>
 #include <cfloat>
+
 
 AsservMain::AsservMain(uint16_t loopFrequency, uint16_t speedPositionLoopDivisor, float wheelRadius_mm,
         float encoderWheelsDistance_mm, uint32_t encodersTicksByTurn, CommandManager &commandManager,
@@ -21,7 +22,7 @@ AsservMain::AsservMain(uint16_t loopFrequency, uint16_t speedPositionLoopDivisor
         AccelerationDecelerationLimiterInterface &angleRegulatorAccelerationLimiter, AccelerationDecelerationLimiterInterface &distanceRegulatorAccelerationLimiter,
         SpeedController &speedControllerRight, SpeedController &speedControllerLeft,
         Pll &rightPll, Pll &leftPll,
-        BlockingDetection *blockingDetection) :
+        BlockingDetector *blockingDetector) :
 
         m_motorController(motorController), m_encoders(encoders), m_odometry(odometrie),
             m_speedControllerRight(speedControllerRight), m_speedControllerLeft(speedControllerLeft),
@@ -29,7 +30,7 @@ AsservMain::AsservMain(uint16_t loopFrequency, uint16_t speedPositionLoopDivisor
             m_angleRegulatorAccelerationLimiter(angleRegulatorAccelerationLimiter), m_distanceRegulatorAccelerationLimiter(distanceRegulatorAccelerationLimiter),
             m_commandManager(commandManager),
             m_pllRight(rightPll), m_pllLeft(leftPll),
-            m_blockingDetection(blockingDetection),
+            m_blockingDetector(blockingDetector),
             m_distanceByEncoderTurn_mm(M_2PI * wheelRadius_mm), m_encodersTicksByTurn(encodersTicksByTurn), m_encodermmByTicks(m_distanceByEncoderTurn_mm / m_encodersTicksByTurn),
             m_encoderWheelsDistance_mm(encoderWheelsDistance_mm), m_encoderWheelsDistance_ticks(encoderWheelsDistance_mm / m_encodermmByTicks),
             m_loopFrequency(loopFrequency), m_loopPeriod(1.0 / float(loopFrequency)), m_speedPositionLoopDivisor( speedPositionLoopDivisor)
@@ -144,9 +145,9 @@ void AsservMain::mainLoop()
             m_motorController.setMotorLeftSpeed(outputSpeedLeft);
         }
 
-        if( m_blockingDetection )
+        if( m_blockingDetector )
         {
-            m_blockingDetection->isBlocked();
+            m_blockingDetector->update();
         }
 
         USBStream::instance()->setSpeedEstimatedRight(estimatedSpeedRight);
