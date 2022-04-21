@@ -186,8 +186,9 @@ void AsservMain::setRegulatorsSpeed(float distSpeed, float angleSpeed)
 {
     chSysLock();
     m_asservMode = regulator_output_control;
-    m_distRegulatorOutputSpeedConsign = distSpeed;
-    m_angleRegulatorOutputSpeedConsign = (angleSpeed * m_encoderWheelsDistance_mm) * 0.5;
+    m_distSpeedLimited = distSpeed;
+    m_angleSpeedLimited = (angleSpeed * m_encoderWheelsDistance_mm) * 0.5;
+
     chSysUnlock();
 }
 
