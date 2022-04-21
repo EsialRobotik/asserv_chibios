@@ -19,6 +19,11 @@ public:
         return m_speedGoal;
     }
 
+    float getSpeedError() const
+    {
+        return m_speedError;
+    }
+
     float getIntegratedOutput() const
     {
         return m_integratedOutput;
@@ -57,6 +62,7 @@ protected:
 private:
     float m_speedGoal;
     float m_integratedOutput;
+    float m_speedError;
 
     float m_outputLimit;
     float m_inputLimit;

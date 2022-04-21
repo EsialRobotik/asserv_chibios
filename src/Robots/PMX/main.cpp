@@ -22,6 +22,8 @@
 #include "AccelerationLimiter/AdvancedAccelerationLimiter.h"
 #include "Pll.h"
 #include "Encoders/MagEncoders.h"
+#include "blockingDetection/SpeedErrorBlockingDetection.h"
+
 
 #define ENABLE_SHELL
 
@@ -88,6 +90,8 @@ AdaptativeSpeedController *speedControllerLeft;
 Pll *rightPll;
 Pll *leftPll;
 
+SpeedErrorBlockingDetection *blockingDetection;
+
 SimpleAccelerationLimiter *angleAccelerationlimiter;
 AdvancedAccelerationLimiter *distanceAccelerationLimiter;
 
@@ -120,6 +124,8 @@ static void initAsserv()
     commandManager = new CommandManager( COMMAND_MANAGER_ARRIVAL_DISTANCE_THRESHOLD_mm, COMMAND_MANAGER_ARRIVAL_ANGLE_THRESHOLD_RAD,
                                    preciseGotoConf, waypointGotoConf, gotoNoStopConf,
                                    *angleRegulator, *distanceRegulator);
+
+    blockingDetection = new SpeedErrorBlockingDetection(ASSERV_THREAD_PERIOD_S, *speedControllerRight, *speedControllerLeft, 1.0f, 666.f);
 
     mainAsserv = new AsservMain( ASSERV_THREAD_FREQUENCY, ASSERV_POSITION_DIVISOR,
                            ENCODERS_WHEELS_RADIUS_MM, ENCODERS_WHEELS_DISTANCE_MM, ENCODERS_TICKS_BY_TURN,
