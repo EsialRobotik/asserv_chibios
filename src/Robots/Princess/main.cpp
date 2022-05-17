@@ -19,11 +19,12 @@
 #include "Odometry.h"
 #include "USBStream.h"
 #include "AccelerationLimiter/SimpleAccelerationLimiter.h"
-#include "AccelerationLimiter/AdvancedAccelerationLimiter.h"
+#include "AccelerationLimiter/AccelerationDecelerationLimiter.h"
 #include "Pll.h"
+#include "blockingDetector/SpeedErrorBlockingDetector.h"
 
 
-#define ASSERV_THREAD_FREQUENCY (300)
+#define ASSERV_THREAD_FREQUENCY (600)
 #define ASSERV_THREAD_PERIOD_S (1.0/ASSERV_THREAD_FREQUENCY)
 #define ASSERV_POSITION_DIVISOR (5)
 
@@ -33,10 +34,11 @@
 
 #define MAX_SPEED_MM_PER_SEC (1200)
 
-#define DIST_REGULATOR_KP (3)
-#define DIST_REGULATOR_MAX_ACC (1200)
-#define DIST_REGULATOR_MIN_ACC (500)
-#define DIST_REGULATOR_HIGH_SPEED_THRESHOLD (500)
+#define DIST_REGULATOR_KP (6)
+#define DIST_REGULATOR_MAX_ACC_FW (1200)
+#define DIST_REGULATOR_MAX_DEC_FW (1200)
+#define DIST_REGULATOR_MAX_ACC_BW (1200)
+#define DIST_REGULATOR_MAX_DEC_BW (1200)
 
 #define ANGLE_REGULATOR_KP (900)
 #define ANGLE_REGULATOR_MAX_ACC (1500)
@@ -84,8 +86,11 @@ AdaptativeSpeedController *speedControllerLeft;
 Pll *rightPll;
 Pll *leftPll;
 
+SpeedErrorBlockingDetector *blockingDetector;
+
 SimpleAccelerationLimiter *angleAccelerationlimiter;
-AdvancedAccelerationLimiter *distanceAccelerationLimiter;
+AccelerationDecelerationLimiter *distanceAccelerationLimiter;
+
 
 CommandManager *commandManager;
 AsservMain *mainAsserv;
@@ -97,7 +102,7 @@ static void initAsserv()
     md22MotorController = new Md22(&ESIALCardPinConf_md22, false, false, true, 100000);
 
     angleRegulator = new Regulator(ANGLE_REGULATOR_KP, MAX_SPEED_MM_PER_SEC);
-    distanceRegulator = new Regulator(DIST_REGULATOR_KP, MAX_SPEED_MM_PER_SEC);
+    distanceRegulator = new Regulator(DIST_REGULATOR_KP, FLT_MAX);
 
     rightPll = new Pll (PLL_BANDWIDTH);
     leftPll = new Pll(PLL_BANDWIDTH);
@@ -109,11 +114,15 @@ static void initAsserv()
 
 
     angleAccelerationlimiter = new SimpleAccelerationLimiter(ANGLE_REGULATOR_MAX_ACC);
-    distanceAccelerationLimiter = new AdvancedAccelerationLimiter(DIST_REGULATOR_MAX_ACC, DIST_REGULATOR_MIN_ACC, DIST_REGULATOR_HIGH_SPEED_THRESHOLD);
+    distanceAccelerationLimiter = new AccelerationDecelerationLimiter(DIST_REGULATOR_MAX_ACC_FW, DIST_REGULATOR_MAX_DEC_FW, DIST_REGULATOR_MAX_ACC_BW, DIST_REGULATOR_MAX_DEC_BW, MAX_SPEED_MM_PER_SEC,  DIST_REGULATOR_KP);
+
+   blockingDetector = new SpeedErrorBlockingDetector(ASSERV_THREAD_PERIOD_S, *speedControllerRight, *speedControllerLeft, 1.f, 666.0f);
 
     commandManager = new CommandManager( COMMAND_MANAGER_ARRIVAL_DISTANCE_THRESHOLD_mm, COMMAND_MANAGER_ARRIVAL_ANGLE_THRESHOLD_RAD,
                                    preciseGotoConf, waypointGotoConf, gotoNoStopConf,
-                                   *angleRegulator, *distanceRegulator);
+                                   *angleRegulator, *distanceRegulator,
+                                   distanceAccelerationLimiter,
+                                   blockingDetector);
 
     mainAsserv = new AsservMain( ASSERV_THREAD_FREQUENCY, ASSERV_POSITION_DIVISOR,
                            ENCODERS_WHEELS_RADIUS_MM, ENCODERS_WHEELS_DISTANCE_MM, ENCODERS_TICKS_BY_TURN,
@@ -121,7 +130,8 @@ static void initAsserv()
                            *angleRegulator, *distanceRegulator,
                            *angleAccelerationlimiter, *distanceAccelerationLimiter,
                            *speedControllerRight, *speedControllerLeft,
-                           *rightPll, *leftPll);
+                           *rightPll, *leftPll,
+                           blockingDetector);
 }
 
 
@@ -339,9 +349,22 @@ void asservCommandUSB(BaseSequentialStream *chp, int argc, char **argv)
         float acc_threshold = atof(argv[3]);
         chprintf(outputStream, "setting distance acceleration limiter max %.2f min %.2f threshold %.2f \r\n", acc_max, acc_min, acc_threshold);
 
-        distanceAccelerationLimiter->setMaxAcceleration(acc_max);
-        distanceAccelerationLimiter->setMinAcceleration(acc_min);
-        distanceAccelerationLimiter->setHighSpeedThreshold(acc_threshold);
+//        distanceAccelerationLimiter->setMaxAcceleration(acc_max);
+//        distanceAccelerationLimiter->setMinAcceleration(acc_min);
+//        distanceAccelerationLimiter->setHighSpeedThreshold(acc_threshold);
+    }
+    else if (!strcmp(argv[0], "distaccdec"))
+    {
+        float acc_fw = atof(argv[1]);
+        float dec_fw = atof(argv[2]);
+        float acc_bw = atof(argv[3]);
+        float dec_bw = atof(argv[4]);
+        chprintf(outputStream, "setting distance acceleration dec limiter fw : acc%.2f dec%.2f bw: acc%.2f dec%.2f \r\n", acc_fw, dec_fw, acc_bw, dec_bw);
+
+        distanceAccelerationLimiter->setMaxAccFW(acc_fw);
+        distanceAccelerationLimiter->setMaxDecFW(dec_fw);
+        distanceAccelerationLimiter->setMaxAccBW(acc_bw);
+        distanceAccelerationLimiter->setMaxDecBW(dec_bw);
     }
     else if (!strcmp(argv[0], "addangle"))
     {
@@ -428,6 +451,21 @@ void asservCommandUSB(BaseSequentialStream *chp, int argc, char **argv)
         mainAsserv->resetToNormalMode();
         commandManager->addGoTo(X, Y);
     }
+    else if (!strcmp(argv[0], "pll"))
+    {
+        float bw = atof(argv[1]);
+        chprintf(outputStream, "Set PLL bandwidth to %.2f \r\n", bw);
+        rightPll->setBandwidth(bw);
+        leftPll->setBandwidth(bw);
+        rightPll->reset();
+        leftPll->reset();
+    }
+    else if (!strcmp(argv[0], "damp"))
+    {
+        float value = atof(argv[1]);
+        chprintf(outputStream, "Set acce/dec limiter dampling factor to %.2f \r\n", value);
+        distanceAccelerationLimiter->setDamplingFactor(value);
+    }
     else if (!strcmp(argv[0], "gototest"))
     {
         mainAsserv->resetToNormalMode();
@@ -461,9 +499,10 @@ void asservCommandUSB(BaseSequentialStream *chp, int argc, char **argv)
 
         // accel limiter
         config_buffer[index++] = angleAccelerationlimiter->getMaxAcceleration();
-        config_buffer[index++] = distanceAccelerationLimiter->getMaxAcceleration();
-        config_buffer[index++] = distanceAccelerationLimiter->getMinAcceleration();
-        config_buffer[index++] = distanceAccelerationLimiter->getHighSpeedThreshold();
+        config_buffer[index++] = distanceAccelerationLimiter->getMaxAccFW();
+        config_buffer[index++] = distanceAccelerationLimiter->getMaxDecFW();
+        config_buffer[index++] = distanceAccelerationLimiter->getMaxAccBW();
+        config_buffer[index++] = distanceAccelerationLimiter->getMaxDecBW();
     
 
         chprintf(outputStream, "sending %d float of config !\r\n", index);

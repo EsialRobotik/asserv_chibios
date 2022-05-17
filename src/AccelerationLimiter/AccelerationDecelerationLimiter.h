@@ -19,6 +19,17 @@ public:
 
     inline void setDamplingFactor(float value ){m_damplingFactor = value;};
 
+
+    inline float getMaxAccFW() const { return m_maxAccelerationForward; };
+    inline float getMaxDecFW() const { return m_maxDecelerationForward; };
+    inline float getMaxAccBW() const { return m_maxAccelerationBackward; };
+    inline float getMaxDecBW() const { return m_maxDecelerationBackward; };
+
+    inline void setMaxAccFW(float value)  { m_maxAccelerationForward = value; };
+    inline void setMaxDecFW(float value)  { m_maxDecelerationForward = value; };
+    inline void setMaxAccBW(float value)  { m_maxAccelerationBackward = value; };
+    inline void setMaxDecBW(float value)  { m_maxDecelerationBackward = value; };
+
 private:
 
     bool  m_enabled;
