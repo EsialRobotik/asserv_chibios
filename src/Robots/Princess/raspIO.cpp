@@ -181,6 +181,12 @@ THD_FUNCTION(asservCommandSerial, p)
             mainAsserv->limitMotorControllerConsignToPercentage(consigneValue1);
             break;
 
+        case 'C': // Reglage de l'entraxe des Codeurs ( C comme Connard )
+            serialReadLine(buffer, sizeof(buffer));
+            sscanf(buffer, "%f", &consigneValue1);
+            odometry->setEncoderWheelsDistance(consigneValue1);
+            break;
+
 
         default:
             chprintf(outputStream, " - unexpected character\r\n");

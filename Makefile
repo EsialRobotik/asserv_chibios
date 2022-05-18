@@ -91,7 +91,7 @@ MCU  = cortex-m4
 # Imported source files and paths.
 CHIBIOS  := ./ChibiOS/
 CHIBIOS_CONTRIB = ./ChibiOS-Contrib/
-CONFDIR  := ./cfg_chibios
+CONFDIR  := ./src/Robots/$(ROBOT)/cfg_chibios
 BUILDDIR := ./build
 DEPDIR   := ./.dep
 SRCDIR   := ./src
