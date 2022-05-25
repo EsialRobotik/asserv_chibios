@@ -32,13 +32,15 @@
 #define ENCODERS_WHEELS_DISTANCE_MM (268.5)
 #define ENCODERS_TICKS_BY_TURN (1024*4)
 
-#define MAX_SPEED_MM_PER_SEC (1200)
+#define MAX_SPEED_MM_PER_SEC (1500)
 
 #define DIST_REGULATOR_KP (6)
-#define DIST_REGULATOR_MAX_ACC_FW (1200)
-#define DIST_REGULATOR_MAX_DEC_FW (1200)
-#define DIST_REGULATOR_MAX_ACC_BW (1200)
-#define DIST_REGULATOR_MAX_DEC_BW (1200)
+#define DIST_REGULATOR_MAX_ACC_FW (2200)
+#define DIST_REGULATOR_MAX_DEC_FW (2600)
+#define DIST_REGULATOR_MAX_ACC_BW (1400)
+#define DIST_REGULATOR_MAX_DEC_BW (1400)
+#define ACC_DEC_DAMPLING (1.4)
+
 
 #define ANGLE_REGULATOR_KP (900)
 #define ANGLE_REGULATOR_MAX_ACC (1500)
@@ -66,7 +68,7 @@ Goto::GotoConfiguration preciseGotoConf  = {COMMAND_MANAGER_GOTO_RETURN_THRESHOL
 Goto::GotoConfiguration waypointGotoConf  = {COMMAND_MANAGER_GOTO_RETURN_THRESHOLD_mm, COMMAND_MANAGER_GOTO_ANGLE_THRESHOLD_RAD, COMMAND_MANAGER_GOTO_WAYPOINT_ARRIVAL_DISTANCE_mm};
 
 #define COMMAND_MANAGER_GOTONOSTOP_TOO_BIG_ANGLE_THRESHOLD_RAD (M_PI/2)
-GotoNoStop::GotoNoStopConfiguration gotoNoStopConf = {COMMAND_MANAGER_GOTO_ANGLE_THRESHOLD_RAD, COMMAND_MANAGER_GOTONOSTOP_TOO_BIG_ANGLE_THRESHOLD_RAD, (150/DIST_REGULATOR_KP)};
+GotoNoStop::GotoNoStopConfiguration gotoNoStopConf = {COMMAND_MANAGER_GOTO_ANGLE_THRESHOLD_RAD, COMMAND_MANAGER_GOTONOSTOP_TOO_BIG_ANGLE_THRESHOLD_RAD, (150/DIST_REGULATOR_KP), 85};
 
 Md22::I2cPinInit ESIALCardPinConf_md22 = {GPIOB, 6, GPIOB, 7};
 QuadratureEncoder::GpioPinInit ESIALCardPinConf_Encoders = {GPIOC, 6, GPIOA, 7, GPIOA, 1, GPIOA, 0};
@@ -99,7 +101,7 @@ AsservMain *mainAsserv;
 static void initAsserv()
 {
     encoders = new QuadratureEncoder(&ESIALCardPinConf_Encoders, true, true, true);
-    md22MotorController = new Md22(&ESIALCardPinConf_md22, false, false, true, 100000);
+    md22MotorController = new Md22(&ESIALCardPinConf_md22, false, true, false, 100000);
 
     angleRegulator = new Regulator(ANGLE_REGULATOR_KP, MAX_SPEED_MM_PER_SEC);
     distanceRegulator = new Regulator(DIST_REGULATOR_KP, FLT_MAX);
@@ -114,7 +116,7 @@ static void initAsserv()
 
 
     angleAccelerationlimiter = new SimpleAccelerationLimiter(ANGLE_REGULATOR_MAX_ACC);
-    distanceAccelerationLimiter = new AccelerationDecelerationLimiter(DIST_REGULATOR_MAX_ACC_FW, DIST_REGULATOR_MAX_DEC_FW, DIST_REGULATOR_MAX_ACC_BW, DIST_REGULATOR_MAX_DEC_BW, MAX_SPEED_MM_PER_SEC,  DIST_REGULATOR_KP);
+    distanceAccelerationLimiter = new AccelerationDecelerationLimiter(DIST_REGULATOR_MAX_ACC_FW, DIST_REGULATOR_MAX_DEC_FW, DIST_REGULATOR_MAX_ACC_BW, DIST_REGULATOR_MAX_DEC_BW, MAX_SPEED_MM_PER_SEC, ACC_DEC_DAMPLING, DIST_REGULATOR_KP);
 
    blockingDetector = new SpeedErrorBlockingDetector(ASSERV_THREAD_PERIOD_S, *speedControllerRight, *speedControllerLeft, 1.f, 666.0f);
 
@@ -167,7 +169,7 @@ THD_FUNCTION(ControlPanelThread, p);
 char history_buffer[SHELL_MAX_HIST_BUFF];
 char *completion_buffer[SHELL_MAX_COMPLETIONS];
 
-float config_buffer[30];
+float config_buffer[35];
 void asservCommandUSB(BaseSequentialStream *chp, int argc, char **argv);
 
 void asservCommandSerial();
@@ -359,12 +361,14 @@ void asservCommandUSB(BaseSequentialStream *chp, int argc, char **argv)
         float dec_fw = atof(argv[2]);
         float acc_bw = atof(argv[3]);
         float dec_bw = atof(argv[4]);
+        float damp = atof(argv[5]);
         chprintf(outputStream, "setting distance acceleration dec limiter fw : acc%.2f dec%.2f bw: acc%.2f dec%.2f \r\n", acc_fw, dec_fw, acc_bw, dec_bw);
 
         distanceAccelerationLimiter->setMaxAccFW(acc_fw);
         distanceAccelerationLimiter->setMaxDecFW(dec_fw);
         distanceAccelerationLimiter->setMaxAccBW(acc_bw);
         distanceAccelerationLimiter->setMaxDecBW(dec_bw);
+        distanceAccelerationLimiter->setDamplingFactor(damp);
     }
     else if (!strcmp(argv[0], "addangle"))
     {
@@ -473,6 +477,7 @@ void asservCommandUSB(BaseSequentialStream *chp, int argc, char **argv)
         commandManager->addGoToNoStop(500, -500);
         commandManager->addGoToNoStop(0, -500);
         commandManager->addGoToNoStop(0, 0);
+        commandManager->addGoToAngle(500, 0);
 
     }
     else if (!strcmp(argv[0], "get_config"))
@@ -503,6 +508,7 @@ void asservCommandUSB(BaseSequentialStream *chp, int argc, char **argv)
         config_buffer[index++] = distanceAccelerationLimiter->getMaxDecFW();
         config_buffer[index++] = distanceAccelerationLimiter->getMaxAccBW();
         config_buffer[index++] = distanceAccelerationLimiter->getMaxDecBW();
+        config_buffer[index++] = distanceAccelerationLimiter->getDamplingFactor();
     
 
         chprintf(outputStream, "sending %d float of config !\r\n", index);

@@ -6,15 +6,15 @@
 
 AccelerationDecelerationLimiter::AccelerationDecelerationLimiter(
         float maxAcceleration, float maxDeceleration,
-        float maxSpeed, float positionCorrectorKp)
-    : AccelerationDecelerationLimiter(maxAcceleration, maxDeceleration, maxAcceleration, maxDeceleration, maxSpeed, positionCorrectorKp)
+        float maxSpeed, float dampling, float positionCorrectorKp)
+    : AccelerationDecelerationLimiter(maxAcceleration, maxDeceleration, maxAcceleration, maxDeceleration, maxSpeed, dampling, positionCorrectorKp)
 {
 }
 
 AccelerationDecelerationLimiter::AccelerationDecelerationLimiter(
         float maxAccelerationForward, float maxDecelerationForward,
         float maxAccelerationBackward, float maxDecelerationBackward,
-        float maxSpeed, float positionCorrectorKp): AccelerationDecelerationLimiterInterface()
+        float maxSpeed, float dampling, float positionCorrectorKp): AccelerationDecelerationLimiterInterface()
 {
     m_enabled = true;
     m_initialPositionError = 0;
@@ -30,7 +30,7 @@ AccelerationDecelerationLimiter::AccelerationDecelerationLimiter(
     m_maxSpeed = maxSpeed;
     m_positionCorrectorKp = positionCorrectorKp;
     m_maxAttainableSpeed = 0;
-    m_damplingFactor = 1.3f;
+    m_damplingFactor = dampling;
     m_timeToVmax = 0;
     m_timeFromVmaxToZero = 0;
 }
@@ -121,7 +121,7 @@ void AccelerationDecelerationLimiter::reset()
     m_initialPositionError = 0;
     m_previousPositionGoal = 0;
     m_previousLimitedOutput = 0;
-    m_velocityAtDecTime = 0;
+    m_velocityAtDecTime = m_maxSpeed;
     m_velocityCompensation = 0;
     m_CompensatedOutput = 0;
 }
