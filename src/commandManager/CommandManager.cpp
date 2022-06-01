@@ -33,6 +33,7 @@ CommandManager::CommandManager(float straitLineArrivalWindows_mm, float turnArri
     m_distRegulatorConsign = 0;
     m_accelerationDecelerationLimiter = accelerationDecelerationLimiter;
     m_blockingDetector = blockingDetector;
+    m_blocked = false;
 }
 
 bool CommandManager::addStraightLine(float valueInmm)
@@ -134,20 +135,28 @@ void CommandManager::setEmergencyStop()
     m_emergencyStop = true;
 }
 
+
 void CommandManager::resetEmergencyStop()
 {
     m_emergencyStop = false;
+    m_blocked = false;
 }
 
 CommandManager::CommandStatus CommandManager::getCommandStatus()
 {
 
-    if( m_emergencyStop )
+    if( m_emergencyStop && m_blocked)
+        return STATUS_BLOCKED;
+    else if( m_emergencyStop )
         return STATUS_HALTED;
     else if (m_currentCmd == nullptr)
         return STATUS_IDLE;
     else if( m_blockingDetector && m_blockingDetector->isBlocked())
+    {
+        setEmergencyStop();
+        m_blocked = true;
         return STATUS_BLOCKED;
+    }
     else
         return STATUS_RUNNING;
 }

@@ -32,7 +32,7 @@ MagEncoders::~MagEncoders()
 
 void MagEncoders::init()
 {
-    chprintf(outputStream,"\r\nMagEncoders::init()... \r\n");
+    //chprintf(outputStream, "\r\nMagEncoders::init()... \r\n");
 
     // Enable I2C SDA & SCL pin
     // External pullups with correct resistance value shall be used !
@@ -42,44 +42,55 @@ void MagEncoders::init()
     palSetPadMode(m_i2cPinConf.GPIObaseSDA, m_i2cPinConf.pinNumberSDA,
             PAL_MODE_ALTERNATE(4) | PAL_STM32_OTYPE_OPENDRAIN);
 
-
     i2cStart(&I2CD2, &m_i2cconfig);
 
     //wait 20ms
-    chThdSleepMilliseconds(20);
-    //verification
-    uint8_t agc = 0;
-    uint8_t diag = 0;
-    uint16_t mag = 0;
-    uint16_t raw = 0;
+    //chThdSleepMilliseconds(20);
 
-    int connect1 = m_mysensor1.begin();
-    chDbgAssert((connect1==0), "MagEncoders::init() - m_mysensor1 NOT CONNECTED\r\n");//TODO Allumer des led d'error
-//while(1)
-//{
-    m_mysensor1.getAllData(&agc, &diag, &mag, &raw);
-    chprintf(outputStream, "1.0x%02x agc=%d diag=%d mag=%d raw=%d\r\n", m_mysensor1.chipAddress(), agc, diag, mag, raw);
-//}
-    chDbgAssert((diag == 1), "init() m_mysensor1 MagEncoders - getAllData (diag != 1) NOK\r\n");
-    chDbgAssert((agc >= 30 && agc <= 79),
-            "init() m_mysensor1 MagEncoders - getAllData (agc >= 30 && agc <= 79) NOK\r\n");
+    uint16_t raw1 = 0;
+    uint16_t raw2 = 0;
+    uint8_t agc1 = 0;
+    uint8_t agc2 = 0;
+    uint8_t diag1 = 0;
+    uint8_t diag2 = 0;
+    uint16_t mag1 = 0;
+    uint16_t mag2 = 0;
+    int err = getValuesStatus(&raw1, &raw2, &agc1, &agc2, &diag1, &diag2, &mag1, &mag2);
 
+    chDbgAssert((err >= 0), "init() MagEncoders::init() NOT OK;\r\n");
 
-    int connect2 = m_mysensor2.begin();
-    chDbgAssert((connect2==0), "MagEncoders::init() - m_mysensor2 NOT CONNECTED\r\n");
+    /*
+     //verification
+     uint8_t agc = 0;
+     uint8_t diag = 0;
+     uint16_t mag = 0;
+     uint16_t raw = 0;
 
-    m_mysensor2.getAllData(&agc, &diag, &mag, &raw);
-    chprintf(outputStream, "2.0x%02x agc=%d diag=%d mag=%d raw=%d\r\n",m_mysensor2.chipAddress(), agc, diag, mag, raw);
-    chDbgAssert((diag == 1), "init() m_mysensor2 MagEncoders - getAllData (diag == 1) NOK\r\n");
-    chDbgAssert((agc >= 30 && agc <= 75),
-            "init() m_mysensor2 MagEncoders - getAllData (agc >= 30 && agc <= 75) NOK\r\n");
+     int connect1 = m_mysensor1.begin();
+     chDbgAssert((connect1 == 0), "MagEncoders::init() - m_mysensor1 NOT CONNECTED\r\n");  //TODO Allumer des led d'error
+     //while(1)
+     //{
+     m_mysensor1.getAllData(&agc, &diag, &mag, &raw);
+     chprintf(outputStream, "1.0x%02x agc=%d diag=%d mag=%d raw=%d\r\n", m_mysensor1.chipAddress(), agc, diag, mag, raw);
+     //}
+     chDbgAssert((diag == 1), "init() m_mysensor1 MagEncoders - getAllData (diag != 1) NOK\r\n");
+     chDbgAssert((agc >= AGC_MIN && agc <= AGC_MAX),
+     "init() m_mysensor1 MagEncoders - getAllData (agc >= 30 && agc <= 80) NOK\r\n");
 
-//    float encoder1 = (m_mysensor1.angleR(U_RAW, true) );
-//    float encoder2 = (m_mysensor2.angleR(U_RAW, true) );
-    //chprintf(outputStream,"MagEncoders::init() %f  %f;\r\n", encoder1,encoder2);
+     int connect2 = m_mysensor2.begin();
+     chDbgAssert((connect2 == 0), "MagEncoders::init() - m_mysensor2 NOT CONNECTED\r\n");
 
+     m_mysensor2.getAllData(&agc, &diag, &mag, &raw);
+     chprintf(outputStream, "2.0x%02x agc=%d diag=%d mag=%d raw=%d\r\n", m_mysensor2.chipAddress(), agc, diag, mag, raw);
+     chDbgAssert((diag == 1), "init() m_mysensor2 MagEncoders - getAllData (diag == 1) NOK\r\n");
+     chDbgAssert((agc >= AGC_MIN && agc <= AGC_MAX),
+     "init() m_mysensor2 MagEncoders - getAllData (agc >= 30 && agc <= 80) NOK\r\n");
 
-    chprintf(outputStream,"MagEncoders::init() done;\r\n");
+     //    float encoder1 = (m_mysensor1.angleR(U_RAW, true) );
+     //    float encoder2 = (m_mysensor2.angleR(U_RAW, true) );
+     //chprintf(outputStream,"MagEncoders::init() %f  %f;\r\n", encoder1,encoder2);
+     */
+
 }
 
 void MagEncoders::start()
@@ -97,7 +108,7 @@ void MagEncoders::stop()
 
 void MagEncoders::getValues(float *deltaEncoderRightFiltered, float *deltaEncoderLeftFiltered)
 {
-/*
+    /*
      // (outputStream,"MagEncoders::getValues() done; %d %d\r\n", m_encoder1Previous, m_encoder2Previous);
      //utilisation du depassement d'un int16
      //[0;16383] -8192 * 4 = [-32768;32764]
@@ -130,7 +141,7 @@ void MagEncoders::getValues(float *deltaEncoderRightFiltered, float *deltaEncode
 
      m_encoder1Previous = encoder1;
      m_encoder2Previous = encoder2;
-*/
+     */
 
     float deltaEncoderRight = 0.0;
     float deltaEncoderLeft = 0.0;
@@ -141,52 +152,47 @@ void MagEncoders::getValues(float *deltaEncoderRightFiltered, float *deltaEncode
 //    float encoder1 = (m_mysensor1.angleR(U_RAW, true) - 8192.0) * 4.0;
 //    float encoder2 = (m_mysensor2.angleR(U_RAW, true) - 8192.0) * 4.0;
 
-    uint16_t raw1 =0;
-    uint16_t raw2 = 0 ;
+    uint16_t raw1 = 0;
+    uint16_t raw2 = 0;
     uint8_t agc1 = 0;
     uint8_t agc2 = 0;
     uint8_t diag1 = 0;
     uint8_t diag2 = 0;
     uint16_t mag1 = 0;
     uint16_t mag2 = 0;
-    getValuesStatus(&raw1, &raw2, &agc1, &agc2, &diag1, &diag2, &mag1, &mag2);
-    float encoder1 = ((float)(raw1) - 8192.0) * 4.0;
-    float encoder2 = ((float)(raw2) - 8192.0) * 4.0;
+    int err = getValuesStatus(&raw1, &raw2, &agc1, &agc2, &diag1, &diag2, &mag1, &mag2);
+    if (err == 0) {
+        //utilisation du depassement d'un int16
+        int16_t encoder1 = ((int16_t) (raw1) - 8192.0) * 4.0;
+        int16_t encoder2 = ((int16_t) (raw2) - 8192.0) * 4.0;
 
-//    uint8_t agc = 0;
-//    uint8_t diag = 0;
-//    uint16_t mag = 0;
-//    uint16_t raw = 0;
-//    m_mysensor1.getAllData(&agc, &diag, &mag, &raw);
-//    float encoder11 = ((float)(raw) - 8192.0) * 4.0;
-//    m_mysensor2.getAllData(&agc, &diag, &mag, &raw);
+        //chprintf(outputStream, "---- %f = %f    \r\n", encoder1, encoder11);
 
-    //chprintf(outputStream, "---- %f = %f    \r\n", encoder1, encoder11);
+        if (m_is1EncoderRight) {
+            deltaEncoderRight = encoder1 - m_encoder1Previous;
+            deltaEncoderLeft = encoder2 - m_encoder2Previous;
+        } else {
+            deltaEncoderRight = encoder2 - m_encoder2Previous;
+            deltaEncoderLeft = encoder1 - m_encoder1Previous;
+        }
 
-    if (m_is1EncoderRight) {
-        deltaEncoderRight = encoder1 - m_encoder1Previous;
-        deltaEncoderLeft = encoder2 - m_encoder2Previous;
-    } else {
-        deltaEncoderRight = encoder2 - m_encoder2Previous;
-        deltaEncoderLeft = encoder1 - m_encoder1Previous;
+        if (m_invertEncoderR)
+            deltaEncoderRight = -deltaEncoderRight;
+        if (m_invertEncoderL)
+            deltaEncoderLeft = -deltaEncoderLeft;
+
+        deltaEncoderRight = ((int16_t) (deltaEncoderRight)) / 4.0;
+        deltaEncoderLeft = ((int16_t) (deltaEncoderLeft)) / 4.0;
+
+        m_encoderRSum += (int32_t) (deltaEncoderRight);
+        m_encoderLSum += (int32_t) (deltaEncoderLeft);
+
+        m_encoder1Previous = encoder1;
+        m_encoder2Previous = encoder2;
+
+        *deltaEncoderRightFiltered = (deltaEncoderRight);
+        *deltaEncoderLeftFiltered = (deltaEncoderLeft);
     }
-
-    if (m_invertEncoderR)
-        deltaEncoderRight = -deltaEncoderRight;
-    if (m_invertEncoderL)
-        deltaEncoderLeft = -deltaEncoderLeft;
-
-    deltaEncoderRight = ((int16_t) (deltaEncoderRight)) / 4.0;
-    deltaEncoderLeft = ((int16_t) (deltaEncoderLeft)) / 4.0;
-
-    m_encoderRSum += (int32_t) (deltaEncoderRight);
-    m_encoderLSum += (int32_t) (deltaEncoderLeft);
-
-    m_encoder1Previous = encoder1;
-    m_encoder2Previous = encoder2;
-
-    *deltaEncoderRightFiltered = (deltaEncoderRight);
-    *deltaEncoderLeftFiltered = (deltaEncoderLeft);
 }
 
 void MagEncoders::getEncodersTotalCount(int32_t *encoderRight, int32_t *encoderLeft)
@@ -195,9 +201,69 @@ void MagEncoders::getEncodersTotalCount(int32_t *encoderRight, int32_t *encoderL
     *encoderLeft = m_encoderLSum;
 }
 
-void MagEncoders::getValuesStatus(uint16_t *raw1, uint16_t *raw2, uint8_t *agc1, uint8_t *agc2, uint8_t *diag1, uint8_t *diag2, uint16_t *mag1,
-        uint16_t *mag2)
+int MagEncoders::getValuesStatus(uint16_t *raw1, uint16_t *raw2, uint8_t *agc1, uint8_t *agc2, uint8_t *diag1,
+        uint8_t *diag2, uint16_t *mag1, uint16_t *mag2)
 {
-    m_mysensor1.getAllData(agc1, diag1, mag1, raw1);
-    m_mysensor2.getAllData(agc2, diag2, mag2, raw2);
+    int err1 = 0;
+    int err2 = 0;
+    int again = 5;
+    int i = 0;
+    err1 = m_mysensor1.getAllData(agc1, diag1, mag1, raw1);
+    for (i = 0; i < again; i++) {
+        if (err1 < 0) {
+            chprintf(outputStream, "getValuesStatus() m_mysensor1.getAllData()  err1=%d\r\n", err1);
+            err1 = err1 * 100;
+        }
+        //COF (CORDIC Overflow), logic high indicates an out of range error in the CORDIC part.
+        //When this bit is set, the angle and magnitude data is invalid.
+        //The absolute output maintains the last valid angular value.
+        if (((*diag1 && 0x02) >> 1) == 1) {
+            chprintf(outputStream, "getValuesStatus() m_mysensor1.getAllData() COF (CORDIC Overflow) diag=%d\r\n",
+                    (int) *diag1);
+            err1 = -900;
+        }
+        //Automatic Gain Control value. 0 decimal represents high magnetic field, 255 decimal represents low  magnetic field
+        if ((*agc1 <= AGC_MIN) && (*agc1 >= AGC_MAX)) {
+            chprintf(outputStream, "getValuesStatus() m_mysensor1.getAllData() out of range agc=%d\r\n", *agc1);
+            err1 = -800;
+        }
+        if (err1 >= 0)
+            break;
+        else
+            chprintf(outputStream, "getValuesStatus() m_mysensor1.getAllData() TRY AGAIN n°%d\r\n", again);
+    }
+    chDbgAssert(i < 5, "getAllData - m_mysensor1 TRY AGAIN > 5 !!! \r\n");
+
+    err2 = m_mysensor2.getAllData(agc2, diag2, mag2, raw2);
+    for (i = 0; i < again; i++) {
+        if (err2 < 0) {
+            chprintf(outputStream, "getValuesStatus() m_mysensor2.getAllData()  err2=%d\r\n", err2);
+            err2 = err1 * 1000;
+        }
+        //COF (CORDIC Overflow), logic high indicates an out of range error in the CORDIC part.
+        //When this bit is set, the angle and magnitude data is invalid.
+        //The absolute output maintains the last valid angular value.
+        if (((*diag2 && 0x02) >> 1) == 1) {
+            chprintf(outputStream, "getValuesStatus() m_mysensor2.getAllData() COF (CORDIC Overflow) diag=%d\r\n",
+                    (int) *diag2);
+            err2 = -9000;
+        }
+        //Automatic Gain Control value. 0 decimal represents high magnetic field, 255 decimal represents low  magnetic field
+        if (*agc2 <= AGC_MIN && *agc2 >= AGC_MAX) {
+            chprintf(outputStream, "getValuesStatus() m_mysensor2.getAllData() out of range agc=%d\r\n", *agc2);
+            err2 = -8000;
+        }
+        if (err2 >= 0)
+            break;
+        else
+            chprintf(outputStream, "getValuesStatus() m_mysensor2.getAllData() TRY AGAIN n°%d\r\n", again);
+    }
+    chDbgAssert(i < 5, "getAllData - m_mysensor2 TRY AGAIN > 5 !!! \r\n");
+
+    //on retourne l'erreur, si la donnée n'est pas fiable
+    if (err1 < 0)
+        return err1;
+    if (err2 < 0)
+        return err2;
+    return 0;
 }

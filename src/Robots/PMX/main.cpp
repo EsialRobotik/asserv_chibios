@@ -8,6 +8,7 @@
 #include <cfloat>
 
 #include "../../blockingDetector/SpeedErrorBlockingDetector.h"
+#include "../../blockingDetector/OldSchoolBlockingDetector.h"
 #include "raspIO.h"
 #include "util/asservMath.h"
 #include "util/chibiOsAllocatorWrapper.h"
@@ -35,9 +36,9 @@
 #define ENCODERS_WHEELS_DISTANCE_MM (234.4) //distance entre les 2 roues codeuses
 #define ENCODERS_TICKS_BY_TURN (16384) //nombre de ticks par tour de vos encodeurs.
 
-#define MAX_SPEED_MM_PER_SEC (1500)
+#define MAX_SPEED_MM_PER_SEC (800)
 
-#define DIST_REGULATOR_KP (1.95)
+#define DIST_REGULATOR_KP (2.7) //1.95
 #define DIST_REGULATOR_MAX_ACC (900)
 #define DIST_REGULATOR_MIN_ACC (500)
 #define DIST_REGULATOR_HIGH_SPEED_THRESHOLD (500)
@@ -55,7 +56,6 @@ float speed_controller_left_Ki[NB_PI_SUBSET] = { 3.0, 4.2, 1.5}; //1.0
 float speed_controller_left_SpeedRange[NB_PI_SUBSET] = { 20, 50, 60};
 
 #define PLL_BANDWIDTH (100) //verifpour garder un minimum de variation sur la vitesse
-
 
 #define COMMAND_MANAGER_ARRIVAL_ANGLE_THRESHOLD_RAD (0.02)
 #define COMMAND_MANAGER_ARRIVAL_DISTANCE_THRESHOLD_mm (2.5)
@@ -90,15 +90,14 @@ AdaptativeSpeedController *speedControllerLeft;
 Pll *rightPll;
 Pll *leftPll;
 
-SpeedErrorBlockingDetector *blockingDetector;
+//SpeedErrorBlockingDetector *blockingDetector;
+OldSchoolBlockingDetector *blockingDetector;
 
 SimpleAccelerationLimiter *angleAccelerationlimiter;
 AdvancedAccelerationLimiter *distanceAccelerationLimiter;
 
-
 CommandManager *commandManager;
 AsservMain *mainAsserv;
-
 
 static void initAsserv()
 {
@@ -122,11 +121,13 @@ static void initAsserv()
     angleAccelerationlimiter = new SimpleAccelerationLimiter(ANGLE_REGULATOR_MAX_ACC);
     distanceAccelerationLimiter = new AdvancedAccelerationLimiter(DIST_REGULATOR_MAX_ACC, DIST_REGULATOR_MIN_ACC, DIST_REGULATOR_HIGH_SPEED_THRESHOLD);
 
+    //blockingDetector = new SpeedErrorBlockingDetector(ASSERV_THREAD_PERIOD_S, *speedControllerRight, *speedControllerLeft, 1.0f, 0.9f);//
+    blockingDetector = new OldSchoolBlockingDetector(ASSERV_THREAD_PERIOD_S, *md22MotorController, *odometry, 0.0018f, 0.4f, 0.25f); //0.0018f, 0.4f, 0.25f
+
     commandManager = new CommandManager( COMMAND_MANAGER_ARRIVAL_DISTANCE_THRESHOLD_mm, COMMAND_MANAGER_ARRIVAL_ANGLE_THRESHOLD_RAD,
                                    preciseGotoConf, waypointGotoConf, gotoNoStopConf,
-                                   *angleRegulator, *distanceRegulator);
+                                   *angleRegulator, *distanceRegulator, nullptr, blockingDetector);
 
-    blockingDetector = new SpeedErrorBlockingDetector(ASSERV_THREAD_PERIOD_S, *speedControllerRight, *speedControllerLeft, 1.0f, 666.f);
 
     mainAsserv = new AsservMain( ASSERV_THREAD_FREQUENCY, ASSERV_POSITION_DIVISOR,
                            ENCODERS_WHEELS_RADIUS_MM, ENCODERS_WHEELS_DISTANCE_MM, ENCODERS_TICKS_BY_TURN,
@@ -134,10 +135,8 @@ static void initAsserv()
                            *angleRegulator, *distanceRegulator,
                            *angleAccelerationlimiter, *distanceAccelerationLimiter,
                            *speedControllerRight, *speedControllerLeft,
-                           *rightPll, *leftPll,
-                           blockingDetector);
-
-
+                           *rightPll, *leftPll, blockingDetector
+                     );
 }
 
 BaseSequentialStream *outputStream;

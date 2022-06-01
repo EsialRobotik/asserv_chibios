@@ -96,6 +96,8 @@ class CommandManager
         const Regulator &m_distance_regulator;
 
         bool m_emergencyStop;
+        bool m_blocked;
+
 
         BlockingDetector const *m_blockingDetector;
 

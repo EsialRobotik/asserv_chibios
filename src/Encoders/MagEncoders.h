@@ -7,6 +7,9 @@
 #include "hal_streams.h"
 #include "ams_as5048b.h"
 
+#define AGC_MIN (30)
+#define AGC_MAX (80)
+
 // Address depending on the two DIL switches
 //#define AS5048B_ADDR(a2,a1)  (uint8_t)(0x40 | ( a2 ? 0x2 : 0 ) | ( a1 ? 0x1 : 0 ))//todo a changer
 
@@ -32,7 +35,7 @@ public:
 
     virtual void getValues(float *deltaEncoderRight, float *deltaEncoderLeft);
 
-    void getValuesStatus(uint16_t *encoderRight, uint16_t *encoderLeft, uint8_t *agcR, uint8_t *agcL, uint8_t *diagR,
+    int getValuesStatus(uint16_t *encoderRight, uint16_t *encoderLeft, uint8_t *agcR, uint8_t *agcL, uint8_t *diagR,
             uint8_t *diagL, uint16_t *magR, uint16_t *magL);
 private:
     I2CConfig m_i2cconfig;

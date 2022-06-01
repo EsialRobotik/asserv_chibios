@@ -216,6 +216,7 @@ THD_FUNCTION(asservPositionSerial, p)
             (int32_t)odometry->getX(), (int32_t)odometry->getY(), odometry->getTheta(),
             commandManager->getCommandStatus(), commandManager->getPendingCommandCount(),
             md22MotorController->getLeftSpeed(), md22MotorController->getRightSpeed(), debg);
+        //DEBUG
 //        chprintf(outputStream,    "#%d;%d;%f;%d;%d;%d;%d;%d\r\n",
 //                    (int32_t)odometry->getX(), (int32_t)odometry->getY(), odometry->getTheta(),
 //                    commandManager->getCommandStatus(), commandManager->getPendingCommandCount(),

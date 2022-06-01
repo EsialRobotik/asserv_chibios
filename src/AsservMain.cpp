@@ -185,8 +185,14 @@ void AsservMain::mainLoop()
 
         m_asservCounter++;
 
-        chDbgAssert(chVTGetSystemTime() < time, "asserv thread missed deadline !");
+
+        if (chVTGetSystemTime() < time)
+        {
+            //Non bloquant
+            //chDbgAssert(chVTGetSystemTime() < time, "asserv thread missed deadline !");
+        }
         chThdSleepUntil(time);
+
         time += TIME_US2I(loopPeriod_us);
     }
 }
