@@ -1,12 +1,38 @@
-# Asserv NG
+# Asserv Nucleo
 
-Asserv Next Generation ! Rien que ça.... 
-L'idée ici était de faire un asserv pour un robot de coupe de france de robotique (eurobot) avec un certain nombre de caractéristiques :
- * Que des unités SI. Ici, pas d'unités incompréhensibles à la con, mais tous les calculs se font en flottant ( d'où la nécéssité d'une FPU et d'une carte performante) 
- * Un décodage hardware des encodeurs (géré ici par des timers directement sur le microprocesseur)
- * Un premier étage d'asserv des roues en vitesse, puis par dessus, un asservissement polaire. L'avantage est de pouvoir gérer plus facilement les courbes d'accélérations
- * un système de visualisation en temps réel des données calculés par les boucles de controle.  
- * Un OS temps réel 
+## Quels objectifs?
+
+De part notre expérience en tant que participant à la coupe de France de robotique, nous savons qu'un asservissement est une brique de base obligatoire pour accéder à des travaux intéressants sur un robot ( Si le robot ne sait pas où il est, ou ne sait pas aller à un endroit précis sur la table, le bras le plus classe ou la méca la plus chiadé, ne sert à rien :) ).
+
+Malheureusement cette brique n'est pas facile à appréhender :
+ * Il y a peu de personnes ou de ressources qui permettent de s'initier "simplement" à la question
+ * La transmission de connaissances sur le sujet est difficile entre générations (petit souvenir ému de mon arrivée dans le club de mon école où on m'a montré un PCB rouge avec marqué "carte d'asserv" dessus et ZERO documentation !)
+ * Cela nécessite des connaissances en code, math, éléctronique et mécanique. C'est normal en robotique, mais pour des équipes jeunes, atteindre le niveau minimale dans toutes ces disciplines peut être très long et la finalité pas forcement très motivante.
+
+Donc, lorsque j'ai décidé fin 2019 de refondre notre asservissement je me suis donné quelques objectifs :
+  * Faire aussi accessible que possible : que ce soit en terme de compréhension du fonctionnement ou du réglage 
+  * Fournir un système de visualisation de données, de façon a pouvoir comprendre facilement le comportement des formules mathématiques utilisés et donc le comportement final du robot. 
+  * Avoir une base de code qui soit pensée pour être extensible et partageable entre équipes. Et donc qui soient instanciable facilement  sur d'autres microcontrôleur et en utilisant un matériel différent du notre. 
+* Bien-sur avoir une asserv performante. L'idée étant que si une équipe veut être utilisatrice de l'asserv en quasi "boite noire" cela est possible, mais si quelqu'un veut implémenter des choses plus avancée et devenir un "poweruser" c'est possible.
+
+## Quels caractéristiques ?
+
+Donc si on devait compiler une liste de caractéristiques de ce projet façon liste à la Prévert: 
+
+* Que des unités SI. Ici, pas d'unités incompréhensibles à la con, donc tous les calculs se font en flottant ( d'où la nécessité d'une FPU et d'une carte performante)
+* Un décodage hardware des encodeurs (géré dans notre instance par des timers directement sur le microprocesseur)
+* Un premier étage d'asserv des roues en vitesse, puis par dessus, un asservissement polaire. L'avantage est de pouvoir gérer plus facilement les courbes d'accélérations ( et aussi la décélération, mais moins facilement...)
+* un système de visualisation en temps réel des données calculés par les boucles de contrôle.
+* Un OS temps réel
+* Des documentations sur le fonctionnement minimal à connaître, et sur la façon de régler l'asserv. 
+* Des documentations plus avancées sur le fonctionnement interne, les méthodes alternatives existantes, ....
+
+
+## Pourquoi faire ?
+
+Soyons honnête, l'objectif premier était pour notre équipe d'avoir une meilleur asserv, moins buggé et plus compréhensible pour toute l'équipe. Le second objectif était simplement pour montrer à Planète science qu'en tant que ~~personne trop vieux pour ces conneries~~ ancien de la coupe de France de robotique, nous "jouons le jeu". Nous ne voulons pas pour écraser la concurrence, nous voulons qu'il y ait de la concurrence ! 
+Lorsque j'ai commencé à travailler sur un asservissement de robot de coupe de France de robotique, aversive fournit par Microb Robotique m'a énormément appris et aidé. A nous de faire pareil maintenant. 
+
 
 ## Avant de compiler
 
