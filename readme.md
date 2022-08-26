@@ -36,6 +36,7 @@ Lorsque j'ai commencé à travailler sur un asservissement de robot de coupe de 
 ## Contact
 
 Pour du support, une question ou me payer une bière à la prochaine coupe: robotique [at] epicea.org
+
 Ou plus simplement sur le serveur [Discord de la coupe](https://discord.gg/tteC3Cp), pseudo : cheff[Esial Robotik]
 
 
