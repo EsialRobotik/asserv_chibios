@@ -33,6 +33,11 @@ Donc si on devait compiler une liste de caractéristiques de ce projet façon li
 Soyons honnête, l'objectif premier était pour notre équipe d'avoir une meilleur asserv, moins buggé et plus compréhensible pour toute l'équipe. Le second objectif était simplement pour montrer à Planète science qu'en tant que ~~personne trop vieux pour ces conneries~~ ancien de la coupe de France de robotique, nous "jouons le jeu". Nous ne voulons pas pour écraser la concurrence, nous voulons qu'il y ait de la concurrence ! 
 Lorsque j'ai commencé à travailler sur un asservissement de robot de coupe de France de robotique, aversive fournit par Microb Robotique m'a énormément appris et aidé. A nous de faire pareil maintenant. 
 
+## Contact
+
+Pour du support, une question ou me payer une bière à la prochaine coupe: robotique [at] epicea.org
+Ou plus simplement sur le serveur [Discord de la coupe](https://discord.gg/tteC3Cp), pseudo : cheff[Esial Robotik]
+
 
 ## Avant de compiler
 
