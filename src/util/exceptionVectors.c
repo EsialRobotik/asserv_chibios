@@ -167,16 +167,44 @@ void __assert_func(const char * assertion, const char * file, unsigned int line,
     dbg_assert(assertion, file, line, function, "\n");
 }
 
+
+
+
+
+
 /*
- * Gros hack des enfers !
- *  Je ne sais pas pourquoi/comment, mais à un moment j'ai eu cette erreur au link :
- *      libg.a(lib_a-fini.o): In function `__libc_fini_array':
- *            fini.c:(.text.__libc_fini_array+0x26): undefined reference to `_fini'
- *
- *    C'est une vieille étiquette obsolète, donc je ne sais pas pourquoi on se trimbale ça..
- *     Et Giovanni il est d'accord avec moi en plus ==> http://www.chibios.com/forum/viewtopic.php?t=4172
+ * DIRTY HACK :
+ *  Il semble avoir un bug dans ChibiOS !
+ *  Dans le cpp_wrapper il manque cette fonction qui est dans sysall.c ...
+ *  ... Sauf que syscall.c et cpp_wrapper ne sont pas compatibles :-/
  */
+
+
+#include <stdlib.h>
+#include <errno.h>
+#include <string.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+
 __attribute__((used))
-void _fini(void)
-{
+caddr_t _sbrk_r(struct _reent *r, int incr) {
+#if CH_CFG_USE_MEMCORE
+  void *p;
+
+  chDbgCheck(incr >= 0);
+
+  p = chCoreAllocFromBase((size_t)incr, 1U, 0U);
+  if (p == NULL) {
+    __errno_r(r)  = ENOMEM;
+    return (caddr_t)-1;
+  }
+  return (caddr_t)p;
+#else
+  (void)incr;
+  __errno_r(r) = ENOMEM;
+  return (caddr_t)-1;
+#endif
 }
+
+
+

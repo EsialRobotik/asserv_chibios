@@ -104,12 +104,10 @@ include $(CHIBIOS)/os/common/startup/ARMCMx/compilers/GCC/mk/startup_stm32f4xx.m
 include $(CHIBIOS_CONTRIB)/os/hal/hal.mk
 include $(CHIBIOS_CONTRIB)/os/hal/ports/STM32/STM32F4xx/platform.mk
 include $(CHIBIOS)/os/hal/boards/ST_NUCLEO64_F446RE/board.mk
-include $(CHIBIOS)/os/hal/osal/rt/osal.mk
+include $(CHIBIOS)/os/hal/osal/rt-nil/osal.mk
 # RTOS files (optional).
 include $(CHIBIOS)/os/rt/rt.mk
-include $(CHIBIOS)/os/common/ports/ARMCMx/compilers/GCC/mk/port_v7m.mk
-# Auto-build files in ./source recursively.
-include $(CHIBIOS)/tools/mk/autobuild.mk
+include $(CHIBIOS)/os/common/ports/ARMv7-M/compilers/GCC/mk/port.mk
 # Other files (optional).
 include $(CHIBIOS)/test/lib/test.mk
 include $(CHIBIOS)/test/rt/rt_test.mk
@@ -140,7 +138,6 @@ CSRC = $(ALLCSRC) \
        $(wildcard $(SRCDIR)/Robots/$(ROBOT)/*.c ) \
        $(SRCDIR)/usbcfg.c \
        $(SRCDIR)/util/exceptionVectors.c \
-       $(CHIBIOS)/os/various/syscalls.c \
        $(TESTSRC) 
 
 # C++ sources that can be compiled in ARM or THUMB mode depending on the global
@@ -245,10 +242,10 @@ robots :
 	@echo "Available robots :  $(AVAILABLE_ROBOTS)" 
 	
 flash : all
-	openocd -c "tcl_port disabled" -c "telnet_port disabled" -c "source [find board/st_nucleo_f4.cfg]" -c "stm32f4x.cpu configure -rtos ChibiOS" -c "init" -c "reset halt" -c "flash write_image erase unlock $(BUILDDIR)/$(PROJECT).elf" -c "verify_image $(BUILDDIR)/$(PROJECT).elf" -c "reset run" -c "shutdown"
+	openocd -c "tcl_port disabled" -c "telnet_port disabled" -c "source [find board/st_nucleo_f4.cfg]" -c "stm32f4x.cpu configure -rtos chibios" -c "init" -c "reset halt" -c "flash write_image erase unlock $(BUILDDIR)/$(PROJECT).elf" -c "verify_image $(BUILDDIR)/$(PROJECT).elf" -c "reset run" -c "shutdown"
 
 debug : all
-	openocd -c "tcl_port disabled" -c "telnet_port disabled" -c "source [find board/st_nucleo_f4.cfg]" -c "stm32f4x.cpu configure -rtos ChibiOS" -c "init" -c "reset halt" -c "flash write_image erase unlock $(BUILDDIR)/$(PROJECT).elf" -c "verify_image $(BUILDDIR)/$(PROJECT).elf" -c "reset halt"
+	openocd -c "tcl_port disabled" -c "telnet_port disabled" -c "source [find board/st_nucleo_f4.cfg]" -c "stm32f4x.cpu configure -rtos chibios" -c "init" -c "reset halt" -c "flash write_image erase unlock $(BUILDDIR)/$(PROJECT).elf" -c "verify_image $(BUILDDIR)/$(PROJECT).elf" -c "reset halt"
 
 	
 
