@@ -3,51 +3,9 @@
 
 #include <stdint.h>
 #include <cmath>
+#include "ch.h"
+#include "USBStreamMacros.h"
 
-typedef struct
-{
-    uint32_t synchro;
-    uint32_t timestamp;
-    float value1;
-    float value2;
-    float value3;
-    float value4;
-    float value5;
-    float value6;
-    float value7;
-    float value8;
-    float value9;
-    float value10;
-    float value11;
-    float value12;
-    float value13;
-    float value14;
-    float value15;
-    float value16;
-    float value17;
-    float value18;
-    float value19;
-    float value20;
-    float value21;
-    float value22;
-    float value23;
-    float value24;
-    float value25;
-    float value26;
-    float value27;
-    float value28;
-    float value29;
-    float value30;
-    float value31;
-    float value32;
-    float value33;
-    float value34;
-    float value35;
-    float value36;
-    float value37;
-    float value38;
-
-}__attribute__((packed)) UsbStreamSample;
 
 class USBStream
 {
@@ -59,7 +17,11 @@ public:
     }
 
     void* sendCurrentStream();
+
     void sendConfig(uint8_t *configBuffer, uint8_t size);
+
+
+    void USBStreamHandleConnection_lowerpriothread();
 
     void releaseBuffer();
     void getFullBuffer(void** ptr, uint32_t* size);
@@ -76,179 +38,49 @@ public:
             *ptrFlt = NAN;
         else
             *ptrFlt = value;
-    }
-    ;
+    };
 
-    // Right motor speed control
-    inline void setSpeedGoalRight(float speed)
-    {
-        setValue(&m_currentStruct.value1, speed);
-    }
-    inline void setSpeedEstimatedRight(float speed)
-    {
-        setValue(&m_currentStruct.value2, speed);
-    }
-    inline void setSpeedOutputRight(float speed)
-    {
-        setValue(&m_currentStruct.value3, speed);
-    }
-    inline void setSpeedIntegratedOutputRight(float speed)
-    {
-        setValue(&m_currentStruct.value7, speed);
-    }
-    inline void setSpeedKpRight(float Kp)
-    {
-        setValue(&m_currentStruct.value24, Kp);
-    }
-    inline void setSpeedKiRight(float Ki)
-    {
-        setValue(&m_currentStruct.value25, Ki);
-    }
 
-    // Left motor speed control
-    inline void setSpeedGoalLeft(float speed)
-    {
-        setValue(&m_currentStruct.value4, speed);
-    }
-    inline void setSpeedEstimatedLeft(float speed)
-    {
-        setValue(&m_currentStruct.value5, speed);
-    }
-    inline void setSpeedOutputLeft(float speed)
-    {
-        setValue(&m_currentStruct.value6, speed);
-    }
-    inline void setSpeedIntegratedOutputLeft(float speed)
-    {
-        setValue(&m_currentStruct.value8, speed);
-    }
-    inline void setSpeedKpLeft(float Kp)
-    {
-        setValue(&m_currentStruct.value26, Kp);
-    }
-    inline void setSpeedKiLeft(float Ki)
-    {
-        setValue(&m_currentStruct.value27, Ki);
-    }
-
-    // Angle regulator
-    inline void setAngleGoal(float goal)
-    {
-        setValue(&m_currentStruct.value11, goal);
-    }
-    inline void setAngleAccumulator(float acc)
-    {
-        setValue(&m_currentStruct.value12, acc);
-    }
-    inline void setAngleOutput(float output)
-    {
-        setValue(&m_currentStruct.value13, output);
-    }
-    inline void setAngleOutputLimited(float output)
-    {
-        setValue(&m_currentStruct.value9, output);
-    }
-
-    // Distance regulator
-    inline void setDistGoal(float goal)
-    {
-        setValue(&m_currentStruct.value14, goal);
-    }
-    inline void setDistAccumulator(float acc)
-    {
-        setValue(&m_currentStruct.value15, acc);
-    }
-    inline void setDistOutput(float output)
-    {
-        setValue(&m_currentStruct.value16, output);
-    }
-    inline void setDistOutputLimited(float output)
-    {
-        setValue(&m_currentStruct.value10, output);
-    }
-
-    // Raw Encoder
-    inline void setRawEncoderDeltaRight(float delta)
-    {
-        setValue(&m_currentStruct.value17, delta);
-    }
-    inline void setRawEncoderDeltaLeft(float delta)
-    {
-        setValue(&m_currentStruct.value18, delta);
-    }
-
-    // Odometrie
-    inline void setOdoX(float x)
-    {
-        setValue(&m_currentStruct.value19, x);
-    }
-    inline void setOdoY(float y)
-    {
-        setValue(&m_currentStruct.value20, y);
-    }
-    inline void setOdoTheta(float theta)
-    {
-        setValue(&m_currentStruct.value21, theta);
-    }
-
-    // Command Manager
-    inline void setXGoal(float x)
-    {
-        setValue(&m_currentStruct.value22, x);
-    }
-    inline void setYGoal(float y)
-    {
-        setValue(&m_currentStruct.value23, y);
-    }
-
-    // Acc & dec limiter
-    inline void setDistanceLimiterVelocityAtDecTime(float val)
-    {
-        setValue(&m_currentStruct.value32, val);
-    }
-    inline void setDistanceLimiterVelocityCompensation(float val)
-    {
-        setValue(&m_currentStruct.value33, val);
-    }
-    inline void setDistanceLimiterVelocityCompensated(float val)
-    {
-        setValue(&m_currentStruct.value34, val);
-    }
-    inline void setDistanceLimiterOutput(float val)
-    {
-        setValue(&m_currentStruct.value35, val);
-    }
-    inline void setDistanceLimiterTimeFromVmaxToZero(float val)
-    {
-        setValue(&m_currentStruct.value31, val);
-    }
-    inline void setDistanceLimiterTargetSpeed(float val)
-    {
-        setValue(&m_currentStruct.value30, val);
-    }
-    inline void setDistanceLimiterTimeToVMax(float val)
-    {
-        setValue(&m_currentStruct.value29, val);
-    }
-    inline void setDistanceLimiterMaxAttainableSpeed(float val)
-    {
-        setValue(&m_currentStruct.value28, val);
-    }
-    inline void setDistanceLimitercurrentSpeed(float val)
-    {
-        setValue(&m_currentStruct.value36, val);
-    }
-
-    // Blocking detector
-    inline void setMovingIntegralError(float val)
-    {
-        setValue(&m_currentStruct.value37, val);
-    }
-    inline void setMovingIntegralErrorThreshold(float val)
-    {
-        setValue(&m_currentStruct.value38, val);
-    }
-
+    GENERATE_USB_STREAM_HEADER(
+        Timestamp,                              timestamp,
+        SpeedGoalRight,                         speed/right/goal,
+        SpeedEstimatedRight,                    speed/right/current,
+        SpeedOutputRight,                       speed/right/outputConsign ,
+        SpeedIntegratedOutputRight,             speed/right/output_consign_integrated,
+        SpeedKpRight,                           speed/right/Kp,
+        SpeedKiRight,                           speed/right/Ki,
+        SpeedGoalLeft,                          speed/left/goal,
+        SpeedEstimatedLeft,                     speed/left/current,
+        SpeedOutputLeft,                        speed/left/outputConsign,
+        SpeedIntegratedOutputLeft,              speed/left/output_consign_integrated,
+        SpeedKpLeft,                            speed/left/Kp,
+        SpeedKiLeft,                            speed/left/Ki,
+        AngleGoal,                              angle_regulator/goal,
+        AngleAccumulator,                       angle_regulator/accumulator,
+        AngleOutput,                            angle_regulator/output,
+        AngleOutputLimited,                     angle_regulator/limited_output,
+        DistGoal,                               distance_regulator/goal,
+        DistAccumulator,                        distance_regulator/accumulator,
+        DistOutput,                             distance_regulator/output,
+        DistOutputLimited,                      distance_regulator/limited_output,
+        RawEncoderDeltaRight,                   raw_encoder/right,
+        RawEncoderDeltaLeft,                    raw_encoder/left,
+        OdoX,                                   odometry/X,
+        OdoY,                                   odometry/Y,
+        OdoTheta,                               odometry/theta,
+        XGoal,                                  commandManager/X,
+        YGoal,                                  commandManager/Y,
+        DistanceLimiterVelocityAtDecTime,       accDec/distance/VelocityAtDecTime,
+        DistanceLimiterVelocityCompensation,    accDec/distance/VelocityCompensation,
+        DistanceLimiterVelocityCompensated,     accDec/distance/VelocityCompensated,
+        DistanceLimiterOutput,                  accDec/distance/OutputSpeedConsign,
+        DistanceLimiterTimeFromVmaxToZero,      accDec/distance/TimeFromVmaxToZero,
+        DistanceLimiterTargetSpeed,             accDec/distance/targetSpeed,
+        DistanceLimiterTimeToVMax,              accDec/distance/TimeToVMax,
+        DistanceLimiterMaxAttainableSpeed,      accDec/distance/MaxAttainableSpeed,
+        DistanceLimitercurrentSpeed,            accDec/distance/currentSpeed,
+        MovingIntegralError,                    blockingDetector/movingIntegralError,
+        MovingIntegralErrorThreshold,           blockingDetector/movingIntegralErrorThreshold);
 
 
 private:
@@ -267,6 +99,7 @@ private:
     UsbStreamSample m_currentStruct;
     uint32_t m_timestamp;
     uint32_t m_bufferSize;
+    mutex_t m_sample_sending_mutex;
 };
 
 #endif /* USBSTREAM_SRC_DATASTREAMTYPE_H_ */

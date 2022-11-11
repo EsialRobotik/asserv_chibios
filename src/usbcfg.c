@@ -222,7 +222,7 @@ NULL, 0x0010, 0x0000, &ep2instate,
 NULL, 1,
 NULL };
 
-static volatile int configured_cnt = 0;
+static volatile bool configured_usb = false;
 
 /*
  * Handles the USB driver global events.
@@ -234,6 +234,7 @@ static void usb_event(USBDriver *usbp, usbevent_t event)
     switch (event) {
     case USB_EVENT_ADDRESS:
         return;
+
     case USB_EVENT_CONFIGURED:
         chSysLockFromISR();
 
@@ -247,18 +248,19 @@ static void usb_event(USBDriver *usbp, usbevent_t event)
         sduConfigureHookI(&SDU1);
 
         chSysUnlockFromISR();
-        configured_cnt++;
+        configured_usb=true;
         return;
     case USB_EVENT_RESET:
+        return;
         /* Falls into.*/
     case USB_EVENT_UNCONFIGURED:
+        return;
         /* Falls into.*/
     case USB_EVENT_SUSPEND:
         chSysLockFromISR();
 
         /* Disconnection event on suspend.*/
         sduSuspendHookI(&SDU1);
-
         chSysUnlockFromISR();
         return;
     case USB_EVENT_WAKEUP:
@@ -266,7 +268,6 @@ static void usb_event(USBDriver *usbp, usbevent_t event)
 
         /* Connection event on wakeup.*/
         sduWakeupHookI(&SDU1);
-
         chSysUnlockFromISR();
         return;
     case USB_EVENT_STALLED:
@@ -301,7 +302,7 @@ USBD1_DATA_REQUEST_EP,
 USBD1_DATA_AVAILABLE_EP,
 USBD1_INTERRUPT_REQUEST_EP };
 
-int is_usb_serial_configured(void)
+bool is_usb_serial_configured(void)
 {
-    return configured_cnt;
+    return configured_usb;
 }

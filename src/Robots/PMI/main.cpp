@@ -19,6 +19,7 @@
 #include "Odometry.h"
 #include "USBStream.h"
 #include "AccelerationLimiter/SimpleAccelerationLimiter.h"
+#include "AccelerationLimiter/AdvancedAccelerationLimiter.h"
 #include "AccelerationLimiter/AccelerationDecelerationLimiter.h"
 #include "Pll.h"
 #include "blockingDetector/SpeedErrorBlockingDetector.h"
@@ -32,17 +33,17 @@
 #define ENCODERS_WHEELS_DISTANCE_MM (264.7)
 #define ENCODERS_TICKS_BY_TURN (1440*4)
 
-#define MAX_SPEED_MM_PER_SEC (1200)
+#define MAX_SPEED_MM_PER_SEC (2000)
 
-#define DIST_REGULATOR_KP (6)
-#define DIST_REGULATOR_MAX_ACC_FW (1201)
-#define DIST_REGULATOR_MAX_DEC_FW (1202)
-#define DIST_REGULATOR_MAX_ACC_BW (1203)
-#define DIST_REGULATOR_MAX_DEC_BW (1204)
+#define DIST_REGULATOR_KP (4.0)
+#define DIST_REGULATOR_KP_MAX_ACC (2000)
+#define DIST_REGULATOR_KP_MIN_ACC (500)
+#define DIST_REGULATOR_KP_MAX_ACC_THRESHOLD (50)
+// #define ACC_DEC_DAMPLING (1.4)
 
 
-#define ANGLE_REGULATOR_KP (700)
-#define ANGLE_REGULATOR_MAX_ACC (1800)
+#define ANGLE_REGULATOR_KP (780)
+#define ANGLE_REGULATOR_MAX_ACC (2500)
 
 float speed_controller_right_Kp[NB_PI_SUBSET] = { 0.1, 0.1, 0.1};
 float speed_controller_right_Ki[NB_PI_SUBSET] = { 1.0, 0.8, 0.6};
@@ -90,7 +91,8 @@ Pll *leftPll;
 SpeedErrorBlockingDetector *blockingDetector;
 
 SimpleAccelerationLimiter *angleAccelerationlimiter;
-AccelerationDecelerationLimiter *distanceAccelerationLimiter;
+AdvancedAccelerationLimiter *distanceAccelerationLimiter;
+// AccelerationDecelerationLimiter *distanceAccelerationLimiter;
 
 CommandManager *commandManager;
 AsservMain *mainAsserv;
@@ -99,7 +101,7 @@ AsservMain *mainAsserv;
 static void initAsserv()
 {
     encoders = new QuadratureEncoder(&ESIALCardPinConf_Encoders, true, true, true);
-    md22MotorController = new Md22(&ESIALCardPinConf_md22, true, true, true, 100000);
+    md22MotorController = new Md22(&ESIALCardPinConf_md22, false, false, false, 100000);
 
     angleRegulator = new Regulator(ANGLE_REGULATOR_KP, MAX_SPEED_MM_PER_SEC);
     distanceRegulator = new Regulator(DIST_REGULATOR_KP, FLT_MAX);
@@ -114,14 +116,16 @@ static void initAsserv()
 
 
     angleAccelerationlimiter = new SimpleAccelerationLimiter(ANGLE_REGULATOR_MAX_ACC);
-    distanceAccelerationLimiter = new AccelerationDecelerationLimiter(DIST_REGULATOR_MAX_ACC_FW, DIST_REGULATOR_MAX_DEC_FW, DIST_REGULATOR_MAX_ACC_BW, DIST_REGULATOR_MAX_DEC_BW, MAX_SPEED_MM_PER_SEC,  DIST_REGULATOR_KP);
+
+    distanceAccelerationLimiter = new AdvancedAccelerationLimiter(DIST_REGULATOR_KP_MAX_ACC, DIST_REGULATOR_KP_MIN_ACC , DIST_REGULATOR_KP_MAX_ACC_THRESHOLD);
+    // distanceAccelerationLimiter = new AccelerationDecelerationLimiter(DIST_REGULATOR_MAX_ACC_FW, DIST_REGULATOR_MAX_DEC_FW, DIST_REGULATOR_MAX_ACC_BW, DIST_REGULATOR_MAX_DEC_BW, MAX_SPEED_MM_PER_SEC, ACC_DEC_DAMPLING, DIST_REGULATOR_KP);
 
     blockingDetector = new SpeedErrorBlockingDetector(ASSERV_THREAD_PERIOD_S, *speedControllerRight, *speedControllerLeft, 1.f, 666.0f);
 
     commandManager = new CommandManager( COMMAND_MANAGER_ARRIVAL_DISTANCE_THRESHOLD_mm, COMMAND_MANAGER_ARRIVAL_ANGLE_THRESHOLD_RAD,
                                    preciseGotoConf, waypointGotoConf, gotoNoStopConf,
                                    *angleRegulator, *distanceRegulator,
-                                   distanceAccelerationLimiter,
+                                   nullptr,
                                    blockingDetector);
 
     mainAsserv = new AsservMain( ASSERV_THREAD_FREQUENCY, ASSERV_POSITION_DIVISOR,
@@ -159,6 +163,56 @@ static THD_FUNCTION(AsservThread, arg)
     mainAsserv->mainLoop();
 }
 
+static THD_WORKING_AREA(waLowPrioUSBThread, 512);
+static THD_FUNCTION(LowPrioUSBThread, arg)
+{
+    (void) arg;
+    chRegSetThreadName("LowPrioUSBThread");
+
+
+    while (!chThdShouldTerminateX())
+    {
+       USBStream::instance()->USBStreamHandleConnection_lowerpriothread();
+//       if (size > 0)
+//       {
+//           char *buffer = (char*) ptr;
+//
+//           /*
+//            *  On transforme la commande recu dans une version argv/argc
+//            *    de manière a utiliser les commandes shell déjà définie...
+//            */
+//           bool prevWasSpace = false;
+//           firstArg = buffer;
+//           int nb_arg = 0;
+//           for (uint32_t i = 0; i < size; i++)
+//           {
+//               if (prevWasSpace && buffer[i] != ' ')
+//               {
+//                   argv[nb_arg++] = &buffer[i];
+//               }
+//
+//               if (buffer[i] == ' ' || buffer[i] == '\r' || buffer[i] == '\n')
+//               {
+//                   prevWasSpace = true;
+//                   buffer[i] = '\0';
+//               }
+//               else
+//               {
+//                   prevWasSpace = false;
+//               }
+//           }
+//
+//           // On évite de faire appel au shell si le nombre d'arg est mauvais ou si la 1ière commande est mauvaise...
+//           if (nb_arg > 0 && !strcmp(firstArg, "asserv"))
+//           {
+//               asservCommandUSB(nullptr, nb_arg, argv);
+//           }
+//           USBStream::instance()->releaseBuffer();
+//       }
+    }
+
+}
+
 
 THD_WORKING_AREA(wa_shell, 2048);
 THD_WORKING_AREA(wa_controlPanel, 256);
@@ -189,6 +243,8 @@ int main(void)
     chThdCreateStatic(waAsservThread, sizeof(waAsservThread), HIGHPRIO, AsservThread, NULL);
     chBSemWait(&asservStarted_semaphore);
 
+    chThdCreateStatic(waLowPrioUSBThread, sizeof(waLowPrioUSBThread), NORMALPRIO, LowPrioUSBThread, NULL);
+
     outputStream = reinterpret_cast<BaseSequentialStream*>(&SD2);
 
     // Custom commands
@@ -217,8 +273,8 @@ int main(void)
         chRegSetThreadNameX(shellThd, "shell");
 
         // Le thread controlPanel n'a de sens que quand le shell tourne
-        thread_t *controlPanelThd = chThdCreateStatic(wa_controlPanel, sizeof(wa_controlPanel), LOWPRIO, ControlPanelThread, nullptr);
-        chRegSetThreadNameX(controlPanelThd, "controlPanel");
+//        thread_t *controlPanelThd = chThdCreateStatic(wa_controlPanel, sizeof(wa_controlPanel), LOWPRIO, ControlPanelThread, nullptr);
+//        chRegSetThreadNameX(controlPanelThd, "controlPanel");
     }
     else
     {
@@ -421,9 +477,9 @@ void asservCommandUSB(BaseSequentialStream *chp, int argc, char **argv)
         float acc_threshold = atof(argv[3]);
         chprintf(outputStream, "setting distance acceleration limiter max %.2f min %.2f threshold %.2f \r\n", acc_max, acc_min, acc_threshold);
 
-//        distanceAccelerationLimiter->setMaxAcceleration(acc_max);
-//        distanceAccelerationLimiter->setMinAcceleration(acc_min);
-//        distanceAccelerationLimiter->setHighSpeedThreshold(acc_threshold);
+       distanceAccelerationLimiter->setMaxAcceleration(acc_max);
+       distanceAccelerationLimiter->setMinAcceleration(acc_min);
+       distanceAccelerationLimiter->setHighSpeedThreshold(acc_threshold);
     }
     else if (!strcmp(argv[0], "distaccdec"))
     {
@@ -433,10 +489,10 @@ void asservCommandUSB(BaseSequentialStream *chp, int argc, char **argv)
         float dec_bw = atof(argv[4]);
         chprintf(outputStream, "setting distance acceleration dec limiter fw : acc%.2f dec%.2f bw: acc%.2f dec%.2f \r\n", acc_fw, dec_fw, acc_bw, dec_bw);
 
-        distanceAccelerationLimiter->setMaxAccFW(acc_fw);
-        distanceAccelerationLimiter->setMaxDecFW(dec_fw);
-        distanceAccelerationLimiter->setMaxAccBW(acc_bw);
-        distanceAccelerationLimiter->setMaxDecBW(dec_bw);
+        // distanceAccelerationLimiter->setMaxAccFW(acc_fw);
+        // distanceAccelerationLimiter->setMaxDecFW(dec_fw);
+        // distanceAccelerationLimiter->setMaxAccBW(acc_bw);
+        // distanceAccelerationLimiter->setMaxDecBW(dec_bw);
     }
     else if (!strcmp(argv[0], "addangle"))
     {
@@ -536,17 +592,23 @@ void asservCommandUSB(BaseSequentialStream *chp, int argc, char **argv)
     {
         float value = atof(argv[1]);
         chprintf(outputStream, "Set acce/dec limiter dampling factor to %.2f \r\n", value);
-        distanceAccelerationLimiter->setDamplingFactor(value);
+        // distanceAccelerationLimiter->setDamplingFactor(value);
     }
     else if (!strcmp(argv[0], "gototest"))
     {
         mainAsserv->resetToNormalMode();
         
-        commandManager->addGoToNoStop(500, 0);
-        commandManager->addGoToNoStop(500, 300);
-        commandManager->addGoToNoStop(0, 300);
-        commandManager->addGoToNoStop(0, 0);
-        commandManager->addGoToAngle(1000, 0);
+        // commandManager->addGoToNoStop(500, 0);
+        // commandManager->addGoToNoStop(500, 300);
+        // commandManager->addGoToNoStop(0, 300);
+        // commandManager->addGoToNoStop(0, 0);
+        // commandManager->addGoToAngle(1000, 0);
+
+//        commandManager->addGoToWaypointBack(-800, 0);
+//        commandManager->addGoToWaypointBack(-800, -300);
+//        commandManager->addGoToWaypointBack( 0, -300);
+//        commandManager->addGoToWaypointBack( 0, 0);
+//        commandManager->addGoToAngle(1000, 0);
 
 //        commandManager->addGoToWaypoint(500, 0);
 //        commandManager->addGoToWaypoint(500, 300);
@@ -637,10 +699,13 @@ void asservCommandUSB(BaseSequentialStream *chp, int argc, char **argv)
 
         // accel limiter
         config_buffer[index++] = angleAccelerationlimiter->getMaxAcceleration();
-        config_buffer[index++] = distanceAccelerationLimiter->getMaxAccFW();
-        config_buffer[index++] = distanceAccelerationLimiter->getMaxDecFW();
-        config_buffer[index++] = distanceAccelerationLimiter->getMaxAccBW();
-        config_buffer[index++] = distanceAccelerationLimiter->getMaxDecBW();
+        config_buffer[index++] = distanceAccelerationLimiter->getMaxAcceleration();
+        config_buffer[index++] = distanceAccelerationLimiter->getMinAcceleration();
+        config_buffer[index++] = distanceAccelerationLimiter->getHighSpeedThreshold();
+        // config_buffer[index++] = distanceAccelerationLimiter->getMaxAccFW();
+        // config_buffer[index++] = distanceAccelerationLimiter->getMaxDecFW();
+        // config_buffer[index++] = distanceAccelerationLimiter->getMaxAccBW();
+        // config_buffer[index++] = distanceAccelerationLimiter->getMaxDecBW();
 
         chprintf(outputStream, "sending %d float of config !\r\n", index);
         USBStream::instance()->sendConfig((uint8_t*)config_buffer, index*sizeof(config_buffer[0]));
@@ -661,42 +726,42 @@ THD_FUNCTION(ControlPanelThread, p)
     char *argv[7];
     while (!chThdShouldTerminateX())
     {
-        USBStream::instance()->getFullBuffer(&ptr, &size);
-        if (size > 0)
-        {
-            char *buffer = (char*) ptr;
-
-            /*
-             *  On transforme la commande recu dans une version argv/argc
-             *    de manière a utiliser les commandes shell déjà définie...
-             */
-            bool prevWasSpace = false;
-            firstArg = buffer;
-            int nb_arg = 0;
-            for (uint32_t i = 0; i < size; i++)
-            {
-                if (prevWasSpace && buffer[i] != ' ')
-                {
-                    argv[nb_arg++] = &buffer[i];
-                }
-
-                if (buffer[i] == ' ' || buffer[i] == '\r' || buffer[i] == '\n')
-                {
-                    prevWasSpace = true;
-                    buffer[i] = '\0';
-                }
-                else
-                {
-                    prevWasSpace = false;
-                }
-            }
-
-            // On évite de faire appel au shell si le nombre d'arg est mauvais ou si la 1ière commande est mauvaise...
-            if (nb_arg > 0 && !strcmp(firstArg, "asserv"))
-            {
-                asservCommandUSB(nullptr, nb_arg, argv);
-            }
-            USBStream::instance()->releaseBuffer();
-        }
+//        USBStream::instance()->getFullBuffer(&ptr, &size);
+//        if (size > 0)
+//        {
+//            char *buffer = (char*) ptr;
+//
+//            /*
+//             *  On transforme la commande recu dans une version argv/argc
+//             *    de manière a utiliser les commandes shell déjà définie...
+//             */
+//            bool prevWasSpace = false;
+//            firstArg = buffer;
+//            int nb_arg = 0;
+//            for (uint32_t i = 0; i < size; i++)
+//            {
+//                if (prevWasSpace && buffer[i] != ' ')
+//                {
+//                    argv[nb_arg++] = &buffer[i];
+//                }
+//
+//                if (buffer[i] == ' ' || buffer[i] == '\r' || buffer[i] == '\n')
+//                {
+//                    prevWasSpace = true;
+//                    buffer[i] = '\0';
+//                }
+//                else
+//                {
+//                    prevWasSpace = false;
+//                }
+//            }
+//
+//            // On évite de faire appel au shell si le nombre d'arg est mauvais ou si la 1ière commande est mauvaise...
+//            if (nb_arg > 0 && !strcmp(firstArg, "asserv"))
+//            {
+//                asservCommandUSB(nullptr, nb_arg, argv);
+//            }
+//            USBStream::instance()->releaseBuffer();
+//        }
     }
 }

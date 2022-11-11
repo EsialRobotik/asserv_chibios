@@ -7,6 +7,7 @@
 
 const uint32_t synchroWord_stream = 0xCAFED00D;
 const uint32_t synchroWord_config = 0xCAFEDECA;
+const uint32_t synchroWord_connection = 0xDEADBEEF;
 
 USBStream *USBStream::s_instance = NULL;
 USBStream::USBStream()
@@ -14,7 +15,9 @@ USBStream::USBStream()
     m_currentPtr = NULL;
     m_timestamp = 0;
     m_bufferSize = 0;
-    std::memset(&m_currentStruct, 0xFFFFFFFF, sizeof(m_currentStruct));
+
+    chMtxObjectInit (&m_sample_sending_mutex);
+    std::memset(m_currentStruct.array, 0xFFFFFFFF, sizeof(m_currentStruct.array));
 }
 
 void USBStream::init()
@@ -49,11 +52,16 @@ void USBStream::init()
 void* USBStream::sendCurrentStream()
 {
     m_currentStruct.synchro = synchroWord_stream;
-    m_currentStruct.timestamp = m_timestamp++;
+    m_currentStruct.sample_size_without_synchro_nor_this = sizeof(m_currentStruct)-sizeof(m_currentStruct.synchro)-sizeof(m_currentStruct.sample_size_without_synchro_nor_this);
+    setTimestamp(m_timestamp++);
 
-    sendFullBuffer();
+    if( chMtxTryLock(&m_sample_sending_mutex))
+    {
+        sendFullBuffer();
 
-    getEmptyBuffer();
+        getEmptyBuffer();
+        chMtxUnlock(&m_sample_sending_mutex);
+    }
 
     return m_currentPtr;
 }
@@ -114,3 +122,50 @@ void USBStream::releaseBuffer()
 {
     ibqReleaseEmptyBuffer(&SDU1.ibqueue);
 }
+
+void USBStream::USBStreamHandleConnection_lowerpriothread()
+{
+    void *ptr = nullptr;
+    uint32_t size = 0;
+    USBStream::instance()->getFullBuffer(&ptr, &size);
+    if (size > 0)
+    {
+        uint32_t *buffer = (uint32_t*) ptr;
+        if(buffer[0] == synchroWord_connection)
+        {
+            /*
+             * It's a bit tricky here !
+             * As this function is paced by a medium priority thread ( ie: bellow than the rest of this class )
+             *  sending a description must stop the sending of the asserv loop.
+             *  To do so, a mutex is used and a new buffer is get for the next loop at the end of this routine.
+             */
+            chMtxLock(&m_sample_sending_mutex);
+
+            msg_t msg = obqGetEmptyBufferTimeout(&SDU1.obqueue, TIME_MS2I(100));
+            uint32_t *ptr_32 = (uint32_t*)SDU1.obqueue.ptr;
+            uint32_t available_size = ((uint32_t) SDU1.obqueue.top - (uint32_t) SDU1.obqueue.ptr);
+
+
+             //The description begin with a synchro word //
+            ptr_32[0] = synchroWord_connection;
+
+            // ... then the size of the following string
+            uint32_t description_size = strlen(description);
+            ptr_32[1] = description_size;
+
+            // And finaly, the description itself
+            char *ptr_str = (char*)&(ptr_32[2]);
+            for(unsigned int i=0;i<description_size; i++)
+                ptr_str[i] = description[i];
+
+            obqPostFullBuffer(&SDU1.obqueue, ((uint8_t*)&ptr_str[description_size]) - ((uint8_t*)ptr_32));
+
+            getEmptyBuffer();
+            chMtxUnlock(&m_sample_sending_mutex);
+
+
+        }
+        USBStream::instance()->releaseBuffer();
+    }
+}
+
