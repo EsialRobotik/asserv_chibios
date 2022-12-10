@@ -36,14 +36,14 @@
 #define MAX_SPEED_MM_PER_SEC (2000)
 
 #define DIST_REGULATOR_KP (4.0)
-#define DIST_REGULATOR_KP_MAX_ACC (2000)
+#define DIST_REGULATOR_KP_MAX_ACC (2250)
 #define DIST_REGULATOR_KP_MIN_ACC (500)
-#define DIST_REGULATOR_KP_MAX_ACC_THRESHOLD (50)
+#define DIST_REGULATOR_KP_MAX_ACC_THRESHOLD (100)
 // #define ACC_DEC_DAMPLING (1.4)
 
 
-#define ANGLE_REGULATOR_KP (780)
-#define ANGLE_REGULATOR_MAX_ACC (2500)
+#define ANGLE_REGULATOR_KP (950)
+#define ANGLE_REGULATOR_MAX_ACC (6000)
 
 float speed_controller_right_Kp[NB_PI_SUBSET] = { 0.1, 0.1, 0.1};
 float speed_controller_right_Ki[NB_PI_SUBSET] = { 1.0, 0.8, 0.6};
@@ -163,6 +163,7 @@ static THD_FUNCTION(AsservThread, arg)
     mainAsserv->mainLoop();
 }
 
+void usbSerialCallback(char *buffer, uint32_t size);
 static THD_WORKING_AREA(waLowPrioUSBThread, 512);
 static THD_FUNCTION(LowPrioUSBThread, arg)
 {
@@ -172,43 +173,7 @@ static THD_FUNCTION(LowPrioUSBThread, arg)
 
     while (!chThdShouldTerminateX())
     {
-       USBStream::instance()->USBStreamHandleConnection_lowerpriothread();
-//       if (size > 0)
-//       {
-//           char *buffer = (char*) ptr;
-//
-//           /*
-//            *  On transforme la commande recu dans une version argv/argc
-//            *    de manière a utiliser les commandes shell déjà définie...
-//            */
-//           bool prevWasSpace = false;
-//           firstArg = buffer;
-//           int nb_arg = 0;
-//           for (uint32_t i = 0; i < size; i++)
-//           {
-//               if (prevWasSpace && buffer[i] != ' ')
-//               {
-//                   argv[nb_arg++] = &buffer[i];
-//               }
-//
-//               if (buffer[i] == ' ' || buffer[i] == '\r' || buffer[i] == '\n')
-//               {
-//                   prevWasSpace = true;
-//                   buffer[i] = '\0';
-//               }
-//               else
-//               {
-//                   prevWasSpace = false;
-//               }
-//           }
-//
-//           // On évite de faire appel au shell si le nombre d'arg est mauvais ou si la 1ière commande est mauvaise...
-//           if (nb_arg > 0 && !strcmp(firstArg, "asserv"))
-//           {
-//               asservCommandUSB(nullptr, nb_arg, argv);
-//           }
-//           USBStream::instance()->releaseBuffer();
-//       }
+       USBStream::instance()->USBStreamHandleConnection_lowerpriothread(usbSerialCallback);
     }
 
 }
@@ -216,7 +181,7 @@ static THD_FUNCTION(LowPrioUSBThread, arg)
 
 THD_WORKING_AREA(wa_shell, 2048);
 THD_WORKING_AREA(wa_controlPanel, 256);
-THD_FUNCTION(ControlPanelThread, p);
+//THD_FUNCTION(ControlPanelThread, p);
 
 char history_buffer[SHELL_MAX_HIST_BUFF];
 char *completion_buffer[SHELL_MAX_COMPLETIONS];
@@ -243,7 +208,7 @@ int main(void)
     chThdCreateStatic(waAsservThread, sizeof(waAsservThread), HIGHPRIO, AsservThread, NULL);
     chBSemWait(&asservStarted_semaphore);
 
-    chThdCreateStatic(waLowPrioUSBThread, sizeof(waLowPrioUSBThread), NORMALPRIO, LowPrioUSBThread, NULL);
+    chThdCreateStatic(waLowPrioUSBThread, sizeof(waLowPrioUSBThread), LOWPRIO, LowPrioUSBThread, NULL);
 
     outputStream = reinterpret_cast<BaseSequentialStream*>(&SD2);
 
@@ -610,11 +575,11 @@ void asservCommandUSB(BaseSequentialStream *chp, int argc, char **argv)
 //        commandManager->addGoToWaypointBack( 0, 0);
 //        commandManager->addGoToAngle(1000, 0);
 
-//        commandManager->addGoToWaypoint(500, 0);
-//        commandManager->addGoToWaypoint(500, 300);
-//        commandManager->addGoToWaypoint(0, 300);
-//        commandManager->addGoToWaypoint(0, 0);
-//        commandManager->addGoToAngle(1000, 0);
+        commandManager->addGoToWaypoint(800, 0);
+        commandManager->addGoToWaypoint(800, 300);
+        commandManager->addGoToWaypoint(0, 300);
+        commandManager->addGoToWaypoint(0, 0);
+        commandManager->addGoToAngle(1000, 0);
 //
 //        commandManager->addGoTo(500, 0);
 //        commandManager->addGoTo(500, 300);
@@ -716,52 +681,40 @@ void asservCommandUSB(BaseSequentialStream *chp, int argc, char **argv)
     }
 }
 
-
-THD_FUNCTION(ControlPanelThread, p)
+void usbSerialCallback(char *buffer, uint32_t size)
 {
-    (void) p;
-    void *ptr = nullptr;
-    uint32_t size = 0;
-    char *firstArg = nullptr;
-    char *argv[7];
-    while (!chThdShouldTerminateX())
+    if (size > 0)
     {
-//        USBStream::instance()->getFullBuffer(&ptr, &size);
-//        if (size > 0)
-//        {
-//            char *buffer = (char*) ptr;
-//
-//            /*
-//             *  On transforme la commande recu dans une version argv/argc
-//             *    de manière a utiliser les commandes shell déjà définie...
-//             */
-//            bool prevWasSpace = false;
-//            firstArg = buffer;
-//            int nb_arg = 0;
-//            for (uint32_t i = 0; i < size; i++)
-//            {
-//                if (prevWasSpace && buffer[i] != ' ')
-//                {
-//                    argv[nb_arg++] = &buffer[i];
-//                }
-//
-//                if (buffer[i] == ' ' || buffer[i] == '\r' || buffer[i] == '\n')
-//                {
-//                    prevWasSpace = true;
-//                    buffer[i] = '\0';
-//                }
-//                else
-//                {
-//                    prevWasSpace = false;
-//                }
-//            }
-//
-//            // On évite de faire appel au shell si le nombre d'arg est mauvais ou si la 1ière commande est mauvaise...
-//            if (nb_arg > 0 && !strcmp(firstArg, "asserv"))
-//            {
-//                asservCommandUSB(nullptr, nb_arg, argv);
-//            }
-//            USBStream::instance()->releaseBuffer();
-//        }
+        /*
+         *  On transforme la commande recu dans une version argv/argc
+         *    de manière a utiliser les commandes shell déjà définie...
+         */
+        bool prevWasSpace = false;
+        char* firstArg = buffer;
+        int nb_arg = 0;
+        char *argv[10];
+        for (uint32_t i = 0; i < size; i++)
+        {
+            if (prevWasSpace && buffer[i] != ' ')
+            {
+                argv[nb_arg++] = &buffer[i];
+            }
+
+            if (buffer[i] == ' ' || buffer[i] == '\r' || buffer[i] == '\n')
+            {
+                prevWasSpace = true;
+                buffer[i] = '\0';
+            }
+            else
+            {
+                prevWasSpace = false;
+            }
+        }
+
+        // On évite de faire appel au shell si le nombre d'arg est mauvais ou si la 1ière commande est mauvaise...
+        if (nb_arg > 0 && !strcmp(firstArg, "asserv"))
+        {
+            asservCommandUSB(nullptr, nb_arg, argv);
+        }
     }
 }

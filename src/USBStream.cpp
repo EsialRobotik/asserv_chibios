@@ -123,7 +123,8 @@ void USBStream::releaseBuffer()
     ibqReleaseEmptyBuffer(&SDU1.ibqueue);
 }
 
-void USBStream::USBStreamHandleConnection_lowerpriothread()
+extern BaseSequentialStream *outputStream;
+void USBStream::USBStreamHandleConnection_lowerpriothread(usbStreamCallback callback)
 {
     void *ptr = nullptr;
     uint32_t size = 0;
@@ -133,6 +134,7 @@ void USBStream::USBStreamHandleConnection_lowerpriothread()
         uint32_t *buffer = (uint32_t*) ptr;
         if(buffer[0] == synchroWord_connection)
         {
+            chprintf(outputStream, "connection detected\r\n");
             /*
              * It's a bit tricky here !
              * As this function is paced by a medium priority thread ( ie: bellow than the rest of this class )
@@ -141,10 +143,8 @@ void USBStream::USBStreamHandleConnection_lowerpriothread()
              */
             chMtxLock(&m_sample_sending_mutex);
 
-            msg_t msg = obqGetEmptyBufferTimeout(&SDU1.obqueue, TIME_MS2I(100));
+            obqGetEmptyBufferTimeout(&SDU1.obqueue, TIME_MS2I(100));
             uint32_t *ptr_32 = (uint32_t*)SDU1.obqueue.ptr;
-            uint32_t available_size = ((uint32_t) SDU1.obqueue.top - (uint32_t) SDU1.obqueue.ptr);
-
 
              //The description begin with a synchro word //
             ptr_32[0] = synchroWord_connection;
@@ -162,8 +162,12 @@ void USBStream::USBStreamHandleConnection_lowerpriothread()
 
             getEmptyBuffer();
             chMtxUnlock(&m_sample_sending_mutex);
-
-
+        }
+        else
+        {
+            char *str = (char*) ptr;
+            str[size] = 0;
+            callback(str, size);
         }
         USBStream::instance()->releaseBuffer();
     }

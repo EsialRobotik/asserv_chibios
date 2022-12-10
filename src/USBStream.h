@@ -21,7 +21,8 @@ public:
     void sendConfig(uint8_t *configBuffer, uint8_t size);
 
 
-    void USBStreamHandleConnection_lowerpriothread();
+    typedef void (*usbStreamCallback)(char *buffer, uint32_t size);
+    void USBStreamHandleConnection_lowerpriothread(usbStreamCallback callback);
 
     void releaseBuffer();
     void getFullBuffer(void** ptr, uint32_t* size);
