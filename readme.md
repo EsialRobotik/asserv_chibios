@@ -1,4 +1,4 @@
-# Asserv Nucleo
+# Asserv ChibiOS
 
 ## Quels objectifs?
 
