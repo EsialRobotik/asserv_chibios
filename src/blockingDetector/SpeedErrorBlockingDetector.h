@@ -11,6 +11,10 @@ class SpeedController;
 class SpeedErrorBlockingDetector : public BlockingDetector
 {
     public:
+        /**
+         * Unfortunately this class doesn't really work ! It's almost impossible to tune the parameters.
+         *  Just keep this implementation for education purpose.
+         */
         explicit SpeedErrorBlockingDetector(float dt,  SpeedController& rightSpeedController, SpeedController& leftSpeedController, float movingIntegralDuration, float movingIntegralErrorThreshold);
         virtual ~SpeedErrorBlockingDetector();
 

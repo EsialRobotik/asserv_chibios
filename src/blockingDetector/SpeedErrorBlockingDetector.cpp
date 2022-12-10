@@ -31,8 +31,8 @@ void SpeedErrorBlockingDetector::update()
     m_errorValues[m_currentIdx] = currentError;
     m_movingIntegralError += (currentError-outError)*m_dt;
 
-    USBStream::instance()->setMovingIntegralError(m_movingIntegralError);
-    USBStream::instance()->setMovingIntegralErrorThreshold(m_movingIntegralErrorThreshold);
+//    USBStream::instance()->setMovingIntegralError(m_movingIntegralError);
+//    USBStream::instance()->setMovingIntegralErrorThreshold(m_movingIntegralErrorThreshold);
 }
 
 bool SpeedErrorBlockingDetector::isBlocked() const

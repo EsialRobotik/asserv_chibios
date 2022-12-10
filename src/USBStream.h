@@ -41,6 +41,19 @@ public:
             *ptrFlt = value;
     };
 
+    /*
+     * This macro will generate accessor for each value
+     *      and generate a name that will be sent to plotjuggler.
+     *
+     * For example :
+     * GENERATE_USB_STREAM_HEADER(
+     *  SpeedGoalRight,               speed/right/goal,
+     *  SpeedIntegratedOutputRight,   speed/right/output_consign_integrated)
+     *
+     *  will generation 2 function : void setSpeedGoalRight(float value) and void SpeedIntegratedOutputRight(float value)
+     *
+     *  and 2 string "speed/right/goal" and "speed/right/output_consign_integrated)" will be sent to plotjuggler.
+     */
 
     GENERATE_USB_STREAM_HEADER(
         Timestamp,                              timestamp,
@@ -80,8 +93,8 @@ public:
         DistanceLimiterTimeToVMax,              accDec/distance/TimeToVMax,
         DistanceLimiterMaxAttainableSpeed,      accDec/distance/MaxAttainableSpeed,
         DistanceLimitercurrentSpeed,            accDec/distance/currentSpeed,
-        MovingIntegralError,                    blockingDetector/movingIntegralError,
-        MovingIntegralErrorThreshold,           blockingDetector/movingIntegralErrorThreshold);
+        BlockingDuration,                       blockingDetector/blockingDuration,
+        BlockingDetected,                       blockingDetector/blockingDetected);
 
 
 private:

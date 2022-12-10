@@ -13,7 +13,8 @@ class OldSchoolBlockingDetector : public BlockingDetector
     public:
         explicit OldSchoolBlockingDetector(
                 float dt, MotorController const &motorController, Odometry const &odometry,
-                float block_angle_speed_threshold, float block_dist_speed_threshold, float blocking_detected_duration_threshold);
+                float block_angle_speed_threshold, float block_dist_speed_threshold, float blocking_detected_duration_threshold,
+                float minimum_considered_speed_percent = 10);
         virtual ~OldSchoolBlockingDetector();
 
         virtual bool isBlocked() const;
@@ -30,6 +31,8 @@ class OldSchoolBlockingDetector : public BlockingDetector
         float m_block_dist_speed_threshold;
 
         float m_blocking_detected_duration_threshold;
+
+        float m_minimum_considered_speed_percent;
 };
 
 #endif /* SRC_BLOCKINGDETECTOR_OLDSCHOOLDETECTOR_H_ */

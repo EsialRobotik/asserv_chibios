@@ -22,7 +22,7 @@
 #include "AccelerationLimiter/AdvancedAccelerationLimiter.h"
 #include "AccelerationLimiter/AccelerationDecelerationLimiter.h"
 #include "Pll.h"
-#include "blockingDetector/SpeedErrorBlockingDetector.h"
+#include "blockingDetector/OldSchoolBlockingDetector.h"
 
 
 #define ASSERV_THREAD_FREQUENCY (600)
@@ -55,6 +55,9 @@ float speed_controller_left_SpeedRange[NB_PI_SUBSET] = { 20, 50, 60};
 
 #define PLL_BANDWIDTH (200)
 
+#define BLOCKING_ANGLE_SPEED_THRESHOLD_RAD_PER_S (3.6)
+#define BLOCKING_DIST_SPEED_THRESHOLD_MM_PER_S (80)
+#define BLOCKING_TIME_THRESHOLD_MS (0.25)
 
 #define COMMAND_MANAGER_ARRIVAL_ANGLE_THRESHOLD_RAD (0.02)
 #define COMMAND_MANAGER_ARRIVAL_DISTANCE_THRESHOLD_mm (5)
@@ -88,7 +91,7 @@ AdaptativeSpeedController *speedControllerLeft;
 Pll *rightPll;
 Pll *leftPll;
 
-SpeedErrorBlockingDetector *blockingDetector;
+OldSchoolBlockingDetector *blockingDetector;
 
 SimpleAccelerationLimiter *angleAccelerationlimiter;
 AdvancedAccelerationLimiter *distanceAccelerationLimiter;
@@ -96,7 +99,6 @@ AdvancedAccelerationLimiter *distanceAccelerationLimiter;
 
 CommandManager *commandManager;
 AsservMain *mainAsserv;
-
 
 static void initAsserv()
 {
@@ -120,7 +122,7 @@ static void initAsserv()
     distanceAccelerationLimiter = new AdvancedAccelerationLimiter(DIST_REGULATOR_KP_MAX_ACC, DIST_REGULATOR_KP_MIN_ACC , DIST_REGULATOR_KP_MAX_ACC_THRESHOLD);
     // distanceAccelerationLimiter = new AccelerationDecelerationLimiter(DIST_REGULATOR_MAX_ACC_FW, DIST_REGULATOR_MAX_DEC_FW, DIST_REGULATOR_MAX_ACC_BW, DIST_REGULATOR_MAX_DEC_BW, MAX_SPEED_MM_PER_SEC, ACC_DEC_DAMPLING, DIST_REGULATOR_KP);
 
-    blockingDetector = new SpeedErrorBlockingDetector(ASSERV_THREAD_PERIOD_S, *speedControllerRight, *speedControllerLeft, 1.f, 666.0f);
+    blockingDetector = new OldSchoolBlockingDetector(ASSERV_THREAD_PERIOD_S, *md22MotorController, *odometry, BLOCKING_ANGLE_SPEED_THRESHOLD_RAD_PER_S, BLOCKING_DIST_SPEED_THRESHOLD_MM_PER_S, BLOCKING_TIME_THRESHOLD_MS);
 
     commandManager = new CommandManager( COMMAND_MANAGER_ARRIVAL_DISTANCE_THRESHOLD_mm, COMMAND_MANAGER_ARRIVAL_ANGLE_THRESHOLD_RAD,
                                    preciseGotoConf, waypointGotoConf, gotoNoStopConf,
