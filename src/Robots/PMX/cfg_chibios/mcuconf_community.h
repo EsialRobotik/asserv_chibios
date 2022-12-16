@@ -19,12 +19,13 @@
  */
 #define STM32_FSMC_USE_FSMC1                FALSE
 #define STM32_FSMC_FSMC1_IRQ_PRIORITY       10
+#define STM32_FSMC_DMA_CHN                  0x03010201
 
 /*
  * FSMC NAND driver system settings.
  */
-#define STM32_NAND_USE_FSMC_NAND1           FALSE
-#define STM32_NAND_USE_FSMC_NAND2           FALSE
+#define STM32_NAND_USE_NAND1                FALSE
+#define STM32_NAND_USE_NAND2                FALSE
 #define STM32_NAND_USE_EXT_INT              FALSE
 #define STM32_NAND_DMA_STREAM               STM32_DMA_STREAM_ID(2, 7)
 #define STM32_NAND_DMA_PRIORITY             0
@@ -33,16 +34,16 @@
 /*
  * FSMC SRAM driver system settings.
  */
-#define STM32_USE_FSMC_SRAM                 FALSE
-#define STM32_SRAM_USE_FSMC_SRAM1           FALSE
-#define STM32_SRAM_USE_FSMC_SRAM2           FALSE
-#define STM32_SRAM_USE_FSMC_SRAM3           FALSE
-#define STM32_SRAM_USE_FSMC_SRAM4           FALSE
+#define STM32_SRAM_USE_SRAM1                FALSE
+#define STM32_SRAM_USE_SRAM2                FALSE
+#define STM32_SRAM_USE_SRAM3                FALSE
+#define STM32_SRAM_USE_SRAM4                FALSE
 
 /*
  * FSMC SDRAM driver system settings.
  */
-#define STM32_USE_FSMC_SDRAM                FALSE
+#define STM32_SDRAM_USE_SDRAM1              FALSE
+#define STM32_SDRAM_USE_SDRAM2              FALSE
 
 /*
  * TIMCAP driver system settings.
@@ -117,32 +118,11 @@
 #define CRCSW_PROGRAMMABLE                  TRUE
 
 /*
- * EICU driver system settings.
+ * LTDC driver system settings.
  */
-#define STM32_EICU_USE_TIM1                 TRUE
-#define STM32_EICU_USE_TIM2                 FALSE
-#define STM32_EICU_USE_TIM3                 TRUE
-#define STM32_EICU_USE_TIM4                 TRUE
-#define STM32_EICU_USE_TIM5                 TRUE
-#define STM32_EICU_USE_TIM8                 TRUE
-#define STM32_EICU_USE_TIM9                 TRUE
-#define STM32_EICU_USE_TIM10                TRUE
-#define STM32_EICU_USE_TIM11                TRUE
-#define STM32_EICU_USE_TIM12                TRUE
-#define STM32_EICU_USE_TIM13                TRUE
-#define STM32_EICU_USE_TIM14                TRUE
-#define STM32_EICU_TIM1_IRQ_PRIORITY        7
-#define STM32_EICU_TIM2_IRQ_PRIORITY        7
-#define STM32_EICU_TIM3_IRQ_PRIORITY        7
-#define STM32_EICU_TIM4_IRQ_PRIORITY        7
-#define STM32_EICU_TIM5_IRQ_PRIORITY        7
-#define STM32_EICU_TIM8_IRQ_PRIORITY        7
-#define STM32_EICU_TIM9_IRQ_PRIORITY        7
-#define STM32_EICU_TIM10_IRQ_PRIORITY       7
-#define STM32_EICU_TIM11_IRQ_PRIORITY       7
-#define STM32_EICU_TIM12_IRQ_PRIORITY       7
-#define STM32_EICU_TIM13_IRQ_PRIORITY       7
-#define STM32_EICU_TIM14_IRQ_PRIORITY       7
+#define STM32_LTDC_USE_LTDC                 FALSE
+#define STM32_LTDC_EV_IRQ_PRIORITY          11
+#define STM32_LTDC_ER_IRQ_PRIORITY          11
 
 /*
  * QEI driver system settings.

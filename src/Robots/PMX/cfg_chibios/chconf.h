@@ -1,5 +1,5 @@
 /*
-    ChibiOS - Copyright (C) 2006..2018 Giovanni Di Sirio
+    ChibiOS - Copyright (C) 2006..2020 Giovanni Di Sirio
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -29,18 +29,35 @@
 #define CHCONF_H
 
 #define _CHIBIOS_RT_CONF_
-#define _CHIBIOS_RT_CONF_VER_6_0_
-
-
-#include "../src/util/exceptionVectors.h"
+#define _CHIBIOS_RT_CONF_VER_7_0_
 
 #if !defined(CHPRINTF_USE_FLOAT)
 #define CHPRINTF_USE_FLOAT TRUE
 #endif
+/*===========================================================================*/
+/**
+ * @name System settings
+ * @{
+ */
+/*===========================================================================*/
 
-/*
- * User CUSTOM:
- * 	by defining this value, shellconf.h will be loaded by the buildchain
+/**
+ * @brief   Handling of instances.
+ * @note    If enabled then threads assigned to various instances can
+ *          interact each other using the same synchronization objects.
+ *          If disabled then each OS instance is a separate world, no
+ *          direct interactions are handled by the OS.
+*/
+#if !defined(CH_CFG_SMP_MODE)
+#define CH_CFG_SMP_MODE                     FALSE
+#endif
+
+
+/** @} */
+
+
+ /** User CUSTOM:
+ *  by defining this value, shellconf.h will be loaded by the buildchain
  */
 #define SHELL_CONFIG_FILE
 
@@ -54,7 +71,7 @@
 
 /**
  * @brief   System time counter resolution.
- * @note    Allowed values are 16 or 32 bits.
+ * @note    Allowed values are 16, 32 or 64 bits.
  */
 #if !defined(CH_CFG_ST_RESOLUTION)
 #define CH_CFG_ST_RESOLUTION                32
@@ -187,6 +204,17 @@
  */
 #if !defined(CH_CFG_USE_TM)
 #define CH_CFG_USE_TM                       TRUE
+#endif
+
+/**
+ * @brief   Time Stamps APIs.
+ * @details If enabled then the time time stamps APIs are included in
+ *          the kernel.
+ *
+ * @note    The default is @p TRUE.
+ */
+#if !defined(CH_CFG_USE_TIMESTAMP)
+#define CH_CFG_USE_TIMESTAMP                TRUE
 #endif
 
 /**
@@ -326,6 +354,28 @@
 #endif
 
 /**
+ * @brief   Dynamic Threads APIs.
+ * @details If enabled then the dynamic threads creation APIs are included
+ *          in the kernel.
+ *
+ * @note    The default is @p TRUE.
+ * @note    Requires @p CH_CFG_USE_WAITEXIT.
+ * @note    Requires @p CH_CFG_USE_HEAP and/or @p CH_CFG_USE_MEMPOOLS.
+ */
+#if !defined(CH_CFG_USE_DYNAMIC)
+#define CH_CFG_USE_DYNAMIC                  TRUE
+#endif
+
+/** @} */
+
+/*===========================================================================*/
+/**
+ * @name OSLIB options
+ * @{
+ */
+/*===========================================================================*/
+
+/**
  * @brief   Mailboxes APIs.
  * @details If enabled then the asynchronous messages (mailboxes) APIs are
  *          included in the kernel.
@@ -346,6 +396,21 @@
  */
 #if !defined(CH_CFG_USE_MEMCORE)
 #define CH_CFG_USE_MEMCORE                  TRUE
+#endif
+
+/**
+ * @brief   Managed RAM size.
+ * @details Size of the RAM area to be managed by the OS. If set to zero
+ *          then the whole available RAM is used. The core memory is made
+ *          available to the heap allocator and/or can be used directly through
+ *          the simplified core memory allocator.
+ *
+ * @note    In order to let the OS manage the whole RAM the linker script must
+ *          provide the @p __heap_base__ and @p __heap_end__ symbols.
+ * @note    Requires @p CH_CFG_USE_MEMCORE.
+ */
+#if !defined(CH_CFG_MEMCORE_SIZE)
+#define CH_CFG_MEMCORE_SIZE                 0
 #endif
 
 /**
@@ -396,16 +461,36 @@
 #endif
 
 /**
- * @brief   Dynamic Threads APIs.
- * @details If enabled then the dynamic threads creation APIs are included
+ * @brief   Objects Caches APIs.
+ * @details If enabled then the objects caches APIs are included
  *          in the kernel.
  *
  * @note    The default is @p TRUE.
- * @note    Requires @p CH_CFG_USE_WAITEXIT.
- * @note    Requires @p CH_CFG_USE_HEAP and/or @p CH_CFG_USE_MEMPOOLS.
  */
-#if !defined(CH_CFG_USE_DYNAMIC)
-#define CH_CFG_USE_DYNAMIC                  TRUE
+#if !defined(CH_CFG_USE_OBJ_CACHES)
+#define CH_CFG_USE_OBJ_CACHES               TRUE
+#endif
+
+/**
+ * @brief   Delegate threads APIs.
+ * @details If enabled then the delegate threads APIs are included
+ *          in the kernel.
+ *
+ * @note    The default is @p TRUE.
+ */
+#if !defined(CH_CFG_USE_DELEGATES)
+#define CH_CFG_USE_DELEGATES                TRUE
+#endif
+
+/**
+ * @brief   Jobs Queues APIs.
+ * @details If enabled then the jobs queues APIs are included
+ *          in the kernel.
+ *
+ * @note    The default is @p TRUE.
+ */
+#if !defined(CH_CFG_USE_JOBS)
+#define CH_CFG_USE_JOBS                     TRUE
 #endif
 
 /** @} */
@@ -603,7 +688,7 @@
  * @details User fields added to the end of the @p ch_system_t structure.
  */
 #define CH_CFG_SYSTEM_EXTRA_FIELDS                                          \
-  /* Add threads custom fields here.*/
+  /* Add system custom fields here.*/
 
 /**
  * @brief   System initialization hook.
@@ -611,7 +696,23 @@
  *          just before interrupts are enabled globally.
  */
 #define CH_CFG_SYSTEM_INIT_HOOK() {                                         \
-  /* Add threads initialization code here.*/                                \
+  /* Add system initialization code here.*/                                 \
+}
+
+/**
+ * @brief   OS instance structure extension.
+ * @details User fields added to the end of the @p os_instance_t structure.
+ */
+#define CH_CFG_OS_INSTANCE_EXTRA_FIELDS                                     \
+  /* Add OS instance custom fields here.*/
+
+/**
+ * @brief   OS instance initialization hook.
+ *
+ * @param[in] oip       pointer to the @p os_instance_t structure
+ */
+#define CH_CFG_OS_INSTANCE_INIT_HOOK(oip) {                                 \
+  /* Add OS instance initialization code here.*/                            \
 }
 
 /**
@@ -627,6 +728,8 @@
  *
  * @note    It is invoked from within @p _thread_init() and implicitly from all
  *          the threads creation APIs.
+ *
+ * @param[in] tp        pointer to the @p thread_t structure
  */
 #define CH_CFG_THREAD_INIT_HOOK(tp) {                                       \
   /* Add threads initialization code here.*/                                \
@@ -635,6 +738,8 @@
 /**
  * @brief   Threads finalization hook.
  * @details User finalization code added to the @p chThdExit() API.
+ *
+ * @param[in] tp        pointer to the @p thread_t structure
  */
 #define CH_CFG_THREAD_EXIT_HOOK(tp) {                                       \
   /* Add threads finalization code here.*/                                  \
@@ -643,6 +748,9 @@
 /**
  * @brief   Context switch hook.
  * @details This hook is invoked just before switching between threads.
+ *
+ * @param[in] ntp       thread being switched in
+ * @param[in] otp       thread being switched out
  */
 #define CH_CFG_CONTEXT_SWITCH_HOOK(ntp, otp) {                              \
   /* Context switch code here.*/                                            \
@@ -715,6 +823,14 @@
  */
 #define CH_CFG_TRACE_HOOK(tep) {                                            \
   /* Trace code here.*/                                                     \
+}
+
+/**
+ * @brief   Runtime Faults Collection Unit hook.
+ * @details This hook is invoked each time new faults are collected and stored.
+ */
+#define CH_CFG_RUNTIME_FAULTS_HOOK(mask) {                                  \
+  /* Faults handling code here.*/                                           \
 }
 
 /** @} */

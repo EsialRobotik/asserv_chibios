@@ -7,7 +7,7 @@
 #include <cstdio>
 #include <cfloat>
 
-#include "../../blockingDetector/SpeedErrorBlockingDetector.h"
+
 #include "raspIO.h"
 #include "util/asservMath.h"
 #include "util/chibiOsAllocatorWrapper.h"
@@ -23,6 +23,7 @@
 #include "AccelerationLimiter/AdvancedAccelerationLimiter.h"
 #include "Pll.h"
 #include "Encoders/MagEncoders.h"
+#include "blockingDetector/OldSchoolBlockingDetector.h"
 
 
 #define ENABLE_SHELL
@@ -35,9 +36,9 @@
 #define ENCODERS_WHEELS_DISTANCE_MM (234.4) //distance entre les 2 roues codeuses
 #define ENCODERS_TICKS_BY_TURN (16384) //nombre de ticks par tour de vos encodeurs.
 
-#define MAX_SPEED_MM_PER_SEC (1500)
+#define MAX_SPEED_MM_PER_SEC (800)
 
-#define DIST_REGULATOR_KP (1.95)
+#define DIST_REGULATOR_KP (2.7)
 #define DIST_REGULATOR_MAX_ACC (900)
 #define DIST_REGULATOR_MIN_ACC (500)
 #define DIST_REGULATOR_HIGH_SPEED_THRESHOLD (500)
@@ -54,8 +55,11 @@ float speed_controller_left_Kp[NB_PI_SUBSET] = { 0.3, 0.2, 0.1}; //0.08
 float speed_controller_left_Ki[NB_PI_SUBSET] = { 3.0, 4.2, 1.5}; //1.0
 float speed_controller_left_SpeedRange[NB_PI_SUBSET] = { 20, 50, 60};
 
-#define PLL_BANDWIDTH (100) //verifpour garder un minimum de variation sur la vitesse
+#define PLL_BANDWIDTH (100) //verif pour garder un minimum de variation sur la vitesse
 
+#define BLOCKING_ANGLE_SPEED_THRESHOLD_RAD_PER_S (3.6)
+#define BLOCKING_DIST_SPEED_THRESHOLD_MM_PER_S (80)
+#define BLOCKING_TIME_THRESHOLD_MS (0.25)
 
 #define COMMAND_MANAGER_ARRIVAL_ANGLE_THRESHOLD_RAD (0.02)
 #define COMMAND_MANAGER_ARRIVAL_DISTANCE_THRESHOLD_mm (2.5)
@@ -69,7 +73,7 @@ Goto::GotoConfiguration preciseGotoConf  = {COMMAND_MANAGER_GOTO_RETURN_THRESHOL
 Goto::GotoConfiguration waypointGotoConf  = {COMMAND_MANAGER_GOTO_RETURN_THRESHOLD_mm, COMMAND_MANAGER_GOTO_ANGLE_THRESHOLD_RAD, COMMAND_MANAGER_GOTO_WAYPOINT_ARRIVAL_DISTANCE_mm};
 
 #define COMMAND_MANAGER_GOTONOSTOP_TOO_BIG_ANGLE_THRESHOLD_RAD (M_PI/2)
-GotoNoStop::GotoNoStopConfiguration gotoNoStopConf = {COMMAND_MANAGER_GOTO_ANGLE_THRESHOLD_RAD, COMMAND_MANAGER_GOTONOSTOP_TOO_BIG_ANGLE_THRESHOLD_RAD, (100/DIST_REGULATOR_KP)};
+GotoNoStop::GotoNoStopConfiguration gotoNoStopConf = {COMMAND_MANAGER_GOTO_ANGLE_THRESHOLD_RAD, COMMAND_MANAGER_GOTONOSTOP_TOO_BIG_ANGLE_THRESHOLD_RAD, (100/DIST_REGULATOR_KP), 85};
 
 Md22::I2cPinInit md22PMXCardPinConf_SCL_SDA = {GPIOB, 6, GPIOB, 7};
 QuadratureEncoder::GpioPinInit qePMXCardPinConf_E1ch1_E1ch2_E2ch1_E2ch2 = {GPIOC, 6, GPIOA, 7, GPIOA, 5, GPIOB, 9};
@@ -90,7 +94,7 @@ AdaptativeSpeedController *speedControllerLeft;
 Pll *rightPll;
 Pll *leftPll;
 
-SpeedErrorBlockingDetector *blockingDetector;
+OldSchoolBlockingDetector *blockingDetector;
 
 SimpleAccelerationLimiter *angleAccelerationlimiter;
 AdvancedAccelerationLimiter *distanceAccelerationLimiter;
@@ -98,7 +102,6 @@ AdvancedAccelerationLimiter *distanceAccelerationLimiter;
 
 CommandManager *commandManager;
 AsservMain *mainAsserv;
-
 
 static void initAsserv()
 {
@@ -125,8 +128,9 @@ static void initAsserv()
     commandManager = new CommandManager( COMMAND_MANAGER_ARRIVAL_DISTANCE_THRESHOLD_mm, COMMAND_MANAGER_ARRIVAL_ANGLE_THRESHOLD_RAD,
                                    preciseGotoConf, waypointGotoConf, gotoNoStopConf,
                                    *angleRegulator, *distanceRegulator);
-
-    blockingDetector = new SpeedErrorBlockingDetector(ASSERV_THREAD_PERIOD_S, *speedControllerRight, *speedControllerLeft, 1.0f, 666.f);
+                                   
+	//blockingDetector = new OldSchoolBlockingDetector(ASSERV_THREAD_PERIOD_S, *md22MotorController, *odometry, 0.0018f, 0.4f, 0.25f); //0.0018f, 0.4f, 0.25f
+    blockingDetector = new OldSchoolBlockingDetector(ASSERV_THREAD_PERIOD_S, *md22MotorController, *odometry, BLOCKING_ANGLE_SPEED_THRESHOLD_RAD_PER_S, BLOCKING_DIST_SPEED_THRESHOLD_MM_PER_S, BLOCKING_TIME_THRESHOLD_MS);
 
     mainAsserv = new AsservMain( ASSERV_THREAD_FREQUENCY, ASSERV_POSITION_DIVISOR,
                            ENCODERS_WHEELS_RADIUS_MM, ENCODERS_WHEELS_DISTANCE_MM, ENCODERS_TICKS_BY_TURN,

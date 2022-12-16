@@ -1,5 +1,5 @@
 /*
-    ChibiOS - Copyright (C) 2006..2018 Giovanni Di Sirio
+    ChibiOS - Copyright (C) 2006..2020 Giovanni Di Sirio
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -30,7 +30,6 @@
 
 #define _CHIBIOS_HAL_CONF_
 #define _CHIBIOS_HAL_CONF_VER_7_1_
-
 
 #include "mcuconf.h"
 
@@ -67,6 +66,13 @@
  */
 #if !defined(HAL_USE_DAC) || defined(__DOXYGEN__)
 #define HAL_USE_DAC                         FALSE
+#endif
+
+/**
+ * @brief   Enables the EFlash subsystem.
+ */
+#if !defined(HAL_USE_EFL) || defined(__DOXYGEN__)
+#define HAL_USE_EFL                         FALSE
 #endif
 
 /**
@@ -410,6 +416,26 @@
 #endif
 
 /*===========================================================================*/
+/* SIO driver related settings.                                              */
+/*===========================================================================*/
+
+/**
+ * @brief   Default bit rate.
+ * @details Configuration parameter, this is the baud rate selected for the
+ *          default configuration.
+ */
+#if !defined(SIO_DEFAULT_BITRATE) || defined(__DOXYGEN__)
+#define SIO_DEFAULT_BITRATE                 38400
+#endif
+
+/**
+ * @brief   Support for thread synchronization API.
+ */
+#if !defined(SIO_USE_SYNCHRONIZATION) || defined(__DOXYGEN__)
+#define SIO_USE_SYNCHRONIZATION             TRUE
+#endif
+
+/*===========================================================================*/
 /* SERIAL_USB driver related setting.                                        */
 /*===========================================================================*/
 
@@ -421,7 +447,7 @@
  *          buffers.
  */
 #if !defined(SERIAL_USB_BUFFERS_SIZE) || defined(__DOXYGEN__)
-#define SERIAL_USB_BUFFERS_SIZE             128
+#define SERIAL_USB_BUFFERS_SIZE             2048
 #endif
 
 /**
@@ -429,7 +455,7 @@
  * @note    The default is 2 buffers.
  */
 #if !defined(SERIAL_USB_BUFFERS_NUMBER) || defined(__DOXYGEN__)
-#define SERIAL_USB_BUFFERS_NUMBER           32
+#define SERIAL_USB_BUFFERS_NUMBER           6
 #endif
 
 #define BOARD_OTG_NOVBUSSENS
