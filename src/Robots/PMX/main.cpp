@@ -23,13 +23,21 @@
 #include "Pll.h"
 #include "Encoders/MagEncoders.h"
 #include "blockingDetector/OldSchoolBlockingDetector.h"
+#include "util/debug.h"
 
-#define DEBUG_PRINT 1
-#if DEBUG_PRINT == 1
-#define debug(a,b,c,d) chprintf(a,b,c,d)
-#else
-#define debug(a,b,c,d)
-#endif
+//#define DEBUG_PRINT 1
+//#if DEBUG_PRINT == 1
+//#define debug1(a) chprintf(outputStream,a)
+//#define debug2(a,b) chprintf(outputStream,a,b)
+////#define debug3(a,b,c) chprintf(outputStream,a,b,c)
+////#define debug4(a,b,c,d) chprintf(outputStream,a,b,c,d)
+//
+//#else
+//#define debug1(a)
+//#define debug2(a,b)
+////#define debug3(a,b,c)
+////#define debug4(a,b,c,d)
+//#endif
 
 
 #define ENABLE_SHELL
@@ -114,11 +122,14 @@ BaseSequentialStream *outputStreamSd4;
 
 static void initAsserv()
 {
-	chprintf(outputStreamSd4,"initAsserv...\r\n");
+	debug1("initAsserv()...\r\n");
 
-    md22MotorController= new Md22(&md22PMXCardPinConf_SCL_SDA, false, false, false, 400000); //100k ou 400k
+    md22MotorController= new Md22(&md22PMXCardPinConf_SCL_SDA, false, false, false, 400000); //400k
+    debug1("initAsserv::md22MotorController OK\r\n");
     encoders = new QuadratureEncoder(&qePMXCardPinConf_E1ch1_E1ch2_E2ch1_E2ch2, false, true, false);
+    debug1("initAsserv::QuadratureEncoder OK\r\n");
     encoders_ext = new MagEncoders(false, false, true);
+    debug1("initAsserv::MagEncoders OK\r\n");
 
     angleRegulator = new Regulator(ANGLE_REGULATOR_KP, MAX_SPEED_MM_PER_SEC);
     distanceRegulator = new Regulator(DIST_REGULATOR_KP, MAX_SPEED_MM_PER_SEC);
@@ -138,9 +149,13 @@ static void initAsserv()
     commandManager = new CommandManager( COMMAND_MANAGER_ARRIVAL_DISTANCE_THRESHOLD_mm, COMMAND_MANAGER_ARRIVAL_ANGLE_THRESHOLD_RAD,
                                    preciseGotoConf, waypointGotoConf, gotoNoStopConf,
                                    *angleRegulator, *distanceRegulator);
-                                   
+
+    debug1("initAsserv::commandManager OK\r\n");
+
 	//blockingDetector = new OldSchoolBlockingDetector(ASSERV_THREAD_PERIOD_S, *md22MotorController, *odometry, 0.0018f, 0.4f, 0.25f); //0.0018f, 0.4f, 0.25f
     blockingDetector = new OldSchoolBlockingDetector(ASSERV_THREAD_PERIOD_S, *md22MotorController, *odometry, BLOCKING_ANGLE_SPEED_THRESHOLD_RAD_PER_S, BLOCKING_DIST_SPEED_THRESHOLD_MM_PER_S, BLOCKING_TIME_THRESHOLD_MS);
+
+    debug1("initAsserv::blockingDetector OK\r\n");
 
     mainAsserv = new AsservMain( ASSERV_THREAD_FREQUENCY, ASSERV_POSITION_DIVISOR,
                            ENCODERS_WHEELS_RADIUS_MM, ENCODERS_WHEELS_DISTANCE_MM, ENCODERS_TICKS_BY_TURN,
@@ -151,6 +166,7 @@ static void initAsserv()
                            *rightPll, *leftPll,
                            blockingDetector);
 
+    debug1("initAsserv::mainAsserv OK\r\n");
 }
 
 
@@ -170,30 +186,44 @@ static THD_FUNCTION(AsservThread, arg)
     chRegSetThreadName("AsservThread");
 
 
-    md22MotorController->init();
+    debug1("AsservThread()...\r\n");
+
+
 
     encoders->init();
-    encoders->start();
+	debug1("AsservThread::encoders init OK\r\n");
+	encoders->start();
+	debug1("AsservThread::encoders start OK\r\n");
 
-    encoders_ext->init();
-    encoders_ext->start();
+	encoders_ext->init();
+	debug1("AsservThread::encodersEXT start OK\r\n");
+	/*
+	encoders_ext->start();
+	debug1("AsservThread::encodersEXT start END\r\n");
+
+	md22MotorController->init();
+    debug1("AsservThread::md22MotorController OK\r\n");
+*/
 
     USBStream::init();
+    debug1("AsservThread::USBStream init END + chBSemSignal\r\n");
+
 
     chBSemSignal(&asservStarted_semaphore);
 
-    //desactivation au demarraga
-    mainAsserv->enableMotors(false);
-
+    //desactivation au demarrage
+    //mainAsserv->enableMotors(false);
+    debug1("AsservThread::enableMotors false\r\n");
+/*
     mainAsserv->mainLoop();
-
-//    while (true)
-//    {
-//        palClearPad(GPIOA, GPIOA_ARD_D12);
-//        chThdSleepMilliseconds(200);
-//        palSetPad(GPIOA, GPIOA_ARD_D12);
-//        chThdSleepMilliseconds(200);
-//    }
+*/
+    while (true)
+    {
+        palClearPad(GPIOA, GPIOA_ARD_D12);
+        chThdSleepMilliseconds(200);
+        palSetPad(GPIOA, GPIOA_ARD_D12);
+        chThdSleepMilliseconds(200);
+    }
 }
 
 
@@ -222,41 +252,47 @@ int main(void)
     palSetPadMode(GPIOA, 6, PAL_MODE_OUTPUT_PUSHPULL );
     palSetPadMode(GPIOA, 9, PAL_MODE_OUTPUT_PUSHPULL );
 
-    //init de l'USB debug
+    //init de l'USB debug + SHELL
     sdStart(&SD2, NULL);
     outputStream = reinterpret_cast<BaseSequentialStream*>(&SD2);
+    //chprintf(outputStream,"\r\nSTARTING...\r\n");
+    debug1("\r\nmain::STARTING...\r\n");
 
     //config UART4 for raspIO
     palSetPadMode(GPIOA, 0, PAL_MODE_ALTERNATE(8));
     palSetPadMode(GPIOA, 1, PAL_MODE_ALTERNATE(8));
     sdStart(&SD4, NULL);
     outputStreamSd4 = reinterpret_cast<BaseSequentialStream*>(&SD4);
-    chprintf(outputStreamSd4,"Starting...\r\n");
+    chprintf(outputStreamSd4,"main::SD4 OK\r\n");
 
 
-//    while (true)
-//        {
-//            palClearPad(GPIOA, GPIOA_ARD_D8);
-//            palClearPad(GPIOA, GPIOA_ARD_D12);
-//            chThdSleepMilliseconds(1000);
-//            palSetPad(GPIOA, GPIOA_ARD_D8);
-//            palSetPad(GPIOA, GPIOA_ARD_D12);
-//            chThdSleepMilliseconds(1000);
-//
-//            chprintf(outputStreamSd4,"blinking ...\r\n");
-//        }
 
     //creation de tous les objets
     initAsserv();
-    chprintf(outputStreamSd4,"initAsserv OK.\r\n");
+
+    debug1("main::initAsserv END.\r\n");
+
 
     chBSemObjectInit(&asservStarted_semaphore, true);
+    debug1("main::chBSemWait\r\n");
     chThdCreateStatic(waAsservThread, sizeof(waAsservThread), HIGHPRIO, AsservThread, NULL);
     chBSemWait(&asservStarted_semaphore);
+    debug1("main::waAsservThread END.\r\n");
 
     shellInit();
+    debug1("main::shellInit END.\r\n");
 
-    chprintf(outputStreamSd4,"shellInit OK.\r\n");
+    while (true)
+                            {
+                                palClearPad(GPIOA, GPIOA_ARD_D8);
+                                //palClearPad(GPIOA, GPIOA_ARD_D12);
+                                chThdSleepMilliseconds(1000);
+                                palSetPad(GPIOA, GPIOA_ARD_D8);
+                                //palSetPad(GPIOA, GPIOA_ARD_D12);
+                                chThdSleepMilliseconds(1000);
+
+                                debug1("blinking ...\r\n");
+                            }
 
     // Custom commands
     const ShellCommand shellCommands[] = { { "asserv", &(asservCommandUSB) }, { nullptr, nullptr } };
@@ -280,7 +316,7 @@ int main(void)
 #endif
     if (startShell)
     {
-    	chprintf(outputStreamSd4,"startShell ...\r\n");
+    	debug1("main::startShell ...\r\n");
 
         thread_t *shellThd = chThdCreateStatic(wa_shell, sizeof(wa_shell), LOWPRIO, shellThread, &shellCfg);
         chRegSetThreadNameX(shellThd, "shell");
@@ -296,7 +332,7 @@ int main(void)
         thread_t *controlPanelThdSerial = chThdCreateStatic(wa_controlPanel_serie, sizeof(wa_controlPanel_serie), LOWPRIO, asservPositionSerial, nullptr);
         chRegSetThreadNameX(controlPanelThdSerial, "asserv position update serial");
 
-        chprintf(outputStreamSd4,"startShell OK.\r\n");
+
     }
 
     deactivateHeapAllocation();
@@ -312,7 +348,7 @@ int main(void)
         palSetPad(GPIOA, GPIOA_ARD_D12);
         chThdSleepMilliseconds(1000);
 
-        chprintf(outputStreamSd4,"blinking ...\r\n");
+        //debug1("blinking ...\r\n");
     }
 }
 

@@ -5,8 +5,8 @@
 #include "ams_as5048b.h"
 #include <chprintf.h>
 #include "hal_streams.h"
+#include "util/debug.h"
 
-extern BaseSequentialStream *outputStream;
 
 MagEncoders::MagEncoders(bool is1EncoderRight, bool invertEncoderRight, bool invertEncoderLeft) :
         Encoders(), m_mysensor1(AS5048B_ADDR(1, 1)), m_mysensor2(AS5048B_ADDR(0, 1))
@@ -32,18 +32,24 @@ MagEncoders::~MagEncoders()
 
 void MagEncoders::init()
 {
-    chprintf(outputStream,"\r\nMagEncoders::init()... \r\n");
-
+    //chprintf(outputStream,"\r\nMagEncoders::init()... \r\n");
+//debug1("MagEncoders::init()... \r\n");
     // Enable I2C SDA & SCL pin
     // External pullups with correct resistance value shall be used !
     // see : http://wiki.chibios.org/dokuwiki/doku.php?id=chibios:community:guides:i2c_trouble_shooting
     palSetPadMode(m_i2cPinConf.GPIObaseSCL, m_i2cPinConf.pinNumberSCL,
             PAL_MODE_ALTERNATE(4) | PAL_STM32_OTYPE_OPENDRAIN);
+    debug1("MagEncoders::palSetPadMode() OK \r\n");
+
     palSetPadMode(m_i2cPinConf.GPIObaseSDA, m_i2cPinConf.pinNumberSDA,
             PAL_MODE_ALTERNATE(4) | PAL_STM32_OTYPE_OPENDRAIN);
 
+    debug1("MagEncoders::palset OK \r\n");
+    chThdSleepMilliseconds(100);
 
     i2cStart(&I2CD2, &m_i2cconfig);
+
+    debug1("MagEncoders::i2cStart() OK \r\n");
 
     //wait 20ms
     chThdSleepMilliseconds(20);
@@ -58,7 +64,7 @@ void MagEncoders::init()
 //while(1)
 //{
     m_mysensor1.getAllData(&agc, &diag, &mag, &raw);
-    chprintf(outputStream, "1.0x%02x agc=%d diag=%d mag=%d raw=%d\r\n", m_mysensor1.chipAddress(), agc, diag, mag, raw);
+    //chprintf(outputStream, "1.0x%02x agc=%d diag=%d mag=%d raw=%d\r\n", m_mysensor1.chipAddress(), agc, diag, mag, raw);
 //}
     chDbgAssert((diag == 1), "init() m_mysensor1 MagEncoders - getAllData (diag != 1) NOK\r\n");
     chDbgAssert((agc >= 30 && agc <= 79),
@@ -69,7 +75,7 @@ void MagEncoders::init()
     chDbgAssert((connect2==0), "MagEncoders::init() - m_mysensor2 NOT CONNECTED\r\n");
 
     m_mysensor2.getAllData(&agc, &diag, &mag, &raw);
-    chprintf(outputStream, "2.0x%02x agc=%d diag=%d mag=%d raw=%d\r\n",m_mysensor2.chipAddress(), agc, diag, mag, raw);
+    //chprintf(outputStream, "2.0x%02x agc=%d diag=%d mag=%d raw=%d\r\n",m_mysensor2.chipAddress(), agc, diag, mag, raw);
     chDbgAssert((diag == 1), "init() m_mysensor2 MagEncoders - getAllData (diag == 1) NOK\r\n");
     chDbgAssert((agc >= 30 && agc <= 75),
             "init() m_mysensor2 MagEncoders - getAllData (agc >= 30 && agc <= 75) NOK\r\n");
@@ -79,7 +85,7 @@ void MagEncoders::init()
     //chprintf(outputStream,"MagEncoders::init() %f  %f;\r\n", encoder1,encoder2);
 
 
-    chprintf(outputStream,"MagEncoders::init() done;\r\n");
+    //chprintf(outputStream,"MagEncoders::init() done;\r\n");
 }
 
 void MagEncoders::start()

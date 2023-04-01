@@ -12,16 +12,19 @@
 #include "blockingDetector/BlockingDetector.h"
 #include "util/asservMath.h"
 #include <cfloat>
+#include "util/debug.h"
 
-#define DEBUG_PRINT 1
-
-#if DEBUG_PRINT == 1
-#include <chprintf.h>
-extern BaseSequentialStream *outputStream;
-#define debug(a,b,c) chprintf(a,b,c)
-#else
-#define debug(a,b,c)
-#endif
+//#define DEBUG_PRINT 1
+//
+//#if DEBUG_PRINT == 1
+//#include <chprintf.h>
+//extern BaseSequentialStream *outputStream;
+//#define debug1(a) chprintf(outputStream,a)
+//#define debug2(a,b) chprintf(outputStream,a,b)
+//#else
+//#define debug1(a)
+//#define debug2(a,b)
+//#endif
 
 AsservMain::AsservMain(uint16_t loopFrequency, uint16_t speedPositionLoopDivisor, float wheelRadius_mm,
         float encoderWheelsDistance_mm, uint32_t encodersTicksByTurn, CommandManager &commandManager,
@@ -199,7 +202,7 @@ if (chVTGetSystemTime() < time)
 		//bloquant
 		//chDbgAssert(chVTGetSystemTime() < time, "asserv thread missed deadline !");
 		//Non bloquant
-		debug(outputStream,"asserv thread missed deadline! t=%l\r\n ", chVTGetSystemTime() < time);
+		debug2("asserv thread missed deadline! t=%l\r\n ", chVTGetSystemTime() < time);
 	}
 #endif
 
