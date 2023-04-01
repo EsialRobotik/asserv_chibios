@@ -1,8 +1,23 @@
 #include "blockingDetector/OldSchoolBlockingDetector.h"
 #include "Odometry.h"
 #include "motorController/MotorController.h"
-#include "USBStream.h"
 #include <math.h>
+
+#define DEBUG_PRINT 1
+
+#if DEBUG_PRINT == 1
+	#include "hal.h"
+	#include "USBStream.h"
+	#include <chprintf.h>
+	extern BaseSequentialStream *outputStream;
+	#define debug2(a,b) chprintf(a,b)
+	#define debug3(a,b,c) chprintf(a,b,c)
+	#define debug4(a,b,c,d) chprintf(a,b,c,d)
+#else
+	#define debug2(a,b)
+	#define debug3(a,b,c)
+	#define debug4(a,b,c,d)
+#endif
 
 OldSchoolBlockingDetector::OldSchoolBlockingDetector(
         float dt, MotorController const &motorController, Odometry const &odometry,
@@ -25,6 +40,12 @@ OldSchoolBlockingDetector::~OldSchoolBlockingDetector()
 
 void OldSchoolBlockingDetector::update()
 {
+#if DEBUG_PRINT == 1
+if (isBlocked())
+{
+debug2(outputStream,"BLOCKED\r\n ");
+}
+#endif
     float leftMotorSpeedConsign = m_motorController.getMotorLeftSpeed();
     float rightMotorSpeedConsign = m_motorController.getMotorRightSpeed();
     bool isLeftMotorBackward = std::signbit(leftMotorSpeedConsign);
@@ -62,5 +83,8 @@ void OldSchoolBlockingDetector::update()
 
 bool OldSchoolBlockingDetector::isBlocked() const
 {
+#if DEBUG_PRINT == 1
+	debug4(outputStream,"%f %f\r\n ", m_blocking_detected_duration, m_blocking_detected_duration_threshold);
+#endif
     return (m_blocking_detected_duration > m_blocking_detected_duration_threshold);
 }

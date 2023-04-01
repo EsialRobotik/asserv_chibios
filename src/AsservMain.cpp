@@ -11,9 +11,17 @@
 #include "Encoders/Encoder.h"
 #include "blockingDetector/BlockingDetector.h"
 #include "util/asservMath.h"
-#include <chprintf.h>
 #include <cfloat>
 
+#define DEBUG_PRINT 1
+
+#if DEBUG_PRINT == 1
+#include <chprintf.h>
+extern BaseSequentialStream *outputStream;
+#define debug(a,b,c) chprintf(a,b,c)
+#else
+#define debug(a,b,c)
+#endif
 
 AsservMain::AsservMain(uint16_t loopFrequency, uint16_t speedPositionLoopDivisor, float wheelRadius_mm,
         float encoderWheelsDistance_mm, uint32_t encodersTicksByTurn, CommandManager &commandManager,
@@ -185,7 +193,16 @@ void AsservMain::mainLoop()
 
         m_asservCounter++;
 
-        chDbgAssert(chVTGetSystemTime() < time, "asserv thread missed deadline !");
+#if DEBUG_PRINT == 1
+if (chVTGetSystemTime() < time)
+	{
+		//bloquant
+		//chDbgAssert(chVTGetSystemTime() < time, "asserv thread missed deadline !");
+		//Non bloquant
+		debug(outputStream,"asserv thread missed deadline! t=%l\r\n ", chVTGetSystemTime() < time);
+	}
+#endif
+
         chThdSleepUntil(time);
         time += TIME_US2I(loopPeriod_us);
     }
