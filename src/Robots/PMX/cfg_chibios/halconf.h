@@ -432,7 +432,7 @@
  * @brief   Support for thread synchronization API.
  */
 #if !defined(SIO_USE_SYNCHRONIZATION) || defined(__DOXYGEN__)
-#define SIO_USE_SYNCHRONIZATION             TRUE
+#define SIO_USE_SYNCHRONIZATION             FALSE
 #endif
 
 /*===========================================================================*/
@@ -469,7 +469,7 @@
  * @note    Disabling this option saves both code and data space.
  */
 #if !defined(SPI_USE_WAIT) || defined(__DOXYGEN__)
-#define SPI_USE_WAIT                        TRUE
+#define SPI_USE_WAIT                        FALSE
 #endif
 
 /**
@@ -486,7 +486,7 @@
  * @note    Disabling this option saves both code and data space.
  */
 #if !defined(SPI_USE_MUTUAL_EXCLUSION) || defined(__DOXYGEN__)
-#define SPI_USE_MUTUAL_EXCLUSION            TRUE
+#define SPI_USE_MUTUAL_EXCLUSION            FALSE
 #endif
 
 /**
@@ -538,7 +538,7 @@
  * @note    Disabling this option saves both code and data space.
  */
 #if !defined(WSPI_USE_WAIT) || defined(__DOXYGEN__)
-#define WSPI_USE_WAIT                       TRUE
+#define WSPI_USE_WAIT                       FALSE
 #endif
 
 /**
@@ -546,7 +546,7 @@
  * @note    Disabling this option saves both code and data space.
  */
 #if !defined(WSPI_USE_MUTUAL_EXCLUSION) || defined(__DOXYGEN__)
-#define WSPI_USE_MUTUAL_EXCLUSION           TRUE
+#define WSPI_USE_MUTUAL_EXCLUSION           FALSE
 #endif
 
 

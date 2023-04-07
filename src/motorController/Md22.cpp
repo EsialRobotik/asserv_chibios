@@ -12,7 +12,7 @@ constexpr uint8_t accReg = 0x03;
 
 constexpr uint8_t controlMode = 0x01; // Wanted value for mode register. Ie: -128 (full reverse)   0 (stop)   127 (full forward).
 
- Md22::Md22(I2cPinInit *i2cPins, bool is1motorRight, bool invertMotorRight, bool invertMotorLeft, uint32_t i2cFrequency) :
+Md22::Md22(I2cPinInit *i2cPins, bool is1motorRight, bool invertMotorRight, bool invertMotorLeft, uint32_t i2cFrequency) :
         MotorController()
 {
     m_i2cPinConf = *i2cPins;
@@ -34,7 +34,7 @@ constexpr uint8_t controlMode = 0x01; // Wanted value for mode register. Ie: -12
 
 void Md22::init()
 {
-	debug1("Md22::init...\r\n");
+    debug1("Md22::init...\r\n");
     // Enable I2C SDA & SCL pin
     // External pullups with correct resistance value shall be used !
     // see : http://wiki.chibios.org/dokuwiki/doku.php?id=chibios:community:guides:i2c_trouble_shooting
@@ -46,38 +46,29 @@ void Md22::init()
             PAL_MODE_ALTERNATE(4) | PAL_STM32_OTYPE_OPENDRAIN);
 
     debug1("Md22::PAL MODE SDA OK\r\n");
-    chThdSleepMilliseconds(100);
-
-    i2cStart(&I2CD1, &m_i2cconfig);
-
-    debug1("Md22::i2cStart OK\r\n");
 
     // When the stm32 and the Md22 are powered on at the same time,
     //   it seems that the MD22 could take much longer to boot...
     // So wait a few ms !
-    chThdSleepMilliseconds(100);
+    chThdSleepMilliseconds(100); //100
 
-    /*
-
-
-    sysinterval_t tmo = TIME_MS2I(10);
-    msg_t msg = 0;
-    uint8_t cmd[] = {0,0};
-
-    i2cAcquireBus (&I2CD1);
-
-
-//     * Keep this hacky part from PMRobotix
-//     *     because they tries to get rid of interference with software.....
-//     * TODO: check if this is REALLY necessary
-    for(int i=0; i<10; i++)
-    {
-        if (I2CD1.state != I2C_READY)
-        {
-           i2cStart(&I2CD1, I2CD1.config);
-           chThdSleepMilliseconds(2);
+    //     * Keep this hacky part from PMRobotix
+    //     *     because they tries to get rid of interference with software.....
+    //     * TODO: check if this is REALLY necessary
+    for (int i = 0; i < 10; i++) {
+        if (I2CD1.state != I2C_READY) {
+            i2cStart(&I2CD1, &m_i2cconfig);
+            //i2cStart(&I2CD1, I2CD1.config);
+            chThdSleepMilliseconds(2);
         }
     }
+    debug1("Md22::i2cStart OK\r\n");
+
+    sysinterval_t tmo = TIME_MS2I(10);//10
+    msg_t msg = 0;
+    uint8_t cmd[] = { 0, 0 };
+
+    i2cAcquireBus (&I2CD1);
 
     // Set mode
     cmd[0] = modeReg;
@@ -103,7 +94,6 @@ void Md22::init()
     chDbgAssert(msg == MSG_OK, "Config MD22 - i2cMasterTransmitTimeout motor2Reg ERROR NOK\r\n");
 
     i2cReleaseBus(&I2CD1);
-    */
 }
 
 void Md22::setMotorLeftSpeed(float percentage)
@@ -114,7 +104,7 @@ void Md22::setMotorLeftSpeed(float percentage)
         m_leftMotorPercentage = -m_leftMotorPercentage;
 
     int8_t md22SpeedConsign = (int8_t) fmap(m_leftMotorPercentage, -100.0, 100.0, -128.0, 127.0);
-    uint8_t reg ;
+    uint8_t reg;
     if (m_is1motorRight)
         reg = motor2Reg;
     else

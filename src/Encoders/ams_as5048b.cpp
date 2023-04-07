@@ -64,7 +64,7 @@ AMS_AS5048B::AMS_AS5048B(uint8_t chipAddress)
  @params
  none
  @returns
- none
+ 0 if SUCCESS ; -1 if ERROR
  */
 /**************************************************************************/
 int AMS_AS5048B::ping()
@@ -89,7 +89,7 @@ int AMS_AS5048B::ping()
  @params
  none
  @returns
- none
+ 0 if SUCCESS; -1 if ERROR
  */
 /**************************************************************************/
 

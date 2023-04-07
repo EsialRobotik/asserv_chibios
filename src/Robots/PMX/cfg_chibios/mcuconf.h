@@ -48,10 +48,10 @@
 #define STM32_CLOCK48_REQUIRED              TRUE
 #define STM32_SW                            STM32_SW_PLL
 #define STM32_PLLSRC                        STM32_PLLSRC_HSE
-#define STM32_PLLM_VALUE                    8
-#define STM32_PLLN_VALUE                    360
+#define STM32_PLLM_VALUE                    4
+#define STM32_PLLN_VALUE                    144
 #define STM32_PLLP_VALUE                    2
-#define STM32_PLLQ_VALUE                    7
+#define STM32_PLLQ_VALUE                    6
 #define STM32_PLLI2SN_VALUE                 192
 #define STM32_PLLI2SM_VALUE                 4
 #define STM32_PLLI2SR_VALUE                 4
@@ -323,7 +323,7 @@
  * ST driver system settings.
  */
 #define STM32_ST_IRQ_PRIORITY               8
-#define STM32_ST_USE_TIMER                  2
+#define STM32_ST_USE_TIMER                  5
 
 /*
  * UART driver system settings.
