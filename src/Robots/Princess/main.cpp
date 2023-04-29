@@ -21,7 +21,7 @@
 #include "AccelerationLimiter/SimpleAccelerationLimiter.h"
 #include "AccelerationLimiter/AccelerationDecelerationLimiter.h"
 #include "Pll.h"
-#include "blockingDetector/SpeedErrorBlockingDetector.h"
+#include "blockingDetector/OldSchoolBlockingDetector.h"
 
 
 #define ASSERV_THREAD_FREQUENCY (600)
@@ -35,15 +35,15 @@
 #define MAX_SPEED_MM_PER_SEC (1500)
 
 #define DIST_REGULATOR_KP (6)
-#define DIST_REGULATOR_MAX_ACC_FW (2200)
-#define DIST_REGULATOR_MAX_DEC_FW (2600)
-#define DIST_REGULATOR_MAX_ACC_BW (1400)
-#define DIST_REGULATOR_MAX_DEC_BW (1400)
-#define ACC_DEC_DAMPLING (1.4)
+#define DIST_REGULATOR_MAX_ACC_FW (3000)
+#define DIST_REGULATOR_MAX_DEC_FW (3300)
+#define DIST_REGULATOR_MAX_ACC_BW (3300)
+#define DIST_REGULATOR_MAX_DEC_BW (2000)
+#define ACC_DEC_DAMPLING (1.6)
 
 
 #define ANGLE_REGULATOR_KP (900)
-#define ANGLE_REGULATOR_MAX_ACC (1500)
+#define ANGLE_REGULATOR_MAX_ACC (2500)
 
 float speed_controller_right_Kp[NB_PI_SUBSET] = { 0.1, 0.1, 0.1};
 float speed_controller_right_Ki[NB_PI_SUBSET] = { 1.0, 0.8, 0.6};
@@ -54,6 +54,10 @@ float speed_controller_left_Ki[NB_PI_SUBSET] = { 1.0, 0.8, 0.6};
 float speed_controller_left_SpeedRange[NB_PI_SUBSET] = { 20, 50, 60};
 
 #define PLL_BANDWIDTH (150)
+
+#define BLOCKING_DETECTOR_ANGLE_SPEED_THRESHOLD (M_PI/16)
+#define BLOCKING_DETECTOR_DIST_SPEED_THRESHOLD (10)
+#define BLOCKING_DETECTOR_BLOCKING_DURATION_THRESHOLD (0.5)
 
 
 #define COMMAND_MANAGER_ARRIVAL_ANGLE_THRESHOLD_RAD (0.02)
@@ -88,7 +92,7 @@ AdaptativeSpeedController *speedControllerLeft;
 Pll *rightPll;
 Pll *leftPll;
 
-SpeedErrorBlockingDetector *blockingDetector;
+OldSchoolBlockingDetector *blockingDetector;
 
 SimpleAccelerationLimiter *angleAccelerationlimiter;
 AccelerationDecelerationLimiter *distanceAccelerationLimiter;
@@ -101,7 +105,7 @@ AsservMain *mainAsserv;
 static void initAsserv()
 {
     encoders = new QuadratureEncoder(&ESIALCardPinConf_Encoders, true, true, true);
-    md22MotorController = new Md22(&ESIALCardPinConf_md22, false, true, false, 100000);
+    md22MotorController = new Md22(&ESIALCardPinConf_md22, true, true, false, 100000);
 
     angleRegulator = new Regulator(ANGLE_REGULATOR_KP, MAX_SPEED_MM_PER_SEC);
     distanceRegulator = new Regulator(DIST_REGULATOR_KP, FLT_MAX);
@@ -118,7 +122,8 @@ static void initAsserv()
     angleAccelerationlimiter = new SimpleAccelerationLimiter(ANGLE_REGULATOR_MAX_ACC);
     distanceAccelerationLimiter = new AccelerationDecelerationLimiter(DIST_REGULATOR_MAX_ACC_FW, DIST_REGULATOR_MAX_DEC_FW, DIST_REGULATOR_MAX_ACC_BW, DIST_REGULATOR_MAX_DEC_BW, MAX_SPEED_MM_PER_SEC, ACC_DEC_DAMPLING, DIST_REGULATOR_KP);
 
-   blockingDetector = new SpeedErrorBlockingDetector(ASSERV_THREAD_PERIOD_S, *speedControllerRight, *speedControllerLeft, 1.f, 666.0f);
+    blockingDetector = new OldSchoolBlockingDetector(ASSERV_THREAD_PERIOD_S, *md22MotorController, *odometry,
+           BLOCKING_DETECTOR_ANGLE_SPEED_THRESHOLD, BLOCKING_DETECTOR_DIST_SPEED_THRESHOLD, BLOCKING_DETECTOR_BLOCKING_DURATION_THRESHOLD);
 
     commandManager = new CommandManager( COMMAND_MANAGER_ARRIVAL_DISTANCE_THRESHOLD_mm, COMMAND_MANAGER_ARRIVAL_ANGLE_THRESHOLD_RAD,
                                    preciseGotoConf, waypointGotoConf, gotoNoStopConf,
@@ -161,6 +166,21 @@ static THD_FUNCTION(AsservThread, arg)
     mainAsserv->mainLoop();
 }
 
+void usbSerialCallback(char *buffer, uint32_t size);
+static THD_WORKING_AREA(waLowPrioUSBThread, 512);
+static THD_FUNCTION(LowPrioUSBThread, arg)
+{
+    (void) arg;
+    chRegSetThreadName("LowPrioUSBThread");
+
+
+    while (!chThdShouldTerminateX())
+    {
+       USBStream::instance()->USBStreamHandleConnection_lowerpriothread(usbSerialCallback);
+    }
+
+}
+
 
 THD_WORKING_AREA(wa_shell, 2048);
 THD_WORKING_AREA(wa_controlPanel, 256);
@@ -191,6 +211,8 @@ int main(void)
     chBSemWait(&asservStarted_semaphore);
 
     outputStream = reinterpret_cast<BaseSequentialStream*>(&SD2);
+    chThdCreateStatic(waLowPrioUSBThread, sizeof(waLowPrioUSBThread), LOWPRIO, LowPrioUSBThread, NULL);
+
 
     // Custom commands
     const ShellCommand shellCommands[] = { { "asserv", &(asservCommandUSB) }, { nullptr, nullptr } };
@@ -394,7 +416,7 @@ void asservCommandUSB(BaseSequentialStream *chp, int argc, char **argv)
 
         mainAsserv->resetToNormalMode();
         bool ok = commandManager->addStraightLine(dist);
-        chprintf(outputStream, "Adding distance %.2fmm %d\r\n", dist, ok );
+        chprintf(outputStream, "Adding distance %.2fmm argc %d (%s)\r\n", dist,argc,  argv[1] );
 
     }
     else if (!strcmp(argv[0], "anglecontrol"))
@@ -534,6 +556,7 @@ THD_FUNCTION(ControlPanelThread, p)
         if (size > 0)
         {
             char *buffer = (char*) ptr;
+            buffer[size] = 0;
 
             /*
              *  On transforme la commande recu dans une version argv/argc
@@ -552,7 +575,7 @@ THD_FUNCTION(ControlPanelThread, p)
                 if (buffer[i] == ' ' || buffer[i] == '\r' || buffer[i] == '\n')
                 {
                     prevWasSpace = true;
-                    buffer[i] = '\0';
+                    buffer[i] = 0;
                 }
                 else
                 {
@@ -566,6 +589,44 @@ THD_FUNCTION(ControlPanelThread, p)
                 asservCommandUSB(nullptr, nb_arg, argv);
             }
             USBStream::instance()->releaseBuffer();
+        }
+    }
+}
+
+void usbSerialCallback(char *buffer, uint32_t size)
+{
+    if (size > 0)
+    {
+        /*
+         *  On transforme la commande recu dans une version argv/argc
+         *    de manière a utiliser les commandes shell déjà définie...
+         */
+        bool prevWasSpace = false;
+        char* firstArg = buffer;
+        int nb_arg = 0;
+        char *argv[10];
+        for (uint32_t i = 0; i < size; i++)
+        {
+            if (prevWasSpace && buffer[i] != ' ')
+            {
+                argv[nb_arg++] = &buffer[i];
+            }
+
+            if (buffer[i] == ' ' || buffer[i] == '\r' || buffer[i] == '\n')
+            {
+                prevWasSpace = true;
+                buffer[i] = 0;
+            }
+            else
+            {
+                prevWasSpace = false;
+            }
+        }
+
+        // On évite de faire appel au shell si le nombre d'arg est mauvais ou si la 1ière commande est mauvaise...
+        if (nb_arg > 0 && !strcmp(firstArg, "asserv"))
+        {
+            asservCommandUSB(nullptr, nb_arg, argv);
         }
     }
 }
