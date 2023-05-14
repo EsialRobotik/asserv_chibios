@@ -28,6 +28,7 @@ CommandManager::CommandManager(float straitLineArrivalWindows_mm, float turnArri
         m_angle_regulator(angle_regulator), m_distance_regulator(distance_regulator)
 {
     m_emergencyStop = false;
+    m_blockingDetected = false;
     m_currentCmd = nullptr;
     m_angleRegulatorConsign = 0;
     m_distRegulatorConsign = 0;
@@ -139,6 +140,11 @@ void CommandManager::resetEmergencyStop()
     m_emergencyStop = false;
 }
 
+void CommandManager::resetBlockingDetected()
+{
+    m_blockingDetected = false;
+}
+
 CommandManager::CommandStatus CommandManager::getCommandStatus()
 {
 
@@ -146,7 +152,7 @@ CommandManager::CommandStatus CommandManager::getCommandStatus()
         return STATUS_HALTED;
     else if (m_currentCmd == nullptr)
         return STATUS_IDLE;
-    else if( m_blockingDetector && m_blockingDetector->isBlocked())
+    else if(m_blockingDetected )
         return STATUS_BLOCKED;
     else
         return STATUS_RUNNING;
@@ -175,6 +181,18 @@ void CommandManager::update(float X_mm, float Y_mm, float theta_rad)
         m_currentCmd = nullptr;
         return;
     }
+    else if (m_blockingDetector && m_blockingDetector->isBlocked())
+    {
+        m_blockingDetected = true;
+    }
+
+    if(m_blockingDetected)
+    {
+        m_angleRegulatorConsign = m_angle_regulator.getAccumulator();
+        m_distRegulatorConsign = m_distance_regulator.getAccumulator();
+        return;
+    }
+
 
     if (m_currentCmd != nullptr && !m_currentCmd->isGoalReached(X_mm, Y_mm, theta_rad, m_angle_regulator, m_distance_regulator, m_cmdList.getSecond()))
     {

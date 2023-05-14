@@ -100,6 +100,11 @@ THD_FUNCTION(asservCommandSerial, p)
             serialReadLine(buffer, sizeof(buffer));
             break;
 
+        case 'B': //Reset blocking detection
+            commandManager->resetBlockingDetected();
+            serialReadLine(buffer, sizeof(buffer));
+            break;
+
         case 'z':
             // Go 20cm
             chprintf(outputStream, "consigne avant : 200mm\n");

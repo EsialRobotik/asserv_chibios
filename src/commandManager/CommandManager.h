@@ -48,6 +48,8 @@ class CommandManager
         void setEmergencyStop();
         void resetEmergencyStop();
 
+        void resetBlockingDetected();
+
         /*
          * Mise à jour des consignes de sorties en fonction
          *     de la nouvelle position du robot
@@ -96,6 +98,7 @@ class CommandManager
         const Regulator &m_distance_regulator;
 
         bool m_emergencyStop;
+        bool m_blockingDetected;
 
         BlockingDetector const *m_blockingDetector;
 
