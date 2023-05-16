@@ -77,11 +77,11 @@ void MagEncoders::init()
                 raw);
         chThdSleepMilliseconds(20);
         chDbgAssert((diag == 1), "init() m_mysensor1 MagEncoders - getAllData (diag != 1) NOK\r\n");
-        if (!(agc >= 30 && agc <= 79)) {
-            chprintf(outputStream, "ERROR 1.0x%02x agc=%d NOK (agc >= 30 && agc <= 80)\r\n", m_mysensor1.chipAddress(), agc);
+        if (!(agc >= 30 && agc <= 90)) {
+            chprintf(outputStream, "ERROR 1.0x%02x agc=%d NOK (agc >= 30 && agc <= 90)\r\n", m_mysensor1.chipAddress(), agc);
             chThdSleepMilliseconds(20);
-            chDbgAssert((agc >= 30 && agc <= 80),
-                    "init() m_mysensor1 MagEncoders - getAllData (agc >= 30 && agc <= 80) NOK\r\n");
+            chDbgAssert((agc >= 30 && agc <= 90),
+                    "init() m_mysensor1 MagEncoders - getAllData (agc >= 30 && agc <= 90) NOK\r\n");
         }
     }
 
@@ -111,7 +111,7 @@ void MagEncoders::init()
         //chDbgAssert((connect1 == 0 || connect2 == 0), "MagEncoders::init() - m_mysensor1 or 2 NOT CONNECTED\r\n");
 
 
-        //TODO Allumer des led d'error
+        //Allumer des led d'error
         blink_error(50);
     }
     //debug
