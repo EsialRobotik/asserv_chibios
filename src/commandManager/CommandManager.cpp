@@ -21,7 +21,7 @@ CommandManager::CommandManager(float straitLineArrivalWindows_mm, float turnArri
         Goto::GotoConfiguration &preciseGotoConfiguration, Goto::GotoConfiguration &waypointGotoConfiguration, GotoNoStop::GotoNoStopConfiguration &gotoNoStopConfiguration,
         const Regulator &angle_regulator, const Regulator &distance_regulator,
         AccelerationDecelerationLimiter *accelerationDecelerationLimiter,
-        BlockingDetector const *blockingDetector):
+        BlockingDetector *blockingDetector):
         m_cmdList(32,COMMAND_MAX_SIZE),
         m_straitLineArrivalWindows_mm(straitLineArrivalWindows_mm), m_turnArrivalWindows_rad(turnArrivalWindows_rad),
         m_preciseGotoConfiguration(preciseGotoConfiguration), m_waypointGotoConfiguration(waypointGotoConfiguration), m_gotoNoStopConfiguration(gotoNoStopConfiguration),
@@ -138,11 +138,9 @@ void CommandManager::setEmergencyStop()
 void CommandManager::resetEmergencyStop()
 {
     m_emergencyStop = false;
-}
-
-void CommandManager::resetBlockingDetected()
-{
     m_blockingDetected = false;
+    if(m_blockingDetector)
+        m_blockingDetector->reset();
 }
 
 CommandManager::CommandStatus CommandManager::getCommandStatus()
@@ -184,13 +182,6 @@ void CommandManager::update(float X_mm, float Y_mm, float theta_rad)
     else if (m_blockingDetector && m_blockingDetector->isBlocked())
     {
         m_blockingDetected = true;
-    }
-
-    if(m_blockingDetected)
-    {
-        m_angleRegulatorConsign = m_angle_regulator.getAccumulator();
-        m_distRegulatorConsign = m_distance_regulator.getAccumulator();
-        return;
     }
 
 
