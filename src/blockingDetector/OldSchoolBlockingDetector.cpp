@@ -25,8 +25,8 @@ OldSchoolBlockingDetector::~OldSchoolBlockingDetector()
 
 void OldSchoolBlockingDetector::update()
 {
-    float leftMotorSpeedConsign = m_motorController.getMotorLeftSpeed();
-    float rightMotorSpeedConsign = m_motorController.getMotorRightSpeed();
+    float leftMotorSpeedConsign = m_motorController.getMotorLeftSpeedNonInverted();
+    float rightMotorSpeedConsign = m_motorController.getMotorLeftSpeedNonInverted();
     bool isLeftMotorBackward = std::signbit(leftMotorSpeedConsign);
     bool isRighMotorBackward = std::signbit(rightMotorSpeedConsign);
 

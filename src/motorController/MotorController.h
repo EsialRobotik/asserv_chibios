@@ -12,8 +12,8 @@ public:
     virtual void setMotorLeftSpeed(float percentage) = 0;
 
 
-    virtual float getMotorRightSpeed() const = 0;
-    virtual float getMotorLeftSpeed() const = 0;
+    virtual float getMotorRightSpeedNonInverted() const = 0;
+    virtual float getMotorLeftSpeedNonInverted() const = 0;
 };
 
 #endif /* SRC_MOTORCONTROLLER_MOTORCONTROLLER_H_ */
