@@ -13,7 +13,6 @@
 #include "USBStream.h"
 #include <chprintf.h>
 
-
 #define MAX(a,b) (((a)>(b))?(a):(b))
 #define COMMAND_MAX_SIZE MAX( MAX( MAX( MAX(sizeof(StraitLine), sizeof(Turn)), sizeof(Goto)), sizeof(GotoAngle) ), sizeof(GotoNoStop) )
 
@@ -21,13 +20,14 @@ CommandManager::CommandManager(float straitLineArrivalWindows_mm, float turnArri
         Goto::GotoConfiguration &preciseGotoConfiguration, Goto::GotoConfiguration &waypointGotoConfiguration, GotoNoStop::GotoNoStopConfiguration &gotoNoStopConfiguration,
         const Regulator &angle_regulator, const Regulator &distance_regulator,
         AccelerationDecelerationLimiter *accelerationDecelerationLimiter,
-        BlockingDetector const *blockingDetector):
+        BlockingDetector *blockingDetector):
         m_cmdList(32,COMMAND_MAX_SIZE),
         m_straitLineArrivalWindows_mm(straitLineArrivalWindows_mm), m_turnArrivalWindows_rad(turnArrivalWindows_rad),
         m_preciseGotoConfiguration(preciseGotoConfiguration), m_waypointGotoConfiguration(waypointGotoConfiguration), m_gotoNoStopConfiguration(gotoNoStopConfiguration),
         m_angle_regulator(angle_regulator), m_distance_regulator(distance_regulator)
 {
     m_emergencyStop = false;
+    m_blockingDetected = false;
     m_currentCmd = nullptr;
     m_angleRegulatorConsign = 0;
     m_distRegulatorConsign = 0;
@@ -137,6 +137,9 @@ void CommandManager::setEmergencyStop()
 void CommandManager::resetEmergencyStop()
 {
     m_emergencyStop = false;
+    m_blockingDetected = false;
+    if (m_blockingDetector)
+        m_blockingDetector-> reset();
 }
 
 CommandManager::CommandStatus CommandManager::getCommandStatus()
@@ -146,7 +149,8 @@ CommandManager::CommandStatus CommandManager::getCommandStatus()
         return STATUS_HALTED;
     else if (m_currentCmd == nullptr)
         return STATUS_IDLE;
-    else if( m_blockingDetector && m_blockingDetector->isBlocked())
+    //else if( m_blockingDetector && m_blockingDetector->isBlocked())
+    else if(m_blockingDetected)
         return STATUS_BLOCKED;
     else
         return STATUS_RUNNING;
@@ -174,6 +178,10 @@ void CommandManager::update(float X_mm, float Y_mm, float theta_rad)
         m_cmdList.flush();
         m_currentCmd = nullptr;
         return;
+    }
+    else if(m_blockingDetector && m_blockingDetector->isBlocked())
+    {
+        m_blockingDetected = true;
     }
 
     if (m_currentCmd != nullptr && !m_currentCmd->isGoalReached(X_mm, Y_mm, theta_rad, m_angle_regulator, m_distance_regulator, m_cmdList.getSecond()))

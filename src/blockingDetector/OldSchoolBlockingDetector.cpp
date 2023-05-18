@@ -73,3 +73,8 @@ bool OldSchoolBlockingDetector::isBlocked() const
 #endif
     return (m_blocking_detected_duration > m_blocking_detected_duration_threshold);
 }
+
+void OldSchoolBlockingDetector::reset()
+{
+    m_blocking_detected_duration = 0;
+}

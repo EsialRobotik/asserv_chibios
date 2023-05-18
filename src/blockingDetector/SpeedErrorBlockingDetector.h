@@ -21,6 +21,8 @@ class SpeedErrorBlockingDetector : public BlockingDetector
         virtual bool isBlocked() const;
         virtual void update();
 
+        virtual void reset() { } // TODO
+
     private:
         float m_dt;
         SpeedController& m_rightSpeedController;

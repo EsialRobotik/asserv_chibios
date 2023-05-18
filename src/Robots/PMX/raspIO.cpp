@@ -163,9 +163,9 @@ THD_FUNCTION(asservCommandSerial, p)
             chprintf(outputStreamSd4, "x%fy%fa%fs%d\r\n",
                     odometry->getX(), odometry->getY(), odometry->getTheta(),
                     commandManager->getCommandStatus());
-            chprintf(outputStream, "x%fy%fa%fs%d\r\n",
-                                odometry->getX(), odometry->getY(), odometry->getTheta(),
-                                commandManager->getCommandStatus());
+//            chprintf(outputStream, "x%fy%fa%fs%d\r\n",
+//                                odometry->getX(), odometry->getY(), odometry->getTheta(),
+//                                commandManager->getCommandStatus());
             break;
 
         case 'P': // set la position et l'angle du robot

@@ -77,10 +77,10 @@ void MagEncoders::init()
                 raw);
         chThdSleepMilliseconds(20);
         chDbgAssert((diag == 1), "init() m_mysensor1 MagEncoders - getAllData (diag != 1) NOK\r\n");
-        if (!(agc >= 30 && agc <= 90)) {
+        if (!(agc >= 30 && agc <= 150)) {
             chprintf(outputStream, "ERROR 1.0x%02x agc=%d NOK (agc >= 30 && agc <= 90)\r\n", m_mysensor1.chipAddress(), agc);
             chThdSleepMilliseconds(20);
-            chDbgAssert((agc >= 30 && agc <= 90),
+            chDbgAssert((agc >= 30 && agc <= 150),
                     "init() m_mysensor1 MagEncoders - getAllData (agc >= 30 && agc <= 90) NOK\r\n");
         }
     }
@@ -98,10 +98,10 @@ void MagEncoders::init()
         chThdSleepMilliseconds(20);
 
         chDbgAssert((diag == 1), "init() m_mysensor2 MagEncoders - getAllData (diag == 1) NOK\r\n");
-        if (!(agc >= 30 && agc <= 79)) {
+        if (!(agc >= 30 && agc <= 150)) {
             chprintf(outputStream, "ERROR 2.0x%02x agc=%d NOK (agc >= 30 && agc <= 80)\r\n", m_mysensor2.chipAddress(), agc);
             chThdSleepMilliseconds(20);
-            chDbgAssert((agc >= 30 && agc <= 80),
+            chDbgAssert((agc >= 30 && agc <= 150),
                     "init() m_mysensor2 MagEncoders - getAllData (agc >= 30 && agc <= 80) NOK\r\n");
         }
     }

@@ -12,8 +12,8 @@
 #include "USBStream.h"
 #include <chprintf.h>
 
-#define DEBUG_PRINT 1
-#define DEBUG_PRINT_DEADLINE 1
+#define DEBUG_PRINT 0
+#define DEBUG_PRINT_DEADLINE 0
 #define DEBUG_PRINT_BLOCKED 0
 
 extern BaseSequentialStream *outputStream;
