@@ -138,3 +138,19 @@ void Md22::setMotorRightSpeed(float percentage)
     m_lastRightConsign = md22SpeedConsign;
 }
 
+float Md22::getMotorRightSpeedNonInverted() const
+{
+    if (m_invertMotorRight)
+        return -m_rightMotorPercentage;
+    else
+        return m_rightMotorPercentage;
+}
+
+float Md22::getMotorLeftSpeedNonInverted() const
+{
+    if (m_invertMotorLeft)
+        return -m_leftMotorPercentage;
+    else
+        return m_leftMotorPercentage;
+}
+

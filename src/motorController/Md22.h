@@ -25,11 +25,9 @@ public:
     void setMotorRightSpeed(float percentage);
     void setMotorLeftSpeed(float percentage);
 
-    virtual float getMotorRightSpeed() const { return m_rightMotorPercentage; };
-    virtual float getMotorLeftSpeed() const { return m_leftMotorPercentage; };
 
-    inline int8_t getRightSpeed() { return m_lastRightConsign; }
-    inline int8_t getLeftSpeed() { return m_lastLeftConsign; }
+    virtual float getMotorRightSpeedNonInverted() const;
+    virtual float getMotorLeftSpeedNonInverted() const;
 
 private:
     I2CConfig m_i2cconfig;

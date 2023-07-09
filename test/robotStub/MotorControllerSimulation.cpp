@@ -23,12 +23,12 @@ void MotorControllerSimulation::setMotorRightSpeed(float percentage)
     m_rightMotorPercentage = limit(percentage, -100.0, 100.0);
 }
 
-float MotorControllerSimulation::getMotorRightSpeed() const
+float MotorControllerSimulation::getMotorRightSpeedNonInverted() const
 {
         return m_rightMotorPercentage;
 }
 
-float MotorControllerSimulation::getMotorLeftSpeed() const
+float MotorControllerSimulation::getMotorLeftSpeedNonInverted() const
 {
         return m_leftMotorPercentage;
 }

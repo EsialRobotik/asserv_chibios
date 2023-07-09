@@ -16,8 +16,8 @@ public:
     void setMotorLeftSpeed(float percentage);
 
 
-    virtual float getMotorRightSpeed() const;
-    virtual float getMotorLeftSpeed() const;
+    virtual float getMotorRightSpeedNonInverted() const;
+    virtual float getMotorLeftSpeedNonInverted() const;
 
 private:
 

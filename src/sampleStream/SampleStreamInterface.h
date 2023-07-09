@@ -82,6 +82,7 @@ public:
         OdoTheta,                               odometry/theta,
         XGoal,                                  commandManager/X,
         YGoal,                                  commandManager/Y,
+        AlignOnly,                             commandManager/AlignOnly,
         DistanceLimiterVelocityAtDecTime,       accDec/distance/VelocityAtDecTime,
         DistanceLimiterVelocityCompensation,    accDec/distance/VelocityCompensation,
         DistanceLimiterVelocityCompensated,     accDec/distance/VelocityCompensated,

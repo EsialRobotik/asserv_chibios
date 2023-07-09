@@ -20,6 +20,7 @@ class SpeedErrorBlockingDetector : public BlockingDetector
 
         virtual bool isBlocked() const;
         virtual void update();
+        virtual void reset() {};
 
     private:
         float m_dt;
