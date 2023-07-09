@@ -21,13 +21,6 @@ public:
     explicit Md22(I2cPinInit *i2cPins, bool is1motorRight, bool invertMotorRight, bool invertMotorLeft, uint32_t i2cFrequency);
     virtual ~Md22() {};
 
-    msg_t i2cMasterTransmitTimeoutTimes(I2CDriver *i2cp,
-                                   i2caddr_t addr,
-                                   const uint8_t *txbuf,
-                                   size_t txbytes,
-                                   uint8_t *rxbuf,
-                                   size_t rxbytes,
-                                   sysinterval_t timeout, int times);
     void init();
     void setMotorRightSpeed(float percentage);
     void setMotorLeftSpeed(float percentage);

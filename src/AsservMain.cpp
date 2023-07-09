@@ -2,7 +2,6 @@
 #include "ch.h"
 #include "hal.h"
 #include "commandManager/CommandManager.h"
-#include "USBStream.h"
 #include "Odometry.h"
 #include "SpeedController/SpeedController.h"
 #include "Pll.h"
@@ -13,6 +12,7 @@
 #include "util/asservMath.h"
 #include <chprintf.h>
 #include <cfloat>
+#include "sampleStream/SampleStreamInterface.h"
 
 
 AsservMain::AsservMain(uint16_t loopFrequency, uint16_t speedPositionLoopDivisor, float wheelRadius_mm,
@@ -150,38 +150,40 @@ void AsservMain::mainLoop()
             m_blockingDetector->update();
         }
 
-        USBStream::instance()->setSpeedEstimatedRight(estimatedSpeedRight);
-        USBStream::instance()->setSpeedEstimatedLeft(estimatedSpeedLeft);
-        USBStream::instance()->setSpeedGoalRight(m_speedControllerRight.getSpeedGoal());
-        USBStream::instance()->setSpeedGoalLeft(m_speedControllerLeft.getSpeedGoal());
-        USBStream::instance()->setSpeedOutputRight(outputSpeedRight);
-        USBStream::instance()->setSpeedOutputLeft(outputSpeedLeft);
-        USBStream::instance()->setSpeedIntegratedOutputRight(m_speedControllerRight.getIntegratedOutput());
-        USBStream::instance()->setSpeedIntegratedOutputLeft(m_speedControllerLeft.getIntegratedOutput());
-        USBStream::instance()->setSpeedKpRight(m_speedControllerRight.getCurrentKp());
-        USBStream::instance()->setSpeedKpLeft(m_speedControllerLeft.getCurrentKp());
-        USBStream::instance()->setSpeedKiRight(m_speedControllerRight.getCurrentKi());
-        USBStream::instance()->setSpeedKiLeft(m_speedControllerLeft.getCurrentKi());
+        SampleStream *instance = SampleStream::instance();
+
+        instance->setSpeedEstimatedRight(estimatedSpeedRight);
+        instance->setSpeedEstimatedLeft(estimatedSpeedLeft);
+        instance->setSpeedGoalRight(m_speedControllerRight.getSpeedGoal());
+        instance->setSpeedGoalLeft(m_speedControllerLeft.getSpeedGoal());
+        instance->setSpeedOutputRight(outputSpeedRight);
+        instance->setSpeedOutputLeft(outputSpeedLeft);
+        instance->setSpeedIntegratedOutputRight(m_speedControllerRight.getIntegratedOutput());
+        instance->setSpeedIntegratedOutputLeft(m_speedControllerLeft.getIntegratedOutput());
+        instance->setSpeedKpRight(m_speedControllerRight.getCurrentKp());
+        instance->setSpeedKpLeft(m_speedControllerLeft.getCurrentKp());
+        instance->setSpeedKiRight(m_speedControllerRight.getCurrentKi());
+        instance->setSpeedKiLeft(m_speedControllerLeft.getCurrentKi());
 
 
-        USBStream::instance()->setAngleGoal(m_commandManager.getAngleGoal());
-        USBStream::instance()->setAngleAccumulator(m_angleRegulator.getAccumulator());
-        USBStream::instance()->setAngleOutput(m_angleRegulatorOutputSpeedConsign);
-        USBStream::instance()->setAngleOutputLimited(m_angleSpeedLimited);
+        instance->setAngleGoal(m_commandManager.getAngleGoal());
+        instance->setAngleAccumulator(m_angleRegulator.getAccumulator());
+        instance->setAngleOutput(m_angleRegulatorOutputSpeedConsign);
+        instance->setAngleOutputLimited(m_angleSpeedLimited);
 
-        USBStream::instance()->setDistGoal(m_commandManager.getDistanceGoal());
-        USBStream::instance()->setDistAccumulator(m_distanceRegulator.getAccumulator());
-        USBStream::instance()->setDistOutput(m_distRegulatorOutputSpeedConsign);
-        USBStream::instance()->setDistOutputLimited(m_distSpeedLimited);
+        instance->setDistGoal(m_commandManager.getDistanceGoal());
+        instance->setDistAccumulator(m_distanceRegulator.getAccumulator());
+        instance->setDistOutput(m_distRegulatorOutputSpeedConsign);
+        instance->setDistOutputLimited(m_distSpeedLimited);
 
-        USBStream::instance()->setOdoX(m_odometry.getX());
-        USBStream::instance()->setOdoY(m_odometry.getY());
-        USBStream::instance()->setOdoTheta(m_odometry.getTheta());
+        instance->setOdoX(m_odometry.getX());
+        instance->setOdoY(m_odometry.getY());
+        instance->setOdoTheta(m_odometry.getTheta());
 
-        USBStream::instance()->setRawEncoderDeltaLeft((float) encoderDeltaLeft);
-        USBStream::instance()->setRawEncoderDeltaRight((float) encoderDeltaRight);
+        instance->setRawEncoderDeltaLeft((float) encoderDeltaLeft);
+        instance->setRawEncoderDeltaRight((float) encoderDeltaRight);
 
-        USBStream::instance()->sendCurrentStream();
+        instance->sendCurrentStream();
 
         m_asservCounter++;
 
@@ -301,6 +303,12 @@ void AsservMain::setPosition(float X_mm, float Y_mm, float theta_rad)
      *    enqued consign in the commandManager are false
      */
     m_commandManager.reset();
+//    m_angleRegulator.reset();
+//    m_distanceRegulator.reset();
+//    m_speedControllerRight.resetIntegral();
+//    m_speedControllerLeft.resetIntegral();
+//    m_angleRegulatorAccelerationLimiter.reset();
+//    m_distanceRegulatorAccelerationLimiter.reset();
     chSysUnlock();
 }
 
@@ -313,6 +321,8 @@ void AsservMain::limitMotorControllerConsignToPercentage(float percentage)
     chSysLock();
     m_speedControllerLeft.setMaxOutputLimit(percentage);
     m_speedControllerRight.setMaxOutputLimit(percentage);
+//    m_speedControllerRight.resetIntegral();
+//    m_speedControllerLeft.resetIntegral();
     chSysUnlock();
 }
 

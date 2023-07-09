@@ -8,6 +8,7 @@
 #include <cfloat>
 
 #include "../../blockingDetector/SpeedErrorBlockingDetector.h"
+#include "../../USBStream_old.h"
 #include "raspIO.h"
 #include "util/asservMath.h"
 #include "util/chibiOsAllocatorWrapper.h"
@@ -18,7 +19,6 @@
 #include "Encoders/QuadratureEncoder.h"
 #include "motorController/Md22.h"
 #include "Odometry.h"
-#include "USBStream.h"
 #include "AccelerationLimiter/SimpleAccelerationLimiter.h"
 #include "AccelerationLimiter/AdvancedAccelerationLimiter.h"
 #include "Pll.h"

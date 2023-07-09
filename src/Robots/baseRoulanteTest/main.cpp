@@ -5,6 +5,7 @@
 #include <cstdlib>
 #include <cstring>
 
+#include "../../USBStream_old.h"
 #include "util/asservMath.h"
 #include "util/chibiOsAllocatorWrapper.h"
 #include "AsservMain.h"
@@ -12,7 +13,6 @@
 #include "Encoders/QuadratureEncoder.h"
 #include "motorController/Vnh5019.h"
 #include "Odometry.h"
-#include "USBStream.h"
 #include "SlopeFilter.h"
 #include "Pll.h"
 

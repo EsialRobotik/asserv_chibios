@@ -15,7 +15,7 @@ endif
 
 # C++ specific options here (added to USE_OPT).
 ifeq ($(USE_CPPOPT),)
-  USE_CPPOPT = -fno-rtti -fno-exceptions -std=c++11
+  USE_CPPOPT = -fno-rtti -fno-exceptions -std=c++17
 endif
 
 # Enable this if you want the linker to remove unused code and data.
@@ -146,7 +146,7 @@ CPPSRC = $(ALLCPPSRC) \
        $(wildcard $(SRCDIR)/Robots/$(ROBOT)/*.cpp ) \
        $(SRCDIR)/motorController/Vnh5019.cpp \
        $(SRCDIR)/motorController/Md22.cpp \
-       $(SRCDIR)/USBStream.cpp \
+       $(SRCDIR)/sampleStream/USBStream.cpp \
        $(SRCDIR)/Encoders/QuadratureEncoder.cpp \
        $(SRCDIR)/Encoders/ams_as5048b.cpp \
        $(SRCDIR)/Encoders/MagEncoders.cpp \

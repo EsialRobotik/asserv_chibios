@@ -1,5 +1,5 @@
-#ifndef ENCODERS_H_
-#define ENCODERS_H_
+#ifndef QUADRATURE_ENCODERS_H_
+#define QUADRATURE_ENCODERS_H_
 
 #include "Encoder.h"
 #include "ch.h"

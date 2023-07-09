@@ -9,12 +9,9 @@ const uint32_t synchroWord_stream = 0xCAFED00D;
 const uint32_t synchroWord_config = 0xCAFEDECA;
 const uint32_t synchroWord_connection = 0xDEADBEEF;
 
-USBStream *USBStream::s_instance = NULL;
 USBStream::USBStream()
 {
-    m_currentPtr = NULL;
     m_timestamp = 0;
-    m_bufferSize = 0;
 
     chMtxObjectInit (&m_sample_sending_mutex);
     std::memset(m_currentStruct.array, 0xFFFFFFFF, sizeof(m_currentStruct.array));
@@ -26,7 +23,9 @@ void USBStream::init()
     palSetPadMode(GPIOA, 12, PAL_MODE_ALTERNATE(10)); //USB D+
     palSetPadMode(GPIOA, 11, PAL_MODE_ALTERNATE(10)); //USB D-
 
+
     s_instance = new USBStream();
+    SampleStream::setInstance(s_instance);
 
     /*
      * Initializes a serial-over-USB CDC driver.
@@ -128,7 +127,7 @@ void USBStream::USBStreamHandleConnection_lowerpriothread(usbStreamCallback call
 {
     void *ptr = nullptr;
     uint32_t size = 0;
-    USBStream::instance()->getFullBuffer(&ptr, &size);
+    getFullBuffer(&ptr, &size);
     if (size > 0)
     {
         uint32_t *buffer = (uint32_t*) ptr;
@@ -169,7 +168,7 @@ void USBStream::USBStreamHandleConnection_lowerpriothread(usbStreamCallback call
             str[size] = 0;
             callback(str, size);
         }
-        USBStream::instance()->releaseBuffer();
+        releaseBuffer();
     }
 }
 

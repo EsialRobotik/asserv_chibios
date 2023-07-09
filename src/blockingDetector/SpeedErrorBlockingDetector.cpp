@@ -1,7 +1,6 @@
 #include "blockingDetector/SpeedErrorBlockingDetector.h"
 #include "SpeedController/SpeedController.h"
-#include "USBStream.h"
-
+#include <math.h>
 
 SpeedErrorBlockingDetector::SpeedErrorBlockingDetector(
         float dt, SpeedController & rightSpeedController, SpeedController & leftSpeedController,
@@ -31,8 +30,6 @@ void SpeedErrorBlockingDetector::update()
     m_errorValues[m_currentIdx] = currentError;
     m_movingIntegralError += (currentError-outError)*m_dt;
 
-//    USBStream::instance()->setMovingIntegralError(m_movingIntegralError);
-//    USBStream::instance()->setMovingIntegralErrorThreshold(m_movingIntegralErrorThreshold);
 }
 
 bool SpeedErrorBlockingDetector::isBlocked() const

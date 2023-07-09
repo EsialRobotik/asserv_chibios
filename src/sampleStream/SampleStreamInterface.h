@@ -1,31 +1,28 @@
-#ifndef USBSTREAM_SRC_DATASTREAMTYPE_H_
-#define USBSTREAM_SRC_DATASTREAMTYPE_H_
+#ifndef SRC_SAMPLE_STREAM_ITF_H_
+#define SRC_SAMPLE_STREAM_ITF_H_
 
-#include <stdint.h>
+
+#include <cstdint>
 #include <cmath>
-#include "ch.h"
-#include "USBStreamMacros.h"
+#include "SampleStreamMacros.h"
 
-
-class USBStream
+class SampleStream
 {
 public:
-    static void init();
-    static inline USBStream* instance()
+    virtual ~SampleStream(){}
+
+    static SampleStream* instance()
     {
         return s_instance;
     }
 
-    void* sendCurrentStream();
+    static void setInstance(SampleStream* instance)
+    {
+        s_instance = instance;
+    }
 
-    void sendConfig(uint8_t *configBuffer, uint8_t size);
+    virtual void* sendCurrentStream() = 0;
 
-
-    typedef void (*usbStreamCallback)(char *buffer, uint32_t size);
-    void USBStreamHandleConnection_lowerpriothread(usbStreamCallback callback);
-
-    void releaseBuffer();
-    void getFullBuffer(void** ptr, uint32_t* size);
 
     /*
      * DIRTY HACK !!
@@ -40,6 +37,7 @@ public:
         else
             *ptrFlt = value;
     };
+
 
     /*
      * This macro will generate accessor for each value
@@ -98,22 +96,14 @@ public:
 
 
 private:
-    USBStream();
-    virtual ~USBStream()
-    {
-    }
-    ;
 
-    void getEmptyBuffer();
-    void sendFullBuffer();
+    static inline SampleStream* s_instance = nullptr;
 
-    static USBStream* s_instance;
-
+protected:
     UsbStreamSample *m_currentPtr;
     UsbStreamSample m_currentStruct;
-    uint32_t m_timestamp;
-    uint32_t m_bufferSize;
-    mutex_t m_sample_sending_mutex;
+
 };
 
-#endif /* USBSTREAM_SRC_DATASTREAMTYPE_H_ */
+
+#endif /* SRC_SAMPLE_STREAM_ITF_H_ */

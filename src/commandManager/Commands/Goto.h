@@ -12,6 +12,7 @@ class Goto : public Command
             float gotoReturnThreshold_mm;
             float gotoAngleThreshold_rad;
             float arrivalDistanceThreshold_mm;
+            float alignOnlyExitAngleThreshold_rad;
         };
 
         explicit Goto(float consignX_mm, float consignY_mm,

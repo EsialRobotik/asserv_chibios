@@ -7,6 +7,7 @@
 #include <cstdio>
 #include <cfloat>
 
+#include "sampleStream/USBStream.h"
 #include "raspIO.h"
 #include "util/asservMath.h"
 #include "util/chibiOsAllocatorWrapper.h"
@@ -17,7 +18,6 @@
 #include "Encoders/QuadratureEncoder.h"
 #include "motorController/Md22.h"
 #include "Odometry.h"
-#include "USBStream.h"
 #include "AccelerationLimiter/SimpleAccelerationLimiter.h"
 #include "AccelerationLimiter/AdvancedAccelerationLimiter.h"
 #include "AccelerationLimiter/AccelerationDecelerationLimiter.h"
@@ -29,7 +29,7 @@
 #define ASSERV_THREAD_PERIOD_S (1.0/ASSERV_THREAD_FREQUENCY)
 #define ASSERV_POSITION_DIVISOR (5)
 
-#define ENCODERS_WHEELS_RADIUS_MM (31.80/2.0)
+#define ENCODERS_WHEELS_RADIUS_MM (31.40/2.0)
 #define ENCODERS_WHEELS_DISTANCE_MM (264.7)
 #define ENCODERS_TICKS_BY_TURN (1440*4)
 
@@ -67,15 +67,17 @@ float speed_controller_left_SpeedRange[NB_PI_SUBSET] = { 20, 50, 60};
 
 
 #define COMMAND_MANAGER_ARRIVAL_ANGLE_THRESHOLD_RAD (0.02)
-#define COMMAND_MANAGER_ARRIVAL_DISTANCE_THRESHOLD_mm (5)
+#define COMMAND_MANAGER_ARRIVAL_DISTANCE_THRESHOLD_mm (2.5)
 #define COMMAND_MANAGER_GOTO_ANGLE_THRESHOLD_RAD (M_PI/8)
 #define COMMAND_MANAGER_GOTO_RETURN_THRESHOLD_mm (10)
+#define COMMAND_MANAGER_ALIGN_ONLY_EXIT_ANGLE_THRESHOLD_RAD COMMAND_MANAGER_GOTO_ANGLE_THRESHOLD_RAD/10
+
 
 #define COMMAND_MANAGER_GOTO_PRECISE_ARRIVAL_DISTANCE_mm (3)
-Goto::GotoConfiguration preciseGotoConf  = {COMMAND_MANAGER_GOTO_RETURN_THRESHOLD_mm, COMMAND_MANAGER_GOTO_ANGLE_THRESHOLD_RAD, COMMAND_MANAGER_GOTO_PRECISE_ARRIVAL_DISTANCE_mm};
+Goto::GotoConfiguration preciseGotoConf  = {COMMAND_MANAGER_GOTO_RETURN_THRESHOLD_mm, COMMAND_MANAGER_GOTO_ANGLE_THRESHOLD_RAD, COMMAND_MANAGER_GOTO_PRECISE_ARRIVAL_DISTANCE_mm, COMMAND_MANAGER_ALIGN_ONLY_EXIT_ANGLE_THRESHOLD_RAD};
 
 #define COMMAND_MANAGER_GOTO_WAYPOINT_ARRIVAL_DISTANCE_mm (20)
-Goto::GotoConfiguration waypointGotoConf  = {COMMAND_MANAGER_GOTO_RETURN_THRESHOLD_mm, COMMAND_MANAGER_GOTO_ANGLE_THRESHOLD_RAD, COMMAND_MANAGER_GOTO_WAYPOINT_ARRIVAL_DISTANCE_mm};
+Goto::GotoConfiguration waypointGotoConf  = {COMMAND_MANAGER_GOTO_RETURN_THRESHOLD_mm, COMMAND_MANAGER_GOTO_ANGLE_THRESHOLD_RAD, COMMAND_MANAGER_GOTO_WAYPOINT_ARRIVAL_DISTANCE_mm, COMMAND_MANAGER_ALIGN_ONLY_EXIT_ANGLE_THRESHOLD_RAD};
 
 #define COMMAND_MANAGER_GOTONOSTOP_TOO_BIG_ANGLE_THRESHOLD_RAD (M_PI/2)
 GotoNoStop::GotoNoStopConfiguration gotoNoStopConf = {COMMAND_MANAGER_GOTO_ANGLE_THRESHOLD_RAD, COMMAND_MANAGER_GOTONOSTOP_TOO_BIG_ANGLE_THRESHOLD_RAD, (150/DIST_REGULATOR_KP), 85 };
@@ -574,6 +576,11 @@ void asservCommandUSB(BaseSequentialStream *chp, int argc, char **argv)
     {
         mainAsserv->resetToNormalMode();
         
+        commandManager->addGoTo(1000, 0);
+        chThdSleepMilliseconds(1200);
+        commandManager->setEmergencyStop();
+
+
         // commandManager->addGoToNoStop(500, 0);
         // commandManager->addGoToNoStop(500, 300);
         // commandManager->addGoToNoStop(0, 300);
@@ -586,11 +593,11 @@ void asservCommandUSB(BaseSequentialStream *chp, int argc, char **argv)
 //        commandManager->addGoToWaypointBack( 0, 0);
 //        commandManager->addGoToAngle(1000, 0);
 
-        commandManager->addGoToWaypoint(800, 0);
-        commandManager->addGoToWaypoint(800, 300);
-        commandManager->addGoToWaypoint(0, 300);
-        commandManager->addGoToWaypoint(0, 0);
-        commandManager->addGoToAngle(1000, 0);
+//        commandManager->addGoToWaypoint(800, 0);
+//        commandManager->addGoToWaypoint(800, 300);
+//        commandManager->addGoToWaypoint(0, 300);
+//        commandManager->addGoToWaypoint(0, 0);
+//        commandManager->addGoToAngle(1000, 0);
 //
 //        commandManager->addGoTo(500, 0);
 //        commandManager->addGoTo(500, 300);

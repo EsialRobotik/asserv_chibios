@@ -1,7 +1,8 @@
 #include "AccelerationDecelerationLimiter.h"
 #include <algorithm>
 #include <math.h>
-#include "USBStream.h"
+#include "sampleStream/SampleStreamInterface.h"
+
 
 
 AccelerationDecelerationLimiter::AccelerationDecelerationLimiter(
@@ -90,15 +91,17 @@ float AccelerationDecelerationLimiter::limitAcceleration(float dt, float targetS
         m_CompensatedOutput = -m_maxSpeed;
 
 
-    USBStream::instance()->setDistanceLimiterVelocityAtDecTime(m_velocityAtDecTime);
-    USBStream::instance()->setDistanceLimiterVelocityCompensation(m_velocityCompensation);
-    USBStream::instance()->setDistanceLimiterVelocityCompensated(targetSpeed - m_velocityCompensation);
-    USBStream::instance()->setDistanceLimiterOutput(m_CompensatedOutput);
-    USBStream::instance()->setDistanceLimitercurrentSpeed(currentSpeed);
-    USBStream::instance()->setDistanceLimiterTargetSpeed(targetSpeed);
-    USBStream::instance()->setDistanceLimiterTimeToVMax(m_timeToVmax);
-    USBStream::instance()->setDistanceLimiterMaxAttainableSpeed(m_maxAttainableSpeed);
-    USBStream::instance()->setDistanceLimiterTimeFromVmaxToZero(m_timeFromVmaxToZero);
+
+    SampleStream *instance = SampleStream::instance();
+    instance->setDistanceLimiterVelocityAtDecTime(m_velocityAtDecTime);
+    instance->setDistanceLimiterVelocityCompensation(m_velocityCompensation);
+    instance->setDistanceLimiterVelocityCompensated(targetSpeed - m_velocityCompensation);
+    instance->setDistanceLimiterOutput(m_CompensatedOutput);
+    instance->setDistanceLimitercurrentSpeed(currentSpeed);
+    instance->setDistanceLimiterTargetSpeed(targetSpeed);
+    instance->setDistanceLimiterTimeToVMax(m_timeToVmax);
+    instance->setDistanceLimiterMaxAttainableSpeed(m_maxAttainableSpeed);
+    instance->setDistanceLimiterTimeFromVmaxToZero(m_timeFromVmaxToZero);
 
 
     m_previousLimitedOutput = m_CompensatedOutput;
@@ -124,5 +127,6 @@ void AccelerationDecelerationLimiter::reset()
     m_velocityAtDecTime = m_maxSpeed;
     m_velocityCompensation = 0;
     m_CompensatedOutput = 0;
+    m_maxAttainableSpeed = 0;
 }
 

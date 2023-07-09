@@ -1,9 +1,10 @@
 #include "Goto.h"
 #include "Regulator.h"
 #include "util/asservMath.h"
-#include "USBStream.h"
+#include "ch.h"
 #include <new>
 #include <cmath>
+#include "sampleStream/SampleStreamInterface.h"
 
 Goto::Goto(float consignX_mm, float consignY_mm,
         GotoConfiguration const *configuration,
@@ -15,6 +16,8 @@ Goto::Goto(float consignX_mm, float consignY_mm,
         m_backModeCorrection = -1;
     else
         m_backModeCorrection = 1;
+
+    chDbgAssert(configuration->alignOnlyExitAngleThreshold_rad <= configuration->gotoAngleThreshold_rad, "Align only exit angle cannot be lower than goto Angle.");
 }
 
 void Goto::computeInitialConsign(float X_mm, float Y_mm, float theta_rad, float *distanceConsig, float *angleConsign, const Regulator &angle_regulator, const Regulator &distance_regulator)
@@ -58,12 +61,19 @@ void Goto::updateConsign(float X_mm, float Y_mm, float theta_rad, float *distanc
        if (fabs(deltaTheta) < m_configuration->gotoAngleThreshold_rad)
        {
            *distanceConsig = distance_regulator.getAccumulator() + m_backModeCorrection*deltaDist;
+       }
+
+       if (fabs(deltaTheta) < m_configuration->alignOnlyExitAngleThreshold_rad)
+       {
            m_alignOnly = false;
        }
    }
 
-   USBStream::instance()->setXGoal(m_consignX_mm);
-   USBStream::instance()->setYGoal(m_consignY_mm);}
+   SampleStream *instance = SampleStream::instance();
+   instance->setXGoal(m_consignX_mm);
+   instance->setYGoal(m_consignY_mm);
+   instance->setAlignOnly((m_alignOnly )? 1.0f : 0.0f);
+}
 
 bool Goto::isGoalReached(float X_mm, float Y_mm, float , const Regulator &, const Regulator &, const Command* )
 {

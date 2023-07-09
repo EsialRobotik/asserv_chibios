@@ -1,10 +1,10 @@
 #include "GotoNoStop.h"
 #include "Regulator.h"
 #include "util/asservMath.h"
-#include "USBStream.h"
 #include "AccelerationLimiter/AccelerationDecelerationLimiter.h"
 #include <new>
 #include <cmath>
+#include "sampleStream/SampleStreamInterface.h"
 
 GotoNoStop::GotoNoStop(float consignX_mm, float consignY_mm,
         GotoNoStopConfiguration const *configuration,
@@ -23,8 +23,9 @@ GotoNoStop::GotoNoStop(float consignX_mm, float consignY_mm,
 
 void GotoNoStop::computeInitialConsign(float X_mm, float Y_mm, float theta_rad, float *distanceConsig, float *angleConsign, const Regulator &angle_regulator, const Regulator &distance_regulator)
 {
-    USBStream::instance()->setXGoal(m_consignX_mm);
-    USBStream::instance()->setYGoal(m_consignY_mm);
+    SampleStream *instance = SampleStream::instance();
+    instance->setXGoal(m_consignX_mm);
+    instance->setYGoal(m_consignY_mm);
 
    float deltaX = m_consignX_mm - X_mm;
    float deltaY = m_consignY_mm - Y_mm;
@@ -95,8 +96,8 @@ void GotoNoStop::computeInitialConsign(float X_mm, float Y_mm, float theta_rad, 
        *distanceConsig = distance_regulator.getAccumulator() + m_backModeCorrection * deltaDist;
 
 
-       USBStream::instance()->setXGoal(X_goal);
-       USBStream::instance()->setYGoal(Y_goal);
+       instance->setXGoal(X_goal);
+       instance->setYGoal(Y_goal);
    }
 
 

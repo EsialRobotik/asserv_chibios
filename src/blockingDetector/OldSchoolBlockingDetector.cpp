@@ -1,8 +1,8 @@
 #include "blockingDetector/OldSchoolBlockingDetector.h"
 #include "Odometry.h"
 #include "motorController/MotorController.h"
-#include "USBStream.h"
 #include <math.h>
+#include "sampleStream/SampleStreamInterface.h"
 
 OldSchoolBlockingDetector::OldSchoolBlockingDetector(
         float dt, MotorController const &motorController, Odometry const &odometry,
@@ -56,8 +56,10 @@ void OldSchoolBlockingDetector::update()
         m_blocking_detected_duration = 0;
     }
 
-    USBStream::instance()->setBlockingDuration(m_blocking_detected_duration);
-    USBStream::instance()->setBlockingDetected( (m_blocking_detected_duration > m_blocking_detected_duration_threshold) ? 1.0 : 0.0);
+
+    SampleStream *instance = SampleStream::instance();
+    instance->setBlockingDuration(m_blocking_detected_duration);
+    instance->setBlockingDetected( (m_blocking_detected_duration > m_blocking_detected_duration_threshold) ? 1.0 : 0.0);
 }
 
 bool OldSchoolBlockingDetector::isBlocked() const
