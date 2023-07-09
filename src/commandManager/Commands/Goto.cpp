@@ -72,7 +72,6 @@ void Goto::updateConsign(float X_mm, float Y_mm, float theta_rad, float *distanc
    SampleStream *instance = SampleStream::instance();
    instance->setXGoal(m_consignX_mm);
    instance->setYGoal(m_consignY_mm);
-   instance->setAlignOnly((m_alignOnly )? 1.0f : 0.0f);
 }
 
 bool Goto::isGoalReached(float X_mm, float Y_mm, float , const Regulator &, const Regulator &, const Command* )
