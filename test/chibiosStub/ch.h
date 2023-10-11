@@ -3,6 +3,8 @@
 
 #include <cstdint>
 #include <cassert>
+#include <chrono>
+#include <thread>
 
 typedef uint32_t time_usecs_t;
 
@@ -21,6 +23,6 @@ static inline systime_t chVTGetSystemTime(void) {
 static inline void chSysLock(void) {}
 static inline void chSysUnlock(void) {}
 
-static inline void chThdSleepUntil(systime_t time){};
+static inline void chThdSleepUntil(systime_t time){ std::this_thread::sleep_for(std::chrono::milliseconds(1)); };
 
 #endif /* CHTIME_H */

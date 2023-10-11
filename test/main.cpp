@@ -2,8 +2,7 @@
 #include "Regulator.h"
 #include "Pll.h"
 #include "sampleStream/SampleStreamInterface.h"
-#include "robotStub/EncoderSimulation.h"
-#include "robotStub/MotorControllerSimulation.h"
+#include "robotStub/MotorEncoderSimulator.h"
 #include "Odometry.h"
 #include "SpeedController/AdaptativeSpeedController.h"
 #include "AccelerationLimiter/SimpleAccelerationLimiter.h"
@@ -12,6 +11,9 @@
 #include "AsservMain.h"
 #include "NativeStream.h"
 #include <float.h>
+#include <thread>
+#include <iostream>
+#include <string>
 
 #define ASSERV_THREAD_FREQUENCY (600)
 #define ASSERV_THREAD_PERIOD_S (1.0/ASSERV_THREAD_FREQUENCY)
@@ -19,20 +21,23 @@
 
 #define ENCODERS_TICKS_BY_TURN (1440*4)
 
-
-#define ANGLE_REGULATOR_KP (1)
-#define DIST_REGULATOR_KP (1)
-#define ANGLE_REGULATOR_MAX_ACC (3000)
-#define MAX_SPEED_MM_PER_SEC (1500)
-#define PLL_BANDWIDTH (150)
 #define ENCODERS_WHEELS_RADIUS_MM (31.40/2.0)
 #define ENCODERS_WHEELS_DISTANCE_MM (261.2)
+#define ENCODERS_TICKS_BY_TURN (1440*4)
 
+#define MAX_SPEED_MM_PER_SEC (1500)
+
+#define DIST_REGULATOR_KP (5)
 #define DIST_REGULATOR_MAX_ACC_FW (1200)
 #define DIST_REGULATOR_MAX_DEC_FW (1200)
 #define DIST_REGULATOR_MAX_ACC_BW (1200)
 #define DIST_REGULATOR_MAX_DEC_BW (1200)
 #define ACC_DEC_DAMPLING (1.6)
+
+#define PLL_BANDWIDTH (150)
+
+#define ANGLE_REGULATOR_KP (800)
+#define ANGLE_REGULATOR_MAX_ACC (3000)
 
 
 float speed_controller_right_Kp[NB_PI_SUBSET] = { 0.1, 0.1, 0.1};
@@ -60,12 +65,13 @@ Goto::GotoConfiguration waypointGotoConf  = {COMMAND_MANAGER_GOTO_RETURN_THRESHO
 GotoNoStop::GotoNoStopConfiguration gotoNoStopConf = {COMMAND_MANAGER_GOTO_ANGLE_THRESHOLD_RAD, COMMAND_MANAGER_GOTONOSTOP_TOO_BIG_ANGLE_THRESHOLD_RAD, (150/DIST_REGULATOR_KP), 85 };
 
 
+CommandManager *commandManager;
+AsservMain *mainAsserv;
+void shell();
+
 int main(void)
 {
-    printf("zob\n");
-    Regulator reg(10, 10);
-    EncoderSimuation encoders;
-    MotorControllerSimulation motorController;
+    MotorEncoderSimulator motorEncoder(ASSERV_THREAD_PERIOD_S, ENCODERS_WHEELS_RADIUS_MM, ENCODERS_TICKS_BY_TURN );
 
     Regulator angleRegulator(ANGLE_REGULATOR_KP, MAX_SPEED_MM_PER_SEC);
     Regulator distanceRegulator(DIST_REGULATOR_KP, FLT_MAX);
@@ -85,23 +91,64 @@ int main(void)
 
 
 
-    CommandManager commandManager( COMMAND_MANAGER_ARRIVAL_DISTANCE_THRESHOLD_mm, COMMAND_MANAGER_ARRIVAL_ANGLE_THRESHOLD_RAD,
+    commandManager = new CommandManager( COMMAND_MANAGER_ARRIVAL_DISTANCE_THRESHOLD_mm, COMMAND_MANAGER_ARRIVAL_ANGLE_THRESHOLD_RAD,
                                    preciseGotoConf, waypointGotoConf, gotoNoStopConf,
                                    angleRegulator, distanceRegulator,
                                    &distanceAccelerationLimiter,
                                    nullptr);
 
-    AsservMain mainAsserv( ASSERV_THREAD_FREQUENCY, ASSERV_POSITION_DIVISOR,
+    mainAsserv = new AsservMain( ASSERV_THREAD_FREQUENCY, ASSERV_POSITION_DIVISOR,
                            ENCODERS_WHEELS_RADIUS_MM, ENCODERS_WHEELS_DISTANCE_MM, ENCODERS_TICKS_BY_TURN,
-                           commandManager, motorController, encoders, odometry,
+                           *commandManager, motorEncoder, motorEncoder, odometry,
                            angleRegulator, distanceRegulator,
                            angleAccelerationlimiter, distanceAccelerationLimiter,
                            speedControllerRight, speedControllerLeft,
                            rightPll, leftPll,
                            nullptr);
 
-    NativeStream::init();
+    NativeStream::init(ASSERV_THREAD_PERIOD_S);
 
-    mainAsserv.mainLoop();
+    thread thread_shell(shell);
+    mainAsserv->mainLoop();
+    thread_shell.join();
+}
 
+
+void shell()
+{
+    printf("shell started\n");
+    std::string line;
+
+    while(1)
+    {
+        std::getline (std::cin,line);
+
+        if( line.c_str()[0] == 'a' )
+        {
+            float X = 100;
+            printf("Adding straight line of %f mm\r\n", X);
+
+            commandManager->addStraightLine(X);
+        }
+        else if( line.c_str()[0] == 'b' )
+        {
+            float right = 100;
+            float left = 1000;
+            printf("Wheel speedl r:%f l:%f\r\n", right,left);
+
+            mainAsserv->setWheelsSpeed(right, left);
+        }
+        else if( line.c_str()[0] == 'c' )
+        {
+            printf("test !\r\n");
+
+            commandManager->addGoTo(1000,0);
+            commandManager->addGoTo(1000,10);
+            commandManager->addGoTo(1010,10);
+        }
+        else
+        {
+            printf("Unknown command %s\n", line.c_str());
+        }
+    }
 }

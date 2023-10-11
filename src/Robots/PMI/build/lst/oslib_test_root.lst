@@ -1,0 +1,1617 @@
+ARM GAS  /tmp/ccH6nJ0S.s 			page 1
+
+
+   1              		.cpu cortex-m4
+   2              		.arch armv7e-m
+   3              		.fpu fpv4-sp-d16
+   4              		.eabi_attribute 27, 1
+   5              		.eabi_attribute 28, 1
+   6              		.eabi_attribute 20, 1
+   7              		.eabi_attribute 21, 1
+   8              		.eabi_attribute 23, 3
+   9              		.eabi_attribute 24, 1
+  10              		.eabi_attribute 25, 1
+  11              		.eabi_attribute 26, 1
+  12              		.eabi_attribute 30, 1
+  13              		.eabi_attribute 34, 1
+  14              		.eabi_attribute 18, 4
+  15              		.file	"oslib_test_root.c"
+  16              		.file 1 "../../../ChibiOS//test/lib/ch_test.h"
+  17              		.file 2 "/home/cheff/dev_tools/gcc-arm-none-eabi-10.3-2021.10/lib/gcc/arm-none-eabi/10.3.1/include
+  18              		.file 3 "../../../ChibiOS//test/oslib/source/test/oslib_test_sequence_001.h"
+  19              		.file 4 "../../../ChibiOS//test/oslib/source/test/oslib_test_sequence_002.h"
+  20              		.file 5 "../../../ChibiOS//test/oslib/source/test/oslib_test_sequence_003.h"
+  21              		.file 6 "../../../ChibiOS//test/oslib/source/test/oslib_test_sequence_004.h"
+  22              		.file 7 "../../../ChibiOS//test/oslib/source/test/oslib_test_sequence_005.h"
+  23              		.file 8 "../../../ChibiOS//test/oslib/source/test/oslib_test_sequence_006.h"
+  24              		.file 9 "../../../ChibiOS//test/oslib/source/test/oslib_test_sequence_007.h"
+  25              		.file 10 "../../../ChibiOS//test/oslib/source/test/oslib_test_sequence_008.h"
+  26              		.file 11 "../../../ChibiOS//test/oslib/source/test/oslib_test_sequence_009.h"
+  27              		.file 12 "../../../ChibiOS//test/oslib/source/test/oslib_test_root.h"
+  28              		.file 13 "../../../ChibiOS//test/oslib/source/test/oslib_test_root.c"
+  29              		.section	.gnu.debuglto_.debug_info,"e",%progbits
+  30              	.Ldebug_info0:
+  31              		.hidden	oslib_test_root.c.e90fb5f1
+  32              		.weak	oslib_test_root.c.e90fb5f1
+  33              	oslib_test_root.c.e90fb5f1:
+  34 0000 0F020000 		.4byte	0x20f
+  35 0004 0400     		.2byte	0x4
+  36 0006 00000000 		.4byte	.Ldebug_abbrev0
+  37 000a 04       		.byte	0x4
+  38 000b 01       		.uleb128 0x1
+  39 000c BD000000 		.4byte	.LASF32
+  40 0010 0C       		.byte	0xc
+  41 0011 9A010000 		.4byte	.LASF33
+  42 0015 3F020000 		.4byte	.LASF34
+  43 0019 00000000 		.4byte	.Ldebug_line0
+  44 001d 02       		.uleb128 0x2
+  45 001e 04       		.byte	0x4
+  46 001f 05       		.byte	0x5
+  47 0020 696E7400 		.ascii	"int\000"
+  48 0024 03       		.uleb128 0x3
+  49 0025 48000000 		.4byte	.LASF16
+  50 0029 02       		.byte	0x2
+  51 002a D1       		.byte	0xd1
+  52 002b 17       		.byte	0x17
+  53 002c 30000000 		.4byte	0x30
+  54 0030 04       		.uleb128 0x4
+  55 0031 04       		.byte	0x4
+  56 0032 07       		.byte	0x7
+  57 0033 88020000 		.4byte	.LASF0
+ARM GAS  /tmp/ccH6nJ0S.s 			page 2
+
+
+  58 0037 04       		.uleb128 0x4
+  59 0038 08       		.byte	0x8
+  60 0039 05       		.byte	0x5
+  61 003a C2020000 		.4byte	.LASF1
+  62 003e 04       		.uleb128 0x4
+  63 003f 08       		.byte	0x8
+  64 0040 04       		.byte	0x4
+  65 0041 1C030000 		.4byte	.LASF2
+  66 0045 04       		.uleb128 0x4
+  67 0046 01       		.byte	0x1
+  68 0047 06       		.byte	0x6
+  69 0048 28030000 		.4byte	.LASF3
+  70 004c 04       		.uleb128 0x4
+  71 004d 01       		.byte	0x1
+  72 004e 08       		.byte	0x8
+  73 004f EC010000 		.4byte	.LASF4
+  74 0053 04       		.uleb128 0x4
+  75 0054 02       		.byte	0x2
+  76 0055 05       		.byte	0x5
+  77 0056 6D020000 		.4byte	.LASF5
+  78 005a 04       		.uleb128 0x4
+  79 005b 02       		.byte	0x2
+  80 005c 07       		.byte	0x7
+  81 005d 15020000 		.4byte	.LASF6
+  82 0061 04       		.uleb128 0x4
+  83 0062 04       		.byte	0x4
+  84 0063 05       		.byte	0x5
+  85 0064 13030000 		.4byte	.LASF7
+  86 0068 04       		.uleb128 0x4
+  87 0069 04       		.byte	0x4
+  88 006a 07       		.byte	0x7
+  89 006b FA010000 		.4byte	.LASF8
+  90 006f 04       		.uleb128 0x4
+  91 0070 08       		.byte	0x8
+  92 0071 07       		.byte	0x7
+  93 0072 D5010000 		.4byte	.LASF9
+  94 0076 05       		.uleb128 0x5
+  95 0077 04       		.byte	0x4
+  96 0078 83000000 		.4byte	0x83
+  97 007c 04       		.uleb128 0x4
+  98 007d 01       		.byte	0x1
+  99 007e 08       		.byte	0x8
+ 100 007f 95020000 		.4byte	.LASF10
+ 101 0083 06       		.uleb128 0x6
+ 102 0084 7C000000 		.4byte	0x7c
+ 103 0088 04       		.uleb128 0x4
+ 104 0089 01       		.byte	0x1
+ 105 008a 02       		.byte	0x2
+ 106 008b 34030000 		.4byte	.LASF11
+ 107 008f 07       		.uleb128 0x7
+ 108 0090 10       		.byte	0x10
+ 109 0091 01       		.byte	0x1
+ 110 0092 4C       		.byte	0x4c
+ 111 0093 09       		.byte	0x9
+ 112 0094 CD000000 		.4byte	0xcd
+ 113 0098 08       		.uleb128 0x8
+ 114 0099 E8020000 		.4byte	.LASF12
+ARM GAS  /tmp/ccH6nJ0S.s 			page 3
+
+
+ 115 009d 01       		.byte	0x1
+ 116 009e 4D       		.byte	0x4d
+ 117 009f 0F       		.byte	0xf
+ 118 00a0 76000000 		.4byte	0x76
+ 119 00a4 00       		.byte	0
+ 120 00a5 08       		.uleb128 0x8
+ 121 00a6 AF000000 		.4byte	.LASF13
+ 122 00aa 01       		.byte	0x1
+ 123 00ab 4E       		.byte	0x4e
+ 124 00ac 0A       		.byte	0xa
+ 125 00ad CE000000 		.4byte	0xce
+ 126 00b1 04       		.byte	0x4
+ 127 00b2 08       		.uleb128 0x8
+ 128 00b3 0C020000 		.4byte	.LASF14
+ 129 00b7 01       		.byte	0x1
+ 130 00b8 4F       		.byte	0x4f
+ 131 00b9 0A       		.byte	0xa
+ 132 00ba CE000000 		.4byte	0xce
+ 133 00be 08       		.byte	0x8
+ 134 00bf 08       		.uleb128 0x8
+ 135 00c0 B5000000 		.4byte	.LASF15
+ 136 00c4 01       		.byte	0x1
+ 137 00c5 50       		.byte	0x50
+ 138 00c6 0A       		.byte	0xa
+ 139 00c7 CE000000 		.4byte	0xce
+ 140 00cb 0C       		.byte	0xc
+ 141 00cc 00       		.byte	0
+ 142 00cd 09       		.uleb128 0x9
+ 143 00ce 05       		.uleb128 0x5
+ 144 00cf 04       		.byte	0x4
+ 145 00d0 CD000000 		.4byte	0xcd
+ 146 00d4 03       		.uleb128 0x3
+ 147 00d5 28020000 		.4byte	.LASF17
+ 148 00d9 01       		.byte	0x1
+ 149 00da 51       		.byte	0x51
+ 150 00db 03       		.byte	0x3
+ 151 00dc 8F000000 		.4byte	0x8f
+ 152 00e0 06       		.uleb128 0x6
+ 153 00e1 D4000000 		.4byte	0xd4
+ 154 00e5 07       		.uleb128 0x7
+ 155 00e6 08       		.byte	0x8
+ 156 00e7 01       		.byte	0x1
+ 157 00e8 56       		.byte	0x56
+ 158 00e9 09       		.byte	0x9
+ 159 00ea 09010000 		.4byte	0x109
+ 160 00ee 08       		.uleb128 0x8
+ 161 00ef E8020000 		.4byte	.LASF12
+ 162 00f3 01       		.byte	0x1
+ 163 00f4 57       		.byte	0x57
+ 164 00f5 16       		.byte	0x16
+ 165 00f6 76000000 		.4byte	0x76
+ 166 00fa 00       		.byte	0
+ 167 00fb 08       		.uleb128 0x8
+ 168 00fc BC020000 		.4byte	.LASF18
+ 169 0100 01       		.byte	0x1
+ 170 0101 58       		.byte	0x58
+ 171 0102 1E       		.byte	0x1e
+ARM GAS  /tmp/ccH6nJ0S.s 			page 4
+
+
+ 172 0103 09010000 		.4byte	0x109
+ 173 0107 04       		.byte	0x4
+ 174 0108 00       		.byte	0
+ 175 0109 05       		.uleb128 0x5
+ 176 010a 04       		.byte	0x4
+ 177 010b 15010000 		.4byte	0x115
+ 178 010f 05       		.uleb128 0x5
+ 179 0110 04       		.byte	0x4
+ 180 0111 E0000000 		.4byte	0xe0
+ 181 0115 06       		.uleb128 0x6
+ 182 0116 0F010000 		.4byte	0x10f
+ 183 011a 03       		.uleb128 0x3
+ 184 011b 04030000 		.4byte	.LASF19
+ 185 011f 01       		.byte	0x1
+ 186 0120 59       		.byte	0x59
+ 187 0121 03       		.byte	0x3
+ 188 0122 E5000000 		.4byte	0xe5
+ 189 0126 06       		.uleb128 0x6
+ 190 0127 1A010000 		.4byte	0x11a
+ 191 012b 07       		.uleb128 0x7
+ 192 012c 08       		.byte	0x8
+ 193 012d 01       		.byte	0x1
+ 194 012e 5E       		.byte	0x5e
+ 195 012f 09       		.byte	0x9
+ 196 0130 4F010000 		.4byte	0x14f
+ 197 0134 08       		.uleb128 0x8
+ 198 0135 E8020000 		.4byte	.LASF12
+ 199 0139 01       		.byte	0x1
+ 200 013a 5F       		.byte	0x5f
+ 201 013b 16       		.byte	0x16
+ 202 013c 76000000 		.4byte	0x76
+ 203 0140 00       		.byte	0
+ 204 0141 08       		.uleb128 0x8
+ 205 0142 B2020000 		.4byte	.LASF20
+ 206 0146 01       		.byte	0x1
+ 207 0147 60       		.byte	0x60
+ 208 0148 22       		.byte	0x22
+ 209 0149 4F010000 		.4byte	0x14f
+ 210 014d 04       		.byte	0x4
+ 211 014e 00       		.byte	0
+ 212 014f 05       		.uleb128 0x5
+ 213 0150 04       		.byte	0x4
+ 214 0151 5B010000 		.4byte	0x15b
+ 215 0155 05       		.uleb128 0x5
+ 216 0156 04       		.byte	0x4
+ 217 0157 26010000 		.4byte	0x126
+ 218 015b 06       		.uleb128 0x6
+ 219 015c 55010000 		.4byte	0x155
+ 220 0160 03       		.uleb128 0x3
+ 221 0161 33020000 		.4byte	.LASF21
+ 222 0165 01       		.byte	0x1
+ 223 0166 61       		.byte	0x61
+ 224 0167 03       		.byte	0x3
+ 225 0168 2B010000 		.4byte	0x12b
+ 226 016c 06       		.uleb128 0x6
+ 227 016d 60010000 		.4byte	0x160
+ 228 0171 0A       		.uleb128 0xa
+ARM GAS  /tmp/ccH6nJ0S.s 			page 5
+
+
+ 229 0172 00000000 		.4byte	.LASF22
+ 230 0176 03       		.byte	0x3
+ 231 0177 19       		.byte	0x19
+ 232 0178 1D       		.byte	0x1d
+ 233 0179 26010000 		.4byte	0x126
+ 234 017d 0A       		.uleb128 0xa
+ 235 017e 18000000 		.4byte	.LASF23
+ 236 0182 04       		.byte	0x4
+ 237 0183 19       		.byte	0x19
+ 238 0184 1D       		.byte	0x1d
+ 239 0185 26010000 		.4byte	0x126
+ 240 0189 0A       		.uleb128 0xa
+ 241 018a 30000000 		.4byte	.LASF24
+ 242 018e 05       		.byte	0x5
+ 243 018f 19       		.byte	0x19
+ 244 0190 1D       		.byte	0x1d
+ 245 0191 26010000 		.4byte	0x126
+ 246 0195 0A       		.uleb128 0xa
+ 247 0196 9A020000 		.4byte	.LASF25
+ 248 019a 06       		.byte	0x6
+ 249 019b 19       		.byte	0x19
+ 250 019c 1D       		.byte	0x1d
+ 251 019d 26010000 		.4byte	0x126
+ 252 01a1 0A       		.uleb128 0xa
+ 253 01a2 4F000000 		.4byte	.LASF26
+ 254 01a6 07       		.byte	0x7
+ 255 01a7 19       		.byte	0x19
+ 256 01a8 1D       		.byte	0x1d
+ 257 01a9 26010000 		.4byte	0x126
+ 258 01ad 0A       		.uleb128 0xa
+ 259 01ae 67000000 		.4byte	.LASF27
+ 260 01b2 08       		.byte	0x8
+ 261 01b3 19       		.byte	0x19
+ 262 01b4 1D       		.byte	0x1d
+ 263 01b5 26010000 		.4byte	0x126
+ 264 01b9 0A       		.uleb128 0xa
+ 265 01ba 7F000000 		.4byte	.LASF28
+ 266 01be 09       		.byte	0x9
+ 267 01bf 19       		.byte	0x19
+ 268 01c0 1D       		.byte	0x1d
+ 269 01c1 26010000 		.4byte	0x126
+ 270 01c5 0A       		.uleb128 0xa
+ 271 01c6 97000000 		.4byte	.LASF29
+ 272 01ca 0A       		.byte	0xa
+ 273 01cb 19       		.byte	0x19
+ 274 01cc 1D       		.byte	0x1d
+ 275 01cd 26010000 		.4byte	0x126
+ 276 01d1 0A       		.uleb128 0xa
+ 277 01d2 D0020000 		.4byte	.LASF30
+ 278 01d6 0B       		.byte	0xb
+ 279 01d7 19       		.byte	0x19
+ 280 01d8 1D       		.byte	0x1d
+ 281 01d9 26010000 		.4byte	0x126
+ 282 01dd 0A       		.uleb128 0xa
+ 283 01de 77020000 		.4byte	.LASF31
+ 284 01e2 0C       		.byte	0xc
+ 285 01e3 2B       		.byte	0x2b
+ARM GAS  /tmp/ccH6nJ0S.s 			page 6
+
+
+ 286 01e4 1A       		.byte	0x1a
+ 287 01e5 6C010000 		.4byte	0x16c
+ 288 01e9 0B       		.uleb128 0xb
+ 289 01ea 5B010000 		.4byte	0x15b
+ 290 01ee F9010000 		.4byte	0x1f9
+ 291 01f2 0C       		.uleb128 0xc
+ 292 01f3 30000000 		.4byte	0x30
+ 293 01f7 09       		.byte	0x9
+ 294 01f8 00       		.byte	0
+ 295 01f9 06       		.uleb128 0x6
+ 296 01fa E9010000 		.4byte	0x1e9
+ 297 01fe 0D       		.uleb128 0xd
+ 298 01ff ED020000 		.4byte	.LASF35
+ 299 0203 0D       		.byte	0xd
+ 300 0204 35       		.byte	0x35
+ 301 0205 1E       		.byte	0x1e
+ 302 0206 F9010000 		.4byte	0x1f9
+ 303 020a 0E       		.uleb128 0xe
+ 304 020b DD010000 		.4byte	0x1dd
+ 305 020f 0D       		.byte	0xd
+ 306 0210 55       		.byte	0x55
+ 307 0211 13       		.byte	0x13
+ 308 0212 00       		.byte	0
+ 309              		.section	.gnu.debuglto_.debug_abbrev,"e",%progbits
+ 310              	.Ldebug_abbrev0:
+ 311 0000 01       		.uleb128 0x1
+ 312 0001 11       		.uleb128 0x11
+ 313 0002 01       		.byte	0x1
+ 314 0003 25       		.uleb128 0x25
+ 315 0004 0E       		.uleb128 0xe
+ 316 0005 13       		.uleb128 0x13
+ 317 0006 0B       		.uleb128 0xb
+ 318 0007 03       		.uleb128 0x3
+ 319 0008 0E       		.uleb128 0xe
+ 320 0009 1B       		.uleb128 0x1b
+ 321 000a 0E       		.uleb128 0xe
+ 322 000b 10       		.uleb128 0x10
+ 323 000c 17       		.uleb128 0x17
+ 324 000d 00       		.byte	0
+ 325 000e 00       		.byte	0
+ 326 000f 02       		.uleb128 0x2
+ 327 0010 24       		.uleb128 0x24
+ 328 0011 00       		.byte	0
+ 329 0012 0B       		.uleb128 0xb
+ 330 0013 0B       		.uleb128 0xb
+ 331 0014 3E       		.uleb128 0x3e
+ 332 0015 0B       		.uleb128 0xb
+ 333 0016 03       		.uleb128 0x3
+ 334 0017 08       		.uleb128 0x8
+ 335 0018 00       		.byte	0
+ 336 0019 00       		.byte	0
+ 337 001a 03       		.uleb128 0x3
+ 338 001b 16       		.uleb128 0x16
+ 339 001c 00       		.byte	0
+ 340 001d 03       		.uleb128 0x3
+ 341 001e 0E       		.uleb128 0xe
+ 342 001f 3A       		.uleb128 0x3a
+ARM GAS  /tmp/ccH6nJ0S.s 			page 7
+
+
+ 343 0020 0B       		.uleb128 0xb
+ 344 0021 3B       		.uleb128 0x3b
+ 345 0022 0B       		.uleb128 0xb
+ 346 0023 39       		.uleb128 0x39
+ 347 0024 0B       		.uleb128 0xb
+ 348 0025 49       		.uleb128 0x49
+ 349 0026 13       		.uleb128 0x13
+ 350 0027 00       		.byte	0
+ 351 0028 00       		.byte	0
+ 352 0029 04       		.uleb128 0x4
+ 353 002a 24       		.uleb128 0x24
+ 354 002b 00       		.byte	0
+ 355 002c 0B       		.uleb128 0xb
+ 356 002d 0B       		.uleb128 0xb
+ 357 002e 3E       		.uleb128 0x3e
+ 358 002f 0B       		.uleb128 0xb
+ 359 0030 03       		.uleb128 0x3
+ 360 0031 0E       		.uleb128 0xe
+ 361 0032 00       		.byte	0
+ 362 0033 00       		.byte	0
+ 363 0034 05       		.uleb128 0x5
+ 364 0035 0F       		.uleb128 0xf
+ 365 0036 00       		.byte	0
+ 366 0037 0B       		.uleb128 0xb
+ 367 0038 0B       		.uleb128 0xb
+ 368 0039 49       		.uleb128 0x49
+ 369 003a 13       		.uleb128 0x13
+ 370 003b 00       		.byte	0
+ 371 003c 00       		.byte	0
+ 372 003d 06       		.uleb128 0x6
+ 373 003e 26       		.uleb128 0x26
+ 374 003f 00       		.byte	0
+ 375 0040 49       		.uleb128 0x49
+ 376 0041 13       		.uleb128 0x13
+ 377 0042 00       		.byte	0
+ 378 0043 00       		.byte	0
+ 379 0044 07       		.uleb128 0x7
+ 380 0045 13       		.uleb128 0x13
+ 381 0046 01       		.byte	0x1
+ 382 0047 0B       		.uleb128 0xb
+ 383 0048 0B       		.uleb128 0xb
+ 384 0049 3A       		.uleb128 0x3a
+ 385 004a 0B       		.uleb128 0xb
+ 386 004b 3B       		.uleb128 0x3b
+ 387 004c 0B       		.uleb128 0xb
+ 388 004d 39       		.uleb128 0x39
+ 389 004e 0B       		.uleb128 0xb
+ 390 004f 01       		.uleb128 0x1
+ 391 0050 13       		.uleb128 0x13
+ 392 0051 00       		.byte	0
+ 393 0052 00       		.byte	0
+ 394 0053 08       		.uleb128 0x8
+ 395 0054 0D       		.uleb128 0xd
+ 396 0055 00       		.byte	0
+ 397 0056 03       		.uleb128 0x3
+ 398 0057 0E       		.uleb128 0xe
+ 399 0058 3A       		.uleb128 0x3a
+ARM GAS  /tmp/ccH6nJ0S.s 			page 8
+
+
+ 400 0059 0B       		.uleb128 0xb
+ 401 005a 3B       		.uleb128 0x3b
+ 402 005b 0B       		.uleb128 0xb
+ 403 005c 39       		.uleb128 0x39
+ 404 005d 0B       		.uleb128 0xb
+ 405 005e 49       		.uleb128 0x49
+ 406 005f 13       		.uleb128 0x13
+ 407 0060 38       		.uleb128 0x38
+ 408 0061 0B       		.uleb128 0xb
+ 409 0062 00       		.byte	0
+ 410 0063 00       		.byte	0
+ 411 0064 09       		.uleb128 0x9
+ 412 0065 15       		.uleb128 0x15
+ 413 0066 00       		.byte	0
+ 414 0067 27       		.uleb128 0x27
+ 415 0068 19       		.uleb128 0x19
+ 416 0069 00       		.byte	0
+ 417 006a 00       		.byte	0
+ 418 006b 0A       		.uleb128 0xa
+ 419 006c 34       		.uleb128 0x34
+ 420 006d 00       		.byte	0
+ 421 006e 03       		.uleb128 0x3
+ 422 006f 0E       		.uleb128 0xe
+ 423 0070 3A       		.uleb128 0x3a
+ 424 0071 0B       		.uleb128 0xb
+ 425 0072 3B       		.uleb128 0x3b
+ 426 0073 0B       		.uleb128 0xb
+ 427 0074 39       		.uleb128 0x39
+ 428 0075 0B       		.uleb128 0xb
+ 429 0076 49       		.uleb128 0x49
+ 430 0077 13       		.uleb128 0x13
+ 431 0078 3F       		.uleb128 0x3f
+ 432 0079 19       		.uleb128 0x19
+ 433 007a 3C       		.uleb128 0x3c
+ 434 007b 19       		.uleb128 0x19
+ 435 007c 00       		.byte	0
+ 436 007d 00       		.byte	0
+ 437 007e 0B       		.uleb128 0xb
+ 438 007f 01       		.uleb128 0x1
+ 439 0080 01       		.byte	0x1
+ 440 0081 49       		.uleb128 0x49
+ 441 0082 13       		.uleb128 0x13
+ 442 0083 01       		.uleb128 0x1
+ 443 0084 13       		.uleb128 0x13
+ 444 0085 00       		.byte	0
+ 445 0086 00       		.byte	0
+ 446 0087 0C       		.uleb128 0xc
+ 447 0088 21       		.uleb128 0x21
+ 448 0089 00       		.byte	0
+ 449 008a 49       		.uleb128 0x49
+ 450 008b 13       		.uleb128 0x13
+ 451 008c 2F       		.uleb128 0x2f
+ 452 008d 0B       		.uleb128 0xb
+ 453 008e 00       		.byte	0
+ 454 008f 00       		.byte	0
+ 455 0090 0D       		.uleb128 0xd
+ 456 0091 34       		.uleb128 0x34
+ARM GAS  /tmp/ccH6nJ0S.s 			page 9
+
+
+ 457 0092 00       		.byte	0
+ 458 0093 03       		.uleb128 0x3
+ 459 0094 0E       		.uleb128 0xe
+ 460 0095 3A       		.uleb128 0x3a
+ 461 0096 0B       		.uleb128 0xb
+ 462 0097 3B       		.uleb128 0x3b
+ 463 0098 0B       		.uleb128 0xb
+ 464 0099 39       		.uleb128 0x39
+ 465 009a 0B       		.uleb128 0xb
+ 466 009b 49       		.uleb128 0x49
+ 467 009c 13       		.uleb128 0x13
+ 468 009d 3F       		.uleb128 0x3f
+ 469 009e 19       		.uleb128 0x19
+ 470 009f 00       		.byte	0
+ 471 00a0 00       		.byte	0
+ 472 00a1 0E       		.uleb128 0xe
+ 473 00a2 34       		.uleb128 0x34
+ 474 00a3 00       		.byte	0
+ 475 00a4 47       		.uleb128 0x47
+ 476 00a5 13       		.uleb128 0x13
+ 477 00a6 3A       		.uleb128 0x3a
+ 478 00a7 0B       		.uleb128 0xb
+ 479 00a8 3B       		.uleb128 0x3b
+ 480 00a9 0B       		.uleb128 0xb
+ 481 00aa 39       		.uleb128 0x39
+ 482 00ab 0B       		.uleb128 0xb
+ 483 00ac 00       		.byte	0
+ 484 00ad 00       		.byte	0
+ 485 00ae 00       		.byte	0
+ 486              		.section	.gnu.debuglto_.debug_line,"e",%progbits
+ 487              	.Ldebug_line0:
+ 488 0000 00020000 		.4byte	.LELT0-.LSLT0
+ 489              	.LSLT0:
+ 490 0004 0400     		.2byte	0x4
+ 491 0006 FA010000 		.4byte	.LELTP0-.LASLTP0
+ 492              	.LASLTP0:
+ 493 000a 01       		.byte	0x1
+ 494 000b 01       		.byte	0x1
+ 495 000c 01       		.byte	0x1
+ 496 000d F6       		.byte	0xf6
+ 497 000e F2       		.byte	0xf2
+ 498 000f 0D       		.byte	0xd
+ 499 0010 00       		.byte	0
+ 500 0011 01       		.byte	0x1
+ 501 0012 01       		.byte	0x1
+ 502 0013 01       		.byte	0x1
+ 503 0014 01       		.byte	0x1
+ 504 0015 00       		.byte	0
+ 505 0016 00       		.byte	0
+ 506 0017 00       		.byte	0
+ 507 0018 01       		.byte	0x1
+ 508 0019 00       		.byte	0
+ 509 001a 00       		.byte	0
+ 510 001b 01       		.byte	0x1
+ 511 001c 2E2E2F2E 		.ascii	"../../../ChibiOS//test/lib"
+ 511      2E2F2E2E 
+ 511      2F436869 
+ARM GAS  /tmp/ccH6nJ0S.s 			page 10
+
+
+ 511      62694F53 
+ 511      2F2F7465 
+ 512 0036 00       		.byte	0
+ 513 0037 2E2E2F2E 		.ascii	"../../../ChibiOS//test/oslib/source/test"
+ 513      2E2F2E2E 
+ 513      2F436869 
+ 513      62694F53 
+ 513      2F2F7465 
+ 514 005f 00       		.byte	0
+ 515 0060 2F686F6D 		.ascii	"/home/cheff/dev_tools/gcc-arm-none-eabi-10.3-2021.1"
+ 515      652F6368 
+ 515      6566662F 
+ 515      6465765F 
+ 515      746F6F6C 
+ 516 0093 302F6C69 		.ascii	"0/lib/gcc/arm-none-eabi/10.3.1/include"
+ 516      622F6763 
+ 516      632F6172 
+ 516      6D2D6E6F 
+ 516      6E652D65 
+ 517 00b9 00       		.byte	0
+ 518 00ba 00       		.byte	0
+ 519 00bb 63685F74 		.ascii	"ch_test.h\000"
+ 519      6573742E 
+ 519      6800
+ 520 00c5 01       		.uleb128 0x1
+ 521 00c6 00       		.uleb128 0
+ 522 00c7 00       		.uleb128 0
+ 523 00c8 73746464 		.ascii	"stddef.h\000"
+ 523      65662E68 
+ 523      00
+ 524 00d1 03       		.uleb128 0x3
+ 525 00d2 00       		.uleb128 0
+ 526 00d3 00       		.uleb128 0
+ 527 00d4 6F736C69 		.ascii	"oslib_test_sequence_001.h\000"
+ 527      625F7465 
+ 527      73745F73 
+ 527      65717565 
+ 527      6E63655F 
+ 528 00ee 02       		.uleb128 0x2
+ 529 00ef 00       		.uleb128 0
+ 530 00f0 00       		.uleb128 0
+ 531 00f1 6F736C69 		.ascii	"oslib_test_sequence_002.h\000"
+ 531      625F7465 
+ 531      73745F73 
+ 531      65717565 
+ 531      6E63655F 
+ 532 010b 02       		.uleb128 0x2
+ 533 010c 00       		.uleb128 0
+ 534 010d 00       		.uleb128 0
+ 535 010e 6F736C69 		.ascii	"oslib_test_sequence_003.h\000"
+ 535      625F7465 
+ 535      73745F73 
+ 535      65717565 
+ 535      6E63655F 
+ 536 0128 02       		.uleb128 0x2
+ 537 0129 00       		.uleb128 0
+ 538 012a 00       		.uleb128 0
+ARM GAS  /tmp/ccH6nJ0S.s 			page 11
+
+
+ 539 012b 6F736C69 		.ascii	"oslib_test_sequence_004.h\000"
+ 539      625F7465 
+ 539      73745F73 
+ 539      65717565 
+ 539      6E63655F 
+ 540 0145 02       		.uleb128 0x2
+ 541 0146 00       		.uleb128 0
+ 542 0147 00       		.uleb128 0
+ 543 0148 6F736C69 		.ascii	"oslib_test_sequence_005.h\000"
+ 543      625F7465 
+ 543      73745F73 
+ 543      65717565 
+ 543      6E63655F 
+ 544 0162 02       		.uleb128 0x2
+ 545 0163 00       		.uleb128 0
+ 546 0164 00       		.uleb128 0
+ 547 0165 6F736C69 		.ascii	"oslib_test_sequence_006.h\000"
+ 547      625F7465 
+ 547      73745F73 
+ 547      65717565 
+ 547      6E63655F 
+ 548 017f 02       		.uleb128 0x2
+ 549 0180 00       		.uleb128 0
+ 550 0181 00       		.uleb128 0
+ 551 0182 6F736C69 		.ascii	"oslib_test_sequence_007.h\000"
+ 551      625F7465 
+ 551      73745F73 
+ 551      65717565 
+ 551      6E63655F 
+ 552 019c 02       		.uleb128 0x2
+ 553 019d 00       		.uleb128 0
+ 554 019e 00       		.uleb128 0
+ 555 019f 6F736C69 		.ascii	"oslib_test_sequence_008.h\000"
+ 555      625F7465 
+ 555      73745F73 
+ 555      65717565 
+ 555      6E63655F 
+ 556 01b9 02       		.uleb128 0x2
+ 557 01ba 00       		.uleb128 0
+ 558 01bb 00       		.uleb128 0
+ 559 01bc 6F736C69 		.ascii	"oslib_test_sequence_009.h\000"
+ 559      625F7465 
+ 559      73745F73 
+ 559      65717565 
+ 559      6E63655F 
+ 560 01d6 02       		.uleb128 0x2
+ 561 01d7 00       		.uleb128 0
+ 562 01d8 00       		.uleb128 0
+ 563 01d9 6F736C69 		.ascii	"oslib_test_root.h\000"
+ 563      625F7465 
+ 563      73745F72 
+ 563      6F6F742E 
+ 563      6800
+ 564 01eb 02       		.uleb128 0x2
+ 565 01ec 00       		.uleb128 0
+ 566 01ed 00       		.uleb128 0
+ 567 01ee 6F736C69 		.ascii	"oslib_test_root.c\000"
+ARM GAS  /tmp/ccH6nJ0S.s 			page 12
+
+
+ 567      625F7465 
+ 567      73745F72 
+ 567      6F6F742E 
+ 567      6300
+ 568 0200 02       		.uleb128 0x2
+ 569 0201 00       		.uleb128 0
+ 570 0202 00       		.uleb128 0
+ 571 0203 00       		.byte	0
+ 572              	.LELTP0:
+ 573              	.LELT0:
+ 574              		.section	.gnu.debuglto_.debug_str,"eMS",%progbits,1
+ 575              	.LASF22:
+ 576 0000 6F736C69 		.ascii	"oslib_test_sequence_001\000"
+ 576      625F7465 
+ 576      73745F73 
+ 576      65717565 
+ 576      6E63655F 
+ 577              	.LASF23:
+ 578 0018 6F736C69 		.ascii	"oslib_test_sequence_002\000"
+ 578      625F7465 
+ 578      73745F73 
+ 578      65717565 
+ 578      6E63655F 
+ 579              	.LASF24:
+ 580 0030 6F736C69 		.ascii	"oslib_test_sequence_003\000"
+ 580      625F7465 
+ 580      73745F73 
+ 580      65717565 
+ 580      6E63655F 
+ 581              	.LASF16:
+ 582 0048 73697A65 		.ascii	"size_t\000"
+ 582      5F7400
+ 583              	.LASF26:
+ 584 004f 6F736C69 		.ascii	"oslib_test_sequence_005\000"
+ 584      625F7465 
+ 584      73745F73 
+ 584      65717565 
+ 584      6E63655F 
+ 585              	.LASF27:
+ 586 0067 6F736C69 		.ascii	"oslib_test_sequence_006\000"
+ 586      625F7465 
+ 586      73745F73 
+ 586      65717565 
+ 586      6E63655F 
+ 587              	.LASF28:
+ 588 007f 6F736C69 		.ascii	"oslib_test_sequence_007\000"
+ 588      625F7465 
+ 588      73745F73 
+ 588      65717565 
+ 588      6E63655F 
+ 589              	.LASF29:
+ 590 0097 6F736C69 		.ascii	"oslib_test_sequence_008\000"
+ 590      625F7465 
+ 590      73745F73 
+ 590      65717565 
+ 590      6E63655F 
+ 591              	.LASF13:
+ARM GAS  /tmp/ccH6nJ0S.s 			page 13
+
+
+ 592 00af 73657475 		.ascii	"setup\000"
+ 592      7000
+ 593              	.LASF15:
+ 594 00b5 65786563 		.ascii	"execute\000"
+ 594      75746500 
+ 595              	.LASF32:
+ 596 00bd 474E5520 		.ascii	"GNU C17 10.3.1 20210824 (release) -mcpu=cortex-m4 -"
+ 596      43313720 
+ 596      31302E33 
+ 596      2E312032 
+ 596      30323130 
+ 597 00f0 6D746875 		.ascii	"mthumb -mfloat-abi=hard -mfpu=fpv4-sp-d16 -march=ar"
+ 597      6D62202D 
+ 597      6D666C6F 
+ 597      61742D61 
+ 597      62693D68 
+ 598 0123 6D763765 		.ascii	"mv7e-m+fp -g -ggdb -Og -fomit-frame-pointer -falign"
+ 598      2D6D2B66 
+ 598      70202D67 
+ 598      202D6767 
+ 598      6462202D 
+ 599 0156 2D66756E 		.ascii	"-functions=16 -ffunction-sections -fdata-sections -"
+ 599      6374696F 
+ 599      6E733D31 
+ 599      36202D66 
+ 599      66756E63 
+ 600 0189 666E6F2D 		.ascii	"fno-common -flto\000"
+ 600      636F6D6D 
+ 600      6F6E202D 
+ 600      666C746F 
+ 600      00
+ 601              	.LASF33:
+ 602 019a 2E2E2F2E 		.ascii	"../../../ChibiOS//test/oslib/source/test/oslib_test"
+ 602      2E2F2E2E 
+ 602      2F436869 
+ 602      62694F53 
+ 602      2F2F7465 
+ 603 01cd 5F726F6F 		.ascii	"_root.c\000"
+ 603      742E6300 
+ 604              	.LASF9:
+ 605 01d5 6C6F6E67 		.ascii	"long long unsigned int\000"
+ 605      206C6F6E 
+ 605      6720756E 
+ 605      7369676E 
+ 605      65642069 
+ 606              	.LASF4:
+ 607 01ec 756E7369 		.ascii	"unsigned char\000"
+ 607      676E6564 
+ 607      20636861 
+ 607      7200
+ 608              	.LASF8:
+ 609 01fa 6C6F6E67 		.ascii	"long unsigned int\000"
+ 609      20756E73 
+ 609      69676E65 
+ 609      6420696E 
+ 609      7400
+ 610              	.LASF14:
+ARM GAS  /tmp/ccH6nJ0S.s 			page 14
+
+
+ 611 020c 74656172 		.ascii	"teardown\000"
+ 611      646F776E 
+ 611      00
+ 612              	.LASF6:
+ 613 0215 73686F72 		.ascii	"short unsigned int\000"
+ 613      7420756E 
+ 613      7369676E 
+ 613      65642069 
+ 613      6E7400
+ 614              	.LASF17:
+ 615 0228 74657374 		.ascii	"testcase_t\000"
+ 615      63617365 
+ 615      5F7400
+ 616              	.LASF21:
+ 617 0233 74657374 		.ascii	"testsuite_t\000"
+ 617      73756974 
+ 617      655F7400 
+ 618              	.LASF34:
+ 619 023f 2F686F6D 		.ascii	"/home/cheff/git/asserv_nucleo3/src/Robots/PMI\000"
+ 619      652F6368 
+ 619      6566662F 
+ 619      6769742F 
+ 619      61737365 
+ 620              	.LASF5:
+ 621 026d 73686F72 		.ascii	"short int\000"
+ 621      7420696E 
+ 621      7400
+ 622              	.LASF31:
+ 623 0277 6F736C69 		.ascii	"oslib_test_suite\000"
+ 623      625F7465 
+ 623      73745F73 
+ 623      75697465 
+ 623      00
+ 624              	.LASF0:
+ 625 0288 756E7369 		.ascii	"unsigned int\000"
+ 625      676E6564 
+ 625      20696E74 
+ 625      00
+ 626              	.LASF10:
+ 627 0295 63686172 		.ascii	"char\000"
+ 627      00
+ 628              	.LASF25:
+ 629 029a 6F736C69 		.ascii	"oslib_test_sequence_004\000"
+ 629      625F7465 
+ 629      73745F73 
+ 629      65717565 
+ 629      6E63655F 
+ 630              	.LASF20:
+ 631 02b2 73657175 		.ascii	"sequences\000"
+ 631      656E6365 
+ 631      7300
+ 632              	.LASF18:
+ 633 02bc 63617365 		.ascii	"cases\000"
+ 633      7300
+ 634              	.LASF1:
+ 635 02c2 6C6F6E67 		.ascii	"long long int\000"
+ 635      206C6F6E 
+ARM GAS  /tmp/ccH6nJ0S.s 			page 15
+
+
+ 635      6720696E 
+ 635      7400
+ 636              	.LASF30:
+ 637 02d0 6F736C69 		.ascii	"oslib_test_sequence_009\000"
+ 637      625F7465 
+ 637      73745F73 
+ 637      65717565 
+ 637      6E63655F 
+ 638              	.LASF12:
+ 639 02e8 6E616D65 		.ascii	"name\000"
+ 639      00
+ 640              	.LASF35:
+ 641 02ed 6F736C69 		.ascii	"oslib_test_suite_array\000"
+ 641      625F7465 
+ 641      73745F73 
+ 641      75697465 
+ 641      5F617272 
+ 642              	.LASF19:
+ 643 0304 74657374 		.ascii	"testsequence_t\000"
+ 643      73657175 
+ 643      656E6365 
+ 643      5F7400
+ 644              	.LASF7:
+ 645 0313 6C6F6E67 		.ascii	"long int\000"
+ 645      20696E74 
+ 645      00
+ 646              	.LASF2:
+ 647 031c 6C6F6E67 		.ascii	"long double\000"
+ 647      20646F75 
+ 647      626C6500 
+ 648              	.LASF3:
+ 649 0328 7369676E 		.ascii	"signed char\000"
+ 649      65642063 
+ 649      68617200 
+ 650              	.LASF11:
+ 651 0334 5F426F6F 		.ascii	"_Bool\000"
+ 651      6C00
+ 652              		.text
+ 653              		.section	.gnu.lto_.profile.334af3be1e91ae75,"e",%progbits
+ 654 0000 789C6362 		.ascii	"x\234cb\000\001\000\000\022\000\003"
+ 654      00010000 
+ 654      120003
+ 655              		.text
+ 656              		.section	.gnu.lto_.inline.334af3be1e91ae75,"e",%progbits
+ 657 0000 789C6362 		.ascii	"x\234cb@\006\000\000*\000\003"
+ 657      40060000 
+ 657      2A0003
+ 658              		.text
+ 659              		.section	.gnu.lto_.jmpfuncs.334af3be1e91ae75,"e",%progbits
+ 660 0000 789C6362 		.ascii	"x\234cb@\006\000\000*\000\003"
+ 660      40060000 
+ 660      2A0003
+ 661              		.text
+ 662              		.section	.gnu.lto_.pureconst.334af3be1e91ae75,"e",%progbits
+ 663 0000 789C6364 		.ascii	"x\234cd\000\002\000\000\012\000\002"
+ 663      00020000 
+ 663      0A0002
+ARM GAS  /tmp/ccH6nJ0S.s 			page 16
+
+
+ 664              		.text
+ 665              		.section	.gnu.lto_.lto.334af3be1e91ae75,"e",%progbits
+ 666 0000 09000400 		.ascii	"\011\000\004\000\001\000\000\000"
+ 666      01000000 
+ 667              		.text
+ 668              		.section	.gnu.lto_oslib_test_suite_array.365.334af3be1e91ae75,"e",%progbits
+ 669 0000 789C4DCE 		.ascii	"x\234M\316\273N\3030\024\006`\377q/\36029\012\035\020"
+ 669      BB4EC330 
+ 669      140660FF 
+ 669      712FF032 
+ 669      390A1D10 
+ 670 0014 02C4C0C4 		.ascii	"\002\304\300\304\200@\360\000\021\261\\\022)`)v\231"
+ 670      8040F000 
+ 670      11B15C12 
+ 670      29602976 
+ 670      99
+ 671 0025 23841073 		.ascii	"#\204\020s'\006\306\016<\000\367r\247\202\251\314<\014"
+ 671      2706C60E 
+ 671      3C00F772 
+ 671      A782A9CC 
+ 671      3C0C
+ 672 0037 03C556ED 		.ascii	"\003\305V\355Z\036\216\376\357\374\322I\300X\311\334"
+ 672      5A1E8EFE 
+ 672      EFFCD249 
+ 672      C058C9DC 
+ 673 0047 BBE0E8F3 		.ascii	"\273\340\350\363\001g\230N\300\374d:\301i]\377\366\307"
+ 673      0167984E 
+ 673      C0FC643A 
+ 673      C1695DFF 
+ 673      F6C7
+ 674 0059 DFC9C42E 		.ascii	"\337\311\304.\271\335\263\331\371\0306\231\331oO\355"
+ 674      B9DDB3D9 
+ 674      F9183699 
+ 674      D96F4FED 
+ 675 0069 E7CB5914 		.ascii	"\347\313Y\024\254\345{\237\316x\260\246\357\215\234"
+ 675      ACE57B9F 
+ 675      CE78B0A6 
+ 675      EF8D9C
+ 676 0078 3582357C 		.ascii	"5\2025|o\315R3\020\367\265UK\255@\221o\255Xj\207\263"
+ 676      6FCD5233 
+ 676      10F7B555 
+ 676      4BAD4091 
+ 676      6FAD586A 
+ 677 008e 176D30C7 		.ascii	"\027m0\307\226\216\317\352|\300#$\030\001\013\370\000"
+ 677      968ECFEA 
+ 677      7CC02324 
+ 677      18010BF8 
+ 677      00
+ 678 009f DE8137E0 		.ascii	"\336\2017\340\025x\001\236\201'\340\021\030\002\017"
+ 678      1578019E 
+ 678      8127E011 
+ 678      18020F
+ 679 00ae C03D7007 		.ascii	"\300=p\007\334\002\035\334\000\327\300\025XL\271:\220"
+ 679      DC021DDC 
+ 679      00D7C015 
+ 679      584CB93A 
+ 679      90
+ARM GAS  /tmp/ccH6nJ0S.s 			page 17
+
+
+ 680 00bf 2472D9ED 		.ascii	"$r\331\355\322~ahOkY\035\245\207=QJ\325!]\011\332Q\231"
+ 680      D27E6168 
+ 680      4F6B591D 
+ 680      A5873D51 
+ 680      4AD5215D 
+ 681 00d7 329AB637 		.ascii	"2\232\26677\330r\034\223\373\353y\221\025[\273DFjCJ"
+ 681      37D8721C 
+ 681      93FBEB79 
+ 681      91155BBB 
+ 681      44466A43 
+ 682 00ec 9745465A 		.ascii	"\227EFZ\365*!g\222\364\177L+\245L,\330\037\2265u\361"
+ 682      F52A2167 
+ 682      92F47F4C 
+ 682      2BA54C2C 
+ 682      D81F9635 
+ 683              		.text
+ 684              		.section	.gnu.lto_oslib_test_suite.366.334af3be1e91ae75,"e",%progbits
+ 685 0000 789C7361 		.ascii	"x\234sa``\350f\200\2009\314\214-\214m\015\015\177&\235"
+ 685      6060E866 
+ 685      808039CC 
+ 685      8C2D8C6D 
+ 685      0D0D7F26 
+ 686 0015 BD6EB884 		.ascii	"\275n\270\204\231a\0053XL1\267\215c\0113#Lv\306u\306"
+ 686      99610533 
+ 686      584C31B7 
+ 686      8D630933 
+ 686      234C76C6 
+ 687 002b 25CC4C8C 		.ascii	"%\314L\214[\031\031,\233:\032\2002\314s\231\031\030"
+ 687      5B19192C 
+ 687      9B3A1A80 
+ 687      32CC7399 
+ 687      1918
+ 688 003d B731CE65 		.ascii	"\2671\316efd\334\302\310\240\247\237\221\237\233\252"
+ 688      6664DCC2 
+ 688      C8A0A79F 
+ 688      919F9BAA 
+ 689 004d 9F9C919A 		.ascii	"\237\234\221\232\226\246\237\236Y\242\237X\\\234ZT\026"
+ 689      96A69F9E 
+ 689      59A29F58 
+ 689      5C9C5A54 
+ 689      16
+ 690 005e 9F579A9C 		.ascii	"\237W\232\234\223\232o\254_\\\224\254\037\224\237\224"
+ 690      939A6FAC 
+ 690      5F5C94AC 
+ 690      1F949F94 
+ 691 006e 5F52AC1F 		.ascii	"_R\254\037\340\353\311`\255\247\247\017A\316\031\231"
+ 691      E0EBC960 
+ 691      ADA7A70F 
+ 691      41CE1999 
+ 692 007e 4999FEC1 		.ascii	"I\231\376\301\372\372%\251\305%\372\371\3059\231I\372"
+ 692      FAFA25A9 
+ 692      C525FAF9 
+ 692      C5399949 
+ 692      FA
+ 693 008f C5F9A545 		.ascii	"\305\371\245E\311\251H\"\361 f|Q~~\211^2\203\034T\213"
+ 693      C9A94822 
+ 693      F120667C 
+ARM GAS  /tmp/ccH6nJ0S.s 			page 18
+
+
+ 693      517E7E89 
+ 693      5E32831C 
+ 694 00a5 0210F964 		.ascii	"\002\020\371d&\025%\026U*\204\000\345\025\202K3KR\031"
+ 694      26152516 
+ 694      552A8400 
+ 694      E515824B 
+ 694      334B5219 
+ 695 00b9 00ADD844 		.ascii	"\000\255\330D\263"
+ 695      B3
+ 696              		.text
+ 697              		.section	.gnu.lto_.symbol_nodes.334af3be1e91ae75,"e",%progbits
+ 698 0000 789C25C6 		.ascii	"x\234%\306\311\001@@\020\005\321V\264-\012\261\210C"
+ 698      C9014040 
+ 698      1005D156 
+ 698      B42D0AB1 
+ 698      8843
+ 699 0012 32029EB1 		.ascii	"2\002\236\261s\245\277\272\274\232\354\31336\2171\211"
+ 699      73A5BFBA 
+ 699      BC9AECCB 
+ 699      33368F31 
+ 699      89
+ 700 0023 E29F0586 		.ascii	"\342\237\005\206p\245\224\033\225\334qyP\313\223F^\264"
+ 700      70A5941B 
+ 700      95DC7179 
+ 700      50CB9346 
+ 700      5EB4
+ 701 0035 F2A6930F 		.ascii	"\362\246\223\017}h/\321c\015\355"
+ 701      7D682FD1 
+ 701      630DED
+ 702              		.text
+ 703              		.section	.gnu.lto_.refs.334af3be1e91ae75,"e",%progbits
+ 704 0000 789C05C1 		.ascii	"x\234\005\301\011\001\000 \014\304\260^y\306p\200\177"
+ 704      09010020 
+ 704      0CC4B05E 
+ 704      79C67080 
+ 704      7F
+ 705 0011 A3240F08 		.ascii	"\243$\017\010\246\243\016\247\313myl/\037\006\212\000"
+ 705      A6A30EA7 
+ 705      CB6D796C 
+ 705      2F1F068A 
+ 705      00
+ 706 0022 70       		.ascii	"p"
+ 707              		.text
+ 708              		.section	.gnu.lto_.decls.334af3be1e91ae75,"e",%progbits
+ 709 0000 789CA594 		.ascii	"x\234\245\224kL\024W\024\307\357\331\273\274\0114b\332"
+ 709      6B4C1457 
+ 709      14C7EFD9 
+ 709      BBBC0934 
+ 709      62DA
+ 710 0012 0FA62D1F 		.ascii	"\017\246-\037$\351'\206\207\210\264\337\312\207\266"
+ 710      24E92786 
+ 710      8788B4DF 
+ 710      CA87B6
+ 711 0021 1FFA489B 		.ascii	"\037\372H\233\206\217[\330\014.\211\262\351\316\322"
+ 711      868F5BD8 
+ 711      0C2E89B2 
+ 711      E9CED2
+ARM GAS  /tmp/ccH6nJ0S.s 			page 19
+
+
+ 712 0030 B44D9BCC 		.ascii	"\264M\233\314\362(*\011\005*\224\024P\350\273\032\332"
+ 712      F2282A09 
+ 712      052A9414 
+ 712      50E8BB1A 
+ 712      DA
+ 713 0041 980A4279 		.ascii	"\230\012By-/\255\274\004D\004A@\260\202\240\200@\001"
+ 713      2D2FADBC 
+ 713      04440441 
+ 713      40B082A0 
+ 713      804001
+ 714 0054 05B1E7DE 		.ascii	"\005\261\347\336\231uv\201M\032\367f\317\354\314\334"
+ 714      99757681 
+ 714      4D1AF766 
+ 714      CFECCCDC 
+ 715 0064 DFFD9F73 		.ascii	"\337\375\237s\3179wj\275\011)\322\0232J\010y\202\203"
+ 715      CF39776A 
+ 715      BD0929D2 
+ 715      13324A08 
+ 715      798283
+ 716 0077 E27F1F71 		.ascii	"\342\177\037q\035\001h=hSh\377\240M\243\335E\233C\273"
+ 716      1D01683D 
+ 716      685368FF 
+ 716      A04DA3DD 
+ 716      459B43BB 
+ 717 008b 8FB680F6 		.ascii	"\217\266\200\366\000m\031\355\337mk/\001!Ls\034m/\332"
+ 717      006D19ED 
+ 717      DF6D6B2F 
+ 717      01214C73 
+ 717      1C6D2FDA 
+ 718 009f A4D39C9F 		.ascii	"\244\323\234\237\312/\253\353\027T\2759U\177Z\365\347"
+ 718      CA2FABEB 
+ 718      1754BD39 
+ 718      557F5AF5 
+ 718      E7
+ 719 00b0 3CCA500F 		.ascii	"<\312P\017\303%\253h\033h\233h\335h:\264N\264\313*\007"
+ 719      C325AB68 
+ 719      1B689B68 
+ 719      DD683AB4 
+ 719      4EB4CB2A 
+ 720 00c5 6ABCCE83 		.ascii	"j\274\316\203\352H\001\205=\340\213\327\275`'4\204\010"
+ 720      EA480185 
+ 720      3DE08BD7 
+ 720      BD602734 
+ 720      8408
+ 721 00d7 321F2D87 		.ascii	"2\037-\207\011\\\000\016%\004\360\331PN\352\251D\350"
+ 721      095C000E 
+ 721      2504F0D9 
+ 721      504EEAA9 
+ 721      44E8
+ 722 00e9 A7A4847A 		.ascii	"\247\244\204z?\036\270\326\353\343\277\017\000\177v"
+ 722      3F1EB8D6 
+ 722      EBE3BF0F 
+ 722      007F76
+ 723 00f8 599E915B 		.ascii	"Y\236\221[l\224@4D\020\250\007h\000\002\215\000M\240"
+ 723      6C944034 
+ 723      4410A807 
+ 723      6800028D 
+ARM GAS  /tmp/ccH6nJ0S.s 			page 20
+
+
+ 723      004DA0
+ 724 010b C3DB7459 		.ascii	"\303\333tY\336|\031\377K\250\256|\253\367\267\000\177"
+ 724      DE7C19FF 
+ 724      4BA8AE7C 
+ 724      ABF7B700 
+ 724      7F
+ 725 011c C6DB77E7 		.ascii	"\306\333w\347\221\031/;\235\037\030\210\314\242\\\336"
+ 725      91192F3B 
+ 725      9D1F1888 
+ 725      CCA25CDE 
+ 726 012c A2073B40 		.ascii	"\242\007;@-\300_\030\0144\263\334}\211\336u#Y\347r!"
+ 726      2DC05F18 
+ 726      0C34B3DC 
+ 726      7D89DE75 
+ 726      2359E772 
+ 727 0141 4489D5AE 		.ascii	"D\211\325\256\304\011\255\0005\354\226f\003C\262sZ\212"
+ 727      C409AD00 
+ 727      35EC9666 
+ 727      0343B273 
+ 727      5A8A
+ 728 0153 83396257 		.ascii	"\2039bW\021h\203\247\020\002\005C=-z\315O\273\346\347"
+ 728      116883A7 
+ 728      10020543 
+ 728      3D2D7ACD 
+ 728      4FBBE6E7 
+ 729 0167 227060A5 		.ascii	"\"p`\245\256\263@\307\001\373\356\300\271\205\256\252"
+ 729      AEB340C7 
+ 729      01FBEEC0 
+ 729      B985AEAA 
+ 730 0177 604DE192 		.ascii	"`M\341\222\006\374\315\001\357\223g\317Tz\355\017\331"
+ 730      06FCCD01 
+ 730      EF9367CF 
+ 730      547AED0F 
+ 730      D9
+ 731 0188 8FC8FACD 		.ascii	"\217\310\372\315\216\213\031Q\025\307\263\345<\033\305"
+ 731      8E8B1951 
+ 731      15C7B3E5 
+ 731      3C1BC5
+ 732 0197 796801E8 		.ascii	"yh\001\350\320\026\010h\265@0\332L\014XO\240\032\240"
+ 732      D0160868 
+ 732      B54030DA 
+ 732      4C0C584F 
+ 732      A01AA0
+ 733 01aa 8A4D74B0 		.ascii	"\212Mt\260\200\241\023\3402\013\233\371jj\315\011b\032"
+ 733      80A113E0 
+ 733      320B9BF9 
+ 733      6A6ACD09 
+ 733      621A
+ 734 01bc CD00753B 		.ascii	"\315\000u;4\"\011\235\343\333\377\276\270\260\214o?"
+ 734      3422099D 
+ 734      E3DBFFBE 
+ 734      B8B08C6F 
+ 734      3F
+ 735 01cd D3EEA407 		.ascii	"\323\356\244\007]\260M\021\321\323\015\307\262hXi\236"
+ 735      5DB04D11 
+ 735      D1D30DC7 
+ 735      B2685869 
+ARM GAS  /tmp/ccH6nJ0S.s 			page 21
+
+
+ 735      9E
+ 736 01de BC3EF675 		.ascii	"\274>\366u\345\224\277\015y\350\0068\3179G\034\370\224"
+ 736      E594BF0D 
+ 736      79E80638 
+ 736      CF39471C 
+ 736      F894
+ 737 01f0 9A70424F 		.ascii	"\232pBO\377T{\346\025\245gt\374\301\017U\032\327\006"
+ 737      FF547BE6 
+ 737      15A56774 
+ 737      FCC10F55 
+ 737      1AD706
+ 738 0203 1BA8BFCC 		.ascii	"\033\250\277\314\222a\317\364\303\227\216\260\256\242"
+ 738      9261CFF4 
+ 738      C3978EB0 
+ 738      AEA2
+ 739 0211 5B01FA81 		.ascii	"[\001\372\201v\350\334\225\356\232\243t\275\034i\236"
+ 739      76E8DC95 
+ 739      EE9AA374 
+ 739      BD1C699E 
+ 740 0221 1EBEEBE3 		.ascii	"\036\276\353\343Z\272Ax\012!0Qx\266\214j\211\277\256"
+ 740      5ABA4178 
+ 740      0A213051 
+ 740      78B68C6A 
+ 740      89BFAE
+ 741 0234 E56048A9 		.ascii	"\345`H\251\314\326\310\261\271\000\255t;\201\374\212"
+ 741      CCD6C8B1 
+ 741      B900AD74 
+ 741      3B81FC8A 
+ 742 0244 A60A3F4D 		.ascii	"\246\012?MaX\003n(\245\373a9=\313G-\335w\2715\255\301"
+ 742      6158036E 
+ 742      28A5FB61 
+ 742      393DCB47 
+ 742      2DDD77B9 
+ 743 025b A5B8AD40 		.ascii	"\245\270\255@\234\205\001\200\321\377Q\270Q\236\276"
+ 743      9C850180 
+ 743      D1FF51B8 
+ 743      519EBE
+ 744 026a 9B00238E 		.ascii	"\233\000#\216\302\375\341R\270\321\355\205c\271Y+\272"
+ 744      C2FDE152 
+ 744      B8D1ED85 
+ 744      63B9592B 
+ 744      BA
+ 745 027b 11B8B368 		.ascii	"\021\270\263hm\260M\015\321\337\327\027s\235zoLS\033"
+ 745      6DB04D0D 
+ 745      D1DFD717 
+ 745      739D7A6F 
+ 745      4C531B
+ 746 028e 5776382B 		.ascii	"Wv8+\367e\006\357Q\342*\327\341[\350\003\350e\300\004"
+ 746      F76506EF 
+ 746      51E22AD7 
+ 746      E15BE803 
+ 746      E865C004 
+ 747 02a2 F0A23068 		.ascii	"\360\2420h\270`\274\312_\313\323N\225\332\237N\334\242"
+ 747      B860BCCA 
+ 747      5FCBD34E 
+ 747      95DA9F4E 
+ 747      DCA2
+ARM GAS  /tmp/ccH6nJ0S.s 			page 22
+
+
+ 748 02b4 9ACAADDD 		.ascii	"\232\312\255\335U*\206\033@m\240\373_\360\376\231\004"
+ 748      552A861B 
+ 748      406DA0FB 
+ 748      5FF0FE99 
+ 748      04
+ 749 02c5 B8C24376 		.ascii	"\270\302Cv\340WX\377lQ:\302+|f\254~-0\254\024s;\370"
+ 749      E05758FF 
+ 749      6C513AC2 
+ 749      2B7C66AC 
+ 749      7E2D30AC 
+ 750 02dd 6DEDE736 		.ascii	"m\355\3476Y\361}\333\245\343n\003Ix\240\243\027([P\235"
+ 750      59F17DDB 
+ 750      A5E36E03 
+ 750      4978A0A3 
+ 750      17285B50 
+ 751 02f2 9179DD9B 		.ascii	"\221y\335\233-(n<e\223_\347\370\035\027\374\016\342"
+ 751      2D286E3C 
+ 751      65935FE7 
+ 751      F81D17FC 
+ 751      0EE2
+ 752 0304 8F75F41B 		.ascii	"\217u\364\033=\303\307\227\322e/\216WO\345\311\241o"
+ 752      3DC3C797 
+ 752      D2652F8E 
+ 752      574FE5C9 
+ 752      A16F
+ 753 0316 327CC605 		.ascii	"2|\306\005\237A\3748\245\013\034\377ji`M\317\361S\263"
+ 753      9F41FC38 
+ 753      A50B1CFF 
+ 753      6A69604D 
+ 753      CFF153B3 
+ 754 032a 0E7CD605 		.ascii	"\016|\326\005\237E\274\220\322N/\206g\366\257/Q\216"
+ 754      9F45BC90 
+ 754      D24E2F86 
+ 754      67F6AF2F 
+ 754      518E
+ 755 033c 172D38F0 		.ascii	"\027-8\360{.\370=\304+(\375\305\233\341\305C\3456E}"
+ 755      7B2EF83D 
+ 755      C42B28FD 
+ 755      C59BE1C5 
+ 755      43E53645 
+ 756 0351 6BD981CF 		.ascii	"k\331\201\317\273\340\363\210WR\232\341\303\360\266"
+ 756      BBE0F388 
+ 756      57529AE1 
+ 756      C3F0B6
+ 757 0360 ABDD390A 		.ascii	"\253\3359\012\276\372\310\201/\272\340\213\210\327R"
+ 757      BEFAC881 
+ 757      2FBAE08B 
+ 757      88D752
+ 758 036f 3ACEF15F 		.ascii	":\316\361_\317=\314W23\366\304\201/\271\340K\210\267"
+ 758      CF3DCC57 
+ 758      3233F6C4 
+ 758      812FB9E0 
+ 758      4B88B7
+ 759 0382 535AE7CB 		.ascii	"SZ\347\313\360\246\265\2362%3\203?\347\253\370\212\013"
+ 759      F0A6B59E 
+ 759      32253383 
+ 759      3FE7ABF8 
+ARM GAS  /tmp/ccH6nJ0S.s 			page 23
+
+
+ 759      8A0B
+ 760 0394 BE82781F 		.ascii	"\276\202x\037E\264\244\246\253\336Wk\261I\2559V\361"
+ 760      45B4A4A6 
+ 760      ABDE576B 
+ 760      B149AD39 
+ 760      56F1
+ 761 03a6 C20FFE8B 		.ascii	"\302\017\376\213\210\365\317\327\237\364\331\355\340"
+ 761      88F5CFD7 
+ 761      9FF4D9ED 
+ 761      E0
+ 762 03b3 AFF383BF 		.ascii	"\257\363\203\277\006\234|\211\177/\026\331\007~b\364"
+ 762      069C7C89 
+ 762      7F2F16D9 
+ 762      077E62F4 
+ 763 03c3 C7F920B5 		.ascii	"\307\371 \265\247>\302O?<\002x\310\026l\000_\304\302"
+ 763      A73EC24F 
+ 763      3F3C0278 
+ 763      C8166C00 
+ 763      5FC4C2
+ 764 03d6 B4B75717 		.ascii	"\264\267W\0278\235\317\015\315\367&;\000\317\231\245"
+ 764      389DCF0D 
+ 764      CDF7263B 
+ 764      00CF99A5 
+ 765 03e6 23294906 		.ascii	"#)I\006\253(Y\015RZ\212U|5<\\P~\361\246\224\244\224"
+ 765      AB28590D 
+ 765      525A8A55 
+ 765      7C353C5C 
+ 765      507EF1A6 
+ 766 03fd 773F1004 		.ascii	"w?\020\0046)pN\220\314i\026\243\350\364FYi1\233\255"
+ 766      3629704E 
+ 766      90CC6916 
+ 766      A3E8F446 
+ 766      5969319B 
+ 767 0412 E146DF37 		.ascii	"\341F\3377\336\37104>2\226\354\3331\025.\306E$'\305"
+ 767      DEF93034 
+ 767      3E3296EC 
+ 767      DB31152E 
+ 767      C6452427 
+ 768 0427 2447127D 		.ascii	"$G\022}j\342QQo4%Z\374$\361\34341\325(JA\214t<\031\254"
+ 768      6AE25151 
+ 768      6F34255A 
+ 768      FC24F1E3 
+ 768      3431D528 
+ 769 0442 E182C97C 		.ascii	"\341\202\311|T\024\214&19Y8\234b\025\022%I\264|bHM3"
+ 769      54148C26 
+ 769      31395938 
+ 769      9C621512 
+ 769      2549B47C 
+ 770 045a 1E11CDD1 		.ascii	"\036\021\315\321\202d1\012\357\233\223\314VIx\357\355"
+ 770      8264310A 
+ 770      EF9B93CC 
+ 770      564978EF 
+ 770      ED
+ 771 046b B748989B 		.ascii	"\267H\230\233\210Y\274F\023\217\"\334D\002\270\017\266"
+ 771      8859BC46 
+ 771      138F22DC 
+ 771      4402B80F 
+ARM GAS  /tmp/ccH6nJ0S.s 			page 24
+
+
+ 771      B6
+ 772 047c 4383F5B5 		.ascii	"C\203\365\265g\337#y~{\302\014\211\026K\342g^\306DI"
+ 772      67DF2379 
+ 772      7E7BC20C 
+ 772      89164BE2 
+ 772      675EC644 
+ 773 0491 94FCD96B 		.ascii	"\224\374\331kvg\260\276\340\3149\266\026\021\021\031"
+ 773      7667B0BE 
+ 773      E0CC39B6 
+ 773      16111119 
+ 774 04a1 FF2CBE9D 		.ascii	"\377,\276\235\005p/n\264\243<\325\216r\257\035\355\251"
+ 774      05702F6E 
+ 774      B4A33CD5 
+ 774      8E72AF1D 
+ 774      EDA9
+ 775 04b3 76B47BED 		.ascii	"v\264{\355\003\236j\037p\257\035\343\251v\214{\355\203"
+ 775      039E6A1F 
+ 775      70AF1DE3 
+ 775      A9768C7B 
+ 775      ED83
+ 776 04c5 9E6A1F74 		.ascii	"\236j\037t\257\035\353\251v\254{\355C\236j\037r\257"
+ 776      AF1DEBA9 
+ 776      76AC7BED 
+ 776      439E6A1F 
+ 776      72AF
+ 777 04d7 1DE7A976 		.ascii	"\035\347\251v\034j\377\007)\015\336\033"
+ 777      1C6AFF07 
+ 777      290DDE1B 
+ 778              		.text
+ 779              		.section	.gnu.lto_.symtab.334af3be1e91ae75,"e",%progbits
+ 780 0000 6F736C69 		.ascii	"oslib_test_suite\000"
+ 780      625F7465 
+ 780      73745F73 
+ 780      75697465 
+ 780      00
+ 781 0011 00       		.ascii	"\000"
+ 782 0012 00       		.ascii	"\000"
+ 783 0013 00       		.ascii	"\000"
+ 784 0014 00000000 		.ascii	"\000\000\000\000\000\000\000\000"
+ 784      00000000 
+ 785 001c CE000000 		.ascii	"\316\000\000\000"
+ 786 0020 6F736C69 		.ascii	"oslib_test_suite_array\000"
+ 786      625F7465 
+ 786      73745F73 
+ 786      75697465 
+ 786      5F617272 
+ 787 0037 00       		.ascii	"\000"
+ 788 0038 00       		.ascii	"\000"
+ 789 0039 00       		.ascii	"\000"
+ 790 003a 00000000 		.ascii	"\000\000\000\000\000\000\000\000"
+ 790      00000000 
+ 791 0042 E3000000 		.ascii	"\343\000\000\000"
+ 792 0046 6F736C69 		.ascii	"oslib_test_sequence_001\000"
+ 792      625F7465 
+ 792      73745F73 
+ 792      65717565 
+ 792      6E63655F 
+ARM GAS  /tmp/ccH6nJ0S.s 			page 25
+
+
+ 793 005e 00       		.ascii	"\000"
+ 794 005f 02       		.ascii	"\002"
+ 795 0060 00       		.ascii	"\000"
+ 796 0061 00000000 		.ascii	"\000\000\000\000\000\000\000\000"
+ 796      00000000 
+ 797 0069 E5000000 		.ascii	"\345\000\000\000"
+ 798 006d 6F736C69 		.ascii	"oslib_test_sequence_002\000"
+ 798      625F7465 
+ 798      73745F73 
+ 798      65717565 
+ 798      6E63655F 
+ 799 0085 00       		.ascii	"\000"
+ 800 0086 02       		.ascii	"\002"
+ 801 0087 00       		.ascii	"\000"
+ 802 0088 00000000 		.ascii	"\000\000\000\000\000\000\000\000"
+ 802      00000000 
+ 803 0090 E7000000 		.ascii	"\347\000\000\000"
+ 804 0094 6F736C69 		.ascii	"oslib_test_sequence_003\000"
+ 804      625F7465 
+ 804      73745F73 
+ 804      65717565 
+ 804      6E63655F 
+ 805 00ac 00       		.ascii	"\000"
+ 806 00ad 02       		.ascii	"\002"
+ 807 00ae 00       		.ascii	"\000"
+ 808 00af 00000000 		.ascii	"\000\000\000\000\000\000\000\000"
+ 808      00000000 
+ 809 00b7 E9000000 		.ascii	"\351\000\000\000"
+ 810 00bb 6F736C69 		.ascii	"oslib_test_sequence_004\000"
+ 810      625F7465 
+ 810      73745F73 
+ 810      65717565 
+ 810      6E63655F 
+ 811 00d3 00       		.ascii	"\000"
+ 812 00d4 02       		.ascii	"\002"
+ 813 00d5 00       		.ascii	"\000"
+ 814 00d6 00000000 		.ascii	"\000\000\000\000\000\000\000\000"
+ 814      00000000 
+ 815 00de EB000000 		.ascii	"\353\000\000\000"
+ 816 00e2 6F736C69 		.ascii	"oslib_test_sequence_005\000"
+ 816      625F7465 
+ 816      73745F73 
+ 816      65717565 
+ 816      6E63655F 
+ 817 00fa 00       		.ascii	"\000"
+ 818 00fb 02       		.ascii	"\002"
+ 819 00fc 00       		.ascii	"\000"
+ 820 00fd 00000000 		.ascii	"\000\000\000\000\000\000\000\000"
+ 820      00000000 
+ 821 0105 ED000000 		.ascii	"\355\000\000\000"
+ 822 0109 6F736C69 		.ascii	"oslib_test_sequence_006\000"
+ 822      625F7465 
+ 822      73745F73 
+ 822      65717565 
+ 822      6E63655F 
+ 823 0121 00       		.ascii	"\000"
+ 824 0122 02       		.ascii	"\002"
+ARM GAS  /tmp/ccH6nJ0S.s 			page 26
+
+
+ 825 0123 00       		.ascii	"\000"
+ 826 0124 00000000 		.ascii	"\000\000\000\000\000\000\000\000"
+ 826      00000000 
+ 827 012c EF000000 		.ascii	"\357\000\000\000"
+ 828 0130 6F736C69 		.ascii	"oslib_test_sequence_007\000"
+ 828      625F7465 
+ 828      73745F73 
+ 828      65717565 
+ 828      6E63655F 
+ 829 0148 00       		.ascii	"\000"
+ 830 0149 02       		.ascii	"\002"
+ 831 014a 00       		.ascii	"\000"
+ 832 014b 00000000 		.ascii	"\000\000\000\000\000\000\000\000"
+ 832      00000000 
+ 833 0153 F1000000 		.ascii	"\361\000\000\000"
+ 834 0157 6F736C69 		.ascii	"oslib_test_sequence_008\000"
+ 834      625F7465 
+ 834      73745F73 
+ 834      65717565 
+ 834      6E63655F 
+ 835 016f 00       		.ascii	"\000"
+ 836 0170 02       		.ascii	"\002"
+ 837 0171 00       		.ascii	"\000"
+ 838 0172 00000000 		.ascii	"\000\000\000\000\000\000\000\000"
+ 838      00000000 
+ 839 017a F3000000 		.ascii	"\363\000\000\000"
+ 840 017e 6F736C69 		.ascii	"oslib_test_sequence_009\000"
+ 840      625F7465 
+ 840      73745F73 
+ 840      65717565 
+ 840      6E63655F 
+ 841 0196 00       		.ascii	"\000"
+ 842 0197 02       		.ascii	"\002"
+ 843 0198 00       		.ascii	"\000"
+ 844 0199 00000000 		.ascii	"\000\000\000\000\000\000\000\000"
+ 844      00000000 
+ 845 01a1 F5000000 		.ascii	"\365\000\000\000"
+ 846              		.text
+ 847              		.section	.gnu.lto_.ext_symtab.334af3be1e91ae75,"e",%progbits
+ 848 0000 01       		.ascii	"\001"
+ 849 0001 02       		.ascii	"\002"
+ 850 0002 00       		.ascii	"\000"
+ 851 0003 02       		.ascii	"\002"
+ 852 0004 00       		.ascii	"\000"
+ 853 0005 02       		.ascii	"\002"
+ 854 0006 00       		.ascii	"\000"
+ 855 0007 02       		.ascii	"\002"
+ 856 0008 00       		.ascii	"\000"
+ 857 0009 02       		.ascii	"\002"
+ 858 000a 00       		.ascii	"\000"
+ 859 000b 02       		.ascii	"\002"
+ 860 000c 00       		.ascii	"\000"
+ 861 000d 02       		.ascii	"\002"
+ 862 000e 00       		.ascii	"\000"
+ 863 000f 02       		.ascii	"\002"
+ 864 0010 00       		.ascii	"\000"
+ 865 0011 02       		.ascii	"\002"
+ARM GAS  /tmp/ccH6nJ0S.s 			page 27
+
+
+ 866 0012 00       		.ascii	"\000"
+ 867 0013 02       		.ascii	"\002"
+ 868 0014 00       		.ascii	"\000"
+ 869 0015 02       		.ascii	"\002"
+ 870 0016 00       		.ascii	"\000"
+ 871              		.text
+ 872              		.section	.gnu.lto_.opts,"e",%progbits
+ 873 0000 272D666E 		.ascii	"'-fno-openmp' '-fno-openacc' '-fno-pie' '-fcf-prote"
+ 873      6F2D6F70 
+ 873      656E6D70 
+ 873      2720272D 
+ 873      666E6F2D 
+ 874 0033 6374696F 		.ascii	"ction=none' '-g' '-mcpu=cortex-m4' '-mthumb' '-mflo"
+ 874      6E3D6E6F 
+ 874      6E652720 
+ 874      272D6727 
+ 874      20272D6D 
+ 875 0066 61742D61 		.ascii	"at-abi=hard' '-mfpu=fpv4-sp-d16' '-mlibarch=armv7e-"
+ 875      62693D68 
+ 875      61726427 
+ 875      20272D6D 
+ 875      6670753D 
+ 876 0099 6D2B6670 		.ascii	"m+fp' '-march=armv7e-m+fp' '-Og' '-fomit-frame-poin"
+ 876      2720272D 
+ 876      6D617263 
+ 876      683D6172 
+ 876      6D763765 
+ 877 00cc 74657227 		.ascii	"ter' '-falign-functions=16' '-ffunction-sections' '"
+ 877      20272D66 
+ 877      616C6967 
+ 877      6E2D6675 
+ 877      6E637469 
+ 878 00ff 2D666461 		.ascii	"-fdata-sections' '-fno-common' '-flto' '-Xassembler"
+ 878      74612D73 
+ 878      65637469 
+ 878      6F6E7327 
+ 878      20272D66 
+ 879 0132 2720272D 		.ascii	"' '-alms=./build/lst/oslib_test_root.lst'\000"
+ 879      616C6D73 
+ 879      3D2E2F62 
+ 879      75696C64 
+ 879      2F6C7374 
+ 880              		.text
+ 881              		.comm	__gnu_lto_slim,1,1
+ 882              		.ident	"GCC: (GNU Arm Embedded Toolchain 10.3-2021.10) 10.3.1 20210824 (release)"
+ARM GAS  /tmp/ccH6nJ0S.s 			page 28
+
+
+DEFINED SYMBOLS
+                            *ABS*:0000000000000000 oslib_test_root.c
+     /tmp/ccH6nJ0S.s:33     .gnu.debuglto_.debug_info:0000000000000000 oslib_test_root.c.e90fb5f1
+                            *COM*:0000000000000001 __gnu_lto_slim
+
+NO UNDEFINED SYMBOLS

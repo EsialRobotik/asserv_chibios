@@ -207,4 +207,11 @@ caddr_t _sbrk_r(struct _reent *r, int incr) {
 }
 
 
+void _write()
+{
+
+}
+
+
+
 

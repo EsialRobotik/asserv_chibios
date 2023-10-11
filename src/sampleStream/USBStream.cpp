@@ -2,29 +2,25 @@
 #include "usbcfg.h"
 #include <ch.h>
 #include <hal.h>
+#include <cstring>
 #include "core_cm4.h"
 #include <cstring>
 
-const uint32_t synchroWord_stream = 0xCAFED00D;
-const uint32_t synchroWord_config = 0xCAFEDECA;
-const uint32_t synchroWord_connection = 0xDEADBEEF;
-
-USBStream::USBStream()
+USBStream::USBStream(float period)
 {
-    m_timestamp = 0;
+    m_currentPtr = nullptr;
+    period_ = period;
 
-    chMtxObjectInit (&m_sample_sending_mutex);
-    std::memset(m_currentStruct.array, 0xFFFFFFFF, sizeof(m_currentStruct.array));
 }
 
-void USBStream::init()
+void USBStream::init(float period)
 {
     // USB FS
     palSetPadMode(GPIOA, 12, PAL_MODE_ALTERNATE(10)); //USB D+
     palSetPadMode(GPIOA, 11, PAL_MODE_ALTERNATE(10)); //USB D-
 
 
-    s_instance = new USBStream();
+    s_instance = new USBStream(period);
     SampleStream::setInstance(s_instance);
 
     /*
@@ -50,33 +46,24 @@ void USBStream::init()
 
 void* USBStream::sendCurrentStream()
 {
-    m_currentStruct.synchro = synchroWord_stream;
-    m_currentStruct.sample_size_without_synchro_nor_this = sizeof(m_currentStruct)-sizeof(m_currentStruct.synchro)-sizeof(m_currentStruct.sample_size_without_synchro_nor_this);
-    setTimestamp(m_timestamp++);
+    sendFullBuffer();
 
-    if( chMtxTryLock(&m_sample_sending_mutex))
-    {
-        sendFullBuffer();
+    getEmptyBuffer();
 
-        getEmptyBuffer();
-        chMtxUnlock(&m_sample_sending_mutex);
-    }
-
-    return m_currentPtr;
+    return nullptr;
 }
 
-void USBStream::sendConfig(uint8_t *configBuffer, uint8_t size)
-{
-    chnWrite(&SDU1, (uint8_t*)&synchroWord_config, sizeof(synchroWord_config));
-    chnWrite(&SDU1, &size, sizeof(size));
-    chnWrite(&SDU1, configBuffer, size);
-}
 
 void USBStream::sendFullBuffer()
 {
-    if (m_currentPtr != NULL) {
-        *m_currentPtr = m_currentStruct;
-        obqPostFullBuffer(&SDU1.obqueue, sizeof(UsbStreamSample));
+    if (m_currentPtr != nullptr)
+    {
+        my_msgpack["timestamp"] =  my_msgpack["timestamp"].float32_value() + period_;
+        MsgPack msgpack(my_msgpack);
+
+       std::string msgpack_bytes = msgpack.dump();
+       memcpy( m_currentPtr, msgpack_bytes.c_str(), msgpack_bytes.length());
+       obqPostFullBuffer(&SDU1.obqueue, msgpack_bytes.length());
     }
 }
 
@@ -84,91 +71,11 @@ void USBStream::getEmptyBuffer()
 {
     msg_t msg = obqGetEmptyBufferTimeout(&SDU1.obqueue, 0);
     if (msg == MSG_OK) {
-        m_currentPtr = (UsbStreamSample*) SDU1.obqueue.ptr;
-        uint32_t available_size = ((uint32_t) SDU1.obqueue.top - (uint32_t) SDU1.obqueue.ptr);
-        chDbgAssert(available_size >= (sizeof(UsbStreamSample) + 4),
-                "Not enough space in the free buffer. Did you set a correct USB buffer size ?");
+        m_currentPtr = (uint8_t*) SDU1.obqueue.ptr;
     } else {
         m_currentPtr = NULL;
     }
 }
 
-void USBStream::getFullBuffer(void **ptr, uint32_t *size)
-{
-    *size = 0;
-    if (!is_usb_serial_configured()) {
-        /*
-         *  Workaround :
-         *   When USB isn't plugged, ibqGetFullBufferTimeout return MSG_RESET immediately and this thread stuck others threads.
-         *   is_usb_serial_configured return the number of time the usb serial driver was configured ( ie : plugged in a PC ),
-         *    so while this condition isn't true, just schedule the others thread.
-         */
 
-        chThdYield();
-    }
-
-    msg_t msg = ibqGetFullBufferTimeout(&SDU1.ibqueue, TIME_INFINITE);
-
-    uint32_t sizeToRead = (size_t) SDU1.ibqueue.top - (size_t) SDU1.ibqueue.ptr;
-    if (msg != MSG_OK || sizeToRead == 0)
-        return;
-
-    *size = sizeToRead;
-    *ptr = SDU1.ibqueue.ptr;
-}
-
-void USBStream::releaseBuffer()
-{
-    ibqReleaseEmptyBuffer(&SDU1.ibqueue);
-}
-
-extern BaseSequentialStream *outputStream;
-void USBStream::USBStreamHandleConnection_lowerpriothread(usbStreamCallback callback)
-{
-    void *ptr = nullptr;
-    uint32_t size = 0;
-    getFullBuffer(&ptr, &size);
-    if (size > 0)
-    {
-        uint32_t *buffer = (uint32_t*) ptr;
-        if(buffer[0] == synchroWord_connection)
-        {
-            chprintf(outputStream, "connection detected\r\n");
-            /*
-             * It's a bit tricky here !
-             * As this function is paced by a medium priority thread ( ie: bellow than the rest of this class )
-             *  sending a description must stop the sending of the asserv loop.
-             *  To do so, a mutex is used and a new buffer is get for the next loop at the end of this routine.
-             */
-            chMtxLock(&m_sample_sending_mutex);
-
-            obqGetEmptyBufferTimeout(&SDU1.obqueue, TIME_MS2I(100));
-            uint32_t *ptr_32 = (uint32_t*)SDU1.obqueue.ptr;
-
-             //The description begin with a synchro word //
-            ptr_32[0] = synchroWord_connection;
-
-            // ... then the size of the following string
-            uint32_t description_size = strlen(description);
-            ptr_32[1] = description_size;
-
-            // And finaly, the description itself
-            char *ptr_str = (char*)&(ptr_32[2]);
-            for(unsigned int i=0;i<description_size; i++)
-                ptr_str[i] = description[i];
-
-            obqPostFullBuffer(&SDU1.obqueue, ((uint8_t*)&ptr_str[description_size]) - ((uint8_t*)ptr_32));
-
-            getEmptyBuffer();
-            chMtxUnlock(&m_sample_sending_mutex);
-        }
-        else
-        {
-            char *str = (char*) ptr;
-            str[size] = 0;
-            callback(str, size);
-        }
-        releaseBuffer();
-    }
-}
 
