@@ -17,7 +17,7 @@ Goto::Goto(float consignX_mm, float consignY_mm,
     else
         m_backModeCorrection = 1;
 
-    chDbgAssert(configuration->alignOnlyExitAngleThreshold_rad <= configuration->gotoAngleThreshold_rad, "Align only exit angle cannot be lower than goto Angle.");
+    m_alignOnlyExitAngleThreshold_rad = 0;
 }
 
 void Goto::computeInitialConsign(float X_mm, float Y_mm, float theta_rad, float *distanceConsig, float *angleConsign, const Regulator &angle_regulator, const Regulator &distance_regulator)
@@ -32,6 +32,10 @@ void Goto::computeInitialConsign(float X_mm, float Y_mm, float theta_rad, float 
    if (deltaDist < m_configuration->gotoReturnThreshold_mm)
    {
        m_alignOnly = true;
+       /* Cas particulier, pour être sur de bien aller à ce prochain point trop proche,
+        * on calcule un angle minimal qui permet d'arriver a la moitié de la zone d'arrivée.
+        */
+       m_alignOnlyExitAngleThreshold_rad = atan((0.5*m_configuration->arrivalDistanceThreshold_mm)/deltaDist);
    }
 
     updateConsign( X_mm, Y_mm, theta_rad, distanceConsig, angleConsign, angle_regulator, distance_regulator);
@@ -58,20 +62,31 @@ void Goto::updateConsign(float X_mm, float Y_mm, float theta_rad, float *distanc
    {
        *angleConsign = angle_regulator.getAccumulator() + deltaTheta;
 
-       if (fabs(deltaTheta) < m_configuration->gotoAngleThreshold_rad)
+       if (fabs(deltaTheta) < m_configuration->gotoAngleThreshold_rad && !m_alignOnly)
        {
            *distanceConsig = distance_regulator.getAccumulator() + m_backModeCorrection*deltaDist;
        }
 
-       if (fabs(deltaTheta) < m_configuration->alignOnlyExitAngleThreshold_rad)
+       if( m_alignOnly )
        {
-           m_alignOnly = false;
+           if (fabs(deltaTheta) < m_alignOnlyExitAngleThreshold_rad)
+           {
+               m_alignOnly = false;
+               m_alignOnlyExitAngleThreshold_rad = 0;
+           }
+           else
+           {
+               m_alignOnlyExitAngleThreshold_rad = atan((0.5*m_configuration->arrivalDistanceThreshold_mm)/deltaDist);
+           }
        }
+
    }
 
    SampleStream *instance = SampleStream::instance();
    instance->setXGoal(m_consignX_mm);
    instance->setYGoal(m_consignY_mm);
+   instance->setdeltaTheta(deltaTheta);
+   instance->setAlignOnlyExitAngleThreshold(m_alignOnlyExitAngleThreshold_rad);
 }
 
 bool Goto::isGoalReached(float X_mm, float Y_mm, float , const Regulator &, const Regulator &, const Command* )
