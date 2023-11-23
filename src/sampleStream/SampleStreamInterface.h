@@ -139,7 +139,9 @@ public:
         {"accDec/distance/MaxAttainableSpeed", 0.0},
         {"accDec/distance/currentSpeed", 0.0},
         {"blockingDetector/blockingDuration", 0.0},
-        {"blockingDetector/blockingDetected)", 0.0}
+        {"blockingDetector/blockingDetected", 0.0},
+        {"goto/alignOnlyExitAngleThreshold", 0.0},
+        {"goto/deltaTheta", 0.0}
     };
 
     inline void setTimestamp(float val) {my_msgpack["timestamp"] = val;};
@@ -182,15 +184,13 @@ public:
     inline void setDistanceLimitercurrentSpeed(float val) {my_msgpack["accDec/distance/currentSpeed"] = val;};
     inline void setBlockingDuration(float val) {my_msgpack["blockingDetector/blockingDuration"] = val;};
     inline void setBlockingDetected(float val) {my_msgpack["blockingDetector/blockingDetected"] = val;};
+    inline void setAlignOnlyExitAngleThreshold(float val) {my_msgpack["goto/alignOnlyExitAngleThreshold"] = val;};
+    inline void setdeltaTheta(float val) {my_msgpack["goto/deltaTheta"] = val;};
 
 
 private:
 
     static inline SampleStream* s_instance = nullptr;
-
-//protected:
-//    UsbStreamSample *m_currentPtr;
-//    UsbStreamSample m_currentStruct;
 
 };
 

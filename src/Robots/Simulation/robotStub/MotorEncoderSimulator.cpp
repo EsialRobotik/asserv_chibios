@@ -2,6 +2,8 @@
 #include <hal.h>
 #include "MotorEncoderSimulator.h"
 #include "util/asservMath.h"
+#include <cmath>
+
 
 #define MAX_SPEED 3000
 #define TAU 0.4
@@ -18,8 +20,6 @@
     float m_distanceByEncoderTurn_mm(M_2PI * wheelRadius_mm);
     m_encodermmByTicks = encodersTicksByTurn / m_distanceByEncoderTurn_mm ;
     printf("m_encodermmByTicks %f \n", m_encodermmByTicks);
-    m_EncoderRight_last = 0;
-    m_EncoderLeft_last = 0;
 }
 
 
@@ -46,14 +46,18 @@ float MotorEncoderSimulator::getMotorLeftSpeedNonInverted() const
 
 void MotorEncoderSimulator::getValues(float *deltaEncoderRight, float *deltaEncoderLeft)
 {
+    if( fabs(m_rightMotorPercentage) < 5 )
+        m_rightMotorPercentage = 0;
+
+    if( fabs(m_leftMotorPercentage) < 5 )
+        m_leftMotorPercentage = 0;
+
+
     float rightWheelSpeed_mm = m_motorRightSim.process(m_rightMotorPercentage);
     float leftWheelSpeed_mm = m_motorLeftSim.process(m_leftMotorPercentage);
 
 
     *deltaEncoderRight = (rightWheelSpeed_mm/10);
     *deltaEncoderLeft = (leftWheelSpeed_mm /10);
-
-    m_EncoderRight_last = rightWheelSpeed_mm;
-    m_EncoderLeft_last = leftWheelSpeed_mm;
 }
 

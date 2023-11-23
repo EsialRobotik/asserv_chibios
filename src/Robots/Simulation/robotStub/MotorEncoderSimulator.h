@@ -38,9 +38,6 @@ private:
     FirstOrderSim m_motorLeftSim;
 
     float m_encodermmByTicks;
-
-    float m_EncoderRight_last;
-    float m_EncoderLeft_last;
 };
 
 #endif /* MOTOR_CONTROLLER_SIMULATION_H_ */
