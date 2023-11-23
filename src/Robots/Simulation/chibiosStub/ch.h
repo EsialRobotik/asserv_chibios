@@ -23,6 +23,6 @@ static inline systime_t chVTGetSystemTime(void) {
 static inline void chSysLock(void) {}
 static inline void chSysUnlock(void) {}
 
-static inline void chThdSleepUntil(systime_t time){ std::this_thread::sleep_for(std::chrono::milliseconds(1)); };
+static inline void chThdSleepUntil(systime_t ){ std::this_thread::sleep_for(std::chrono::milliseconds(1)); };
 
 #endif /* CHTIME_H */

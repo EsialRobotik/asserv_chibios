@@ -207,11 +207,21 @@ caddr_t _sbrk_r(struct _reent *r, int incr) {
 }
 
 
-void _write()
-{
+// TODO: Probably remove this when using a new version of arm-none-eabi. Probably need to update chibios the same time
+void _write(void);
+void _close(void);
+void _fini(void);
+void _lseek(void);
+void _read(void);
+void _fstat(void);
+void _isatty(void);
 
-}
-
-
+void _write() {}
+void _close() {}
+void _fini() {}
+void _lseek() {}
+void _read() {}
+void _fstat() {}
+void _isatty() {}
 
 
