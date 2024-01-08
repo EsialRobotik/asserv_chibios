@@ -1,9 +1,11 @@
 #include "NativeStream.h"
-#include <msgpack11.hpp>
 #include <bits/stdc++.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
+#include <sstream>
+#include <iostream>
+
 
 using namespace msgpack11;
 
@@ -26,6 +28,7 @@ NativeStream::NativeStream(float period)
     }
 
     period_ = period;
+    timestamp_ = 0.0f;
 }
 
 void NativeStream::init(float period)
@@ -37,7 +40,19 @@ void NativeStream::init(float period)
 
 void* NativeStream::sendCurrentStream()
 {
-    my_msgpack["timestamp"] =  my_msgpack["timestamp"].float32_value() + period_;
+    setTimestamp(timestamp_);
+    std::string str(description);
+    std::stringstream ss (str);
+    char delim = ',';
+
+    std::string item;
+    int i=0;
+
+   while (getline (ss, item, delim)) {
+       my_msgpack[item] = m_currentStruct.array[i];
+       i++;
+   }
+
     MsgPack msgpack(my_msgpack);
 
 
@@ -45,6 +60,7 @@ void* NativeStream::sendCurrentStream()
 
 
     sendto(client_fd_, (const char *)msgpack_bytes.c_str(), msgpack_bytes.length(), MSG_CONFIRM, (const struct sockaddr *) &serv_addr_, sizeof(serv_addr_));
+    timestamp_ += period_;
     return nullptr;
 }
 

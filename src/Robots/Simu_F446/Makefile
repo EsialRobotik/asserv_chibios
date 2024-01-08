@@ -5,7 +5,7 @@
 
 # Compiler options here.
 ifeq ($(USE_OPT),)
-  USE_OPT = -Og -g -ggdb -fomit-frame-pointer -falign-functions=16 -lm
+  USE_OPT = -O2 -fomit-frame-pointer -falign-functions=16 -lm
 endif
 
 # C specific options here (added to USE_OPT).
@@ -55,13 +55,13 @@ endif
 # Stack size to be allocated to the Cortex-M process stack. This stack is
 # the stack used by the main() thread.
 ifeq ($(USE_PROCESS_STACKSIZE),)
-  USE_PROCESS_STACKSIZE = 0x1400
+  USE_PROCESS_STACKSIZE = 0x1800
 endif
 
 # Stack size to the allocated to the Cortex-M main/exceptions stack. This
 # stack is used for processing interrupts and exceptions.
 ifeq ($(USE_EXCEPTIONS_STACKSIZE),)
-  USE_EXCEPTIONS_STACKSIZE = 0x800
+  USE_EXCEPTIONS_STACKSIZE = 0xA00
 endif
 
 # Enables the use of FPU (no, softfp, hard).
@@ -134,7 +134,6 @@ ifneq ($(SHELL_ENABLE),)  # enable the shell
 	SHELL_MODE_DEFINE = -DENABLE_SHELL
 endif
 
-SHELL_MODE_DEFINE = -DENABLE_SHELL
 #$(error ALLSRC : >$(ALLCSRC)<)
 
 # C sources that can be compiled in ARM or THUMB mode depending on the global
@@ -149,8 +148,8 @@ CSRC = $(ALLCSRC)\
 # setting.
 CPPSRC = $(ALLCPPSRC) \
        $(wildcard $(SRCDIR)/Robots/PMI/*.cpp ) \
-       $(SRCDIR)/motorController/Vnh5019.cpp \
-       $(SRCDIR)/motorController/Md22.cpp \
+       $(SRCDIR)/robotStub/MotorEncoderSimulator.cpp \
+       $(SRCDIR)/robotStub/FirstOrderSim.cpp \
        $(SRCDIR)/sampleStream/USBStream.cpp \
        $(SRCDIR)/sampleStream/msgpack11.cpp \
        $(SRCDIR)/Encoders/QuadratureEncoder.cpp \
