@@ -215,7 +215,7 @@ THD_FUNCTION(asservPositionSerial, p)
         chprintf(outputStreamSd4, "#%d;%d;%f;%d;%d;%d;%d;%d\r\n",
             (int32_t)odometry->getX(), (int32_t)odometry->getY(), odometry->getTheta(),
             commandManager->getCommandStatus(), commandManager->getPendingCommandCount(),
-            md22MotorController->getLeftSpeed(), md22MotorController->getRightSpeed(), debg);
+			(int8_t)md22MotorController->getMotorLeftSpeedNonInverted(), (int8_t)md22MotorController->getMotorRightSpeedNonInverted(), debg);
 //        chprintf(outputStream,    "#%d;%d;%f;%d;%d;%d;%d;%d\r\n",
 //                    (int32_t)odometry->getX(), (int32_t)odometry->getY(), odometry->getTheta(),
 //                    commandManager->getCommandStatus(), commandManager->getPendingCommandCount(),

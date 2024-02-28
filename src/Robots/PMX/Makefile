@@ -149,11 +149,13 @@ CSRC = $(ALLCSRC)\
 # C++ sources that can be compiled in ARM or THUMB mode depending on the global
 # setting.
 CPPSRC = $(ALLCPPSRC) \
-       $(wildcard $(SRCDIR)/Robots/PMI/*.cpp ) \
+       $(wildcard $(SRCDIR)/Robots/PMX/*.cpp ) \
        $(SRCDIR)/motorController/Vnh5019.cpp \
        $(SRCDIR)/motorController/Md22.cpp \
        $(SRCDIR)/sampleStream/USBStream.cpp \
        $(SRCDIR)/Encoders/QuadratureEncoder.cpp \
+       $(SRCDIR)/Encoders/MagEncoders.cpp \
+       $(SRCDIR)/Encoders/ams_as5048b.cpp \
        $(SRCDIR)/AsservMain.cpp \
        $(SRCDIR)/SpeedController/SpeedController.cpp \
        $(SRCDIR)/SpeedController/AdaptativeSpeedController.cpp \
@@ -172,7 +174,7 @@ CPPSRC = $(ALLCPPSRC) \
        $(SRCDIR)/AccelerationLimiter/SimpleAccelerationLimiter.cpp \
        $(SRCDIR)/AccelerationLimiter/AdvancedAccelerationLimiter.cpp \
        $(SRCDIR)/AccelerationLimiter/AccelerationDecelerationLimiter.cpp \
-       $(SRCDIR)/blockingDetector/OldSchoolBlockingDetector.cpp 
+       $(SRCDIR)/blockingDetector/SpeedErrorBlockingDetector.cpp 
 
     
 

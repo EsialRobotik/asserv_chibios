@@ -99,7 +99,6 @@ Pll *leftPll;
 OldSchoolBlockingDetector *blockingDetector;
 
 SimpleAccelerationLimiter *angleAccelerationlimiter;
-//AdvancedAccelerationLimiter *distanceAccelerationLimiter;
 AccelerationDecelerationLimiter *distanceAccelerationLimiter;
 
 CommandManager *commandManager;
@@ -107,7 +106,7 @@ AsservMain *mainAsserv;
 
 static void initAsserv()
 {
-    encoders = new QuadratureEncoder(&ESIALCardPinConf_Encoders, true, true, true);
+    encoders = new QuadratureEncoder(&ESIALCardPinConf_Encoders, true, false, false);
     md22MotorController = new Md22(&ESIALCardPinConf_md22, false, false, false, 100000);
 
     angleRegulator = new Regulator(ANGLE_REGULATOR_KP, MAX_SPEED_MM_PER_SEC);
@@ -164,27 +163,27 @@ static THD_FUNCTION(AsservThread, arg)
     md22MotorController->init();
     encoders->init();
     encoders->start();
-    USBStream::init(ASSERV_THREAD_PERIOD_S);
+    USBStream::init();
 
     chBSemSignal(&asservStarted_semaphore);
 
     mainAsserv->mainLoop();
 }
 
-//void usbSerialCallback(char *buffer, uint32_t size);
-//static THD_WORKING_AREA(waLowPrioUSBThread, 512);
-//static THD_FUNCTION(LowPrioUSBThread, arg)
-//{
-//    (void) arg;
-//    chRegSetThreadName("LowPrioUSBThread");
-//
-//
-//    while (!chThdShouldTerminateX())
-//    {
-//       USBStream::instance()->USBStreamHandleConnection_lowerpriothread(usbSerialCallback);
-//    }
-//
-//}
+void usbSerialCallback(char *buffer, uint32_t size);
+static THD_WORKING_AREA(waLowPrioUSBThread, 512);
+static THD_FUNCTION(LowPrioUSBThread, arg)
+{
+    (void) arg;
+    chRegSetThreadName("LowPrioUSBThread");
+
+
+    while (!chThdShouldTerminateX())
+    {
+       USBStream::instance()->USBStreamHandleConnection_lowerpriothread(usbSerialCallback);
+    }
+
+}
 
 
 THD_WORKING_AREA(wa_shell, 2048);
@@ -216,7 +215,7 @@ int main(void)
     chThdCreateStatic(waAsservThread, sizeof(waAsservThread), HIGHPRIO, AsservThread, NULL);
     chBSemWait(&asservStarted_semaphore);
 
-//    chThdCreateStatic(waLowPrioUSBThread, sizeof(waLowPrioUSBThread), LOWPRIO, LowPrioUSBThread, NULL);
+    chThdCreateStatic(waLowPrioUSBThread, sizeof(waLowPrioUSBThread), LOWPRIO, LowPrioUSBThread, NULL);
 
     outputStream = reinterpret_cast<BaseSequentialStream*>(&SD2);
 
@@ -693,56 +692,6 @@ void asservCommandUSB(BaseSequentialStream *chp, int argc, char **argv)
         printUsage();
     }
 }
-
-//THD_FUNCTION(ControlPanelThread, p)
-//{
-//    (void) p;
-//    void *ptr = nullptr;
-//    uint32_t size = 0;
-//    char *firstArg = nullptr;
-//    char *argv[7];
-//    while (!chThdShouldTerminateX())
-//    {
-//        USBStream::instance()->getFullBuffer(&ptr, &size);
-//        if (size > 0)
-//        {
-//            char *buffer = (char*) ptr;
-//            buffer[size] = 0;
-//
-//            /*
-//             *  On transforme la commande recu dans une version argv/argc
-//             *    de manière a utiliser les commandes shell déjà définie...
-//             */
-//            bool prevWasSpace = false;
-//            firstArg = buffer;
-//            int nb_arg = 0;
-//            for (uint32_t i = 0; i < size; i++)
-//            {
-//                if (prevWasSpace && buffer[i] != ' ')
-//                {
-//                    argv[nb_arg++] = &buffer[i];
-//                }
-//
-//                if (buffer[i] == ' ' || buffer[i] == '\r' || buffer[i] == '\n')
-//                {
-//                    prevWasSpace = true;
-//                    buffer[i] = 0;
-//                }
-//                else
-//                {
-//                    prevWasSpace = false;
-//                }
-//            }
-//
-//            // On évite de faire appel au shell si le nombre d'arg est mauvais ou si la 1ière commande est mauvaise...
-//            if (nb_arg > 0 && !strcmp(firstArg, "asserv"))
-//            {
-//                asservCommandUSB(nullptr, nb_arg, argv);
-//            }
-//            USBStream::instance()->releaseBuffer();
-//        }
-//    }
-//}
 
 void usbSerialCallback(char *buffer, uint32_t size)
 {

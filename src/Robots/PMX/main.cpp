@@ -8,7 +8,7 @@
 #include <cfloat>
 
 #include "../../blockingDetector/SpeedErrorBlockingDetector.h"
-#include "../../USBStream_old.h"
+#include "sampleStream/USBStream.h"
 #include "raspIO.h"
 #include "util/asservMath.h"
 #include "util/chibiOsAllocatorWrapper.h"
@@ -191,6 +191,21 @@ THD_WORKING_AREA(wa_shell_serie, 2048);
 THD_WORKING_AREA(wa_controlPanel_serie, 256);
 THD_FUNCTION(ControlPanelThread, p);
 
+void usbSerialCallback(char *buffer, uint32_t size);
+static THD_WORKING_AREA(waLowPrioUSBThread, 512);
+static THD_FUNCTION(LowPrioUSBThread, arg)
+{
+    (void) arg;
+    chRegSetThreadName("LowPrioUSBThread");
+
+
+    while (!chThdShouldTerminateX())
+    {
+       USBStream::instance()->USBStreamHandleConnection_lowerpriothread(usbSerialCallback);
+    }
+
+}
+
 char history_buffer[SHELL_MAX_HIST_BUFF];
 char *completion_buffer[SHELL_MAX_COMPLETIONS];
 
@@ -228,6 +243,7 @@ int main(void)
     chThdCreateStatic(waAsservThread, sizeof(waAsservThread), HIGHPRIO, AsservThread, NULL);
     chBSemWait(&asservStarted_semaphore);
 
+    chThdCreateStatic(waLowPrioUSBThread, sizeof(waLowPrioUSBThread), LOWPRIO, LowPrioUSBThread, NULL);
 
     shellInit();
 
@@ -256,10 +272,6 @@ int main(void)
 
         thread_t *shellThd = chThdCreateStatic(wa_shell, sizeof(wa_shell), LOWPRIO, shellThread, &shellCfg);
         chRegSetThreadNameX(shellThd, "shell");
-
-        // Le thread controlPanel n'a de sens que quand le shell tourne
-        thread_t *controlPanelThd = chThdCreateStatic(wa_controlPanel, sizeof(wa_controlPanel), LOWPRIO, ControlPanelThread, nullptr);
-        chRegSetThreadNameX(controlPanelThd, "controlPanel");
 
 
         thread_t *asserCmdSerialThread = chThdCreateStatic(wa_shell_serie, sizeof(wa_shell_serie), LOWPRIO, asservCommandSerial, nullptr);
@@ -560,55 +572,45 @@ void asservCommandUSB(BaseSequentialStream *chp, int argc, char **argv)
     }
 }
 
-
-THD_FUNCTION(ControlPanelThread, p)
+void usbSerialCallback(char *buffer, uint32_t size)
 {
-    (void) p;
-    void *ptr = nullptr;
-    uint32_t size = 0;
-    char *firstArg = nullptr;
-    char *argv[7];
-    while (!chThdShouldTerminateX())
+    if (size > 0)
     {
-        USBStream::instance()->getFullBuffer(&ptr, &size);
-        if (size > 0)
+        /*
+         *  On transforme la commande recu dans une version argv/argc
+         *    de manière a utiliser les commandes shell déjà définie...
+         */
+        bool prevWasSpace = false;
+        char* firstArg = buffer;
+        int nb_arg = 0;
+        char *argv[10];
+        for (uint32_t i = 0; i < size; i++)
         {
-            char *buffer = (char*) ptr;
-
-            /*
-             *  On transforme la commande recu dans une version argv/argc
-             *    de manière a utiliser les commandes shell déjà définie...
-             */
-            bool prevWasSpace = false;
-            firstArg = buffer;
-            int nb_arg = 0;
-            for (uint32_t i = 0; i < size; i++)
+            if (prevWasSpace && buffer[i] != ' ')
             {
-                if (prevWasSpace && buffer[i] != ' ')
-                {
-                    argv[nb_arg++] = &buffer[i];
-                }
-
-                if (buffer[i] == ' ' || buffer[i] == '\r' || buffer[i] == '\n')
-                {
-                    prevWasSpace = true;
-                    buffer[i] = '\0';
-                }
-                else
-                {
-                    prevWasSpace = false;
-                }
+                argv[nb_arg++] = &buffer[i];
             }
 
-            // On évite de faire appel au shell si le nombre d'arg est mauvais ou si la 1ière commande est mauvaise...
-            if (nb_arg > 0 && !strcmp(firstArg, "asserv"))
+            if (buffer[i] == ' ' || buffer[i] == '\r' || buffer[i] == '\n')
             {
-                asservCommandUSB(nullptr, nb_arg, argv);
+                prevWasSpace = true;
+                buffer[i] = 0;
             }
-            USBStream::instance()->releaseBuffer();
+            else
+            {
+                prevWasSpace = false;
+            }
+        }
+
+        // On évite de faire appel au shell si le nombre d'arg est mauvais ou si la 1ière commande est mauvaise...
+        if (nb_arg > 0 && !strcmp(firstArg, "asserv"))
+        {
+            asservCommandUSB(nullptr, nb_arg, argv);
         }
     }
 }
+
+
 
 
 /*

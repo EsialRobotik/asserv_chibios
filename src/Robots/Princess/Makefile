@@ -149,7 +149,7 @@ CSRC = $(ALLCSRC)\
 # C++ sources that can be compiled in ARM or THUMB mode depending on the global
 # setting.
 CPPSRC = $(ALLCPPSRC) \
-       $(wildcard $(SRCDIR)/Robots/PMI/*.cpp ) \
+       $(wildcard $(SRCDIR)/Robots/Princess/*.cpp ) \
        $(SRCDIR)/motorController/Vnh5019.cpp \
        $(SRCDIR)/motorController/Md22.cpp \
        $(SRCDIR)/sampleStream/USBStream.cpp \

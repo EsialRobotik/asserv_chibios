@@ -7,7 +7,7 @@
 #include <cstdio>
 #include <cfloat>
 
-#include "../../USBStream_old.h"
+#include "sampleStream/USBStream.h"
 #include "raspIO.h"
 #include "util/asservMath.h"
 #include "util/chibiOsAllocatorWrapper.h"
@@ -68,10 +68,10 @@ float speed_controller_left_SpeedRange[NB_PI_SUBSET] = { 20, 50, 60};
 
 
 #define COMMAND_MANAGER_GOTO_PRECISE_ARRIVAL_DISTANCE_mm (3)
-Goto::GotoConfiguration preciseGotoConf  = {COMMAND_MANAGER_GOTO_RETURN_THRESHOLD_mm, COMMAND_MANAGER_GOTO_ANGLE_THRESHOLD_RAD, COMMAND_MANAGER_GOTO_PRECISE_ARRIVAL_DISTANCE_mm, COMMAND_MANAGER_ALIGN_ONLY_EXIT_ANGLE_THRESHOLD_RAD};
+Goto::GotoConfiguration preciseGotoConf  = {COMMAND_MANAGER_GOTO_RETURN_THRESHOLD_mm, COMMAND_MANAGER_GOTO_ANGLE_THRESHOLD_RAD, COMMAND_MANAGER_GOTO_PRECISE_ARRIVAL_DISTANCE_mm};
 
 #define COMMAND_MANAGER_GOTO_WAYPOINT_ARRIVAL_DISTANCE_mm (20)
-Goto::GotoConfiguration waypointGotoConf  = {COMMAND_MANAGER_GOTO_RETURN_THRESHOLD_mm, COMMAND_MANAGER_GOTO_ANGLE_THRESHOLD_RAD, COMMAND_MANAGER_GOTO_WAYPOINT_ARRIVAL_DISTANCE_mm, COMMAND_MANAGER_ALIGN_ONLY_EXIT_ANGLE_THRESHOLD_RAD};
+Goto::GotoConfiguration waypointGotoConf  = {COMMAND_MANAGER_GOTO_RETURN_THRESHOLD_mm, COMMAND_MANAGER_GOTO_ANGLE_THRESHOLD_RAD, COMMAND_MANAGER_GOTO_WAYPOINT_ARRIVAL_DISTANCE_mm};
 
 #define COMMAND_MANAGER_GOTONOSTOP_TOO_BIG_ANGLE_THRESHOLD_RAD (M_PI/2)
 GotoNoStop::GotoNoStopConfiguration gotoNoStopConf = {COMMAND_MANAGER_GOTO_ANGLE_THRESHOLD_RAD, COMMAND_MANAGER_GOTONOSTOP_TOO_BIG_ANGLE_THRESHOLD_RAD, (150/DIST_REGULATOR_KP), 85};
@@ -240,10 +240,6 @@ int main(void)
     {
         thread_t *shellThd = chThdCreateStatic(wa_shell, sizeof(wa_shell), LOWPRIO, shellThread, &shellCfg);
         chRegSetThreadNameX(shellThd, "shell");
-
-        // Le thread controlPanel n'a de sens que quand le shell tourne
-        thread_t *controlPanelThd = chThdCreateStatic(wa_controlPanel, sizeof(wa_controlPanel), LOWPRIO, ControlPanelThread, nullptr);
-        chRegSetThreadNameX(controlPanelThd, "controlPanel");
     }
     else
     {
@@ -544,56 +540,6 @@ void asservCommandUSB(BaseSequentialStream *chp, int argc, char **argv)
     }
 }
 
-
-THD_FUNCTION(ControlPanelThread, p)
-{
-    (void) p;
-    void *ptr = nullptr;
-    uint32_t size = 0;
-    char *firstArg = nullptr;
-    char *argv[7];
-    while (!chThdShouldTerminateX())
-    {
-        USBStream::instance()->getFullBuffer(&ptr, &size);
-        if (size > 0)
-        {
-            char *buffer = (char*) ptr;
-            buffer[size] = 0;
-
-            /*
-             *  On transforme la commande recu dans une version argv/argc
-             *    de manière a utiliser les commandes shell déjà définie...
-             */
-            bool prevWasSpace = false;
-            firstArg = buffer;
-            int nb_arg = 0;
-            for (uint32_t i = 0; i < size; i++)
-            {
-                if (prevWasSpace && buffer[i] != ' ')
-                {
-                    argv[nb_arg++] = &buffer[i];
-                }
-
-                if (buffer[i] == ' ' || buffer[i] == '\r' || buffer[i] == '\n')
-                {
-                    prevWasSpace = true;
-                    buffer[i] = 0;
-                }
-                else
-                {
-                    prevWasSpace = false;
-                }
-            }
-
-            // On évite de faire appel au shell si le nombre d'arg est mauvais ou si la 1ière commande est mauvaise...
-            if (nb_arg > 0 && !strcmp(firstArg, "asserv"))
-            {
-                asservCommandUSB(nullptr, nb_arg, argv);
-            }
-            USBStream::instance()->releaseBuffer();
-        }
-    }
-}
 
 void usbSerialCallback(char *buffer, uint32_t size)
 {
