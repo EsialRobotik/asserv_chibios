@@ -112,6 +112,7 @@ float AccelerationDecelerationLimiter::limitAcceleration(float dt, float targetS
 void AccelerationDecelerationLimiter::enable()
 {
        m_enabled = true;
+       reset();  // When enabling again this limiter, reset the internal values. This should fix the famous bug "the moustache of rami"
 }
 
 void AccelerationDecelerationLimiter::disable()
