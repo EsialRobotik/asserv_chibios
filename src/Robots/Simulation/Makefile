@@ -96,7 +96,7 @@ SRCDIR   := ../../../src
 # SRCS := $(shell find $(SRC_DIRS) -name '*.cpp' -or -name '*.c' -or -name '*.s')
 
 CPPSRC=$(wildcard $(SRCDIR)/Robots/Simulation/*.cpp ) \
-       $(wildcard $(SRCDIR)/Robots/Simulation/robotStub/*.cpp ) \
+       $(wildcard $(SRCDIR)/robotStub/*.cpp ) \
        $(wildcard $(SRCDIR)/Robots/Simulation/chibiosStub/*.cpp ) \
        $(SRCDIR)/sampleStream/msgpack11.cpp \
        $(SRCDIR)/AsservMain.cpp \

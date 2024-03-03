@@ -185,10 +185,6 @@ void AsservMain::mainLoop()
         instance->setOdoTheta(m_odometry.getTheta());
 
 
-//        instance->setRawEncoderDeltaLeft((float) encoderDeltaLeft);
-//        instance->setRawEncoderDeltaRight((float) encoderDeltaRight);
-
-
         instance->setRawEncoderDeltaLeft(m_pllLeft.getSpeed());
         instance->setRawEncoderDeltaRight(m_pllRight.getSpeed());
 

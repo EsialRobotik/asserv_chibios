@@ -1,19 +1,22 @@
 #ifndef MOTOR_CONTROLLER_SIMULATION_H_
 #define MOTOR_CONTROLLER_SIMULATION_H_
 
-#include "motorController/MotorController.h"
-#include "Encoders/Encoder.h"
+#include "MotorController.h"
+#include "Encoder.h"
 #include "FirstOrderSim.h"
 #include <string>
 
 using namespace std;
 
 
+class Odometry;
+
+
 class MotorEncoderSimulator: public MotorController, public Encoders
 {
 public:
 
-    explicit MotorEncoderSimulator(float period, float wheelRadius_mm, float encodersTicksByTurn);
+    explicit MotorEncoderSimulator(float period, float wheelRadius_mm, float encodersTicksByTurn, Odometry *odometry);
     virtual ~MotorEncoderSimulator() {};
 
     void setMotorRightSpeed(float percentage);
@@ -38,6 +41,8 @@ private:
     FirstOrderSim m_motorLeftSim;
 
     float m_encodermmByTicks;
+
+    Odometry *m_odometry;
 };
 
 #endif /* MOTOR_CONTROLLER_SIMULATION_H_ */

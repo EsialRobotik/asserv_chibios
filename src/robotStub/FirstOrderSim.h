@@ -9,6 +9,8 @@ class FirstOrderSim
 
         float process(float input);
 
+        void reset();
+
 private:
        float E, ///< Constant, depending on sampling rate and time constant
              static_gain_,

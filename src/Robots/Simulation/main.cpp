@@ -70,8 +70,6 @@ void shell();
 
 int main(void)
 {
-    MotorEncoderSimulator motorEncoder(ASSERV_THREAD_PERIOD_S, ENCODERS_WHEELS_RADIUS_MM, ENCODERS_TICKS_BY_TURN );
-
     Regulator angleRegulator(ANGLE_REGULATOR_KP, MAX_SPEED_MM_PER_SEC);
     Regulator distanceRegulator(DIST_REGULATOR_KP, FLT_MAX);
 
@@ -79,6 +77,9 @@ int main(void)
     Pll leftPll(PLL_BANDWIDTH);
 
     Odometry odometry(ENCODERS_WHEELS_DISTANCE_MM, 0, 0);
+
+
+    MotorEncoderSimulator motorEncoder(ASSERV_THREAD_PERIOD_S, ENCODERS_WHEELS_RADIUS_MM, ENCODERS_TICKS_BY_TURN, &odometry);
 
 
     AdaptativeSpeedController speedControllerRight(speed_controller_right_Kp, speed_controller_right_Ki, speed_controller_right_SpeedRange, 100, FLT_MAX, ASSERV_THREAD_FREQUENCY);
@@ -124,10 +125,11 @@ void shell()
 
         if( line.c_str()[0] == 'a' )
         {
-            float X = 100;
-            printf("Adding straight line of %f mm\r\n", X);
+            printf("Run scenarion \r\n");
+            mainAsserv->limitMotorControllerConsignToPercentage(25);
+            commandManager->addStraightLine(-200);
+            mainAsserv->limitMotorControllerConsignToPercentage(100);
 
-            commandManager->addStraightLine(X);
         }
         else if( line.c_str()[0] == 'b' )
         {
