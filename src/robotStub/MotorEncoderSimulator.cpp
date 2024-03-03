@@ -12,7 +12,7 @@
  MotorEncoderSimulator::MotorEncoderSimulator(float period, float wheelRadius_mm, float encodersTicksByTurn, Odometry *odometry) :
         MotorController(), Encoders(),
         m_motorRightSim(period, TAU, MAX_SPEED/100), m_motorLeftSim(period, TAU, MAX_SPEED/100),
-		m_odometry(odometry)
+		m_odometry(odometry), m_wall(false), m_wallPos(0)
 {
     m_rightMotorPercentage = 0;
     m_leftMotorPercentage = 0;
@@ -21,7 +21,6 @@
 
     float m_distanceByEncoderTurn_mm(M_2PI * wheelRadius_mm);
     m_encodermmByTicks = encodersTicksByTurn / m_distanceByEncoderTurn_mm ;
-    printf("m_encodermmByTicks %f \n", m_encodermmByTicks);
 }
 
 
@@ -58,16 +57,31 @@ void MotorEncoderSimulator::getValues(float *deltaEncoderRight, float *deltaEnco
     float rightWheelSpeed_mm = m_motorRightSim.process(m_rightMotorPercentage);
     float leftWheelSpeed_mm = m_motorLeftSim.process(m_leftMotorPercentage);
 
-    if( m_odometry->getX() < -10 )
+    if( m_wall )
     {
-    	m_motorRightSim.reset();
-    	m_motorLeftSim.reset();
-    	rightWheelSpeed_mm = 0;
-    	leftWheelSpeed_mm = 0;
+		if( m_odometry->getX() < -10 )
+		{
+			m_motorRightSim.reset();
+			m_motorLeftSim.reset();
+			rightWheelSpeed_mm = 0;
+			leftWheelSpeed_mm = 0;
+			m_motorRightSim.process(0);
+			m_motorLeftSim.process(0);
+		}
     }
 
 
     *deltaEncoderRight = (rightWheelSpeed_mm/10);
     *deltaEncoderLeft = (leftWheelSpeed_mm /10);
+}
+
+
+void MotorEncoderSimulator::setWall(bool value)
+{
+	m_wall = value;
+	if( m_wall)
+	{
+		m_wall = m_odometry->getX()-10;
+	}
 }
 

@@ -29,6 +29,8 @@ public:
 
     virtual void getValues(float *deltaEncoderRight, float *deltaEncoderLeft);
 
+    void setWall(bool value);
+
 private:
 
     float m_rightMotorPercentage;
@@ -43,6 +45,9 @@ private:
     float m_encodermmByTicks;
 
     Odometry *m_odometry;
+
+    bool m_wall;
+    float m_wallPos;
 };
 
 #endif /* MOTOR_CONTROLLER_SIMULATION_H_ */

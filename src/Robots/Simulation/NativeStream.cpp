@@ -5,6 +5,8 @@
 #include <string.h>
 #include <sstream>
 #include <iostream>
+#include <cmath>
+
 
 
 using namespace msgpack11;
@@ -49,8 +51,13 @@ void* NativeStream::sendCurrentStream()
     int i=0;
 
    while (getline (ss, item, delim)) {
-       my_msgpack[item] = m_currentStruct.array[i];
-       i++;
+
+	   if(std::isnan(m_currentStruct.array[i]))
+		   my_msgpack[item] = 0.0f;
+	   else
+		   my_msgpack[item] = m_currentStruct.array[i];
+
+	   i++;
    }
 
     MsgPack msgpack(my_msgpack);

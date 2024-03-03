@@ -14,6 +14,9 @@
 #include <thread>
 #include <iostream>
 #include <string>
+#include <unistd.h>
+#include "util/asservMath.h"
+
 
 #define ASSERV_THREAD_FREQUENCY (600)
 #define ASSERV_THREAD_PERIOD_S (1.0/ASSERV_THREAD_FREQUENCY)
@@ -66,6 +69,8 @@ GotoNoStop::GotoNoStopConfiguration gotoNoStopConf = {COMMAND_MANAGER_GOTO_ANGLE
 
 CommandManager *commandManager;
 AsservMain *mainAsserv;
+MotorEncoderSimulator *motorEncoder;
+Odometry *odometry;
 void shell();
 
 int main(void)
@@ -76,10 +81,10 @@ int main(void)
     Pll rightPll( PLL_BANDWIDTH);
     Pll leftPll(PLL_BANDWIDTH);
 
-    Odometry odometry(ENCODERS_WHEELS_DISTANCE_MM, 0, 0);
+    odometry = new Odometry(ENCODERS_WHEELS_DISTANCE_MM, 0, 0);
 
 
-    MotorEncoderSimulator motorEncoder(ASSERV_THREAD_PERIOD_S, ENCODERS_WHEELS_RADIUS_MM, ENCODERS_TICKS_BY_TURN, &odometry);
+    motorEncoder = new MotorEncoderSimulator(ASSERV_THREAD_PERIOD_S, ENCODERS_WHEELS_RADIUS_MM, ENCODERS_TICKS_BY_TURN, odometry);
 
 
     AdaptativeSpeedController speedControllerRight(speed_controller_right_Kp, speed_controller_right_Ki, speed_controller_right_SpeedRange, 100, FLT_MAX, ASSERV_THREAD_FREQUENCY);
@@ -99,7 +104,7 @@ int main(void)
 
     mainAsserv = new AsservMain( ASSERV_THREAD_FREQUENCY, ASSERV_POSITION_DIVISOR,
                            ENCODERS_WHEELS_RADIUS_MM, ENCODERS_WHEELS_DISTANCE_MM, ENCODERS_TICKS_BY_TURN,
-                           *commandManager, motorEncoder, motorEncoder, odometry,
+                           *commandManager, *motorEncoder, *motorEncoder, *odometry,
                            angleRegulator, distanceRegulator,
                            angleAccelerationlimiter, distanceAccelerationLimiter,
                            speedControllerRight, speedControllerLeft,
@@ -126,9 +131,51 @@ void shell()
         if( line.c_str()[0] == 'a' )
         {
             printf("Run scenarion \r\n");
-            mainAsserv->limitMotorControllerConsignToPercentage(25);
+
+
+            // go_timed -200
+            motorEncoder->setWall(true);
+            mainAsserv->limitMotorControllerConsignToPercentage(10);
             commandManager->addStraightLine(-200);
+            usleep(1000000);
+            mainAsserv->setEmergencyStop();
+            mainAsserv->resetEmergencyStop();
             mainAsserv->limitMotorControllerConsignToPercentage(100);
+            motorEncoder->setWall(false);
+
+
+
+            // set X & st theta
+            mainAsserv->setPosition(50, odometry->getY(), 3.14159265359 );
+
+
+            // go 200
+            commandManager->addStraightLine(200);
+            usleep(1000000);
+
+//            // turn
+//            commandManager->addTurn(degToRad(90));
+//			usleep(1000000);
+//
+//            // go_timed -200
+//            motorEncoder->setWall(true);
+//            mainAsserv->limitMotorControllerConsignToPercentage(10);
+//            commandManager->addStraightLine(-500);
+//            usleep(1000000);
+//            mainAsserv->setEmergencyStop();
+//            mainAsserv->resetEmergencyStop();
+//            mainAsserv->limitMotorControllerConsignToPercentage(100);
+//            motorEncoder->setWall(false);
+//
+//            // set Y
+//            mainAsserv->setPosition(odometry->getX(), 1855, odometry->getTheta() );
+//
+//            // go 200
+//            commandManager->addStraightLine(200);
+//            usleep(1000000);
+
+
+
 
         }
         else if( line.c_str()[0] == 'b' )
