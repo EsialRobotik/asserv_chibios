@@ -135,7 +135,7 @@ ifneq ($(SHELL_ENABLE),)  # enable the shell
 	SHELL_MODE_DEFINE = -DENABLE_SHELL
 endif
 
-SHELL_MODE_DEFINE = -DENABLE_SHELL
+
 #$(error ALLSRC : >$(ALLCSRC)<)
 
 # C sources that can be compiled in ARM or THUMB mode depending on the global

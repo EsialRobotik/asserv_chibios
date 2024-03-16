@@ -62,6 +62,8 @@ public:
 
     void setPosition(float X_mm, float Y_mm, float theta_rad);
     void limitMotorControllerConsignToPercentage(float percentage);
+
+    void setEncodersWheelsDistance_mm(float wheelsDistance_mm);
 private:
 
     float convertSpeedTommSec(float speed_ticksPerSec);
@@ -90,8 +92,8 @@ private:
     const float m_distanceByEncoderTurn_mm;
     const float m_encodersTicksByTurn;
     const float m_encodermmByTicks;
-    const float m_encoderWheelsDistance_mm;
-    const float m_encoderWheelsDistance_ticks;
+    float m_encoderWheelsDistance_mm;
+    float m_encoderWheelsDistance_ticks;
 
     const uint16_t m_loopFrequency;
     const float m_loopPeriod;

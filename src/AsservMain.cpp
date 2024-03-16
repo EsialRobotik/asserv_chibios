@@ -45,10 +45,13 @@ AsservMain::AsservMain(uint16_t loopFrequency, uint16_t speedPositionLoopDivisor
     m_asservMode = normal_mode;
     m_directSpeedMode_rightWheelSpeed = 0;
     m_directSpeedMode_leftWheelSpeed = 0;
-    printf("m_encodermmByTicks %f \n", m_encodermmByTicks);
-    printf("m_encodersTicksByTurn %f \n", m_encodersTicksByTurn);
-    printf("m_distanceByEncoderTurn_mm %f \n", m_distanceByEncoderTurn_mm);
-    printf("ratio %f \n", m_distanceByEncoderTurn_mm/m_encodersTicksByTurn);
+}
+
+void AsservMain::setEncodersWheelsDistance_mm(float wheelsDistance_mm)
+{
+	m_encoderWheelsDistance_mm = wheelsDistance_mm;
+	m_encoderWheelsDistance_ticks = m_encoderWheelsDistance_mm/m_encodermmByTicks;
+	m_odometry.setEncoderWheelsDistance(m_encoderWheelsDistance_mm);
 }
 
 float AsservMain::convertSpeedTommSec(float speed_ticksPerSec)
@@ -185,8 +188,8 @@ void AsservMain::mainLoop()
         instance->setOdoTheta(m_odometry.getTheta());
 
 
-        instance->setRawEncoderDeltaLeft(m_pllLeft.getSpeed());
-        instance->setRawEncoderDeltaRight(m_pllRight.getSpeed());
+        instance->setRawEncoderDeltaLeft(encoderDeltaLeft);
+        instance->setRawEncoderDeltaRight(encoderDeltaRight);
 
 
 
