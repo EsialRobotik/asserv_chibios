@@ -1,14 +1,11 @@
-#ifndef SRC_ENCODERS_MAGENCODERS_CPP_
-#define SRC_ENCODERS_MAGENCODERS_CPP_
+#ifndef SRC_ENCODERS_MAGENCODERS_H_
+#define SRC_ENCODERS_MAGENCODERS_H_
 
 #include "Encoder.h"
 #include "ch.h"
 #include "hal.h"
 #include "hal_streams.h"
 #include "ams_as5048b.h"
-
-// Address depending on the two DIL switches
-//#define AS5048B_ADDR(a2,a1)  (uint8_t)(0x40 | ( a2 ? 0x2 : 0 ) | ( a1 ? 0x1 : 0 ))//todo a changer
 
 class MagEncoders: public Encoders
 {
@@ -21,7 +18,7 @@ public:
         uint8_t pinNumberSDA;
     };
 
-    MagEncoders(bool is1EncoderRight, bool invertEncoderRight = false, bool invertEncoderLeft = false);
+    MagEncoders(I2cPinInit *i2cPins, bool is1EncoderRight, bool invertEncoderRight = false, bool invertEncoderLeft = false, uint32_t i2cFrequency=100000);
     virtual ~MagEncoders();
 
     void init();
@@ -51,4 +48,4 @@ private:
 
 };
 
-#endif /* SRC_ENCODERS_MAGENCODERS_CPP_ */
+#endif /* SRC_ENCODERS_MAGENCODERS_H_ */

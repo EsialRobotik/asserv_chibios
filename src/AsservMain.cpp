@@ -45,10 +45,10 @@ AsservMain::AsservMain(uint16_t loopFrequency, uint16_t speedPositionLoopDivisor
     m_asservMode = normal_mode;
     m_directSpeedMode_rightWheelSpeed = 0;
     m_directSpeedMode_leftWheelSpeed = 0;
-    printf("m_encodermmByTicks %f \n", m_encodermmByTicks);
-    printf("m_encodersTicksByTurn %f \n", m_encodersTicksByTurn);
-    printf("m_distanceByEncoderTurn_mm %f \n", m_distanceByEncoderTurn_mm);
-    printf("ratio %f \n", m_distanceByEncoderTurn_mm/m_encodersTicksByTurn);
+//    printf("m_encodermmByTicks %f \n", m_encodermmByTicks);
+//    printf("m_encodersTicksByTurn %f \n", m_encodersTicksByTurn);
+//    printf("m_distanceByEncoderTurn_mm %f \n", m_distanceByEncoderTurn_mm);
+//    printf("ratio %f \n", m_distanceByEncoderTurn_mm/m_encodersTicksByTurn);
 }
 
 float AsservMain::convertSpeedTommSec(float speed_ticksPerSec)
@@ -86,7 +86,6 @@ void AsservMain::mainLoop()
         float encoderDeltaRight;
         float encoderDeltaLeft;
         m_encoders.getValues(&encoderDeltaRight, &encoderDeltaLeft);
-
 
         // Mise à jour de la position en polaire
         m_odometry.refresh(encoderDeltaRight * m_encodermmByTicks, encoderDeltaLeft * m_encodermmByTicks);
@@ -187,8 +186,6 @@ void AsservMain::mainLoop()
 
         instance->setRawEncoderDeltaLeft(m_pllLeft.getSpeed());
         instance->setRawEncoderDeltaRight(m_pllRight.getSpeed());
-
-
 
         instance->sendCurrentStream();
 
