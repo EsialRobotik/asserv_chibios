@@ -29,7 +29,7 @@
 
 #define ASSERV_THREAD_FREQUENCY (600) //200=>5ms 300=>3ms 600
 #define ASSERV_THREAD_PERIOD_S (1.0/ASSERV_THREAD_FREQUENCY)
-#define ASSERV_POSITION_DIVISOR (5)
+#define ASSERV_POSITION_DIVISOR (15) //5 à 200 en 2023
 
 #define ENCODERS_WHEELS_RADIUS_MM (39.93/2.0) // le rayon de vos roues codeuses 39.88, 39.93
 #define ENCODERS_WHEELS_DISTANCE_MM (234.4) //distance entre les 2 roues codeuses
@@ -63,9 +63,10 @@ float speed_controller_left_SpeedRange[NB_PI_SUBSET] = { 20, 50, 60};
 
 #define PLL_BANDWIDTH (150) //20 à  cause des codeurs magnetique qui oscillent?  verif pour garder un minimum de variation sur la vitesse
 
-#define BLOCKING_ANGLE_SPEED_THRESHOLD_RAD_PER_S (3.6)
-#define BLOCKING_DIST_SPEED_THRESHOLD_MM_PER_S (80)
-#define BLOCKING_TIME_THRESHOLD_MS (0.25)
+#define BLOCKING_ANGLE_SPEED_THRESHOLD_RAD_PER_S (M_PI/6)//3.6
+#define BLOCKING_DIST_SPEED_THRESHOLD_MM_PER_S (20) //80
+#define BLOCKING_TIME_THRESHOLD_SEC (0.15) //0.25
+#define MINIMUM_CONSIDERED_SPEED_PERCENT (8) //poucentage minimum en dessous duquel on compte plus la detection
 
 #define COMMAND_MANAGER_ARRIVAL_ANGLE_THRESHOLD_RAD (0.02)
 #define COMMAND_MANAGER_ARRIVAL_DISTANCE_THRESHOLD_mm (2.5)
@@ -146,18 +147,18 @@ static void initAsserv()
     distanceAccelerationLimiter = new AdvancedAccelerationLimiter(DIST_REGULATOR_MAX_ACC, DIST_REGULATOR_MIN_ACC,
             DIST_REGULATOR_HIGH_SPEED_THRESHOLD);
 
-    commandManager = new CommandManager( COMMAND_MANAGER_ARRIVAL_DISTANCE_THRESHOLD_mm,
-            COMMAND_MANAGER_ARRIVAL_ANGLE_THRESHOLD_RAD, preciseGotoConf, waypointGotoConf, gotoNoStopConf,
-            *angleRegulator, *distanceRegulator);
-
-    debug1("initAsserv::commandManager OK\r\n");
-
     //blockingDetector = new OldSchoolBlockingDetector(ASSERV_THREAD_PERIOD_S, *md22MotorController, *odometry, 0.0018f, 0.4f, 0.25f); //0.0018f, 0.4f, 0.25f
     blockingDetector = new OldSchoolBlockingDetector(ASSERV_THREAD_PERIOD_S, *md22MotorController, *odometry,
             BLOCKING_ANGLE_SPEED_THRESHOLD_RAD_PER_S, BLOCKING_DIST_SPEED_THRESHOLD_MM_PER_S,
-            BLOCKING_TIME_THRESHOLD_MS);
+            BLOCKING_TIME_THRESHOLD_SEC, MINIMUM_CONSIDERED_SPEED_PERCENT);
 
     debug1("initAsserv::blockingDetector OK\r\n");
+
+    commandManager = new CommandManager( COMMAND_MANAGER_ARRIVAL_DISTANCE_THRESHOLD_mm,
+            COMMAND_MANAGER_ARRIVAL_ANGLE_THRESHOLD_RAD, preciseGotoConf, waypointGotoConf, gotoNoStopConf,
+            *angleRegulator, *distanceRegulator, nullptr, blockingDetector);
+
+    debug1("initAsserv::commandManager OK\r\n");
 
     mainAsserv = new AsservMain( ASSERV_THREAD_FREQUENCY, ASSERV_POSITION_DIVISOR,
     ENCODERS_WHEELS_RADIUS_MM, ENCODERS_WHEELS_DISTANCE_MM, ENCODERS_TICKS_BY_TURN, *commandManager,
@@ -392,7 +393,7 @@ void asservCommandUSB(BaseSequentialStream *chp, int argc, char **argv)
 {
     auto printUsage = []() {
         chprintf(outputStream,"Usage :");
-        chprintf(outputStream," - asserv enablemotor 0|1\r\n");
+        chprintf(outputStream," - asserv en 0|1\r\n");
         chprintf(outputStream," - asserv enablepolar 0|1\r\n");
         chprintf(outputStream," - asserv coders \r\n");
         chprintf(outputStream," - asserv ext (coders) \r\n");
@@ -516,7 +517,7 @@ void asservCommandUSB(BaseSequentialStream *chp, int argc, char **argv)
         chprintf(outputStream, "setting dist Kp to %.2f \r\n", Kp);
 
         distanceRegulator->setGain(Kp);
-    } else if (!strcmp(argv[0], "enablemotor")) {
+    } else if (!strcmp(argv[0], "en")) {
         bool enable = !(atoi(argv[1]) == 0);
         chprintf(outputStream, "%s motor output\r\n", (enable ? "enabling" : "disabling"));
         mainAsserv->enableMotors(enable);

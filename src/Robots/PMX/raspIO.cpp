@@ -7,8 +7,6 @@
 #include <cstdio>
 #include <cfloat>
 
-
-
 /*
  * All this part is absolutely terrible !
  * A (way!) best design must be found in order to share code between robot's instance !
@@ -30,10 +28,9 @@ extern BaseSequentialStream *outputStreamSd4;
 static void serialReadLine(char *buffer, unsigned int buffer_size)
 {
     unsigned int i;
-    for(i=0; i<buffer_size; i++)
-    {
+    for (i = 0; i < buffer_size; i++) {
         buffer[i] = streamGet(&SD4);
-        if ( buffer[i] == '\n' || buffer[i] == '\r')
+        if (buffer[i] == '\n' || buffer[i] == '\r')
             break;
     }
     buffer[i] = '\0';
@@ -81,15 +78,33 @@ THD_FUNCTION(asservCommandSerial, p)
     float consigneValue2 = 0;
     float consigneValue3 = 0;
     char buffer[64];
+    int int_as_bool = 0;
+
     //chprintf(outputStream, "Started\r\n");
     chprintf(outputStreamSd4, "Started\r\n");
 
-
-    while(true)
-    {
+    while (true) {
         char readChar = streamGet(&SD4);
 
         switch (readChar) {
+
+        case 'A': // Activation/desactivation du regulateur d'angle / A0 A1
+            serialReadLine(buffer, sizeof(buffer));
+            sscanf(buffer, "%d", &int_as_bool);
+            if (int_as_bool)
+                mainAsserv->enableAngleRegulator();
+            else
+                mainAsserv->disableAngleRegulator();
+            break;
+
+        case 'D': // Activation/desactivation du regulateur de distance / D0 D1
+            serialReadLine(buffer, sizeof(buffer));
+            sscanf(buffer, "%d", &int_as_bool);
+            if (int_as_bool)
+                mainAsserv->enableDistanceRegulator();
+            else
+                mainAsserv->disableDistanceRegulator();
+            break;
 
         case 'h': //Arrêt d'urgence
             mainAsserv->setEmergencyStop();
@@ -120,8 +135,8 @@ THD_FUNCTION(asservCommandSerial, p)
 
         case 'd':
             chprintf(outputStreamSd4, "consigne gauche : 45°\n");
-             commandManager->addTurn(degToRad(-45));
-             break;
+            commandManager->addTurn(degToRad(-45));
+            break;
 
         case 'v': //aVance d'un certain nombre de mm
             serialReadLine(buffer, sizeof(buffer));
@@ -160,8 +175,7 @@ THD_FUNCTION(asservCommandSerial, p)
             break;
 
         case 'p': //retourne la Position et l'angle courants du robot
-            chprintf(outputStreamSd4, "x%fy%fa%fs%d\r\n",
-                    odometry->getX(), odometry->getY(), odometry->getTheta(),
+            chprintf(outputStreamSd4, "x%fy%fa%fs%d\r\n", odometry->getX(), odometry->getY(), odometry->getTheta(),
                     commandManager->getCommandStatus());
 //            chprintf(outputStream, "x%fy%fa%fs%d\r\n",
 //                                odometry->getX(), odometry->getY(), odometry->getTheta(),
@@ -210,17 +224,16 @@ THD_FUNCTION(asservPositionSerial, p)
     systime_t time = chVTGetSystemTime();
     time += TIME_MS2I(loopPeriod_ms);
     unsigned int debg = 0;
-    while(true)
-    {
-        chprintf(outputStreamSd4, "#%d;%d;%f;%d;%d;%d;%d;%d\r\n",
-            (int32_t)odometry->getX(), (int32_t)odometry->getY(), odometry->getTheta(),
-            commandManager->getCommandStatus(), commandManager->getPendingCommandCount(),
-            md22MotorController->getMotorLeftSpeedNonInverted(), md22MotorController->getMotorRightSpeedNonInverted(), debg);
+    while (true) {
+        chprintf(outputStreamSd4, "#%d;%d;%f;%d;%u;%d;%d;%u\r\n", (int32_t) odometry->getX(),
+                (int32_t) odometry->getY(), odometry->getTheta(), (int8_t) commandManager->getCommandStatus(),
+                (uint8_t) commandManager->getPendingCommandCount(), (int32_t)md22MotorController->getMotorLeftSpeedNonInverted(),
+                (int32_t)md22MotorController->getMotorRightSpeedNonInverted(), debg);
         //DEBUG
-//        chprintf(outputStream,    "#%d;%d;%f;%d;%d;%d;%d;%d\r\n",
-//                    (int32_t)odometry->getX(), (int32_t)odometry->getY(), odometry->getTheta(),
-//                    commandManager->getCommandStatus(), commandManager->getPendingCommandCount(),
-//                    md22MotorController->getLeftSpeed(), md22MotorController->getRightSpeed(), debg);
+        chprintf(outputStream,    "#%d;%d;%f;%d;%u;%d;%d;%u\r\n", (int32_t) odometry->getX(),
+                (int32_t) odometry->getY(), odometry->getTheta(), (int8_t) commandManager->getCommandStatus(),
+                (uint8_t) commandManager->getPendingCommandCount(), (int32_t)md22MotorController->getMotorLeftSpeedNonInverted(),
+                (int32_t)md22MotorController->getMotorRightSpeedNonInverted(), debg);
 
         chThdSleepUntil(time);
         time += TIME_MS2I(loopPeriod_ms);
