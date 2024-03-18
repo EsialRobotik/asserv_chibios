@@ -90,7 +90,6 @@ void AsservMain::mainLoop()
         float encoderDeltaLeft;
         m_encoders.getValues(&encoderDeltaRight, &encoderDeltaLeft);
 
-
         // Mise à jour de la position en polaire
         m_odometry.refresh(encoderDeltaRight * m_encodermmByTicks, encoderDeltaLeft * m_encodermmByTicks);
 
@@ -190,8 +189,6 @@ void AsservMain::mainLoop()
 
         instance->setRawEncoderDeltaLeft(encoderDeltaLeft);
         instance->setRawEncoderDeltaRight(encoderDeltaRight);
-
-
 
         instance->sendCurrentStream();
 
