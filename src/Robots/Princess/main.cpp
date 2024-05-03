@@ -32,13 +32,14 @@
 #define ENCODERS_WHEELS_DISTANCE_MM (268.75)
 #define ENCODERS_TICKS_BY_TURN (1024*4)
 
-#define MAX_SPEED_MM_PER_SEC (1200)
+#define REGULATOR_MAX_SPEED_MM_PER_SEC (1000)
+#define WHEELS_MAX_SPEED_MM_PER_SEC (1300)
 
 #define DIST_REGULATOR_KP (6)
-#define DIST_REGULATOR_MAX_ACC_FW (4200)
-#define DIST_REGULATOR_MAX_DEC_FW (4200)
+#define DIST_REGULATOR_MAX_ACC_FW (3800)
+#define DIST_REGULATOR_MAX_DEC_FW (3800)
 #define DIST_REGULATOR_MAX_ACC_BW (2500)
-#define DIST_REGULATOR_MAX_DEC_BW (4000)
+#define DIST_REGULATOR_MAX_DEC_BW (3800)
 #define ACC_DEC_DAMPLING (1.65)
 
 
@@ -109,7 +110,7 @@ static void initAsserv()
     encoders = new QuadratureEncoder(&ESIALCardPinConf_Encoders, true, true, true);
     md22MotorController = new Md22(&ESIALCardPinConf_md22, true, true, false, 100000);
 
-    angleRegulator = new Regulator(ANGLE_REGULATOR_KP, MAX_SPEED_MM_PER_SEC);
+    angleRegulator = new Regulator(ANGLE_REGULATOR_KP, REGULATOR_MAX_SPEED_MM_PER_SEC);
     distanceRegulator = new Regulator(DIST_REGULATOR_KP, FLT_MAX);
 
     rightPll = new Pll (PLL_BANDWIDTH);
@@ -117,12 +118,12 @@ static void initAsserv()
 
     odometry = new Odometry (ENCODERS_WHEELS_DISTANCE_MM, 0, 0);
 
-    speedControllerRight = new AdaptativeSpeedController(speed_controller_right_Kp, speed_controller_right_Ki, speed_controller_right_SpeedRange, 100, MAX_SPEED_MM_PER_SEC, ASSERV_THREAD_FREQUENCY);
-    speedControllerLeft = new AdaptativeSpeedController(speed_controller_left_Kp, speed_controller_left_Ki, speed_controller_left_SpeedRange, 100, MAX_SPEED_MM_PER_SEC, ASSERV_THREAD_FREQUENCY);
+    speedControllerRight = new AdaptativeSpeedController(speed_controller_right_Kp, speed_controller_right_Ki, speed_controller_right_SpeedRange, 100, WHEELS_MAX_SPEED_MM_PER_SEC, ASSERV_THREAD_FREQUENCY);
+    speedControllerLeft = new AdaptativeSpeedController(speed_controller_left_Kp, speed_controller_left_Ki, speed_controller_left_SpeedRange, 100, WHEELS_MAX_SPEED_MM_PER_SEC, ASSERV_THREAD_FREQUENCY);
 
 
     angleAccelerationlimiter = new SimpleAccelerationLimiter(ANGLE_REGULATOR_MAX_ACC);
-    distanceAccelerationLimiter = new AccelerationDecelerationLimiter(DIST_REGULATOR_MAX_ACC_FW, DIST_REGULATOR_MAX_DEC_FW, DIST_REGULATOR_MAX_ACC_BW, DIST_REGULATOR_MAX_DEC_BW, MAX_SPEED_MM_PER_SEC, ACC_DEC_DAMPLING, DIST_REGULATOR_KP);
+    distanceAccelerationLimiter = new AccelerationDecelerationLimiter(DIST_REGULATOR_MAX_ACC_FW, DIST_REGULATOR_MAX_DEC_FW, DIST_REGULATOR_MAX_ACC_BW, DIST_REGULATOR_MAX_DEC_BW, REGULATOR_MAX_SPEED_MM_PER_SEC, ACC_DEC_DAMPLING, DIST_REGULATOR_KP);
 
     blockingDetector = new OldSchoolBlockingDetector(ASSERV_THREAD_PERIOD_S, *md22MotorController, *odometry,
            BLOCKING_DETECTOR_ANGLE_SPEED_THRESHOLD, BLOCKING_DETECTOR_DIST_SPEED_THRESHOLD, BLOCKING_DETECTOR_BLOCKING_DURATION_THRESHOLD);
