@@ -26,7 +26,7 @@
 #define DIST_REGULATOR_MIN_ACC (1000)
 #define DIST_REGULATOR_HIGH_SPEED_THRESHOLD (200)
 
-#define ANGLE_REGULATOR_KP (500) //480 cheff400 mais trop bas coupe de suisse ?
+#define ANGLE_REGULATOR_KP (600) //480 cheff400 mais trop bas coupe de suisse ?
 #define ANGLE_REGULATOR_MAX_ACC (900)
 
 

@@ -360,6 +360,8 @@ void asservCommandUSB(BaseSequentialStream *chp, int argc, char **argv)
         chprintf(outputStream," - asserv ext (coders) \r\n");
         chprintf(outputStream," - asserv reset \r\n");
         chprintf(outputStream," - asserv motorspeed [r|l] speed \r\n");
+        chprintf(outputStream," - asserv distslow [maxspeed] \r\n");
+        chprintf(outputStream," - asserv turnslow [maxspeed] \r\n");
         chprintf(outputStream," -------------- \r\n");
         chprintf(outputStream," - asserv wheelspeedstep [r|l] [speed] [step time] \r\n");
         chprintf(outputStream," -------------- \r\n");
@@ -379,6 +381,7 @@ void asservCommandUSB(BaseSequentialStream *chp, int argc, char **argv)
         chprintf(outputStream," -------------- \r\n");
         chprintf(outputStream," - asserv addgoto X Y\r\n");
         chprintf(outputStream," - asserv gototest\r\n");
+
     };
     (void) chp;
 
@@ -519,7 +522,22 @@ void asservCommandUSB(BaseSequentialStream *chp, int argc, char **argv)
 
         mainAsserv->enablePolar(enable);
 
-    } else if (!strcmp(argv[0], "addgoto")) {
+    } else if (!strcmp(argv[0], "distslow")) {
+			int maxspeed = atoi(argv[1]);
+			chprintf(outputStream, "distslow %d\r\n", maxspeed);
+
+			distanceRegulator->setMaxOutput(maxspeed);
+			angleRegulator->setMaxOutput(MAX_SPEED_MM_PER_SEC);
+
+    } else if (!strcmp(argv[0], "turnslow")) {
+			int maxspeed = atoi(argv[1]);
+			chprintf(outputStream, "turnslow %d\r\n", maxspeed);
+
+			distanceRegulator->setMaxOutput(MAX_SPEED_MM_PER_SEC);
+			angleRegulator->setMaxOutput(maxspeed);
+
+
+	} else if (!strcmp(argv[0], "addgoto")) {
         float X = atof(argv[1]);
         float Y = atof(argv[2]);
         chprintf(outputStream, "Adding goto(%.2f,%.2f) consign\r\n", X, Y);

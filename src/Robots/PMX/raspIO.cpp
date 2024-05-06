@@ -57,7 +57,8 @@ THD_FUNCTION(asservCommandSerial, p)
      W / sauvegarde la config courante  config~1.txt = config.default.txt
 
      I / Active les actions dans la boucle d'asservissement (odo + managers)
-     ! / Stoppe actions dans la boucle d'asservissement
+     N%f#%f / modifie la vitesse max de distance et d'angle
+     ! / remet la vitesse max initiale
      K / desactive le consignController et le commandManager
      J / reactive le consignController et le commandManager
 
@@ -192,16 +193,15 @@ THD_FUNCTION(asservCommandSerial, p)
             break;
 
         case 'N':
-        	distanceRegulator->setMaxOutput(MAX_SPEED_MM_PER_SEC);
-        	angleRegulator->setMaxOutput(MAX_SPEED_MM_PER_SEC);
-            break;
-
-        case 'n':
-        	distanceRegulator->setMaxOutput(SLOW_SPEED_MODE_MAX_SPEED_MM_PER_SEC);
-        	angleRegulator->setMaxOutput(MAX_SPEED_MM_PER_SEC);  //TODO : Peut-etre il faudrait baisser la Vmax du régu d'angle s'il est trop violent par rapport a celui de distance
+        	serialReadLine(buffer, sizeof(buffer));
+        	sscanf(buffer, "%f#%f", &consigneValue1, &consigneValue2);
+        	distanceRegulator->setMaxOutput(consigneValue1);
+        	angleRegulator->setMaxOutput(consigneValue2);
             break;
 
         case '!':
+        	distanceRegulator->setMaxOutput(MAX_SPEED_MM_PER_SEC);
+        	angleRegulator->setMaxOutput(MAX_SPEED_MM_PER_SEC);
             break;
 
         case 'R':
