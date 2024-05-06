@@ -6,24 +6,15 @@
 #include <cstring>
 #include <cstdio>
 #include <cfloat>
+#include "util/asservMath.h"
+#include "config.h"
+
 
 /*
  * All this part is absolutely terrible !
  * A (way!) best design must be found in order to share code between robot's instance !
  */
-#include "Odometry.h"
-#include "AsservMain.h"
-#include "commandManager/CommandManager.h"
-#include "motorController/Md22.h"
-#include "util/asservMath.h"
 
-extern Odometry *odometry;
-extern AsservMain *mainAsserv;
-extern Md22 *md22MotorController;
-extern CommandManager *commandManager;
-
-extern BaseSequentialStream *outputStream;
-extern BaseSequentialStream *outputStreamSd4;
 
 static void serialReadLine(char *buffer, unsigned int buffer_size)
 {
@@ -200,7 +191,14 @@ THD_FUNCTION(asservCommandSerial, p)
             mainAsserv->limitMotorControllerConsignToPercentage(consigneValue1);
             break;
 
-        case 'I':
+        case 'N':
+        	distanceRegulator->setMaxOutput(MAX_SPEED_MM_PER_SEC);
+        	angleRegulator->setMaxOutput(MAX_SPEED_MM_PER_SEC);
+            break;
+
+        case 'n':
+        	distanceRegulator->setMaxOutput(SLOW_SPEED_MODE_MAX_SPEED_MM_PER_SEC);
+        	angleRegulator->setMaxOutput(MAX_SPEED_MM_PER_SEC);  //TODO : Peut-etre il faudrait baisser la Vmax du régu d'angle s'il est trop violent par rapport a celui de distance
             break;
 
         case '!':

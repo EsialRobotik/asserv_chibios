@@ -29,17 +29,17 @@
 #define ASSERV_POSITION_DIVISOR (5)
 
 #define ENCODERS_WHEELS_RADIUS_MM (31.83/2.0)
-#define ENCODERS_WHEELS_DISTANCE_MM (268.5)
+#define ENCODERS_WHEELS_DISTANCE_MM (268.75)
 #define ENCODERS_TICKS_BY_TURN (1024*4)
 
-#define MAX_SPEED_MM_PER_SEC (1500)
+#define MAX_SPEED_MM_PER_SEC (1200)
 
 #define DIST_REGULATOR_KP (6)
-#define DIST_REGULATOR_MAX_ACC_FW (3000)
-#define DIST_REGULATOR_MAX_DEC_FW (3300)
-#define DIST_REGULATOR_MAX_ACC_BW (3300)
-#define DIST_REGULATOR_MAX_DEC_BW (2000)
-#define ACC_DEC_DAMPLING (1.6)
+#define DIST_REGULATOR_MAX_ACC_FW (4200)
+#define DIST_REGULATOR_MAX_DEC_FW (4200)
+#define DIST_REGULATOR_MAX_ACC_BW (2500)
+#define DIST_REGULATOR_MAX_DEC_BW (4000)
+#define ACC_DEC_DAMPLING (1.65)
 
 
 #define ANGLE_REGULATOR_KP (900)
@@ -290,6 +290,7 @@ void asservCommandUSB(BaseSequentialStream *chp, int argc, char **argv)
         chprintf(outputStream," - asserv adddist mm \r\n");
         chprintf(outputStream," - asserv distreset\r\n");
         chprintf(outputStream," - asserv distcontrol Kp\r\n");
+        chprintf(outputStream," - asserv wheelsdist distance_in_mm\r\n");
         chprintf(outputStream," -------------- \r\n");
         chprintf(outputStream," - asserv addgoto X Y\r\n");
         chprintf(outputStream," - asserv gototest\r\n");
@@ -431,6 +432,13 @@ void asservCommandUSB(BaseSequentialStream *chp, int argc, char **argv)
 
         distanceRegulator->setGain(Kp);
     }
+    else if (!strcmp(argv[0], "wheelsdist"))
+    {
+        float wheelDistance_mm = atof(argv[1]);
+        chprintf(outputStream, "setting wheels dist to %.2f \r\n", wheelDistance_mm);
+
+		mainAsserv->setEncodersWheelsDistance_mm(wheelDistance_mm);
+    }
     else if (!strcmp(argv[0], "enablemotor"))
     {
         bool enable = !(atoi(argv[1]) == 0);
@@ -493,11 +501,12 @@ void asservCommandUSB(BaseSequentialStream *chp, int argc, char **argv)
     else if (!strcmp(argv[0], "gototest"))
     {
         mainAsserv->resetToNormalMode();
-        commandManager->addGoToNoStop(500, 0);
-        commandManager->addGoToNoStop(500, -500);
-        commandManager->addGoToNoStop(0, -500);
-        commandManager->addGoToNoStop(0, 0);
-        commandManager->addGoToAngle(500, 0);
+        bool ok = commandManager->addStraightLine(1500);
+        chprintf(outputStream, "Adding distance %.2fmm \r\n", 1500 );
+        chThdSleepMilliseconds(600);
+        chprintf(outputStream, "Stop!\r\n");
+
+        mainAsserv->setEmergencyStop();
 
     }
     else if (!strcmp(argv[0], "get_config"))
