@@ -42,7 +42,7 @@
 #define DIST_REGULATOR_MIN_ACC (1000)
 #define DIST_REGULATOR_HIGH_SPEED_THRESHOLD (200)
 
-#define ANGLE_REGULATOR_KP (400) //480
+#define ANGLE_REGULATOR_KP (500) //480 cheff400 mais trop bas coupe de suisse ?
 #define ANGLE_REGULATOR_MAX_ACC (900)
 
 //float speed_controller_right_Kp[NB_PI_SUBSET] = { 0.3, 0.2, 0.1 };
@@ -74,6 +74,7 @@ float speed_controller_left_SpeedRange[NB_PI_SUBSET] = { 20, 50, 60};
 #define COMMAND_MANAGER_GOTO_RETURN_THRESHOLD_mm (20)
 #define COMMAND_MANAGER_GOTO_ANGLE_THRESHOLD_RAD (M_PI/8)
 #define COMMAND_MANAGER_GOTO_PRECISE_ARRIVAL_DISTANCE_mm (3)
+
 Goto::GotoConfiguration preciseGotoConf = { COMMAND_MANAGER_GOTO_RETURN_THRESHOLD_mm,
         COMMAND_MANAGER_GOTO_ANGLE_THRESHOLD_RAD, COMMAND_MANAGER_GOTO_PRECISE_ARRIVAL_DISTANCE_mm };
 
@@ -203,7 +204,7 @@ static THD_FUNCTION(AsservThread, arg)
     chBSemSignal(&asservStarted_semaphore);
 
     //desactivation au demarrage
-    mainAsserv->enableMotors(false);
+    mainAsserv->enableMotors(true);
     //debug1("AsservThread::enableMotors false\r\n");
 
     mainAsserv->mainLoop();
@@ -394,6 +395,7 @@ void asservCommandUSB(BaseSequentialStream *chp, int argc, char **argv)
     auto printUsage = []() {
         chprintf(outputStream,"Usage :");
         chprintf(outputStream," - asserv en 0|1\r\n");
+        chprintf(outputStream," - asserv enablemotor 0|1\r\n");
         chprintf(outputStream," - asserv enablepolar 0|1\r\n");
         chprintf(outputStream," - asserv coders \r\n");
         chprintf(outputStream," - asserv ext (coders) \r\n");
@@ -517,11 +519,15 @@ void asservCommandUSB(BaseSequentialStream *chp, int argc, char **argv)
         chprintf(outputStream, "setting dist Kp to %.2f \r\n", Kp);
 
         distanceRegulator->setGain(Kp);
-    } else if (!strcmp(argv[0], "en")) {
-        bool enable = !(atoi(argv[1]) == 0);
-        chprintf(outputStream, "%s motor output\r\n", (enable ? "enabling" : "disabling"));
-        mainAsserv->enableMotors(enable);
-    } else if (!strcmp(argv[0], "coders")) {
+    } else if (!strcmp(argv[0], "enablemotor")) {
+		bool enable = !(atoi(argv[1]) == 0);
+		chprintf(outputStream, "%s motor output\r\n", (enable ? "enabling" : "disabling"));
+		mainAsserv->enableMotors(enable);
+	} else if (!strcmp(argv[0], "en")) {
+		bool enable = !(atoi(argv[1]) == 0);
+		chprintf(outputStream, "%s motor output\r\n", (enable ? "enabling" : "disabling"));
+		mainAsserv->enableMotors(enable);
+	} else if (!strcmp(argv[0], "coders")) {
         float deltaEncoderRight;
         float deltaEncoderLeft;
         encoders->getValues(&deltaEncoderRight, &deltaEncoderLeft);
