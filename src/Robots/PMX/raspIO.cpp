@@ -194,14 +194,16 @@ THD_FUNCTION(asservCommandSerial, p)
 
         case 'N':
         	serialReadLine(buffer, sizeof(buffer));
-        	sscanf(buffer, "%f#%f", &consigneValue1, &consigneValue2);
-        	distanceRegulator->setMaxOutput(consigneValue1);
-        	angleRegulator->setMaxOutput(consigneValue2);
+        	sscanf(buffer, "%f#%f", &consigneValue1, &consigneValue2); //TODO pourcentage à faire
+        	if (consigneValue1 >= 0.5) //Si Zero, on ne fait rien
+        		distanceRegulator->setMaxOutput(consigneValue1);
+        	if (consigneValue2 >= 0.5)
+        		angleRegulator->setMaxOutput(consigneValue2);
             break;
 
         case '!':
         	distanceRegulator->setMaxOutput(MAX_SPEED_MM_PER_SEC);
-        	angleRegulator->setMaxOutput(MAX_SPEED_MM_PER_SEC);
+        	angleRegulator->setMaxOutput(ANGLE_REGULATOR_MAX_ACC);
             break;
 
         case 'R':
