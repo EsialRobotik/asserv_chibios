@@ -6,23 +6,10 @@
 #include <cstring>
 #include <cstdio>
 #include <cfloat>
-
-
-
-/*
- * All this part is absolutely terrible !
- * A (way!) best design must be found in order to share code between robot's instance !
- */
-#include "Odometry.h"
-#include "AsservMain.h"
-#include "commandManager/CommandManager.h"
-#include "motorController/Md22.h"
 #include "util/asservMath.h"
-extern BaseSequentialStream *outputStream;
-extern Odometry *odometry;
-extern AsservMain *mainAsserv;
-extern Md22 *md22MotorController;
-extern CommandManager *commandManager;
+#include "config.h"
+
+
 
 
 static void serialReadLine(char *buffer, unsigned int buffer_size)
@@ -78,6 +65,7 @@ THD_FUNCTION(asservCommandSerial, p)
     float consigneValue1 = 0;
     float consigneValue2 = 0;
     float consigneValue3 = 0;
+//    int int_as_bool = 0;
     char buffer[64];
 
     chprintf(outputStream, "Started\r\n");
@@ -187,6 +175,44 @@ THD_FUNCTION(asservCommandSerial, p)
             odometry->setEncoderWheelsDistance(consigneValue1);
             break;
 
+        case 'N': // Restore du comportement Normal du robot
+        	angleAccelerationlimiter->setMaxAcceleration(ANGLE_REGULATOR_MAX_ACC);
+        	distanceAccelerationLimiter->disable();
+        	distanceAccelerationLimiter->setMaxAccFW(DIST_REGULATOR_MAX_ACC_FW);
+        	distanceAccelerationLimiter->setMaxDecFW(DIST_REGULATOR_MAX_DEC_FW);
+        	distanceAccelerationLimiter->setMaxAccBW(DIST_REGULATOR_MAX_ACC_BW);
+        	distanceAccelerationLimiter->setMaxDecBW(DIST_REGULATOR_MAX_DEC_BW);
+        	distanceAccelerationLimiter->enable();
+            break;
+
+		case 'n' : // On réduit l'acceleration/décélleration en cas d'objets dans les pinces
+        	angleAccelerationlimiter->setMaxAcceleration(ANGLE_REGULATOR_MAX_ACC_SLOW);
+        	distanceAccelerationLimiter->disable();
+        	distanceAccelerationLimiter->setMaxAccFW(DIST_REGULATOR_MAX_ACC_FW_SLOW);
+        	distanceAccelerationLimiter->setMaxDecFW(DIST_REGULATOR_MAX_DEC_FW_SLOW);
+        	distanceAccelerationLimiter->setMaxAccBW(DIST_REGULATOR_MAX_ACC_BW_SLOW);
+        	distanceAccelerationLimiter->setMaxDecBW(DIST_REGULATOR_MAX_DEC_BW_SLOW);
+        	distanceAccelerationLimiter->enable();
+			break;
+
+
+//        case 'A': // Activation/desactivation du regulateur d'angle
+//            serialReadLine(buffer, sizeof(buffer));
+//            sscanf(buffer, "%d", &int_as_bool);
+//            if( int_as_bool )
+//            	mainAsserv->enableAngleRegulator();
+//			else
+//			   	mainAsserv->disableAngleRegulator();
+//            break;
+//
+//        case 'D': // Activation/desactivation du regulateur de distance
+//            serialReadLine(buffer, sizeof(buffer));
+//            sscanf(buffer, "%d", &int_as_bool);
+//            if( int_as_bool )
+//            	mainAsserv->enableDistanceRegulator();
+//			else
+//			   	mainAsserv->disableDistanceRegulator();
+//            break;
 
         default:
             chprintf(outputStream, " - unexpected character\r\n");
