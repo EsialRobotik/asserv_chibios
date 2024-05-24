@@ -5,6 +5,10 @@
 #include <cassert>
 #include <chrono>
 #include <thread>
+#include <ctime>
+
+static auto t_start = std::chrono::high_resolution_clock::now();
+
 
 typedef uint32_t time_usecs_t;
 
@@ -12,7 +16,10 @@ typedef uint32_t systime_t;
 
 
 static inline systime_t chVTGetSystemTime(void) {
-  return 0;
+    const auto t_end = std::chrono::high_resolution_clock::now();
+    double delta = std::chrono::duration<double, std::milli>(t_end - t_start).count();
+
+    return (uint32_t)delta;
 }
 
 #define TIME_US2I(usecs) (usecs)

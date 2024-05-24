@@ -41,17 +41,13 @@ AsservMain::AsservMain(uint16_t loopFrequency, uint16_t speedPositionLoopDivisor
     m_distSpeedLimited = 0;
     m_angleSpeedLimited = 0;
     m_enableMotors = true;
-    m_enablePolar = true;
-    m_asservMode = normal_mode;
-    m_directSpeedMode_rightWheelSpeed = 0;
-    m_directSpeedMode_leftWheelSpeed = 0;
 }
 
 void AsservMain::setEncodersWheelsDistance_mm(float wheelsDistance_mm)
 {
-	m_encoderWheelsDistance_mm = wheelsDistance_mm;
-	m_encoderWheelsDistance_ticks = m_encoderWheelsDistance_mm/m_encodermmByTicks;
-	m_odometry.setEncoderWheelsDistance(m_encoderWheelsDistance_mm);
+    m_encoderWheelsDistance_mm = wheelsDistance_mm;
+    m_encoderWheelsDistance_ticks = m_encoderWheelsDistance_mm/m_encodermmByTicks;
+    m_odometry.setEncoderWheelsDistance(m_encoderWheelsDistance_mm);
 }
 
 float AsservMain::convertSpeedTommSec(float speed_ticksPerSec)
@@ -112,10 +108,10 @@ void AsservMain::mainLoop()
          * L'asserv en vitesse étant commandé par l'asserv en position, on laisse qq'e tours de boucle
          * à l'asserv en vitesse pour atteindre sa consigne.
          */
-        if (m_asservCounter == m_speedPositionLoopDivisor && m_enablePolar) {
+        if (m_asservCounter == m_speedPositionLoopDivisor ) {
             m_commandManager.update(m_odometry.getX(), m_odometry.getY(), m_odometry.getTheta());
 
-            if (m_asservMode == normal_mode)
+            if (m_commandManager.getCurrentCommandMixingType() != mixing_type_direct_speed)
             {
                 m_angleRegulatorOutputSpeedConsign = m_angleRegulator.updateOutput( m_commandManager.getAngleGoal() );
                 m_distRegulatorOutputSpeedConsign  = m_distanceRegulator.updateOutput( m_commandManager.getDistanceGoal() );
@@ -131,17 +127,28 @@ void AsservMain::mainLoop()
         /*
          * Regulation en vitesse
          */
-        if (m_asservMode == normal_mode || m_asservMode == regulator_output_control) {
-            // Mise à jour des consignes en vitesse avec acceleration limitée
+
+        if( m_commandManager.getCurrentCommandMixingType() == mixing_type_polar)
+        {
+            // Mixing up limited speed goals.
             m_speedControllerRight.setSpeedGoal(m_distSpeedLimited + m_angleSpeedLimited);
             m_speedControllerLeft.setSpeedGoal(m_distSpeedLimited - m_angleSpeedLimited);
-        } else {
-            /* Ici, on ajoute un mode de fonctionnement pour pouvoir controler indépendamment les roues avec l'IHM ou le shell.
-             * C'est batard, et cela ne doit pas être utilisé autrement que pour faire du réglage
-             */
-            m_speedControllerRight.setSpeedGoal(m_directSpeedMode_rightWheelSpeed);
-            m_speedControllerLeft.setSpeedGoal(m_directSpeedMode_leftWheelSpeed);
         }
+        else if( m_commandManager.getCurrentCommandMixingType() == mixing_type_angle_regulator_right_wheel_only)
+        {
+            m_speedControllerRight.setSpeedGoal( + m_angleSpeedLimited);
+        }
+        else if( m_commandManager.getCurrentCommandMixingType() == mixing_type_angle_regulator_left_wheel_inverted_only)
+        {
+            m_speedControllerLeft.setSpeedGoal( - m_angleSpeedLimited);
+        }
+        else if( m_commandManager.getCurrentCommandMixingType() == mixing_type_direct_speed)
+        {
+            // Hacky stuff here: To allow to send a direct speed command to a wheel, use angleRegulator & distanceRegulator goal as rightSpeedGoal & leftSpeedGoal
+            m_speedControllerRight.setSpeedGoal( m_commandManager.getAngleGoal() );
+            m_speedControllerLeft.setSpeedGoal( m_commandManager.getDistanceGoal() );
+        }
+
 
         float outputSpeedRight = m_speedControllerRight.update(estimatedSpeedRight);
         float outputSpeedLeft = m_speedControllerLeft.update(estimatedSpeedLeft);
@@ -200,37 +207,7 @@ void AsservMain::mainLoop()
     }
 }
 
-void AsservMain::setRegulatorsSpeed(float distSpeed, float angleSpeed)
-{
-    chSysLock();
-    m_asservMode = regulator_output_control;
-    m_distSpeedLimited = distSpeed;
-    m_angleSpeedLimited = (angleSpeed * m_encoderWheelsDistance_mm) * 0.5;
 
-    chSysUnlock();
-}
-
-void AsservMain::setWheelsSpeed(float rightWheelSpeed, float leftWheelSpeed)
-{
-    chSysLock();
-    m_asservMode = direct_speed_mode;
-    m_directSpeedMode_rightWheelSpeed = rightWheelSpeed;
-    m_directSpeedMode_leftWheelSpeed = leftWheelSpeed;
-    m_distanceRegulatorAccelerationLimiter.reset();
-    m_angleRegulatorAccelerationLimiter.reset();
-    chSysUnlock();
-}
-
-void AsservMain::resetToNormalMode()
-{
-    chSysLock();
-    if (m_asservMode != normal_mode) {
-        m_asservMode = normal_mode;
-        m_distanceRegulatorAccelerationLimiter.reset();
-        m_angleRegulatorAccelerationLimiter.reset();
-    }
-    chSysUnlock();
-}
 
 void AsservMain::enableMotors(bool enable)
 {
@@ -238,7 +215,7 @@ void AsservMain::enableMotors(bool enable)
     m_enableMotors = enable;
     if (enable)
     {
-        // Ici, il faut reset les intégrateurs des asserv en vitesse
+        // Here, we loopback action was disabled during a certain time. So the Integral part may have build-up, so reset it.
         m_speedControllerLeft.resetIntegral();
         m_speedControllerRight.resetIntegral();
     }
@@ -333,12 +310,6 @@ void AsservMain::limitMotorControllerConsignToPercentage(float percentage)
     chSysUnlock();
 }
 
-void AsservMain::enablePolar(bool enable)
-{
-    chSysLock();
-    m_enablePolar = enable;
-    chSysUnlock();
-}
 
 void AsservMain::reset()
 {

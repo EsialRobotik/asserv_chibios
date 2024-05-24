@@ -1,8 +1,10 @@
 #include "CommandManager.h"
 #include "Commands/StraitLine.h"
 #include "Commands/Turn.h"
+#include "Commands/OrbitalTurn.h"
 #include "Commands/Goto.h"
 #include "Commands/GotoAngle.h"
+#include "Commands/WheelSpeed.h"
 #include "blockingDetector/BlockingDetector.h"
 #include <cstdlib>
 #include <cmath>
@@ -14,7 +16,7 @@
 
 
 #define MAX(a,b) (((a)>(b))?(a):(b))
-#define COMMAND_MAX_SIZE MAX( MAX( MAX( MAX(sizeof(StraitLine), sizeof(Turn)), sizeof(Goto)), sizeof(GotoAngle) ), sizeof(GotoNoStop) )
+#define COMMAND_MAX_SIZE MAX( MAX( MAX( MAX( MAX( MAX( sizeof(WheelSpeed), sizeof(OrbitalTurn)), sizeof(StraitLine)), sizeof(Turn)), sizeof(Goto)), sizeof(GotoAngle) ), sizeof(GotoNoStop) )
 
 CommandManager::CommandManager(float straitLineArrivalWindows_mm, float turnArrivalWindows_rad,
         Goto::GotoConfiguration &preciseGotoConfiguration, Goto::GotoConfiguration &waypointGotoConfiguration, GotoNoStop::GotoNoStopConfiguration &gotoNoStopConfiguration,
@@ -56,6 +58,29 @@ bool CommandManager::addTurn(float angleInRad)
     m_cmdList.push();
     return true;
 }
+
+bool CommandManager::addGOrbitalTurn(float angleInRad, bool forward, bool turnToTheRight)
+{
+    Command *ptr = m_cmdList.getFree();
+    if(ptr == nullptr)
+        return false;
+
+    new (ptr) OrbitalTurn(angleInRad, forward, turnToTheRight, m_turnArrivalWindows_rad);
+    m_cmdList.push();
+    return true;
+}
+
+bool CommandManager::addWheelsSpeed(float rightWheelSpeedInmmpersec, float leftWheelSpeedInmmpersec, uint32_t stepDurationInms)
+{
+    Command *ptr = m_cmdList.getFree();
+     if(ptr == nullptr)
+         return false;
+
+     new (ptr) WheelSpeed(rightWheelSpeedInmmpersec, leftWheelSpeedInmmpersec, stepDurationInms);
+     m_cmdList.push();
+     return true;
+}
+
 
 bool CommandManager::addGoTo(float posXInmm, float posYInmm)
 {
@@ -167,6 +192,15 @@ void CommandManager::switchToNextCommand()
        m_cmdList.pop();
 
     m_currentCmd = m_cmdList.getFirst();
+}
+
+
+AsservMain::mixing_type_t CommandManager::getCurrentCommandMixingType() const
+{
+    AsservMain::mixing_type_t res = AsservMain::mixing_type_polar;
+    if( m_currentCmd )
+        res =  m_currentCmd->getMixingType();
+    return res;
 }
 
 

@@ -31,10 +31,10 @@
 #define MAX_SPEED_MM_PER_SEC (1500)
 
 #define DIST_REGULATOR_KP (5)
-#define DIST_REGULATOR_MAX_ACC_FW (1200)
-#define DIST_REGULATOR_MAX_DEC_FW (1200)
-#define DIST_REGULATOR_MAX_ACC_BW (1200)
-#define DIST_REGULATOR_MAX_DEC_BW (1200)
+#define DIST_REGULATOR_MAX_ACC_FW (1000)
+#define DIST_REGULATOR_MAX_DEC_FW (1000)
+#define DIST_REGULATOR_MAX_ACC_BW (1000)
+#define DIST_REGULATOR_MAX_DEC_BW (1000)
 #define ACC_DEC_DAMPLING (1.6)
 
 #define PLL_BANDWIDTH (150)
@@ -75,6 +75,7 @@ void shell();
 
 int main(void)
 {
+
     Regulator angleRegulator(ANGLE_REGULATOR_KP, MAX_SPEED_MM_PER_SEC);
     Regulator distanceRegulator(DIST_REGULATOR_KP, FLT_MAX);
 
@@ -92,14 +93,16 @@ int main(void)
 
     SimpleAccelerationLimiter angleAccelerationlimiter(ANGLE_REGULATOR_MAX_ACC);
 
-    AccelerationDecelerationLimiter distanceAccelerationLimiter(DIST_REGULATOR_MAX_ACC_FW, DIST_REGULATOR_MAX_DEC_FW, DIST_REGULATOR_MAX_ACC_BW, DIST_REGULATOR_MAX_DEC_BW, MAX_SPEED_MM_PER_SEC, ACC_DEC_DAMPLING, DIST_REGULATOR_KP);
+//    AccelerationDecelerationLimiter distanceAccelerationLimiter(DIST_REGULATOR_MAX_ACC_FW, DIST_REGULATOR_MAX_DEC_FW, DIST_REGULATOR_MAX_ACC_BW, DIST_REGULATOR_MAX_DEC_BW, MAX_SPEED_MM_PER_SEC, ACC_DEC_DAMPLING, DIST_REGULATOR_KP);
+    SimpleAccelerationLimiter distanceAccelerationLimiter(800);
 
 
 
     commandManager = new CommandManager( COMMAND_MANAGER_ARRIVAL_DISTANCE_THRESHOLD_mm, COMMAND_MANAGER_ARRIVAL_ANGLE_THRESHOLD_RAD,
                                    preciseGotoConf, waypointGotoConf, gotoNoStopConf,
                                    angleRegulator, distanceRegulator,
-                                   &distanceAccelerationLimiter,
+//                                   &distanceAccelerationLimiter,
+                                   nullptr,
                                    nullptr);
 
     mainAsserv = new AsservMain( ASSERV_THREAD_FREQUENCY, ASSERV_POSITION_DIVISOR,
@@ -121,70 +124,35 @@ int main(void)
 
 void shell()
 {
-    printf("shell started\n");
+    printf("shell started %d \n");
     std::string line;
 
     while(1)
     {
+
         std::getline (std::cin,line);
 
         if( line.c_str()[0] == 'a' )
         {
             printf("Run scenarion \r\n");
 
-
-            // go_timed -200
-            motorEncoder->setWall(true);
-            mainAsserv->limitMotorControllerConsignToPercentage(10);
-            commandManager->addStraightLine(-200);
-            usleep(1000000);
-            mainAsserv->setEmergencyStop();
-            mainAsserv->resetEmergencyStop();
-            mainAsserv->limitMotorControllerConsignToPercentage(100);
-            motorEncoder->setWall(false);
-
-
-
-            // set X & st theta
-            mainAsserv->setPosition(50, odometry->getY(), 3.14159265359 );
-
-
-            // go 200
-            commandManager->addStraightLine(200);
-            usleep(1000000);
-
+//			// go 200
+//			commandManager->addStraightLine(200);
+//			usleep(1000000);
+//
 //            // turn
 //            commandManager->addTurn(degToRad(90));
 //			usleep(1000000);
 //
 //            // go_timed -200
-//            motorEncoder->setWall(true);
-//            mainAsserv->limitMotorControllerConsignToPercentage(10);
 //            commandManager->addStraightLine(-500);
 //            usleep(1000000);
-//            mainAsserv->setEmergencyStop();
-//            mainAsserv->resetEmergencyStop();
-//            mainAsserv->limitMotorControllerConsignToPercentage(100);
-//            motorEncoder->setWall(false);
-//
-//            // set Y
-//            mainAsserv->setPosition(odometry->getX(), 1855, odometry->getTheta() );
-//
-//            // go 200
-//            commandManager->addStraightLine(200);
-//            usleep(1000000);
+
+            // go_timed -200
+            commandManager->addGOrbitalTurn(degToRad(90), false, true);
+            usleep(1000000);
 
 
-
-
-        }
-        else if( line.c_str()[0] == 'b' )
-        {
-            float right = 100;
-            float left = 1000;
-            printf("Wheel speedl r:%f l:%f\r\n", right,left);
-
-            mainAsserv->setWheelsSpeed(right, left);
         }
         else if( line.c_str()[0] == 'c' )
         {
@@ -193,6 +161,13 @@ void shell()
             commandManager->addGoTo(1000,0);
             commandManager->addGoTo(1000,10);
             commandManager->addGoTo(1010,10);
+        }
+        else if( line.c_str()[0] == 'b' )
+        {
+            printf("test !\r\n");
+
+            commandManager->addWheelsSpeed(500, 0, 1500);
+//            commandManager->addWheelsSpeed(0, 200, 3300);
         }
         else
         {

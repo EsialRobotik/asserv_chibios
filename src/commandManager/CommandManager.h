@@ -6,6 +6,9 @@
 #include "Commands/Goto.h"
 #include "Commands/GotoNoStop.h"
 #include "Regulator.h"
+#include "AsservMain.h"
+#include <cstdint>
+
 
 class Command;
 class AccelerationDecelerationLimiter;
@@ -41,6 +44,8 @@ class CommandManager
         bool addGoToNoStop(float posXInmm, float posYInmm);
         bool addGoToNoStopBack(float posXInmm, float posYInmm);
         bool addGoToAngle(float posXInmm, float posYInmm);
+        bool addGOrbitalTurn(float angleInDeg, bool forward, bool turnToTheRight);
+        bool addWheelsSpeed(float rightWheelSpeedInmmpersec, float leftWheelSpeedInmmpersec, uint32_t stepDurationInms);
 
         /*
          * Gestion de l'arret d'urgence
@@ -72,6 +77,8 @@ class CommandManager
         CommandManager::CommandStatus getCommandStatus();
         uint8_t getPendingCommandCount();
 
+        AsservMain::mixing_type_t getCurrentCommandMixingType() const;
+
         inline void reset()
         {
             setEmergencyStop();
@@ -102,6 +109,8 @@ class CommandManager
 
         float m_angleRegulatorConsign;
         float m_distRegulatorConsign;
+        float m_rightWheelSpeedConsign;
+        float m_leftWheelSpeedConsign;
 };
 
 #endif

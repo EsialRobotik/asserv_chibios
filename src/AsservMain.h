@@ -13,9 +13,20 @@ class SpeedController;
 class Regulator;
 class BlockingDetector;
 
+
 class AsservMain
 {
 public:
+
+
+    typedef enum {
+        mixing_type_polar,
+        mixing_type_angle_regulator_right_wheel_only,
+        mixing_type_angle_regulator_left_wheel_inverted_only,
+        mixing_type_direct_speed
+    } mixing_type_t;
+
+
     explicit AsservMain(uint16_t loopFrequency, uint16_t speedPositionLoopDivisor, float wheelRadius_mm,
             float encoderWheelsDistance_mm, uint32_t encodersTicksByTurn, CommandManager &commandManager,
             MotorController &motorController, Encoders &encoders, Odometry &odometrie,
@@ -32,23 +43,7 @@ public:
 
     void mainLoop();
 
-    /*
-     *    On peut donner une vitesse par roue en utilisant la fonction: setWheelsSpeed
-     *    Le mode de fonctionnement change et doit être remis à la normal en utilisant: resetToNormalMode
-     *     avant de donner une consigne via setRegulatorsSpeed ou via le CommandManager
-     */
-    void setWheelsSpeed(float rightWheelSpeed, float leftWheelSpeed);
-
-    /*
-     *    On peut donner une commande de vitesse tel qu'elle sortirait des régulateur d'angle/distance
-     *    Le mode de fonctionnement change et doit être remis à la normal en utilisant: resetToNormalMode
-     *     avant de donner une consigne via setRegulatorsSpeed ou via le CommandManager
-     */
-    void setRegulatorsSpeed(float distSpeed, float angleSpeed);
-    void resetToNormalMode();
-
     void enableMotors(bool enable);
-    void enablePolar(bool enable);
 
     void reset();
 
@@ -107,10 +102,6 @@ private:
     float m_angleSpeedLimited;
 
     bool m_enableMotors;
-    bool m_enablePolar;
-    asserv_mode_t m_asservMode;
-    float m_directSpeedMode_rightWheelSpeed;
-    float m_directSpeedMode_leftWheelSpeed;
 };
 
 #endif /* ASSERVMAIN_H_ */

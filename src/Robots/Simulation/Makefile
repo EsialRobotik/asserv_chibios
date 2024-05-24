@@ -112,6 +112,8 @@ CPPSRC=$(wildcard $(SRCDIR)/Robots/Simulation/*.cpp ) \
        $(SRCDIR)/commandManager/Commands/Goto.cpp \
        $(SRCDIR)/commandManager/Commands/GotoAngle.cpp \
        $(SRCDIR)/commandManager/Commands/GotoNoStop.cpp \
+       $(SRCDIR)/commandManager/Commands/WheelSpeed.cpp \
+       $(SRCDIR)/commandManager/Commands/OrbitalTurn.cpp \
        $(SRCDIR)/AccelerationLimiter/AbstractAccelerationLimiter.cpp \
        $(SRCDIR)/AccelerationLimiter/SimpleAccelerationLimiter.cpp \
        $(SRCDIR)/AccelerationLimiter/AdvancedAccelerationLimiter.cpp \
