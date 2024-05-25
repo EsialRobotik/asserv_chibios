@@ -8,12 +8,13 @@ StraitLine::StraitLine(float consign, float arrivalDistanceThreshold_mm)
 {
 }
 
-void StraitLine::computeInitialConsign(float , float , float , float *distanceConsig, float *, const Regulator &, const Regulator &)
+Command::consign_type_t StraitLine::computeInitialConsign(float , float , float , consign_t & consign, const Regulator &, const Regulator &)
 {
-    *distanceConsig += m_straitLineConsign;
+    consign.distance_consign += m_straitLineConsign;
+    return  consign_type_t::consign_polar;
 }
 
-void StraitLine::updateConsign(float , float , float , float *, float *, const Regulator &, const Regulator &)
+void StraitLine::updateConsign(float , float , float , consign_t & , const Regulator &, const Regulator &)
 {
 }
 

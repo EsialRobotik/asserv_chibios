@@ -20,7 +20,7 @@ Goto::Goto(float consignX_mm, float consignY_mm,
     m_alignOnlyExitAngleThreshold_rad = 0;
 }
 
-void Goto::computeInitialConsign(float X_mm, float Y_mm, float theta_rad, float *distanceConsig, float *angleConsign, const Regulator &angle_regulator, const Regulator &distance_regulator)
+Command::consign_type_t Goto::computeInitialConsign(float X_mm, float Y_mm, float theta_rad, consign_t & consign, const Regulator &angle_regulator, const Regulator &distance_regulator)
 {
    float deltaX = m_consignX_mm - X_mm;
    float deltaY = m_consignY_mm - Y_mm;
@@ -38,10 +38,11 @@ void Goto::computeInitialConsign(float X_mm, float Y_mm, float theta_rad, float 
        m_alignOnlyExitAngleThreshold_rad = atan((0.5*m_configuration->arrivalDistanceThreshold_mm)/deltaDist);
    }
 
-    updateConsign( X_mm, Y_mm, theta_rad, distanceConsig, angleConsign, angle_regulator, distance_regulator);
+    updateConsign( X_mm, Y_mm, theta_rad, consign, angle_regulator, distance_regulator);
+    return  consign_type_t::consign_polar;
 }
 
-void Goto::updateConsign(float X_mm, float Y_mm, float theta_rad, float *distanceConsig, float *angleConsign, const Regulator &angle_regulator, const Regulator &distance_regulator)
+void Goto::updateConsign(float X_mm, float Y_mm, float theta_rad, consign_t & consign, const Regulator &angle_regulator, const Regulator &distance_regulator)
 {
    float deltaX = m_consignX_mm - X_mm;
    float deltaY = m_consignY_mm - Y_mm;
@@ -56,15 +57,15 @@ void Goto::updateConsign(float X_mm, float Y_mm, float theta_rad, float *distanc
    if (deltaDist < m_configuration->gotoReturnThreshold_mm && !m_alignOnly)
    {
        float projectedDist = deltaDist * cosf(deltaTheta);
-       *distanceConsig = distance_regulator.getAccumulator() + m_backModeCorrection*projectedDist ;
+       consign.distance_consign = distance_regulator.getAccumulator() + m_backModeCorrection*projectedDist ;
    }
    else
    {
-       *angleConsign = angle_regulator.getAccumulator() + deltaTheta;
+       consign.angle_consign = angle_regulator.getAccumulator() + deltaTheta;
 
        if (fabs(deltaTheta) < m_configuration->gotoAngleThreshold_rad && !m_alignOnly)
        {
-           *distanceConsig = distance_regulator.getAccumulator() + m_backModeCorrection*deltaDist;
+           consign.distance_consign = distance_regulator.getAccumulator() + m_backModeCorrection*deltaDist;
        }
 
        if( m_alignOnly )
@@ -85,8 +86,6 @@ void Goto::updateConsign(float X_mm, float Y_mm, float theta_rad, float *distanc
    SampleStream *instance = SampleStream::instance();
    instance->setXGoal(m_consignX_mm);
    instance->setYGoal(m_consignY_mm);
-//   instance->setdeltaTheta(deltaTheta);
-//   instance->setAlignOnlyExitAngleThreshold(m_alignOnlyExitAngleThreshold_rad);
 }
 
 bool Goto::isGoalReached(float X_mm, float Y_mm, float , const Regulator &, const Regulator &, const Command* )

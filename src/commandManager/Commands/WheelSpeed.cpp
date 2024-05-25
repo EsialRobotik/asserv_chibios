@@ -2,6 +2,7 @@
 #include "Regulator.h"
 #include <new>
 #include <cmath>
+#include <cstdio>
 
 WheelSpeed::WheelSpeed(float rightWheelSpeed_mmpersec, float leftWheelSpeed_mmpersec, uint32_t stepDuration_ms)
  : m_rightWheelSpeed_mmpersec(rightWheelSpeed_mmpersec), m_leftWheelSpeed_mmpersec(leftWheelSpeed_mmpersec)
@@ -10,13 +11,14 @@ WheelSpeed::WheelSpeed(float rightWheelSpeed_mmpersec, float leftWheelSpeed_mmpe
     m_step_endtime += TIME_US2I(stepDuration_ms);
 }
 
-void WheelSpeed::computeInitialConsign(float, float , float , float *distanceConsign, float *angleConsign, const Regulator &, const Regulator &)
+Command::consign_type_t WheelSpeed::computeInitialConsign(float, float , float , consign_t & consign, const Regulator &, const Regulator &)
 {
-    *angleConsign = m_rightWheelSpeed_mmpersec;
-    *distanceConsign = m_leftWheelSpeed_mmpersec;
+    consign.right_wheel_consign = m_rightWheelSpeed_mmpersec;
+    consign.left_wheel_consign = m_leftWheelSpeed_mmpersec;
+    return  consign_type_t::consign_wheel_speed;
 }
 
-void WheelSpeed::updateConsign(float , float , float , float *, float *, const Regulator &, const Regulator &)
+void WheelSpeed::updateConsign(float , float , float , consign_t & , const Regulator &, const Regulator &)
 {
 }
 

@@ -31,10 +31,12 @@ CommandManager::CommandManager(float straitLineArrivalWindows_mm, float turnArri
     m_emergencyStop = false;
     m_blockingDetected = false;
     m_currentCmd = nullptr;
-    m_angleRegulatorConsign = 0;
-    m_distRegulatorConsign = 0;
     m_accelerationDecelerationLimiter = accelerationDecelerationLimiter;
     m_blockingDetector = blockingDetector;
+    m_consign.type = Command::consign_type_t::consign_polar;
+    m_consign.angle_consign = 0;
+    m_consign.distance_consign = 0;
+
 }
 
 bool CommandManager::addStraightLine(float valueInmm)
@@ -150,8 +152,9 @@ bool CommandManager::addGoToAngle(float posXInmm, float posYInmm)
 
 void CommandManager::setEmergencyStop()
 {
-    m_angleRegulatorConsign = m_angle_regulator.getAccumulator();
-    m_distRegulatorConsign = m_distance_regulator.getAccumulator();
+    m_consign.type = Command::consign_type_t::consign_polar;
+    m_consign.angle_consign = m_angle_regulator.getAccumulator();
+    m_consign.distance_consign = m_distance_regulator.getAccumulator();
 
     m_cmdList.flush();
     m_currentCmd = nullptr;
@@ -220,13 +223,13 @@ void CommandManager::update(float X_mm, float Y_mm, float theta_rad)
 
     if (m_currentCmd != nullptr && !m_currentCmd->isGoalReached(X_mm, Y_mm, theta_rad, m_angle_regulator, m_distance_regulator, m_cmdList.getSecond()))
     {
-        m_currentCmd->updateConsign(X_mm, Y_mm, theta_rad, &m_distRegulatorConsign, &m_angleRegulatorConsign, m_angle_regulator, m_distance_regulator);
+        m_currentCmd->updateConsign(X_mm, Y_mm, theta_rad, m_consign, m_angle_regulator, m_distance_regulator);
     }
     else
     {
         switchToNextCommand();
         if( m_currentCmd != nullptr )
-            m_currentCmd->computeInitialConsign(X_mm, Y_mm, theta_rad, &m_distRegulatorConsign, &m_angleRegulatorConsign, m_angle_regulator, m_distance_regulator);
+            m_consign.type = m_currentCmd->computeInitialConsign(X_mm, Y_mm, theta_rad, m_consign, m_angle_regulator, m_distance_regulator);
     }
 }
 

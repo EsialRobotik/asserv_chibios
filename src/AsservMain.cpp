@@ -104,21 +104,46 @@ void AsservMain::mainLoop()
         float estimatedSpeedLeft = convertSpeedTommSec(m_pllLeft.getSpeed());
 
 
-        /* Calculer une nouvelle consigne de vitesse a chaque  ASSERV_POSITION_DIVISOR tour de boucle
-         * L'asserv en vitesse étant commandé par l'asserv en position, on laisse qq'e tours de boucle
+        /* Calculer une nouvelle consigne de vitesse a chaque  m_speedPositionLoopDivisor tour de boucle
+         * L'asserv en vitesse étant commandé par l'asserv en position, on laisse m_speedPositionLoopDivisor tours de boucle
          * à l'asserv en vitesse pour atteindre sa consigne.
          */
-        if (m_asservCounter == m_speedPositionLoopDivisor ) {
+        Command::consign_t current_command_consign;
+        if (m_asservCounter == m_speedPositionLoopDivisor )
+        {
             m_commandManager.update(m_odometry.getX(), m_odometry.getY(), m_odometry.getTheta());
 
-            if (m_commandManager.getCurrentCommandMixingType() != mixing_type_direct_speed)
+            current_command_consign = m_commandManager.getConsign();
+
+            if (current_command_consign.type == Command::consign_type_t::consign_polar)
             {
-                m_angleRegulatorOutputSpeedConsign = m_angleRegulator.updateOutput( m_commandManager.getAngleGoal() );
-                m_distRegulatorOutputSpeedConsign  = m_distanceRegulator.updateOutput( m_commandManager.getDistanceGoal() );
+                m_angleRegulatorOutputSpeedConsign = m_angleRegulator.updateOutput( current_command_consign.angle_consign );
+                m_distRegulatorOutputSpeedConsign  = m_distanceRegulator.updateOutput(current_command_consign.distance_consign );
 
                 // On limite l'acceleration sur la sortie du regulateur de distance et d'angle
-                m_distSpeedLimited  = m_distanceRegulatorAccelerationLimiter.limitAcceleration(polarRegulationPeriod, m_distRegulatorOutputSpeedConsign, (estimatedSpeedRight+estimatedSpeedLeft)*0.5,  m_commandManager.getDistanceGoal(), m_distanceRegulator.getError());
-                m_angleSpeedLimited = m_angleRegulatorAccelerationLimiter.limitAcceleration(polarRegulationPeriod, m_angleRegulatorOutputSpeedConsign, (estimatedSpeedRight-estimatedSpeedLeft)/m_encoderWheelsDistance_mm, m_commandManager.getAngleGoal(), m_angleRegulator.getError());
+                m_distSpeedLimited  = m_distanceRegulatorAccelerationLimiter.limitAcceleration(polarRegulationPeriod, m_distRegulatorOutputSpeedConsign, (estimatedSpeedRight+estimatedSpeedLeft)*0.5,  current_command_consign.distance_consign , m_distanceRegulator.getError());
+                m_angleSpeedLimited = m_angleRegulatorAccelerationLimiter.limitAcceleration(polarRegulationPeriod, m_angleRegulatorOutputSpeedConsign, (estimatedSpeedRight-estimatedSpeedLeft)/m_encoderWheelsDistance_mm, current_command_consign.angle_consign , m_angleRegulator.getError());
+            }
+
+            AsservMain::mixing_type_t current_command_mixing_type = m_commandManager.getCurrentCommandMixingType();
+            if( current_command_mixing_type == mixing_type_polar)
+            {
+                // Mixing up limited speed goals.
+                m_speedControllerRight.setSpeedGoal(m_distSpeedLimited + m_angleSpeedLimited);
+                m_speedControllerLeft.setSpeedGoal(m_distSpeedLimited - m_angleSpeedLimited);
+            }
+            else if( current_command_mixing_type == mixing_type_angle_regulator_right_wheel_only)
+            {
+                m_speedControllerRight.setSpeedGoal( + m_angleSpeedLimited);
+            }
+            else if( current_command_mixing_type == mixing_type_angle_regulator_left_wheel_inverted_only)
+            {
+                m_speedControllerLeft.setSpeedGoal( - m_angleSpeedLimited);
+            }
+            else if( current_command_mixing_type == mixing_type_direct_speed)
+            {
+                m_speedControllerRight.setSpeedGoal( current_command_consign.right_wheel_consign);
+                m_speedControllerLeft.setSpeedGoal( current_command_consign.left_wheel_consign );
             }
 
             m_asservCounter = 0;
@@ -128,32 +153,12 @@ void AsservMain::mainLoop()
          * Regulation en vitesse
          */
 
-        if( m_commandManager.getCurrentCommandMixingType() == mixing_type_polar)
-        {
-            // Mixing up limited speed goals.
-            m_speedControllerRight.setSpeedGoal(m_distSpeedLimited + m_angleSpeedLimited);
-            m_speedControllerLeft.setSpeedGoal(m_distSpeedLimited - m_angleSpeedLimited);
-        }
-        else if( m_commandManager.getCurrentCommandMixingType() == mixing_type_angle_regulator_right_wheel_only)
-        {
-            m_speedControllerRight.setSpeedGoal( + m_angleSpeedLimited);
-        }
-        else if( m_commandManager.getCurrentCommandMixingType() == mixing_type_angle_regulator_left_wheel_inverted_only)
-        {
-            m_speedControllerLeft.setSpeedGoal( - m_angleSpeedLimited);
-        }
-        else if( m_commandManager.getCurrentCommandMixingType() == mixing_type_direct_speed)
-        {
-            // Hacky stuff here: To allow to send a direct speed command to a wheel, use angleRegulator & distanceRegulator goal as rightSpeedGoal & leftSpeedGoal
-            m_speedControllerRight.setSpeedGoal( m_commandManager.getAngleGoal() );
-            m_speedControllerLeft.setSpeedGoal( m_commandManager.getDistanceGoal() );
-        }
-
 
         float outputSpeedRight = m_speedControllerRight.update(estimatedSpeedRight);
         float outputSpeedLeft = m_speedControllerLeft.update(estimatedSpeedLeft);
 
-        if (m_enableMotors) {
+        if (m_enableMotors)
+        {
             m_motorController.setMotorRightSpeed(outputSpeedRight);
             m_motorController.setMotorLeftSpeed(outputSpeedLeft);
         }
@@ -179,12 +184,12 @@ void AsservMain::mainLoop()
         instance->setSpeedKiLeft(m_speedControllerLeft.getCurrentKi());
 
 
-        instance->setAngleGoal(m_commandManager.getAngleGoal());
+        instance->setAngleGoal(current_command_consign.angle_consign);
         instance->setAngleAccumulator(m_angleRegulator.getAccumulator());
         instance->setAngleOutput(m_angleRegulatorOutputSpeedConsign);
         instance->setAngleOutputLimited(m_angleSpeedLimited);
 
-        instance->setDistGoal(m_commandManager.getDistanceGoal());
+        instance->setDistGoal(current_command_consign.distance_consign);
         instance->setDistAccumulator(m_distanceRegulator.getAccumulator());
         instance->setDistOutput(m_distRegulatorOutputSpeedConsign);
         instance->setDistOutputLimited(m_distSpeedLimited);

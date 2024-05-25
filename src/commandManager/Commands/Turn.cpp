@@ -8,12 +8,13 @@ Turn::Turn(float consign_rad, float arrivalAngleThreshold_rad)
 {
 }
 
-void Turn::computeInitialConsign(float , float , float , float *, float *angleConsign, const Regulator &, const Regulator &)
+Command::consign_type_t Turn::computeInitialConsign(float , float , float , consign_t & consign, const Regulator &, const Regulator &)
 {
-    *angleConsign += m_angleConsign;
+    consign.angle_consign += m_angleConsign;
+    return  consign_type_t::consign_polar;
 }
 
-void Turn::updateConsign(float , float , float , float *, float *, const Regulator &, const Regulator &)
+void Turn::updateConsign(float , float , float , consign_t & , const Regulator &, const Regulator &)
 {
 }
 

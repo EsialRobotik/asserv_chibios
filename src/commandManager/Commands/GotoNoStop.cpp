@@ -21,7 +21,7 @@ GotoNoStop::GotoNoStop(float consignX_mm, float consignY_mm,
     m_accelerationDecelerationLimiter = accelerationDecelerationLimiter;
 }
 
-void GotoNoStop::computeInitialConsign(float X_mm, float Y_mm, float theta_rad, float *distanceConsig, float *angleConsign, const Regulator &angle_regulator, const Regulator &distance_regulator)
+Command::consign_type_t GotoNoStop::computeInitialConsign(float X_mm, float Y_mm, float theta_rad, consign_t & consign, const Regulator &angle_regulator, const Regulator &distance_regulator)
 {
     SampleStream *instance = SampleStream::instance();
     instance->setXGoal(m_consignX_mm);
@@ -44,14 +44,14 @@ void GotoNoStop::computeInitialConsign(float X_mm, float Y_mm, float theta_rad, 
        float projectedDist = deltaDist * cosf(deltaTheta);
        if (deltaDist < m_gotoConfiguration->gotoReturnThreshold_mm)
        {
-           *distanceConsig = distance_regulator.getAccumulator() + m_backModeCorrection * projectedDist ;
+           consign.distance_consign = distance_regulator.getAccumulator() + m_backModeCorrection * projectedDist ;
        }
        else
        {
-         *angleConsign = angle_regulator.getAccumulator() + deltaTheta;
+           consign.angle_consign = angle_regulator.getAccumulator() + deltaTheta;
 
          if (fabs(deltaTheta) < m_gotoConfiguration->gotoAngleThreshold_rad)
-             *distanceConsig = distance_regulator.getAccumulator() + m_backModeCorrection * deltaDist;
+             consign.distance_consign = distance_regulator.getAccumulator() + m_backModeCorrection * deltaDist;
        }
 
    }
@@ -63,8 +63,8 @@ void GotoNoStop::computeInitialConsign(float X_mm, float Y_mm, float theta_rad, 
        /*  Here we are pointing enough to the right direction to go strait to the goal
         *    use a basic goto command
         */
-       *angleConsign = angle_regulator.getAccumulator() + deltaTheta;
-       *distanceConsig = distance_regulator.getAccumulator() + m_backModeCorrection * deltaDist;
+       consign.angle_consign = angle_regulator.getAccumulator() + deltaTheta;
+       consign.distance_consign = distance_regulator.getAccumulator() + m_backModeCorrection * deltaDist;
    }
    else if (fabs(deltaTheta) > m_configuration->tooBigAngleThreshold_rad)
    {
@@ -75,7 +75,7 @@ void GotoNoStop::computeInitialConsign(float X_mm, float Y_mm, float theta_rad, 
         *   just compute a angle consign.
         *   A distance consign will generate a big overshot to the trajectory
         */
-        *angleConsign = angle_regulator.getAccumulator() + deltaTheta;
+       consign.angle_consign = angle_regulator.getAccumulator() + deltaTheta;
    }
    else
    {
@@ -92,20 +92,20 @@ void GotoNoStop::computeInitialConsign(float X_mm, float Y_mm, float theta_rad, 
 
        deltaDist = Goto::computeDeltaDist(deltaX, deltaY);
        deltaTheta = Goto::computeDeltaTheta(m_backModeCorrection * deltaX, m_backModeCorrection * deltaY, theta_rad);
-       *angleConsign = angle_regulator.getAccumulator() + deltaTheta;
-       *distanceConsig = distance_regulator.getAccumulator() + m_backModeCorrection * deltaDist;
+       consign.angle_consign = angle_regulator.getAccumulator() + deltaTheta;
+       consign.distance_consign = distance_regulator.getAccumulator() + m_backModeCorrection * deltaDist;
 
 
        instance->setXGoal(X_goal);
        instance->setYGoal(Y_goal);
    }
 
-
+   return consign_type_t::consign_polar;
 }
 
-void GotoNoStop::updateConsign(float X_mm, float Y_mm, float theta_rad, float *distanceConsig, float *angleConsign, const Regulator &angle_regulator, const Regulator &distance_regulator)
+void GotoNoStop::updateConsign(float X_mm, float Y_mm, float theta_rad, consign_t & consign, const Regulator &angle_regulator, const Regulator &distance_regulator)
 {
-    return computeInitialConsign(X_mm, Y_mm, theta_rad, distanceConsig, angleConsign, angle_regulator, distance_regulator);
+    computeInitialConsign(X_mm, Y_mm, theta_rad, consign, angle_regulator, distance_regulator);
 }
 
 bool GotoNoStop::isGoalReached(float X_mm, float Y_mm, float , const Regulator &, const Regulator &, const Command* nextCommand)

@@ -65,10 +65,6 @@ private:
     float estimateDeltaAngle(int16_t deltaCountRight, int16_t deltaCountLeft);
     float estimateDeltaDistance(int16_t deltaCountRight, int16_t deltaCountLeft);
 
-    typedef enum
-    {
-        normal_mode, direct_speed_mode, regulator_output_control
-    } asserv_mode_t;
 
     MotorController &m_motorController;
     Encoders &m_encoders;

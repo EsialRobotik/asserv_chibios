@@ -59,17 +59,10 @@ class CommandManager
          */
         void update(float X_mm, float Y_mm, float theta_rad);
 
-        /*
-         * Sorties du commandManager
-         */
-        float getDistanceGoal()
-        {
-            return m_distRegulatorConsign;
-        }
-        float getAngleGoal()
-        {
-            return m_angleRegulatorConsign;
-        }
+        Command::consign_t getConsign()
+       {
+           return m_consign;
+       }
 
         /*
          * Permet au haut niveau de savoir où en est la commande actuelle
@@ -107,10 +100,7 @@ class CommandManager
 
         BlockingDetector *m_blockingDetector;
 
-        float m_angleRegulatorConsign;
-        float m_distRegulatorConsign;
-        float m_rightWheelSpeedConsign;
-        float m_leftWheelSpeedConsign;
+        Command::consign_t m_consign;
 };
 
 #endif

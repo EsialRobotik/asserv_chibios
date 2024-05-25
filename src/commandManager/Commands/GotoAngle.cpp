@@ -12,7 +12,7 @@ GotoAngle::GotoAngle(float consignX_mm, float consignY_mm,
 {
 }
 
-void GotoAngle::computeInitialConsign(float X_mm, float Y_mm, float theta_rad, float *, float *angleConsign, const Regulator &angle_regulator, const Regulator &)
+Command::consign_type_t GotoAngle::computeInitialConsign(float X_mm, float Y_mm, float theta_rad, consign_t & consign, const Regulator &angle_regulator, const Regulator &)
 {
    float deltaX = m_consignX_mm - X_mm;
    float deltaY = m_consignY_mm - Y_mm;
@@ -20,12 +20,14 @@ void GotoAngle::computeInitialConsign(float X_mm, float Y_mm, float theta_rad, f
    // La différence entre le thetaCible (= cap à atteindre) et le theta (= cap actuel du robot) donne l'angle à parcourir
    float deltaTheta = Goto::computeDeltaTheta(deltaX, deltaY, theta_rad);
 
-   *angleConsign =  angle_regulator.getAccumulator() + deltaTheta;
+   consign.angle_consign =  angle_regulator.getAccumulator() + deltaTheta;
+   return  consign_type_t::consign_polar;
+
 }
 
-void GotoAngle::updateConsign(float X_mm, float Y_mm, float theta_rad, float *distanceConsig, float *angleConsign, const Regulator &angle_regulator, const Regulator &distance_regulator)
+void GotoAngle::updateConsign(float X_mm, float Y_mm, float theta_rad, consign_t & consign, const Regulator &angle_regulator, const Regulator &distance_regulator)
 {
-    return computeInitialConsign(X_mm, Y_mm, theta_rad, distanceConsig, angleConsign, angle_regulator, distance_regulator);
+    computeInitialConsign(X_mm, Y_mm, theta_rad, consign, angle_regulator, distance_regulator);
 }
 
 

@@ -124,7 +124,7 @@ int main(void)
 
 void shell()
 {
-    printf("shell started %d \n");
+    printf("shell started \n");
     std::string line;
 
     while(1)
@@ -136,21 +136,11 @@ void shell()
         {
             printf("Run scenarion \r\n");
 
-//			// go 200
-//			commandManager->addStraightLine(200);
-//			usleep(1000000);
-//
-//            // turn
-//            commandManager->addTurn(degToRad(90));
-//			usleep(1000000);
-//
-//            // go_timed -200
-//            commandManager->addStraightLine(-500);
-//            usleep(1000000);
-
-            // go_timed -200
+			commandManager->addStraightLine(200);
+            commandManager->addTurn(degToRad(90));
+            commandManager->addStraightLine(-500);
             commandManager->addGOrbitalTurn(degToRad(90), false, true);
-            usleep(1000000);
+            commandManager->addStraightLine(500);
 
 
         }
@@ -167,7 +157,16 @@ void shell()
             printf("test !\r\n");
 
             commandManager->addWheelsSpeed(500, 0, 1500);
-//            commandManager->addWheelsSpeed(0, 200, 3300);
+            commandManager->addWheelsSpeed(0, 200, 3300);
+        }
+        else if( line.c_str()[0] == 'e' )
+        {
+            printf("test !\r\n");
+
+            commandManager->addGoTo(5000,0);
+            usleep(500000);
+            mainAsserv->setEmergencyStop();
+
         }
         else
         {

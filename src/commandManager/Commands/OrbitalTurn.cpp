@@ -22,15 +22,16 @@ OrbitalTurn::OrbitalTurn(float consign_rad, bool forward, bool turnToTheRight, f
     }
 }
 
-void OrbitalTurn::computeInitialConsign(float , float , float , float *distanceConsig, float *angleConsign, const Regulator &, const Regulator &distance_regulator)
+Command::consign_type_t OrbitalTurn::computeInitialConsign(float , float , float , consign_t & consign, const Regulator &, const Regulator &distance_regulator)
 {
-    *angleConsign += m_angleConsign;
-    *distanceConsig = distance_regulator.getAccumulator();
+    consign.angle_consign += m_angleConsign;
+    consign.distance_consign = distance_regulator.getAccumulator();
+    return  consign_type_t::consign_polar;
 }
 
-void OrbitalTurn::updateConsign(float , float , float , float *distanceConsig, float *, const Regulator &, const Regulator &distance_regulator)
+void OrbitalTurn::updateConsign(float , float , float , consign_t & consign, const Regulator &, const Regulator &distance_regulator)
 {
-    *distanceConsig = distance_regulator.getAccumulator();
+    consign.distance_consign = distance_regulator.getAccumulator();
 }
 
 bool OrbitalTurn::isGoalReached(float , float , float , const Regulator &angle_regulator, const Regulator &, const Command* )
