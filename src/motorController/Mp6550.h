@@ -28,8 +28,15 @@ public:
         PwmConf_t confPwm2Motor2;
     };
 
+    struct sleepPin_t
+    {
+      stm32_gpio_t* GPIObase;
+      uint8_t pinNumber;
+    };
 
-    explicit Mp6550(Mp6550Conf_t &conf, bool is1motorRight, bool invertMotorRight, bool invertMotorLeft);
+
+
+    explicit Mp6550(Mp6550Conf_t &conf, sleepPin_t *sleepOutpin, bool is1motorRight, bool invertMotorRight, bool invertMotorLeft);
     virtual ~Mp6550() {};
 
     void init();
@@ -44,6 +51,8 @@ private:
     void initPwm(PwmConf_t &pwmConf);
 
     Mp6550Conf_t m_mp6550Conf;
+    bool m_sleepPin;
+    sleepPin_t m_sleepOutpin;
     bool m_invertMotorLeft;
     bool m_invertMotorRight;
     bool m_is1motorRight;

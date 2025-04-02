@@ -115,9 +115,6 @@ include $(CHIBIOS)/test/oslib/oslib_test.mk
 include $(CHIBIOS)/os/various/shell/shell.mk
 include $(CHIBIOS)/os/hal/lib/streams/streams.mk
 
-include $(CHIBIOS)/os/various/cpp_wrappers/chcpp.mk
-
-
 
 # Define linker script file here
 LDSCRIPT= $(STARTUPLD)/STM32G431xB.ld

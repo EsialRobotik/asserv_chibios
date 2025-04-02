@@ -3,12 +3,23 @@
 
 #include "SampleStreamInterface.h"
 #include "ch.h"
-
+#include "hal.h"
 
 class USBStream: public SampleStream
 {
 public:
-    static void init();
+
+    struct UsbStreamPinConf_t
+    {
+        stm32_gpio_t* dataPlusPin_GPIObase;
+        uint8_t dataPlusPin_number;
+        uint8_t dataPlusPin_alternate;
+        stm32_gpio_t* dataMinusPin_GPIObase;
+        uint8_t dataMinusPin_number;
+        uint8_t dataMinusPin_alternate;
+    };
+
+    static void init(UsbStreamPinConf_t *pinConf);
 
     static USBStream* instance()
     {

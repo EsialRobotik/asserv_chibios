@@ -8,10 +8,17 @@
 
 extern BaseSequentialStream *outputStream;
 
- Mp6550::Mp6550(Mp6550Conf_t &conf, bool is1motorRight, bool invertMotorRight, bool invertMotorLeft) :
+ Mp6550::Mp6550(Mp6550Conf_t &conf, sleepPin_t *sleepOutpin, bool is1motorRight, bool invertMotorRight, bool invertMotorLeft) :
         MotorController()
 {
     m_mp6550Conf = conf;
+    m_sleepPin = false;
+    if( sleepOutpin )
+    {
+        m_sleepOutpin = *sleepOutpin;
+        m_sleepPin = true;
+    }
+
     m_invertMotorRight = invertMotorRight;
     m_invertMotorLeft = invertMotorLeft;
     m_is1motorRight = is1motorRight;
@@ -19,7 +26,6 @@ extern BaseSequentialStream *outputStream;
     m_lastLeftConsign = 0;
     m_rightMotorPercentage = 0;
     m_leftMotorPercentage = 0;
-
 }
 
 void Mp6550::initPwm(PwmConf_t &pwmConf)
@@ -35,6 +41,12 @@ void Mp6550::init()
     initPwm(m_mp6550Conf.confPwm2Motor1);
     initPwm(m_mp6550Conf.confPwm1Motor2);
     initPwm(m_mp6550Conf.confPwm2Motor2);
+
+    if( m_sleepPin)
+    {
+        palSetPadMode(m_sleepOutpin.GPIObase, m_sleepOutpin.pinNumber, PAL_MODE_OUTPUT_PUSHPULL);
+        palSetPad(m_sleepOutpin.GPIObase, m_sleepOutpin.pinNumber);
+    }
 }
 
 void Mp6550::setMotorLeftSpeed(float percentage)
@@ -81,9 +93,6 @@ void Mp6550::setMotorLeftSpeed(float percentage)
        pwmEnableChannel(pwm1->pwmDriver, pwm1->used_channel, PWM_PERCENTAGE_TO_WIDTH(pwm1->pwmDriver, 10000));
        pwmEnableChannel(pwm2->pwmDriver, pwm2->used_channel, PWM_PERCENTAGE_TO_WIDTH(pwm2->pwmDriver, 10000));
     }
-
-    chprintf(outputStream, "setMotorLeftSpeed %f -> %f : duty_cycle %d \r\n", percentage, m_leftMotorPercentage, duty_cycle);
-
 }
 
 void Mp6550::setMotorRightSpeed(float percentage)
@@ -130,8 +139,6 @@ void Mp6550::setMotorRightSpeed(float percentage)
       pwmEnableChannel(pwm1->pwmDriver, pwm1->used_channel, PWM_PERCENTAGE_TO_WIDTH(pwm1->pwmDriver, 10000));
       pwmEnableChannel(pwm2->pwmDriver, pwm2->used_channel, PWM_PERCENTAGE_TO_WIDTH(pwm2->pwmDriver, 10000));
     }
-
-    chprintf(outputStream, "setMotorRightSpeed %f -> %f : duty_cycle %d \r\n", percentage, m_rightMotorPercentage, duty_cycle);
 }
 
 float Mp6550::getMotorRightSpeedNonInverted() const
