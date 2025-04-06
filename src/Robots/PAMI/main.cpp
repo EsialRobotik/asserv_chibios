@@ -21,6 +21,7 @@
 #include "Pll.h"
 #include "blockingDetector/OldSchoolBlockingDetector.h"
 #include "config.h"
+#include "Communication/raspIO.h"
 
 float speed_controller_right_Kp[NB_PI_SUBSET] = { SPEED_CTRL_RIGHT_KP_1, SPEED_CTRL_RIGHT_KP_2, SPEED_CTRL_RIGHT_KP_3};
 float speed_controller_right_Ki[NB_PI_SUBSET] = { SPEED_CTRL_RIGHT_KI_1, SPEED_CTRL_RIGHT_KI_2, SPEED_CTRL_RIGHT_KI_3};
@@ -54,6 +55,53 @@ SimpleAccelerationLimiter *distanceAccelerationLimiter;
 
 CommandManager *commandManager;
 AsservMain *mainAsserv;
+
+RaspIO *rpio;
+
+BaseSequentialStream *outputStream;
+BaseSequentialStream *outputStreamIA;
+
+
+
+// ADCConfig structure for stm32 MCUs is empty
+static ADCConfig adccfg = {};
+
+// Create buffer to store ADC results. This is
+// one-dimensional interleaved array
+#define ADC_BUF_DEPTH 2 // depth of buffer
+#define ADC_CH_NUM 1    // number of used ADC channels
+static adcsample_t samples_buf[ADC_BUF_DEPTH * ADC_CH_NUM]; // results array
+
+// Fill ADCConversionGroup structure fields
+static ADCConversionGroup adccg = {
+   // this 3 fields are common for all MCUs
+      // set to TRUE if need circular buffer, set FALSE otherwise
+      TRUE,
+      // number of channels
+      (uint16_t)(ADC_CH_NUM),
+      // callback function, set to NULL for begin
+      NULL,
+   // Resent fields are stm32 specific. They contain ADC control registers data.
+   // Please, refer to ST manual RM0008.pdf to understand what we do.
+      // CR1 register content, set to zero for begin
+      0,
+      // CR2 register content, set to zero for begin
+      0,
+      // SMRP1 register content, set to zero for begin
+      0,
+      // SMRP2 register content, set to zero for begin
+      0,
+      // SQR1 register content. Set channel sequence length
+      ADC_SQR1_NUM_CH(ADC_CH_NUM) | ADC_SQR1_SQ1_N(1),
+      // SQR2 register content, set to zero for begin
+      0,
+      // SQR3 register content. We must select 2 channels
+      // For example 15th and 10th channels. Refer to the
+      // pinout of your MCU to select other pins you need.
+      // On STM32-P103 board they connected to PC15 and PC0 contacts
+      // On STM32-103STK board they connected to EXT2-7 contact and joystick
+      0,
+};
 
 
 static void initAsserv()
@@ -231,6 +279,19 @@ static void initAsserv()
                            *speedControllerRight, *speedControllerLeft,
                            *rightPll, *leftPll,
                            nullptr);
+
+    rpio = new RaspIO(&SD1, *odometry, *commandManager, *mp6550, *mainAsserv);
+}
+
+void raspIoWrapperPositionOutput(void *)
+{
+    rpio->positionOutput();
+}
+
+
+void raspIoWrapperCommandInput(void *)
+{
+    rpio->commandInput();
 }
 
 /*
@@ -287,18 +348,16 @@ void asservCommandUSB(BaseSequentialStream *chp, int argc, char **argv);
 
 
 
-BaseSequentialStream *outputStream;
-BaseSequentialStream *outputStreamIA;
-
+THD_WORKING_AREA(wa_raspio1, 512);
+THD_WORKING_AREA(wa_raspio2, 512);
 
 int main(void)
 {
     halInit();
     chSysInit();
-
     initAsserv();
 
-
+    
     /*
      * USART 1:  For communication with the brain µc
      * RX: PA10
@@ -344,7 +403,6 @@ int main(void)
     thread_t *shellThd = chThdCreateStatic(wa_shell, sizeof(wa_shell), LOWPRIO, shellThread, &shellCfg);
     chRegSetThreadNameX(shellThd, "shell");
 
-    // TODO : brancher raspIO.c
 
 //    palSetPadMode(GPIOA, 0, PAL_MODE_INPUT_ANALOG); // this is 15th channel
 //    adcInit();
@@ -352,17 +410,17 @@ int main(void)
 //  adcStartConversion(&ADCD1, &adccg, &samples_buf[0], ADC_BUF_DEPTH);
 
 
+    thread_t *threadPositionOutput = chThdCreateStatic(wa_raspio1, sizeof(wa_raspio1), LOWPRIO, raspIoWrapperPositionOutput, nullptr);
+    chRegSetThreadNameX(threadPositionOutput, "positionOutput");
+    thread_t *threadCommandInput = chThdCreateStatic(wa_raspio2, sizeof(wa_raspio2), LOWPRIO, raspIoWrapperCommandInput, nullptr);
+    chRegSetThreadNameX(threadCommandInput, "commandInput");
+
+
     chThdSetPriority(LOWPRIO);
     char str[32];
     while (true)
     {
-        chThdSleepMilliseconds(250);
-//        encoders->getValues(&encoderR, &encoderL);
-//        chprintf(outputStream, "encoder %f %f\r\n", encoderR, encoderL);
-//        chprintf(outputStream2, "COUCOU\r\n");
-//        char readChar = streamGet(&SD1);
-//        chprintf(outputStream, "Read %c \r\n",readChar);
-//        USBStream::instance()->sendConfig((uint8_t*)"toto\r\n", 6);
+        chThdSleepMilliseconds(1000);
     }
 }
 

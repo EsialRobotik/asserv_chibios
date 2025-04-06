@@ -168,7 +168,8 @@ CPPSRC = $(ALLCPPSRC) \
        $(SRCDIR)/AccelerationLimiter/SimpleAccelerationLimiter.cpp \
        $(SRCDIR)/AccelerationLimiter/AdvancedAccelerationLimiter.cpp \
        $(SRCDIR)/AccelerationLimiter/AccelerationDecelerationLimiter.cpp \
-       $(SRCDIR)/blockingDetector/OldSchoolBlockingDetector.cpp 
+       $(SRCDIR)/blockingDetector/OldSchoolBlockingDetector.cpp  \
+       $(SRCDIR)/Communication/raspIO.cpp
 
     
 
