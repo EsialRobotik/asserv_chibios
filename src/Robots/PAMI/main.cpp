@@ -21,7 +21,7 @@
 #include "Pll.h"
 #include "blockingDetector/OldSchoolBlockingDetector.h"
 #include "config.h"
-#include "Communication/raspIO.h"
+#include "Communication/SerialIO.h"
 
 float speed_controller_right_Kp[NB_PI_SUBSET] = { SPEED_CTRL_RIGHT_KP_1, SPEED_CTRL_RIGHT_KP_2, SPEED_CTRL_RIGHT_KP_3};
 float speed_controller_right_Ki[NB_PI_SUBSET] = { SPEED_CTRL_RIGHT_KI_1, SPEED_CTRL_RIGHT_KI_2, SPEED_CTRL_RIGHT_KI_3};
@@ -56,7 +56,7 @@ SimpleAccelerationLimiter *distanceAccelerationLimiter;
 CommandManager *commandManager;
 AsservMain *mainAsserv;
 
-RaspIO *rpio;
+SerialIO *esp32Io;
 
 BaseSequentialStream *outputStream;
 BaseSequentialStream *outputStreamIA;
@@ -280,18 +280,18 @@ static void initAsserv()
                            *rightPll, *leftPll,
                            nullptr);
 
-    rpio = new RaspIO(&SD1, *odometry, *commandManager, *mp6550, *mainAsserv);
+    esp32Io = new SerialIO(&SD1, *odometry, *commandManager, *mp6550, *mainAsserv);
 }
 
 void raspIoWrapperPositionOutput(void *)
 {
-    rpio->positionOutput();
+    esp32Io->positionOutput();
 }
 
 
 void raspIoWrapperCommandInput(void *)
 {
-    rpio->commandInput();
+    esp32Io->commandInput();
 }
 
 /*

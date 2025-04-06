@@ -9,15 +9,14 @@
 #include "util/asservMath.h"
 #include "config.h"
 #include "Odometry.h"
-#include "raspIO.h"
+#include "SerialIO.h"
 #include "commandManager/CommandManager.h"
 #include "motorController/MotorController.h"
 #include "AsservMain.h"
 
 
 
-
-RaspIO::RaspIO(SerialDriver *serialDriver, Odometry &odometry, CommandManager &commandManager, MotorController &motorController, AsservMain &mainAsserv)
+SerialIO::SerialIO(SerialDriver *serialDriver, Odometry &odometry, CommandManager &commandManager, MotorController &motorController, AsservMain &mainAsserv)
 :m_odometry(odometry), m_commandManager(commandManager), m_motorController(motorController), m_mainAsserv(mainAsserv)
 {   
     m_serialDriver = serialDriver;
@@ -25,7 +24,7 @@ RaspIO::RaspIO(SerialDriver *serialDriver, Odometry &odometry, CommandManager &c
 }
 
 
-void RaspIO::serialReadLine(SerialDriver *serialDriver, char *buffer, unsigned int buffer_size)
+void SerialIO::serialReadLine(SerialDriver *serialDriver, char *buffer, unsigned int buffer_size)
 {
     unsigned int i;
     for(i=0; i<buffer_size; i++)
@@ -37,7 +36,7 @@ void RaspIO::serialReadLine(SerialDriver *serialDriver, char *buffer, unsigned i
     buffer[i] = '\0';
 }
 
-void RaspIO::commandInput()
+bool SerialIO::classicCommandHandle(char readChar)
 {
     /*
      * Commande / Caractères à envoyer sur la série / Paramètres / Effets obtenus
@@ -74,19 +73,14 @@ void RaspIO::commandInput()
      - / applique une valeur -1 sur les moteurs LEFT
      */
 
+    bool res = true;
     float consigneValue1 = 0;
     float consigneValue2 = 0;
     float consigneValue3 = 0;
     char buffer[64];
 
-    chprintf(m_outputStream, "Started\r\n");
-
-
-    while(true)
+    switch (readChar) 
     {
-        char readChar = streamGet(m_serialDriver);
-
-        switch (readChar) {
 
         case 'h': //Arrêt d'urgence
             m_mainAsserv.setEmergencyStop();
@@ -186,16 +180,35 @@ void RaspIO::commandInput()
             m_odometry.setEncoderWheelsDistance(consigneValue1);
             break;
 
-
         default:
-            chprintf(m_outputStream, " - unexpected character\r\n");
+            
+            res = false;
             break;
+    }
+
+    return res;
+}
+
+void SerialIO::commandInput()
+{
+
+    chprintf(m_outputStream, "Started\r\n");
+
+
+    while(true)
+    {
+        char readChar = streamGet(m_serialDriver);
+        bool res = classicCommandHandle(readChar);
+
+        if( !res )
+        {
+            chprintf(m_outputStream, " - unexpected character\r\n");
         }
     }
 }
 
 
-void RaspIO::positionOutput()
+void SerialIO::positionOutput()
 {
     const time_conv_t loopPeriod_ms = 100;
     systime_t time = chVTGetSystemTime();
