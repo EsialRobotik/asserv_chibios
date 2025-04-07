@@ -45,6 +45,7 @@ QuadratureEncoder::~QuadratureEncoder()
 
 void QuadratureEncoder::init()
 {
+    // TODO : Alternate conf should be configurable like the PIN....
     // Encoder 1
     palSetPadMode(m_gpioPinConf.GPIObaseE1ch2, m_gpioPinConf.pinNumberE1ch2, PAL_MODE_ALTERNATE(2)); //TIM3_chan2
     palSetPadMode(m_gpioPinConf.GPIObaseE1ch1, m_gpioPinConf.pinNumberE1ch1, PAL_MODE_ALTERNATE(2)); //TIM3_chan1

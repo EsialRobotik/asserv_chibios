@@ -99,11 +99,11 @@ SRCDIR   := ../../../src
 # Licensing files.
 include $(CHIBIOS)/os/license/license.mk
 # Startup files.
-include $(CHIBIOS)/os/common/startup/ARMCMx/compilers/GCC/mk/startup_stm32f4xx.mk
+include $(CHIBIOS)/os/common/startup/ARMCMx/compilers/GCC/mk/startup_stm32g4xx.mk
 # HAL-OSAL files (optional).
 include $(CHIBIOS_CONTRIB)/os/hal/hal.mk
-include $(CHIBIOS_CONTRIB)/os/hal/ports/STM32/STM32F4xx/platform.mk
-include $(CHIBIOS)/os/hal/boards/ST_NUCLEO64_F446RE/board.mk
+include $(CHIBIOS_CONTRIB)/os/hal/ports/STM32/STM32G4xx/platform.mk
+include $(CHIBIOS)/os/hal/boards/ST_NUCLEO64_G431RB/board.mk
 include $(CHIBIOS)/os/hal/osal/rt-nil/osal.mk
 # RTOS files (optional).
 include $(CHIBIOS)/os/rt/rt.mk
@@ -116,9 +116,8 @@ include $(CHIBIOS)/os/various/shell/shell.mk
 include $(CHIBIOS)/os/hal/lib/streams/streams.mk
 
 
-
 # Define linker script file here
-LDSCRIPT= $(STARTUPLD)/STM32F446xE.ld
+LDSCRIPT= $(STARTUPLD)/STM32G431xB.ld
 
 # Custom part: Depending on a input variable ROBOT, the used main.cpp is different
 
@@ -133,7 +132,7 @@ ifneq ($(SHELL_ENABLE),)  # enable the shell
 	SHELL_MODE_DEFINE = -DENABLE_SHELL
 endif
 
-
+SHELL_MODE_DEFINE = -DENABLE_SHELL
 #$(error ALLSRC : >$(ALLCSRC)<)
 
 # C sources that can be compiled in ARM or THUMB mode depending on the global
@@ -147,9 +146,7 @@ CSRC = $(ALLCSRC)\
 # C++ sources that can be compiled in ARM or THUMB mode depending on the global
 # setting.
 CPPSRC = $(ALLCPPSRC) \
-       $(wildcard $(SRCDIR)/Robots/Princess/*.cpp ) \
-       $(SRCDIR)/motorController/Vnh5019.cpp \
-       $(SRCDIR)/motorController/Md22.cpp \
+       $(wildcard $(SRCDIR)/Robots/PAMI/*.cpp ) \
        $(SRCDIR)/sampleStream/USBStream.cpp \
        $(SRCDIR)/Encoders/QuadratureEncoder.cpp \
        $(SRCDIR)/AsservMain.cpp \
@@ -165,12 +162,15 @@ CPPSRC = $(ALLCPPSRC) \
        $(SRCDIR)/commandManager/Commands/Goto.cpp \
        $(SRCDIR)/commandManager/Commands/GotoAngle.cpp \
        $(SRCDIR)/commandManager/Commands/GotoNoStop.cpp \
+       $(SRCDIR)/motorController/Mp6550.cpp \
        $(SRCDIR)/util/chibiOsAllocatorWrapper.cpp  \
        $(SRCDIR)/AccelerationLimiter/AbstractAccelerationLimiter.cpp \
        $(SRCDIR)/AccelerationLimiter/SimpleAccelerationLimiter.cpp \
        $(SRCDIR)/AccelerationLimiter/AdvancedAccelerationLimiter.cpp \
        $(SRCDIR)/AccelerationLimiter/AccelerationDecelerationLimiter.cpp \
-       $(SRCDIR)/blockingDetector/OldSchoolBlockingDetector.cpp 
+       $(SRCDIR)/blockingDetector/OldSchoolBlockingDetector.cpp  \
+       $(SRCDIR)/Communication/SerialIO.cpp \
+       $(SRCDIR)/Communication/RaspIO.cpp 
 
     
 
@@ -243,10 +243,10 @@ robots :
 	@echo "Available robots :  $(AVAILABLE_ROBOTS)" 
 	
 flash : all
-	openocd -c "tcl_port disabled" -c "telnet_port disabled" -c "source [find board/st_nucleo_f4.cfg]" -c "stm32f4x.cpu configure -rtos chibios" -c "init" -c "reset halt" -c "flash write_image erase unlock $(BUILDDIR)/$(PROJECT).elf" -c "verify_image $(BUILDDIR)/$(PROJECT).elf" -c "reset run" -c "shutdown"
+	openocd -c "tcl_port disabled" -c "telnet_port disabled" -c "source [find board/st_nucleo_g4.cfg]" -c "stm32g4x.cpu configure -rtos chibios" -c "init" -c "reset halt" -c "flash write_image erase unlock $(BUILDDIR)/$(PROJECT).elf" -c "verify_image $(BUILDDIR)/$(PROJECT).elf" -c "reset run" -c "shutdown"
 
 debug : all
-	openocd -c "tcl_port disabled" -c "telnet_port disabled" -c "source [find board/st_nucleo_f4.cfg]" -c "stm32f4x.cpu configure -rtos chibios" -c "init" -c "reset halt" -c "flash write_image erase unlock $(BUILDDIR)/$(PROJECT).elf" -c "verify_image $(BUILDDIR)/$(PROJECT).elf" -c "reset halt"
+	openocd -c "tcl_port disabled" -c "telnet_port disabled" -c "source [find board/st_nucleo_g4.cfg]" -c "stm32g4x.cpu configure -rtos chibios" -c "init" -c "reset halt" -c "flash write_image erase unlock $(BUILDDIR)/$(PROJECT).elf" -c "verify_image $(BUILDDIR)/$(PROJECT).elf" -c "reset halt"
 
 	
 

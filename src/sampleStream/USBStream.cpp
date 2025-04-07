@@ -17,11 +17,16 @@ USBStream::USBStream()
     std::memset(m_currentStruct.array, 0xFFFFFFFF, sizeof(m_currentStruct.array));
 }
 
-void USBStream::init()
+void USBStream::init(UsbStreamPinConf_t *pinConf)
 {
-    // USB FS
-    palSetPadMode(GPIOA, 12, PAL_MODE_ALTERNATE(10)); //USB D+
-    palSetPadMode(GPIOA, 11, PAL_MODE_ALTERNATE(10)); //USB D-
+    // Init pin if needed
+    if(pinConf)
+    {
+        palSetPadMode(pinConf->dataPlusPin_GPIObase, pinConf->dataPlusPin_number, PAL_MODE_ALTERNATE(pinConf->dataPlusPin_alternate)); //USB D+
+        palSetPadMode(pinConf->dataMinusPin_GPIObase, pinConf->dataMinusPin_number, PAL_MODE_ALTERNATE(pinConf->dataMinusPin_alternate)); //USB D-
+    }
+//    palSetPadMode(GPIOA, 12, PAL_MODE_ALTERNATE(10)); //USB D+
+//    palSetPadMode(GPIOA, 11, PAL_MODE_ALTERNATE(10)); //USB D-
 
 
     s_instance = new USBStream();
