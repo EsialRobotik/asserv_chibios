@@ -91,6 +91,7 @@ static void initAsserv()
     commandManager = new CommandManager( COMMAND_MANAGER_ARRIVAL_DISTANCE_THRESHOLD_mm, COMMAND_MANAGER_ARRIVAL_ANGLE_THRESHOLD_RAD,
                                    preciseGotoConf, waypointGotoConf, gotoNoStopConf,
                                    *angleRegulator, *distanceRegulator,
+                                   REGULATOR_MAX_SPEED_MM_PER_SEC, REGULATOR_MAX_SPEED_MM_PER_SEC/3 /* This value should maybe be fine tuned ?*/, 
                                    distanceAccelerationLimiter,
                                    blockingDetector);
 
@@ -236,7 +237,6 @@ void asservCommandUSB(BaseSequentialStream *chp, int argc, char **argv)
     {
         chprintf(outputStream,"Usage :");
         chprintf(outputStream," - asserv enablemotor 0|1\r\n");
-        chprintf(outputStream," - asserv enablepolar 0|1\r\n");
         chprintf(outputStream," - asserv coders \r\n");
         chprintf(outputStream," - asserv reset \r\n");
         chprintf(outputStream," - asserv motorspeed [r|l] speed \r\n");
@@ -244,7 +244,6 @@ void asservCommandUSB(BaseSequentialStream *chp, int argc, char **argv)
         chprintf(outputStream," - asserv wheelspeedstep [r|l] [speed] [step time] \r\n");
         chprintf(outputStream," -------------- \r\n");
         chprintf(outputStream," - asserv robotfwspeedstep [speed] [step time] \r\n");
-        chprintf(outputStream," - asserv robotangspeedstep [speed] [step time] \r\n");
         chprintf(outputStream," - asserv speedcontrol [r|l] [Kp] [Ki] \r\n");
         chprintf(outputStream," - asserv angleacc delta_speed \r\n");
         chprintf(outputStream," - asserv distacc delta_speed \r\n");
@@ -274,8 +273,6 @@ void asservCommandUSB(BaseSequentialStream *chp, int argc, char **argv)
         char side = *argv[1];
         float speedGoal = atof(argv[2]);
         int time = atoi(argv[3]);
-        chprintf(outputStream, "setting fw robot speed %.2f rad/s for %d ms\r\n", speedGoal, time);
-
         chprintf(outputStream, "setting wheel %s to speed %.2f rad/s for %d ms \r\n", (side == 'r') ? "right" : "left", speedGoal, time);
 
         float speedRight = speedGoal;
@@ -286,9 +283,7 @@ void asservCommandUSB(BaseSequentialStream *chp, int argc, char **argv)
             speedRight = 0;
         }
 
-        mainAsserv->setWheelsSpeed(speedRight, speedLeft);
-        chThdSleepMilliseconds(time);
-        mainAsserv->setWheelsSpeed(0, 0);
+        bool ok = commandManager->addWheelsSpeed(speedRight, speedLeft, time);
     }
     else if (!strcmp(argv[0], "robotfwspeedstep"))
     {
@@ -296,19 +291,7 @@ void asservCommandUSB(BaseSequentialStream *chp, int argc, char **argv)
         int time = atoi(argv[2]);
         chprintf(outputStream, "setting fw robot speed %.2f rad/s for %d ms\r\n", speedGoal, time);
 
-        mainAsserv->setRegulatorsSpeed(speedGoal, 0);
-        chThdSleepMilliseconds(time);
-        mainAsserv->setRegulatorsSpeed(0, 0);
-    }
-    else if (!strcmp(argv[0], "robotangspeedstep"))
-    {
-        float speedGoal = atof(argv[1]);
-        int time = atoi(argv[2]);
-        chprintf(outputStream, "setting angle robot speed %.2f rad/s for %d ms\r\n", speedGoal, time);
-
-        mainAsserv->setRegulatorsSpeed(0, speedGoal);
-        chThdSleepMilliseconds(time);
-        mainAsserv->setRegulatorsSpeed(0, 0);
+        bool ok = commandManager->addWheelsSpeed(speedGoal, speedGoal, time);
     }
     else if (!strcmp(argv[0], "speedcontrol"))
     {
@@ -362,7 +345,6 @@ void asservCommandUSB(BaseSequentialStream *chp, int argc, char **argv)
         float angle = atof(argv[1]);
         chprintf(outputStream, "Adding angle %.2frad \r\n", angle);
 
-        mainAsserv->resetToNormalMode();
         commandManager->addTurn(angle);
     }
     else if (!strcmp(argv[0], "anglereset"))
@@ -379,7 +361,6 @@ void asservCommandUSB(BaseSequentialStream *chp, int argc, char **argv)
     {
         float dist = atof(argv[1]);
 
-        mainAsserv->resetToNormalMode();
         bool ok = commandManager->addStraightLine(dist);
         chprintf(outputStream, "Adding distance %.2fmm argc %d (%s)\r\n", dist,argc,  argv[1] );
 
@@ -432,21 +413,12 @@ void asservCommandUSB(BaseSequentialStream *chp, int argc, char **argv)
         else
             md22MotorController->setMotorRightSpeed(speedGoal);
     }
-    else if (!strcmp(argv[0], "enablepolar"))
-    {
-        bool enable = !(atoi(argv[1]) == 0);
-        chprintf(outputStream, "%s polar control\r\n", (enable ? "enabling" : "disabling"));
-
-        mainAsserv->enablePolar(enable);
-
-    }
     else if (!strcmp(argv[0], "addgoto"))
     {
         float X = atof(argv[1]);
         float Y = atof(argv[2]);
         chprintf(outputStream, "Adding goto(%.2f,%.2f) consign\r\n", X, Y);
 
-        mainAsserv->resetToNormalMode();
         commandManager->addGoTo(X, Y);
     }
     else if (!strcmp(argv[0], "pll"))
@@ -466,7 +438,6 @@ void asservCommandUSB(BaseSequentialStream *chp, int argc, char **argv)
     }
     else if (!strcmp(argv[0], "gototest"))
     {
-        mainAsserv->resetToNormalMode();
         bool ok = commandManager->addStraightLine(1500);
         chprintf(outputStream, "Adding distance %.2fmm \r\n", 1500 );
         chThdSleepMilliseconds(600);
