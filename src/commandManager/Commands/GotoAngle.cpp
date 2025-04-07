@@ -21,7 +21,7 @@ Command::consign_type_t GotoAngle::computeInitialConsign(float X_mm, float Y_mm,
    float deltaTheta = Goto::computeDeltaTheta(deltaX, deltaY, theta_rad);
 
    consign.angle_consign =  angle_regulator.getAccumulator() + deltaTheta;
-   return  consign_type_t::consign_polar;
+   return  consign_type_t::consign_acceleration_limited;
 
 }
 

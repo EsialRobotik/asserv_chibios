@@ -12,7 +12,7 @@ public:
 
     typedef enum
     {
-        consign_polar, consign_wheel_speed
+        consign_acceleration_limited, consign_wheel_speed
     } consign_type_t;
 
 

@@ -52,6 +52,11 @@ public:
         m_enabled = false;
     };
 
+    void setMaxOutput(float max_output)
+    {
+        m_maxOutput = max_output;
+    };
+
 
 private:
     double m_accumulator;

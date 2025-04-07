@@ -23,7 +23,6 @@ public:
         mixing_type_polar,
         mixing_type_angle_regulator_right_wheel_only,
         mixing_type_angle_regulator_left_wheel_inverted_only,
-        mixing_type_direct_speed
     } mixing_type_t;
 
 

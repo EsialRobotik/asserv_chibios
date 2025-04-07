@@ -3,6 +3,8 @@
 #include <math.h>
 
 #include "util/asservMath.h"
+#include "sampleStream/SampleStreamInterface.h"
+
 
 Odometry::Odometry(float encoderWheelsDistance_mm, float initialX, float initialY)
 {
@@ -47,17 +49,19 @@ void Odometry::refresh(float m_encoderDeltaRight_mm, float m_encoderDeltaLeft_mm
      */
     m_deltaDist = (m_encoderDeltaLeft_mm + m_encoderDeltaRight_mm) / 2;
     float diffCount = m_encoderDeltaRight_mm - m_encoderDeltaLeft_mm;
-    m_deltaTheta = double(diffCount) / double(m_encoderWheelsDistance_mm); // En radian
+    m_deltaTheta = diffCount / double(m_encoderWheelsDistance_mm); // En radian
+
+    double R=0;
 
     if (diffCount == 0)    // On considère le mouvement comme une ligne droite
-            {
+    {
         // Mise à jour de la position
         m_X_mm += m_deltaDist * cos(m_theta_rad);
         m_Y_mm += m_deltaDist * sin(m_theta_rad);
     } else {
         //On approxime en considérant que le robot suit un arc de cercle
         // On calcule le rayon de courbure du cercle
-        float R = float(m_deltaDist) / m_deltaTheta;
+        float R = m_deltaDist / m_deltaTheta;
 
         //Mise à jour de la position
         m_X_mm += R * (-sin(m_theta_rad) + sin(m_theta_rad + m_deltaTheta));

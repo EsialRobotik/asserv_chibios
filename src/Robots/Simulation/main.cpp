@@ -93,16 +93,15 @@ int main(void)
 
     SimpleAccelerationLimiter angleAccelerationlimiter(ANGLE_REGULATOR_MAX_ACC);
 
-//    AccelerationDecelerationLimiter distanceAccelerationLimiter(DIST_REGULATOR_MAX_ACC_FW, DIST_REGULATOR_MAX_DEC_FW, DIST_REGULATOR_MAX_ACC_BW, DIST_REGULATOR_MAX_DEC_BW, MAX_SPEED_MM_PER_SEC, ACC_DEC_DAMPLING, DIST_REGULATOR_KP);
-    SimpleAccelerationLimiter distanceAccelerationLimiter(800);
-
-
+    AccelerationDecelerationLimiter distanceAccelerationLimiter(DIST_REGULATOR_MAX_ACC_FW, DIST_REGULATOR_MAX_DEC_FW, DIST_REGULATOR_MAX_ACC_BW, DIST_REGULATOR_MAX_DEC_BW, MAX_SPEED_MM_PER_SEC, ACC_DEC_DAMPLING, DIST_REGULATOR_KP);
+//    SimpleAccelerationLimiter distanceAccelerationLimiter(9000000);
 
     commandManager = new CommandManager( COMMAND_MANAGER_ARRIVAL_DISTANCE_THRESHOLD_mm, COMMAND_MANAGER_ARRIVAL_ANGLE_THRESHOLD_RAD,
                                    preciseGotoConf, waypointGotoConf, gotoNoStopConf,
                                    angleRegulator, distanceRegulator,
-//                                   &distanceAccelerationLimiter,
-                                   nullptr,
+                                   MAX_SPEED_MM_PER_SEC, MAX_SPEED_MM_PER_SEC/3,
+                                   &distanceAccelerationLimiter,
+//                                   nullptr,
                                    nullptr);
 
     mainAsserv = new AsservMain( ASSERV_THREAD_FREQUENCY, ASSERV_POSITION_DIVISOR,
@@ -136,11 +135,9 @@ void shell()
         {
             printf("Run scenarion \r\n");
 
-			commandManager->addStraightLine(200);
-            commandManager->addTurn(degToRad(90));
-            commandManager->addStraightLine(-500);
+//            commandManager->addTurn(degToRad(90));
+//            commandManager->addStraightLine(1000);
             commandManager->addGOrbitalTurn(degToRad(90), false, true);
-            commandManager->addStraightLine(500);
 
 
         }
@@ -148,16 +145,13 @@ void shell()
         {
             printf("test !\r\n");
 
-            commandManager->addGoTo(1000,0);
-            commandManager->addGoTo(1000,10);
-            commandManager->addGoTo(1010,10);
+            commandManager->addStraightLine(1000);
+
         }
         else if( line.c_str()[0] == 'b' )
         {
-            printf("test !\r\n");
+            motorEncoder->backwarkPertubation();
 
-            commandManager->addWheelsSpeed(500, 0, 1500);
-            commandManager->addWheelsSpeed(0, 200, 3300);
         }
         else if( line.c_str()[0] == 'e' )
         {

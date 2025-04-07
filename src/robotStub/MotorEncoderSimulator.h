@@ -3,6 +3,7 @@
 
 #include "MotorController.h"
 #include "Encoder.h"
+#include "ch.h"
 #include "FirstOrderSim.h"
 #include <string>
 
@@ -29,7 +30,7 @@ public:
 
     virtual void getValues(float *deltaEncoderRight, float *deltaEncoderLeft);
 
-    void setWall(bool value);
+    void backwarkPertubation();
 
 private:
 
@@ -46,8 +47,8 @@ private:
 
     Odometry *m_odometry;
 
-    bool m_wall;
-    float m_wallPos;
+    bool m_backwarkPerturbation;
+    systime_t m_backwardPertubation_start_time;
 };
 
 #endif /* MOTOR_CONTROLLER_SIMULATION_H_ */

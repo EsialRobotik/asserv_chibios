@@ -54,7 +54,7 @@ float AccelerationDecelerationLimiter::limitAcceleration(float dt, float targetS
     }
 
 
-    if( fabs(m_previousPositionGoal-positionGoal) > 5   )
+    if( m_previousPositionGoal != positionGoal   )
     {
         // An new position goal in inputed, try to compute the velocity at deceleration time,
         //  using the init speed, the maximum acceleration/deceleration and the error at startup
@@ -75,7 +75,7 @@ float AccelerationDecelerationLimiter::limitAcceleration(float dt, float targetS
     m_CompensatedOutput = targetSpeed - m_velocityCompensation;
 
 
-    // Apply a basic "slope filter" to limite maximum acceleration and deceleration
+    // Apply a basic "slope filter" to limit maximum acceleration and deceleration
     float max_delta_up = (forward) ? (maxAcceleration*dt) : (maxDeceleration*dt);
     float max_delta_down = (forward) ? (maxDeceleration*dt) : (maxAcceleration*dt);
 
@@ -89,6 +89,12 @@ float AccelerationDecelerationLimiter::limitAcceleration(float dt, float targetS
         m_CompensatedOutput = m_maxSpeed;
     if( m_CompensatedOutput < -m_maxSpeed)
         m_CompensatedOutput = -m_maxSpeed;
+
+   if( targetSpeed > 0 && m_CompensatedOutput > targetSpeed)
+       m_CompensatedOutput = targetSpeed;
+
+   if( targetSpeed < 0 && m_CompensatedOutput - targetSpeed)
+       m_CompensatedOutput = targetSpeed;
 
 
 

@@ -269,7 +269,8 @@ static void initAsserv()
 
     commandManager = new CommandManager( COMMAND_MANAGER_ARRIVAL_DISTANCE_THRESHOLD_mm, COMMAND_MANAGER_ARRIVAL_ANGLE_THRESHOLD_RAD,
                                    preciseGotoConf, waypointGotoConf, gotoNoStopConf,
-                                   *angleRegulator, *distanceRegulator);
+                                   *angleRegulator, *distanceRegulator,
+                                   REGULATOR_MAX_SPEED_MM_PER_SEC, REGULATOR_MAX_SPEED_MM_PER_SEC);
 
     mainAsserv = new AsservMain( ASSERV_THREAD_FREQUENCY, ASSERV_POSITION_DIVISOR,
                            ENCODERS_WHEELS_RADIUS_MM, ENCODERS_WHEELS_DISTANCE_MM, ENCODERS_TICKS_BY_TURN,
@@ -433,6 +434,7 @@ void asservCommandUSB(BaseSequentialStream *chp, int argc, char **argv)
         chprintf(outputStream,"Usage :");
         chprintf(outputStream," - asserv wheelspeedstep [r|l] [speed] [step time ms]\r\n");
         chprintf(outputStream," - asserv robotfwspeedstep [speed] [step time ms] \r\n");
+        chprintf(outputStream," - asserv orbital angleInDeg forward? toTheRight?\r\n");
         chprintf(outputStream," - asserv coders \r\n");
     };
     (void) chp;
@@ -458,9 +460,7 @@ void asservCommandUSB(BaseSequentialStream *chp, int argc, char **argv)
             speedRight = 0;
         }
 
-        mainAsserv->setWheelsSpeed(speedRight, speedLeft);
-        chThdSleepMilliseconds(time);
-        mainAsserv->setWheelsSpeed(0, 0);
+        bool ok = commandManager->addWheelsSpeed(speedRight, speedLeft, time);
     }
     else if (!strcmp(argv[0], "robotfwspeedstep"))
     {
@@ -468,9 +468,17 @@ void asservCommandUSB(BaseSequentialStream *chp, int argc, char **argv)
         int time = atoi(argv[2]);
         chprintf(outputStream, "setting fw robot speed %.2f rad/s for %d ms\r\n", speedGoal, time);
 
-        mainAsserv->setRegulatorsSpeed(speedGoal, 0);
-        chThdSleepMilliseconds(time);
-        mainAsserv->setRegulatorsSpeed(0, 0);
+        bool ok = commandManager->addWheelsSpeed(speedGoal, speedGoal, time);
+    }
+    else if (!strcmp(argv[0], "orbital"))
+    {
+        float angleInDeg = atof(argv[1]);
+        bool forward = !(atoi(argv[2]) == 0);
+        float turnToTheRight = atof(argv[3]);
+
+        chprintf(outputStream, "Adding orbital turn of %.2f deg, forward? %d, to the right? %d \r\n", angleInDeg, forward, turnToTheRight);
+
+        bool ok = commandManager->addGOrbitalTurn(angleInDeg*M_PI/180.0, forward, turnToTheRight);
     }
     else if (!strcmp(argv[0], "coders"))
     {
@@ -487,7 +495,6 @@ void asservCommandUSB(BaseSequentialStream *chp, int argc, char **argv)
     {
         float dist = atof(argv[1]);
 
-        mainAsserv->resetToNormalMode();
         bool ok = commandManager->addStraightLine(dist);
         chprintf(outputStream, "Adding distance %.2fmm argc %d (%s)\r\n", dist,argc,  argv[1] );
 
@@ -522,7 +529,6 @@ void asservCommandUSB(BaseSequentialStream *chp, int argc, char **argv)
         float angle = atof(argv[1]);
         chprintf(outputStream, "Adding angle %.2frad \r\n", angle);
 
-        mainAsserv->resetToNormalMode();
         commandManager->addTurn(angle);
     }
     else if (!strcmp(argv[0], "addgoto"))
@@ -531,7 +537,6 @@ void asservCommandUSB(BaseSequentialStream *chp, int argc, char **argv)
         float Y = atof(argv[2]);
         chprintf(outputStream, "Adding goto(%.2f,%.2f) consign\r\n", X, Y);
 
-        mainAsserv->resetToNormalMode();
         commandManager->addGoTo(X, Y);
     }
     else

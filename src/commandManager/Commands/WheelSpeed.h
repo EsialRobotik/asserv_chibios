@@ -23,7 +23,7 @@ class WheelSpeed : public Command
 
         virtual bool noStop() const;
 
-        virtual AsservMain::mixing_type_t getMixingType() const { return AsservMain::mixing_type_direct_speed; }
+        virtual AsservMain::mixing_type_t getMixingType() const { return AsservMain::mixing_type_polar; } // No real meaning here, are the consign_type_t not the standard one.
 
     private:
         float m_rightWheelSpeed_mmpersec;

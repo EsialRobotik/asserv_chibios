@@ -20,7 +20,8 @@
 
 CommandManager::CommandManager(float straitLineArrivalWindows_mm, float turnArrivalWindows_rad,
         Goto::GotoConfiguration &preciseGotoConfiguration, Goto::GotoConfiguration &waypointGotoConfiguration, GotoNoStop::GotoNoStopConfiguration &gotoNoStopConfiguration,
-        const Regulator &angle_regulator, const Regulator &distance_regulator,
+        Regulator &angle_regulator, Regulator &distance_regulator,
+        float angle_regulator_normal_max_output, float angle_regulator_orbital_max_output,
         AccelerationDecelerationLimiter *accelerationDecelerationLimiter,
         BlockingDetector *blockingDetector):
         m_cmdList(32,COMMAND_MAX_SIZE),
@@ -33,9 +34,11 @@ CommandManager::CommandManager(float straitLineArrivalWindows_mm, float turnArri
     m_currentCmd = nullptr;
     m_accelerationDecelerationLimiter = accelerationDecelerationLimiter;
     m_blockingDetector = blockingDetector;
-    m_consign.type = Command::consign_type_t::consign_polar;
+    m_consign.type = Command::consign_type_t::consign_acceleration_limited;
     m_consign.angle_consign = 0;
     m_consign.distance_consign = 0;
+    m_angle_regulator_normal_max_output = angle_regulator_normal_max_output;
+    m_angle_regulator_orbital_max_output = angle_regulator_orbital_max_output;
 
 }
 
@@ -67,7 +70,7 @@ bool CommandManager::addGOrbitalTurn(float angleInRad, bool forward, bool turnTo
     if(ptr == nullptr)
         return false;
 
-    new (ptr) OrbitalTurn(angleInRad, forward, turnToTheRight, m_turnArrivalWindows_rad);
+    new (ptr) OrbitalTurn(angleInRad, forward, turnToTheRight, m_turnArrivalWindows_rad, m_angle_regulator_normal_max_output, m_angle_regulator_orbital_max_output, m_angle_regulator);
     m_cmdList.push();
     return true;
 }
@@ -152,7 +155,7 @@ bool CommandManager::addGoToAngle(float posXInmm, float posYInmm)
 
 void CommandManager::setEmergencyStop()
 {
-    m_consign.type = Command::consign_type_t::consign_polar;
+    m_consign.type = Command::consign_type_t::consign_acceleration_limited;
     m_consign.angle_consign = m_angle_regulator.getAccumulator();
     m_consign.distance_consign = m_distance_regulator.getAccumulator();
 
@@ -160,6 +163,7 @@ void CommandManager::setEmergencyStop()
     m_currentCmd = nullptr;
 
     m_emergencyStop = true;
+    m_angle_regulator.setMaxOutput(m_angle_regulator_normal_max_output);
 }
 
 void CommandManager::resetEmergencyStop()

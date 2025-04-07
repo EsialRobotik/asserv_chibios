@@ -100,7 +100,7 @@ Command::consign_type_t GotoNoStop::computeInitialConsign(float X_mm, float Y_mm
        instance->setYGoal(Y_goal);
    }
 
-   return consign_type_t::consign_polar;
+   return consign_type_t::consign_acceleration_limited;
 }
 
 void GotoNoStop::updateConsign(float X_mm, float Y_mm, float theta_rad, consign_t & consign, const Regulator &angle_regulator, const Regulator &distance_regulator)

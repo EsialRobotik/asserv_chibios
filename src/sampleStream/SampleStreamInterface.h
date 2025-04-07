@@ -92,7 +92,15 @@ public:
         DistanceLimiterMaxAttainableSpeed,      accDec/distance/MaxAttainableSpeed,
         DistanceLimitercurrentSpeed,            accDec/distance/currentSpeed,
         BlockingDuration,                       blockingDetector/blockingDuration,
-        BlockingDetected,                       blockingDetector/blockingDetected);
+        BlockingDetected,                       blockingDetector/blockingDetected
+        // DecelerationStartPos,                   accDec/distance/decelerationStartPosition,
+        // posAtNextTick,                          accDec/distance/posAtNextTick,
+        // NextSpeedConsign,                       accDec/distance/nextSpeedConsign,
+        // outputGoal,                             accDec/distance/outputgoal,
+        // CurrentSpeed,                           accDec/distance/currentSpeedRamp,
+        // IsAcc,                                  accDec/distance/IsAcc,
+        // speedStep,                                  accDec/distance/speedStep
+        );
 
 
 private:

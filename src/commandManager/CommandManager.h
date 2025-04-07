@@ -28,7 +28,8 @@ class CommandManager
 
         explicit CommandManager(float straitLineArrivalWindows_mm, float turnArrivalWindows_rad,
                 Goto::GotoConfiguration &preciseGotoConfiguration, Goto::GotoConfiguration &waypointGotoConfiguration, GotoNoStop::GotoNoStopConfiguration &gotoNoStopConfiguration,
-                const Regulator &angle_regulator, const Regulator &distance_regulator,
+                Regulator &angle_regulator, Regulator &distance_regulator,
+                float angle_regulator_normal_max_output, float angle_regulator_orbital_max_output,
                 AccelerationDecelerationLimiter *accelerationDecelerationLimiter = nullptr,
                 BlockingDetector *blockingDetector = nullptr);
         ~CommandManager() {};
@@ -92,11 +93,14 @@ class CommandManager
         GotoNoStop::GotoNoStopConfiguration m_gotoNoStopConfiguration;
         AccelerationDecelerationLimiter *m_accelerationDecelerationLimiter;
 
-        const Regulator &m_angle_regulator;
-        const Regulator &m_distance_regulator;
+        Regulator &m_angle_regulator;
+        Regulator &m_distance_regulator;
 
         bool m_emergencyStop;
         bool m_blockingDetected;
+
+        float m_angle_regulator_normal_max_output;
+        float m_angle_regulator_orbital_max_output;
 
         BlockingDetector *m_blockingDetector;
 

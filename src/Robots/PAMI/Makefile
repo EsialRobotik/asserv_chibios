@@ -162,6 +162,8 @@ CPPSRC = $(ALLCPPSRC) \
        $(SRCDIR)/commandManager/Commands/Goto.cpp \
        $(SRCDIR)/commandManager/Commands/GotoAngle.cpp \
        $(SRCDIR)/commandManager/Commands/GotoNoStop.cpp \
+       $(SRCDIR)/commandManager/Commands/WheelSpeed.cpp \
+       $(SRCDIR)/commandManager/Commands/OrbitalTurn.cpp \
        $(SRCDIR)/motorController/Mp6550.cpp \
        $(SRCDIR)/util/chibiOsAllocatorWrapper.cpp  \
        $(SRCDIR)/AccelerationLimiter/AbstractAccelerationLimiter.cpp \

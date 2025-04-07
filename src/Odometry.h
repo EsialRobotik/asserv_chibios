@@ -55,7 +55,7 @@ private:
     float m_encoderWheelsDistance_mm;
 
     double m_deltaTheta;
-    float m_deltaDist;
+    double m_deltaDist;
 
     // Position actuelle
     float m_X_mm, m_Y_mm; // En mm

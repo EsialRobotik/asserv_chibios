@@ -12,7 +12,7 @@
  MotorEncoderSimulator::MotorEncoderSimulator(float period, float wheelRadius_mm, float encodersTicksByTurn, Odometry *odometry) :
         MotorController(), Encoders(),
         m_motorRightSim(period, TAU, MAX_SPEED/100), m_motorLeftSim(period, TAU, MAX_SPEED/100),
-		m_odometry(odometry), m_wall(false), m_wallPos(0)
+		m_odometry(odometry), m_backwarkPerturbation(false),m_backwardPertubation_start_time(0)
 {
     m_rightMotorPercentage = 0;
     m_leftMotorPercentage = 0;
@@ -54,34 +54,42 @@ void MotorEncoderSimulator::getValues(float *deltaEncoderRight, float *deltaEnco
         m_leftMotorPercentage = 0;
 
 
-    float rightWheelSpeed_mm = m_motorRightSim.process(m_rightMotorPercentage);
-    float leftWheelSpeed_mm = m_motorLeftSim.process(m_leftMotorPercentage);
 
-    if( m_wall )
+
+    if( m_backwarkPerturbation )
     {
-		if( m_odometry->getX() < -10 )
-		{
-			m_motorRightSim.reset();
-			m_motorLeftSim.reset();
-			rightWheelSpeed_mm = 0;
-			leftWheelSpeed_mm = 0;
-			m_motorRightSim.process(0);
-			m_motorLeftSim.process(0);
-		}
+//        if( (chVTGetSystemTime() - m_backwardPertubation_start_time) > 500)
+//        {
+//            *deltaEncoderRight = 0;
+//            *deltaEncoderLeft = 0;
+//        }
+//        else
+        {
+            float rightWheelSpeed_mm = m_motorRightSim.process(-1);
+            float leftWheelSpeed_mm = m_motorLeftSim.process(-1);
+            *deltaEncoderRight = (rightWheelSpeed_mm/10.0);
+            *deltaEncoderLeft = (leftWheelSpeed_mm /10.0);
+        }
+
+
+        if( (chVTGetSystemTime() - m_backwardPertubation_start_time) > 1000)
+        {
+            m_backwarkPerturbation=false;
+        }
     }
-
-
-    *deltaEncoderRight = (rightWheelSpeed_mm/10);
-    *deltaEncoderLeft = (leftWheelSpeed_mm /10);
+    else
+    {
+        float rightWheelSpeed_mm = m_motorRightSim.process(m_rightMotorPercentage);
+        float leftWheelSpeed_mm = m_motorLeftSim.process(m_leftMotorPercentage);
+        *deltaEncoderRight = (rightWheelSpeed_mm/10);
+        *deltaEncoderLeft = (leftWheelSpeed_mm /10);
+    }
 }
 
 
-void MotorEncoderSimulator::setWall(bool value)
+void MotorEncoderSimulator::backwarkPertubation()
 {
-	m_wall = value;
-	if( m_wall)
-	{
-		m_wall = m_odometry->getX()-10;
-	}
+    m_backwarkPerturbation = true;
+    m_backwardPertubation_start_time = chVTGetSystemTime();
 }
 

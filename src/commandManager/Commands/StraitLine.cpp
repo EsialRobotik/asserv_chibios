@@ -11,7 +11,7 @@ StraitLine::StraitLine(float consign, float arrivalDistanceThreshold_mm)
 Command::consign_type_t StraitLine::computeInitialConsign(float , float , float , consign_t & consign, const Regulator &, const Regulator &)
 {
     consign.distance_consign += m_straitLineConsign;
-    return  consign_type_t::consign_polar;
+    return  consign_type_t::consign_acceleration_limited;
 }
 
 void StraitLine::updateConsign(float , float , float , consign_t & , const Regulator &, const Regulator &)
