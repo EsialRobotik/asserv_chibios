@@ -59,49 +59,48 @@ AsservMain *mainAsserv;
 SerialIO *esp32Io;
 
 BaseSequentialStream *outputStream;
-BaseSequentialStream *outputStreamIA;
 
 
 
-// ADCConfig structure for stm32 MCUs is empty
-static ADCConfig adccfg = {};
+// // ADCConfig structure for stm32 MCUs is empty
+// static ADCConfig adccfg = {};
 
-// Create buffer to store ADC results. This is
-// one-dimensional interleaved array
-#define ADC_BUF_DEPTH 2 // depth of buffer
-#define ADC_CH_NUM 1    // number of used ADC channels
-static adcsample_t samples_buf[ADC_BUF_DEPTH * ADC_CH_NUM]; // results array
+// // Create buffer to store ADC results. This is
+// // one-dimensional interleaved array
+// #define ADC_BUF_DEPTH 2 // depth of buffer
+// #define ADC_CH_NUM 1    // number of used ADC channels
+// static adcsample_t samples_buf[ADC_BUF_DEPTH * ADC_CH_NUM]; // results array
 
-// Fill ADCConversionGroup structure fields
-static ADCConversionGroup adccg = {
-   // this 3 fields are common for all MCUs
-      // set to TRUE if need circular buffer, set FALSE otherwise
-      TRUE,
-      // number of channels
-      (uint16_t)(ADC_CH_NUM),
-      // callback function, set to NULL for begin
-      NULL,
-   // Resent fields are stm32 specific. They contain ADC control registers data.
-   // Please, refer to ST manual RM0008.pdf to understand what we do.
-      // CR1 register content, set to zero for begin
-      0,
-      // CR2 register content, set to zero for begin
-      0,
-      // SMRP1 register content, set to zero for begin
-      0,
-      // SMRP2 register content, set to zero for begin
-      0,
-      // SQR1 register content. Set channel sequence length
-      ADC_SQR1_NUM_CH(ADC_CH_NUM) | ADC_SQR1_SQ1_N(1),
-      // SQR2 register content, set to zero for begin
-      0,
-      // SQR3 register content. We must select 2 channels
-      // For example 15th and 10th channels. Refer to the
-      // pinout of your MCU to select other pins you need.
-      // On STM32-P103 board they connected to PC15 and PC0 contacts
-      // On STM32-103STK board they connected to EXT2-7 contact and joystick
-      0,
-};
+// // Fill ADCConversionGroup structure fields
+// static ADCConversionGroup adccg = {
+//    // this 3 fields are common for all MCUs
+//       // set to TRUE if need circular buffer, set FALSE otherwise
+//       TRUE,
+//       // number of channels
+//       (uint16_t)(ADC_CH_NUM),
+//       // callback function, set to NULL for begin
+//       NULL,
+//    // Resent fields are stm32 specific. They contain ADC control registers data.
+//    // Please, refer to ST manual RM0008.pdf to understand what we do.
+//       // CR1 register content, set to zero for begin
+//       0,
+//       // CR2 register content, set to zero for begin
+//       0,
+//       // SMRP1 register content, set to zero for begin
+//       0,
+//       // SMRP2 register content, set to zero for begin
+//       0,
+//       // SQR1 register content. Set channel sequence length
+//       ADC_SQR1_NUM_CH(ADC_CH_NUM) | ADC_SQR1_SQ1_N(1),
+//       // SQR2 register content, set to zero for begin
+//       0,
+//       // SQR3 register content. We must select 2 channels
+//       // For example 15th and 10th channels. Refer to the
+//       // pinout of your MCU to select other pins you need.
+//       // On STM32-P103 board they connected to PC15 and PC0 contacts
+//       // On STM32-103STK board they connected to EXT2-7 contact and joystick
+//       0,
+// };
 
 
 static void initAsserv()
@@ -358,6 +357,16 @@ int main(void)
     chSysInit();
     initAsserv();
 
+    /*  
+     * There's an internal pulldown activated at reset on pin PB4 which is an encoder input !
+     *  Write the bit UCPD1_DBDIS in  PWR_CR3 to disable this pulldown
+     */
+    
+    PWR->CR3 |= (1<<14);
+
+    palSetPadMode(GPIOA, 6, PAL_STM32_MODE_INPUT | PAL_STM32_PUPDR_FLOATING );
+    palSetPadMode(GPIOB, 7, PAL_STM32_MODE_INPUT | PAL_STM32_PUPDR_FLOATING );
+
     
     /*
      * USART 1:  For communication with the brain µc
@@ -367,15 +376,17 @@ int main(void)
     palSetPadMode(GPIOA, 10, PAL_MODE_ALTERNATE(7));
     palSetPadMode(GPIOA, 9, PAL_MODE_ALTERNATE(7));
     sdStart(&SD1, NULL);
-
-    outputStreamIA = reinterpret_cast<BaseSequentialStream*>(&SD1);
-
+    
 
     /*
     *  LPUSART 1 : built-in usb serial port. For shell only
     */
     sdStart(&LPSD1, NULL);
     outputStream = reinterpret_cast<BaseSequentialStream*>(&LPSD1);
+
+
+    chprintf(outputStream,"STM32_PWR_CR3 @ %x : >%x< \r\n",&PWR->CR3, PWR->CR3);
+    chThdSleepMilliseconds(500);
     shellInit();
 
 
@@ -406,6 +417,7 @@ int main(void)
 
 
 //    palSetPadMode(GPIOA, 0, PAL_MODE_INPUT_ANALOG); // this is 15th channel
+//    palSetPadMode(GPIOB, 7, PAL_STM32_MODE_INPUT | PAL_STM32_PUPDR_FLOATING );
 //    adcInit();
 //  adcStart(&ADCD1, &adccfg);
 //  adcStartConversion(&ADCD1, &adccg, &samples_buf[0], ADC_BUF_DEPTH);
@@ -419,6 +431,8 @@ int main(void)
 
     chThdSetPriority(LOWPRIO);
     char str[32];
+
+    
     while (true)
     {
         chThdSleepMilliseconds(1000);
