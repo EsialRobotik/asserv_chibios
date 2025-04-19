@@ -283,13 +283,13 @@ static void initAsserv()
     esp32Io = new SerialIO(&SD1, *odometry, *commandManager, *mp6550, *mainAsserv);
 }
 
-void raspIoWrapperPositionOutput(void *)
+void serialIoWrapperPositionOutput(void *)
 {
     esp32Io->positionOutput();
 }
 
 
-void raspIoWrapperCommandInput(void *)
+void serialIoWrapperCommandInput(void *)
 {
     esp32Io->commandInput();
 }
@@ -359,11 +359,15 @@ int main(void)
 
     /*  
      * There's an internal pulldown activated at reset on pin PB4 which is an encoder input !
-     *  Write the bit UCPD1_DBDIS in  PWR_CR3 to disable this pulldown
+     *  Write the bit UCPD1_DBDIS in PWR_CR3 to disable this pulldown
      */
     
     PWR->CR3 |= (1<<14);
 
+
+    /* PA6 (not used) is connected to PA15 (PWM output) in the board, so force PA6 to float to avoid any problem.
+     * Same thing for PA5 and PB7 but both are unconnected
+    */
     palSetPadMode(GPIOA, 6, PAL_STM32_MODE_INPUT | PAL_STM32_PUPDR_FLOATING );
     palSetPadMode(GPIOB, 7, PAL_STM32_MODE_INPUT | PAL_STM32_PUPDR_FLOATING );
 
@@ -383,21 +387,24 @@ int main(void)
     */
     sdStart(&LPSD1, NULL);
     outputStream = reinterpret_cast<BaseSequentialStream*>(&LPSD1);
-
-
-    chprintf(outputStream,"STM32_PWR_CR3 @ %x : >%x< \r\n",&PWR->CR3, PWR->CR3);
-    chThdSleepMilliseconds(500);
     shellInit();
 
 
+    /*
+     * Asserv Thread with sync mecanism
+    */
     chBSemObjectInit(&asservStarted_semaphore, true);
     chThdCreateStatic(waAsservThread, sizeof(waAsservThread), HIGHPRIO, AsservThread, NULL);
     chBSemWait(&asservStarted_semaphore);
 
+
+    /* Create a 'background' thread to handle command received through the USB */
     chThdCreateStatic(waLowPrioUSBThread, sizeof(waLowPrioUSBThread), LOWPRIO, LowPrioUSBThread, NULL);
 
 
-    // Custom commands
+    /*
+     * Shell subSystem Init 
+     */
     const ShellCommand shellCommands[] = { { "asserv", &(asservCommandUSB) }, { nullptr, nullptr } };
     ShellConfig shellCfg =
     {
@@ -423,15 +430,17 @@ int main(void)
 //  adcStartConversion(&ADCD1, &adccg, &samples_buf[0], ADC_BUF_DEPTH);
 
 
-    thread_t *threadPositionOutput = chThdCreateStatic(wa_raspio1, sizeof(wa_raspio1), LOWPRIO, raspIoWrapperPositionOutput, nullptr);
+    /* 
+     *  Needed thread to run SerialIO (ie: here, communication with ESP32).
+     *  C wrapping function are needed to bridge through C and C++
+     */
+    thread_t *threadPositionOutput = chThdCreateStatic(wa_raspio1, sizeof(wa_raspio1), LOWPRIO, serialIoWrapperPositionOutput, nullptr);
     chRegSetThreadNameX(threadPositionOutput, "positionOutput");
-    thread_t *threadCommandInput = chThdCreateStatic(wa_raspio2, sizeof(wa_raspio2), LOWPRIO, raspIoWrapperCommandInput, nullptr);
+    thread_t *threadCommandInput = chThdCreateStatic(wa_raspio2, sizeof(wa_raspio2), LOWPRIO, serialIoWrapperCommandInput, nullptr);
     chRegSetThreadNameX(threadCommandInput, "commandInput");
 
 
     chThdSetPriority(LOWPRIO);
-    char str[32];
-
     
     while (true)
     {
