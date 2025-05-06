@@ -18,6 +18,7 @@
 #include "Encoders/QuadratureEncoder.h"
 #include "Odometry.h"
 #include "AccelerationLimiter/SimpleAccelerationLimiter.h"
+#include "AccelerationLimiter/AccelerationDecelerationLimiter.h"
 #include "Pll.h"
 #include "blockingDetector/OldSchoolBlockingDetector.h"
 #include "config.h"
@@ -34,7 +35,7 @@ float speed_controller_left_SpeedRange[NB_PI_SUBSET] = { SPEED_CTRL_LEFT_SPEED_T
 
 Goto::GotoConfiguration preciseGotoConf  = {COMMAND_MANAGER_GOTO_RETURN_THRESHOLD_mm, COMMAND_MANAGER_GOTO_ANGLE_THRESHOLD_RAD, COMMAND_MANAGER_GOTO_PRECISE_ARRIVAL_DISTANCE_mm};
 Goto::GotoConfiguration waypointGotoConf  = {COMMAND_MANAGER_GOTO_RETURN_THRESHOLD_mm, COMMAND_MANAGER_GOTO_ANGLE_THRESHOLD_RAD, COMMAND_MANAGER_GOTO_WAYPOINT_ARRIVAL_DISTANCE_mm};
-GotoNoStop::GotoNoStopConfiguration gotoNoStopConf = {COMMAND_MANAGER_GOTO_ANGLE_THRESHOLD_RAD, COMMAND_MANAGER_GOTONOSTOP_TOO_BIG_ANGLE_THRESHOLD_RAD, (150/DIST_REGULATOR_KP), 85};
+GotoNoStop::GotoNoStopConfiguration gotoNoStopConf = {COMMAND_MANAGER_GOTO_ANGLE_THRESHOLD_RAD, COMMAND_MANAGER_GOTONOSTOP_TOO_BIG_ANGLE_THRESHOLD_RAD, (50/DIST_REGULATOR_KP), 20};
 
 Mp6550 *mp6550;
 QuadratureEncoder *encoders;
@@ -51,7 +52,12 @@ Pll *rightPll;
 Pll *leftPll;
 
 SimpleAccelerationLimiter *angleAccelerationlimiter;
+
+#ifdef STAR
+AccelerationDecelerationLimiter *distanceAccelerationLimiter;
+#else
 SimpleAccelerationLimiter *distanceAccelerationLimiter;
+#endif
 
 CommandManager *commandManager;
 AsservMain *mainAsserv;
@@ -263,13 +269,22 @@ static void initAsserv()
 
 
     angleAccelerationlimiter = new SimpleAccelerationLimiter(ANGLE_REGULATOR_MAX_ACC);
+
+
+    AccelerationDecelerationLimiter *accDecLimiter = nullptr;    
+    #ifdef STAR
+    distanceAccelerationLimiter = new AccelerationDecelerationLimiter(DIST_REGULATOR_MAX_ACC_FW, DIST_REGULATOR_MAX_DEC_FW, DIST_REGULATOR_MAX_ACC_BW, DIST_REGULATOR_MAX_DEC_BW, REGULATOR_MAX_SPEED_MM_PER_SEC, ACC_DEC_DAMPLING, DIST_REGULATOR_KP);
+    accDecLimiter = distanceAccelerationLimiter;
+    #else
     distanceAccelerationLimiter = new SimpleAccelerationLimiter(ANGLE_REGULATOR_MAX_ACC);
+    #endif
 
 
     commandManager = new CommandManager( COMMAND_MANAGER_ARRIVAL_DISTANCE_THRESHOLD_mm, COMMAND_MANAGER_ARRIVAL_ANGLE_THRESHOLD_RAD,
                                    preciseGotoConf, waypointGotoConf, gotoNoStopConf,
                                    *angleRegulator, *distanceRegulator,
-                                   REGULATOR_MAX_SPEED_MM_PER_SEC, REGULATOR_MAX_SPEED_MM_PER_SEC);
+                                   REGULATOR_MAX_SPEED_MM_PER_SEC, REGULATOR_MAX_SPEED_MM_PER_SEC,
+                                   accDecLimiter);
 
     mainAsserv = new AsservMain( ASSERV_THREAD_FREQUENCY, ASSERV_POSITION_DIVISOR,
                            ENCODERS_WHEELS_RADIUS_MM, ENCODERS_WHEELS_DISTANCE_MM, ENCODERS_TICKS_BY_TURN,
@@ -561,6 +576,15 @@ void asservCommandUSB(BaseSequentialStream *chp, int argc, char **argv)
         chprintf(outputStream, "Adding goto(%.2f,%.2f) consign\r\n", X, Y);
 
         commandManager->addGoTo(X, Y);
+    }
+    else if (!strcmp(argv[0], "gototest"))
+    {
+        commandManager->addGoTo(400, 0) ;
+        commandManager->addGoTo(400, 100) ;
+        commandManager->addGoTo(0, 100) ;
+        commandManager->addGoTo(0, 0) ;
+        commandManager->addGoToAngle(400, 0) ;
+
     }
     else
     {
