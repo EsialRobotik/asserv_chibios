@@ -107,16 +107,17 @@ static void initAsserv()
     distanceAccelerationLimiter = new AdvancedAccelerationLimiter(DIST_REGULATOR_MAX_ACC, DIST_REGULATOR_MIN_ACC,
             DIST_REGULATOR_HIGH_SPEED_THRESHOLD);
 
-    //blockingDetector = new OldSchoolBlockingDetector(ASSERV_THREAD_PERIOD_S, *md22MotorController, *odometry, 0.0018f, 0.4f, 0.25f); //0.0018f, 0.4f, 0.25f
-    blockingDetector = new OldSchoolBlockingDetector(ASSERV_THREAD_PERIOD_S, *md22MotorController, *odometry,
-            BLOCKING_ANGLE_SPEED_THRESHOLD_RAD_PER_S, BLOCKING_DIST_SPEED_THRESHOLD_MM_PER_S,
-            BLOCKING_TIME_THRESHOLD_SEC, MINIMUM_CONSIDERED_SPEED_PERCENT);
+//    //blockingDetector = new OldSchoolBlockingDetector(ASSERV_THREAD_PERIOD_S, *md22MotorController, *odometry, 0.0018f, 0.4f, 0.25f); //0.0018f, 0.4f, 0.25f
+
+//    blockingDetector = new OldSchoolBlockingDetector(ASSERV_THREAD_PERIOD_S, *md22MotorController, *odometry,
+//            BLOCKING_ANGLE_SPEED_THRESHOLD_RAD_PER_S, BLOCKING_DIST_SPEED_THRESHOLD_MM_PER_S,
+//            BLOCKING_TIME_THRESHOLD_SEC, MINIMUM_CONSIDERED_SPEED_PERCENT);
 
     debug1("initAsserv::blockingDetector OK\r\n");
 
     commandManager = new CommandManager( COMMAND_MANAGER_ARRIVAL_DISTANCE_THRESHOLD_mm,
             COMMAND_MANAGER_ARRIVAL_ANGLE_THRESHOLD_RAD, preciseGotoConf, waypointGotoConf, gotoNoStopConf,
-            *angleRegulator, *distanceRegulator, nullptr, blockingDetector);
+            *angleRegulator, *distanceRegulator, nullptr);//, blockingDetector);
 
     debug1("initAsserv::commandManager OK\r\n");
 
@@ -124,7 +125,7 @@ static void initAsserv()
     ENCODERS_WHEELS_RADIUS_MM, ENCODERS_WHEELS_DISTANCE_MM, ENCODERS_TICKS_BY_TURN, *commandManager,
             *md22MotorController, *encoders_ext, *odometry, *angleRegulator, *distanceRegulator,
             *angleAccelerationlimiter, *distanceAccelerationLimiter, *speedControllerRight, *speedControllerLeft,
-            *rightPll, *leftPll, blockingDetector);
+            *rightPll, *leftPll);//, blockingDetector);
 
     //debug1("initAsserv::mainAsserv OK\r\n");
 

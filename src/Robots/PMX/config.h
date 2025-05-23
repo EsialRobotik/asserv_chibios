@@ -65,8 +65,8 @@
 
 #define BLOCKING_ANGLE_SPEED_THRESHOLD_RAD_PER_S (M_PI/6)//3.6 M_PI/6
 #define BLOCKING_DIST_SPEED_THRESHOLD_MM_PER_S (15) //80 20
-#define BLOCKING_TIME_THRESHOLD_SEC (0.25) //0.25 0.15
-#define MINIMUM_CONSIDERED_SPEED_PERCENT (8) //poucentage minimum en dessous duquel on compte plus la detection
+#define BLOCKING_TIME_THRESHOLD_SEC (0.15) //0.25 0.15
+#define MINIMUM_CONSIDERED_SPEED_PERCENT (20) //8 poucentage minimum en dessous duquel on compte plus la detection
 
 #define COMMAND_MANAGER_ARRIVAL_ANGLE_THRESHOLD_RAD (0.02)
 #define COMMAND_MANAGER_ARRIVAL_DISTANCE_THRESHOLD_mm (2.5)

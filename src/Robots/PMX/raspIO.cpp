@@ -71,6 +71,8 @@ THD_FUNCTION(asservCommandSerial, p)
     float consigneValue3 = 0;
     char buffer[64];
     int int_as_bool = 0;
+    float percentD = 100;
+    float percentA = 100;
 
     //chprintf(outputStream, "Started\r\n");
     chprintf(outputStreamSd4, "Started\r\n");
@@ -131,6 +133,7 @@ THD_FUNCTION(asservCommandSerial, p)
             break;
 
         case 'v': //aVance d'un certain nombre de mm
+        	chprintf(outputStreamSd4, " aVance\r\n");
             serialReadLine(buffer, sizeof(buffer));
             sscanf(buffer, "%f", &consigneValue1);
             commandManager->addStraightLine(consigneValue1);
@@ -180,6 +183,21 @@ THD_FUNCTION(asservCommandSerial, p)
             mainAsserv->setPosition(consigneValue1, consigneValue2, consigneValue3);
             break;
 
+        case 'N': //reduction de la vitesse max en pourcentage
+			serialReadLine(buffer, sizeof(buffer));
+			sscanf(buffer, "%f#%f", &consigneValue1, &consigneValue2);
+			percentD = consigneValue1 * MAX_SPEED_MM_PER_SEC / 100.0;
+			percentA = consigneValue2 * MAX_SPEED_MM_PER_SEC / 100.0;
+			if (consigneValue1 >= 0.5) //Si Zero, on ne fait rien
+			{
+				distanceRegulator->setMaxOutput(percentD);
+			}
+			if (consigneValue2 >= 0.5)
+			{
+				angleRegulator->setMaxOutput(percentA);
+			}
+			break;
+
         case 'M': // M0 = coupe les moteurs / M1 = remet les moteurs
             serialReadLine(buffer, sizeof(buffer));
             sscanf(buffer, "%f", &consigneValue1);
@@ -192,18 +210,9 @@ THD_FUNCTION(asservCommandSerial, p)
             mainAsserv->limitMotorControllerConsignToPercentage(consigneValue1);
             break;
 
-        case 'N':
-        	serialReadLine(buffer, sizeof(buffer));
-        	sscanf(buffer, "%f#%f", &consigneValue1, &consigneValue2); //TODO pourcentage à faire
-        	if (consigneValue1 >= 0.5) //Si Zero, on ne fait rien
-        		distanceRegulator->setMaxOutput(consigneValue1);
-        	if (consigneValue2 >= 0.5)
-        		angleRegulator->setMaxOutput(consigneValue2);
-            break;
-
         case '!':
         	distanceRegulator->setMaxOutput(MAX_SPEED_MM_PER_SEC);
-        	angleRegulator->setMaxOutput(ANGLE_REGULATOR_MAX_ACC);
+        	angleRegulator->setMaxOutput(MAX_SPEED_MM_PER_SEC);
             break;
 
         case 'R':
@@ -227,12 +236,12 @@ THD_FUNCTION(asservPositionSerial, p)
     while (true) {
         chprintf(outputStreamSd4, "#%d;%d;%f;%d;%u;%d;%d;%u\r\n", (int32_t) odometry->getX(),
                 (int32_t) odometry->getY(), odometry->getTheta(), (int8_t) commandManager->getCommandStatus(),
-                (uint8_t) commandManager->getPendingCommandCount(), (int32_t)md22MotorController->getMotorLeftSpeedNonInverted(),
+                commandManager->getPendingCommandCount(), (int32_t)md22MotorController->getMotorLeftSpeedNonInverted(),
                 (int32_t)md22MotorController->getMotorRightSpeedNonInverted(), debg);
         //DEBUG
 //        chprintf(outputStream,    "#%d;%d;%f;%d;%u;%d;%d;%u\r\n", (int32_t) odometry->getX(),
 //                (int32_t) odometry->getY(), odometry->getTheta(), (int8_t) commandManager->getCommandStatus(),
-//                (uint8_t) commandManager->getPendingCommandCount(), (int32_t)md22MotorController->getMotorLeftSpeedNonInverted(),
+//                (unsigned int) commandManager->getPendingCommandCount(), (int32_t)md22MotorController->getMotorLeftSpeedNonInverted(),
 //                (int32_t)md22MotorController->getMotorRightSpeedNonInverted(), debg);
 
         chThdSleepUntil(time);
