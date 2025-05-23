@@ -59,7 +59,7 @@ public:
 
 
 private:
-    double m_accumulator;
+    float m_accumulator;
     float m_Kp;
     float m_error;
     float m_output;
