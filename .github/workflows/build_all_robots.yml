@@ -82,5 +82,3 @@ jobs:
           ⚙️ Firmware build for all robots  
           ✅ Robots compilés avec succès : artefacts disponibles  
           ❌ Les échecs ne bloquent plus la release.
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
