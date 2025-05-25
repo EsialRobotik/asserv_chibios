@@ -11,9 +11,10 @@ jobs:
   build:
     runs-on: ubuntu-latest
     strategy:
+      #Use parallelization to build the list of robot (warning, see "Release Note" step is new robot is added
       matrix:
         robot: [Princess, PAMI, PMI, PMX, Simu_F446, Simulation]
-    continue-on-error: true
+    continue-on-error: true #if a build fails, this allows the process to continue anyway
     outputs:
       sha: ${{ steps.vars.outputs.sha }}
       date: ${{ steps.vars.outputs.date }}
