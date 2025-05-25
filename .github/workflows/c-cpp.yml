@@ -1,28 +1,18 @@
-name: Build Robots Firmware
+name: Build All Robots
 
 on:
   push:
     branches: [ "master" ]
   pull_request:
     branches: [ "master" ]
-  # workflow_dispatch:
-    # inputs:
-      # robot:
-        # description: "Nom du robot à builder"
-        # required: true
-        # default: "Princess"
-        # type: choice
-        # options:
-          # - Princess
-          # - PAMI
-          # - PMI
-          # - PMX
-          # - Simu_F446
-          # - Simulation
+  workflow_dispatch:
 
 jobs:
   build:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        robot: [Princess, PAMI, PMI, PMX, Simu_F446, Simulation]
 
     steps:
     - name: Checkout repository
@@ -41,23 +31,8 @@ jobs:
           libstdc++-arm-none-eabi-newlib \
           gdb-multiarch
 
-    - name: Build firmware for Princess
-      run: make ROBOT=Princess all
-      
-    - name: Build firmware for PAMI
-      run: make ROBOT=PAMI all
-      
-    - name: Build firmware for PMI
-      run: make ROBOT=PMI all
-      
-    - name: Build firmware for PMX
-      run: make ROBOT=PMX all
-      
-    - name: Build firmware for Simu_F446
-      run: make ROBOT=Simu_F446 all
-      
-    - name: Build firmware for Simulation
-      run: make ROBOT=Simulation all
+    - name: Build firmware for ${{ matrix.robot }}
+      run: make ROBOT=${{ matrix.robot }} all
 
     - name: Set artifact name
       id: vars
@@ -68,7 +43,50 @@ jobs:
     - name: Upload firmware artifact
       uses: actions/upload-artifact@v4
       with:
-        name: RobotsFirmware-${{ steps.vars.outputs.date }}-${{ steps.vars.outputs.sha }}
+        name: ${{ matrix.robot }}-${{ steps.vars.outputs.date }}-${{ steps.vars.outputs.sha }}
         path: |
-          src/Robots
+          src/Robots/${{ matrix.robot }}
         if-no-files-found: warn
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/master'
+
+    steps:
+    - name: Download all artifacts
+      uses: actions/download-artifact@v4
+      with:
+        path: release-assets
+
+    - name: Create release tag
+      id: tag
+      run: |
+        echo "RELEASE_TAG=$(date +'%Y-%m-%d')-${GITHUB_SHA::7}" >> $GITHUB_ENV
+
+    - name: Create GitHub Release
+      uses: softprops/action-gh-release@v2
+      with:
+        tag_name: ${{ env.RELEASE_TAG }}
+        name: Firmware Release ${{ env.RELEASE_TAG }}
+        body: |
+          🚀 Firmware build for all robots
+
+          Robots:
+          - Princess
+          - PAMI
+          - PMI
+          - PMX
+          - Simu_F446
+          - Simulation
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Upload binaries to release
+      run: |
+        for dir in release-assets/*; do
+          zip -r "${dir}.zip" "$dir"
+          gh release upload "${{ env.RELEASE_TAG }}" "${dir}.zip" --clobber
+        done
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
