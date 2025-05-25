@@ -9,15 +9,15 @@ const uint32_t synchroWord_stream = 0xCAFED00D;
 const uint32_t synchroWord_config = 0xCAFEDECA;
 const uint32_t synchroWord_connection = 0xDEADBEEF;
 
-USBStream::USBStream()
+USBStream::USBStream(uint16_t loopFrequency)
 {
     m_timestamp = 0;
-
+    m_loopFrequency = loopFrequency;
     chMtxObjectInit (&m_sample_sending_mutex);
     std::memset(m_currentStruct.array, 0xFFFFFFFF, sizeof(m_currentStruct.array));
 }
 
-void USBStream::init(UsbStreamPinConf_t *pinConf)
+void USBStream::init(UsbStreamPinConf_t *pinConf, uint16_t loopFrequency)
 {
     // Init pin if needed
     if(pinConf)
@@ -29,7 +29,7 @@ void USBStream::init(UsbStreamPinConf_t *pinConf)
 //    palSetPadMode(GPIOA, 11, PAL_MODE_ALTERNATE(10)); //USB D-
 
 
-    s_instance = new USBStream();
+    s_instance = new USBStream(loopFrequency);
     SampleStream::setInstance(s_instance);
 
     /*
@@ -153,14 +153,23 @@ void USBStream::USBStreamHandleConnection_lowerpriothread(usbStreamCallback call
              //The description begin with a synchro word //
             ptr_32[0] = synchroWord_connection;
 
-            // ... then the size of the following string
+            // ... then the size of the following string plus the size of the frequency loop at the end !
+            // The value will be inserted at the end of this procedure because the frequency loop string isn't computed yet 
             uint32_t description_size = strlen(description);
-            ptr_32[1] = description_size;
 
             // And finaly, the description itself
             char *ptr_str = (char*)&(ptr_32[2]);
-            for(unsigned int i=0;i<description_size; i++)
+            unsigned int i;
+            for(i=0;i<description_size; i++)
                 ptr_str[i] = description[i];
+
+            // But wait, there's more ! At the end send the loop frequency and update the whole descripition size
+            int len = sprintf(&ptr_str[i], "freq=%d", m_loopFrequency);
+            ptr_32[1]+= len;
+            description_size += len;
+            
+            // Insert the size of whole descripition
+            ptr_32[1] = description_size;
 
             obqPostFullBuffer(&SDU1.obqueue, ((uint8_t*)&ptr_str[description_size]) - ((uint8_t*)ptr_32));
 

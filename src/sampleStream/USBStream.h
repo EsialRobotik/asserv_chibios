@@ -19,7 +19,7 @@ public:
         uint8_t dataMinusPin_alternate;
     };
 
-    static void init(UsbStreamPinConf_t *pinConf);
+    static void init(UsbStreamPinConf_t *pinConf, uint16_t loopFrequency);
 
     static USBStream* instance()
     {
@@ -39,7 +39,7 @@ public:
 
 private:
 
-    USBStream();
+    USBStream(uint16_t loopFrequency);
     virtual ~USBStream() {};
 
 
@@ -48,6 +48,7 @@ private:
     static inline USBStream* s_instance = nullptr;
 
 
+    uint16_t m_loopFrequency;
 
 
     void getEmptyBuffer();

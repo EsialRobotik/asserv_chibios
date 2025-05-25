@@ -128,7 +128,7 @@ static THD_FUNCTION(AsservThread, arg)
         .dataPlusPin_GPIObase = GPIOA, .dataPlusPin_number = 12, .dataPlusPin_alternate = 10,
         .dataMinusPin_GPIObase = GPIOA, .dataMinusPin_number = 11, .dataMinusPin_alternate = 10
     };
-    USBStream::init(&usbPinConf);
+    USBStream::init(&usbPinConf, ASSERV_THREAD_FREQUENCY);
 
     chBSemSignal(&asservStarted_semaphore);
 

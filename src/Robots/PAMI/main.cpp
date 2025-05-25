@@ -325,7 +325,7 @@ static THD_FUNCTION(AsservThread, arg)
     mp6550->init();
     encoders->init();
     encoders->start();
-    USBStream::init(nullptr);
+    USBStream::init(nullptr, ASSERV_THREAD_FREQUENCY);
 
     chBSemSignal(&asservStarted_semaphore);
 
