@@ -2,10 +2,12 @@
 #define SRC_SPEEDCONTROLLER_ADAPTATIVESPEEDCONTROLLER_H_
 
 #include "SpeedController.h"
+#include "sampleStream/configuration/ConfigurationInterface.h"
+
 
 constexpr uint8_t NB_PI_SUBSET = 3;
 
-class AdaptativeSpeedController : public SpeedController
+class AdaptativeSpeedController : public SpeedController, public Configuration
 {
     public:
         explicit AdaptativeSpeedController(
@@ -19,6 +21,9 @@ class AdaptativeSpeedController : public SpeedController
         void setGains(float Kp, float Ki, uint8_t range);
 
         void getGainsForRange(uint8_t range, float *Kp, float *Ki, float *speedRange);
+
+        virtual Cbore & getConfiguration(Cbore & cbor_representation);
+
 
     private:
         void  updateGains(float actualSpeed);

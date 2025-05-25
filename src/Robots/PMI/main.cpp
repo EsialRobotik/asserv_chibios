@@ -23,6 +23,8 @@
 #include "AccelerationLimiter/AccelerationDecelerationLimiter.h"
 #include "Pll.h"
 #include "blockingDetector/OldSchoolBlockingDetector.h"
+#include "sampleStream/configuration/ConfigurationRepresentation.h"
+
 
 
 #define ASSERV_THREAD_FREQUENCY (600)
@@ -33,7 +35,7 @@
 #define ENCODERS_WHEELS_DISTANCE_MM (261.2)
 #define ENCODERS_TICKS_BY_TURN (1440*4)
 
-#define MAX_SPEED_MM_PER_SEC (1500)
+#define REGULATOR_MAX_SPEED_MM_PER_SEC (1500)
 
 #define DIST_REGULATOR_KP (5)
 #define DIST_REGULATOR_MAX_ACC_FW (1200)
@@ -103,13 +105,14 @@ AccelerationDecelerationLimiter *distanceAccelerationLimiter;
 
 CommandManager *commandManager;
 AsservMain *mainAsserv;
+ConfigurationRepresentation *conf_json;
 
 static void initAsserv()
 {
     encoders = new QuadratureEncoder(&ESIALCardPinConf_Encoders, true, false, false);
     md22MotorController = new Md22(&ESIALCardPinConf_md22, false, false, false, 100000);
 
-    angleRegulator = new Regulator(ANGLE_REGULATOR_KP, MAX_SPEED_MM_PER_SEC);
+    angleRegulator = new Regulator(ANGLE_REGULATOR_KP, REGULATOR_MAX_SPEED_MM_PER_SEC);
     distanceRegulator = new Regulator(DIST_REGULATOR_KP, FLT_MAX);
 
     rightPll = new Pll (PLL_BANDWIDTH);
@@ -124,7 +127,7 @@ static void initAsserv()
     angleAccelerationlimiter = new SimpleAccelerationLimiter(ANGLE_REGULATOR_MAX_ACC);
 
 
-    distanceAccelerationLimiter = new AccelerationDecelerationLimiter(DIST_REGULATOR_MAX_ACC_FW, DIST_REGULATOR_MAX_DEC_FW, DIST_REGULATOR_MAX_ACC_BW, DIST_REGULATOR_MAX_DEC_BW, MAX_SPEED_MM_PER_SEC, ACC_DEC_DAMPLING, DIST_REGULATOR_KP);
+    distanceAccelerationLimiter = new AccelerationDecelerationLimiter(DIST_REGULATOR_MAX_ACC_FW, DIST_REGULATOR_MAX_DEC_FW, DIST_REGULATOR_MAX_ACC_BW, DIST_REGULATOR_MAX_DEC_BW, REGULATOR_MAX_SPEED_MM_PER_SEC, ACC_DEC_DAMPLING, DIST_REGULATOR_KP);
 
     blockingDetector = new OldSchoolBlockingDetector(ASSERV_THREAD_PERIOD_S, *md22MotorController, *odometry,
            BLOCKING_DETECTOR_ANGLE_SPEED_THRESHOLD, BLOCKING_DETECTOR_DIST_SPEED_THRESHOLD, BLOCKING_DETECTOR_BLOCKING_DURATION_THRESHOLD);
@@ -143,6 +146,9 @@ static void initAsserv()
                            *speedControllerRight, *speedControllerLeft,
                            *rightPll, *leftPll,
                            blockingDetector);
+
+    conf_json = new ConfigurationRepresentation (angleRegulator, distanceRegulator, angleAccelerationlimiter, distanceAccelerationLimiter, speedControllerRight, speedControllerLeft);
+
 }
 
 
@@ -163,7 +169,7 @@ static THD_FUNCTION(AsservThread, arg)
     md22MotorController->init();
     encoders->init();
     encoders->start();
-    USBStream::init();
+    USBStream::init(conf_json);
 
     chBSemSignal(&asservStarted_semaphore);
 
@@ -205,11 +211,11 @@ int main(void)
     halInit();
     chSysInit();
 
-    initAsserv();
-
-
     sdStart(&SD2, NULL);
     shellInit();
+
+    initAsserv();
+
 
     chBSemObjectInit(&asservStarted_semaphore, true);
     chThdCreateStatic(waAsservThread, sizeof(waAsservThread), HIGHPRIO, AsservThread, NULL);

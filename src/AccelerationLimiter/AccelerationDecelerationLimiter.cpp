@@ -18,23 +18,30 @@ AccelerationDecelerationLimiter::AccelerationDecelerationLimiter(
         float maxSpeed, float dampling, float positionCorrectorKp): AccelerationDecelerationLimiterInterface()
 {
     m_enabled = true;
-    m_initialPositionError = 0;
-    m_previousPositionGoal = 0;
-    m_previousLimitedOutput = 0;
-    m_velocityCompensation = 0;
-    m_CompensatedOutput = 0;
-    m_velocityAtDecTime = maxSpeed;
     m_maxAccelerationForward = maxAccelerationForward;
     m_maxDecelerationForward = maxDecelerationForward;
     m_maxAccelerationBackward = maxAccelerationBackward;
     m_maxDecelerationBackward = maxDecelerationBackward;
     m_maxSpeed = maxSpeed;
     m_positionCorrectorKp = positionCorrectorKp;
-    m_maxAttainableSpeed = 0;
     m_damplingFactor = dampling;
     m_timeToVmax = 0;
     m_timeFromVmaxToZero = 0;
+    reset();
 }
+
+void AccelerationDecelerationLimiter::reset()
+{
+    m_initialPositionError = 0;
+    m_previousPositionGoal = 0;
+    m_previousLimitedOutput = 0;
+    m_velocityCompensation = 0;
+    m_CompensatedOutput = 0;
+    m_maxAttainableSpeed = 0;
+    m_velocityAtDecTime = m_maxSpeed;
+
+}
+
 
 float AccelerationDecelerationLimiter::limitAcceleration(float dt, float targetSpeed, float currentSpeed, float positionGoal, float positionError)
 {
@@ -126,14 +133,18 @@ void AccelerationDecelerationLimiter::disable()
     m_enabled = false;
 }
 
-void AccelerationDecelerationLimiter::reset()
+
+
+Cbore & AccelerationDecelerationLimiter::getConfiguration(Cbore & cbor_representation)
 {
-    m_initialPositionError = 0;
-    m_previousPositionGoal = 0;
-    m_previousLimitedOutput = 0;
-    m_velocityAtDecTime = m_maxSpeed;
-    m_velocityCompensation = 0;
-    m_CompensatedOutput = 0;
-    m_maxAttainableSpeed = 0;
+    return cbor_representation.map()
+            .key("name").value("acc_dec_limiter")
+            .key("max_acc_fw").value(m_maxAccelerationForward)
+            .key("max_acc_bw").value(m_maxAccelerationBackward)
+            .key("max_dec_fw").value(m_maxDecelerationForward)
+            .key("max_dec_bw").value(m_maxDecelerationBackward)
+            .key("dampling").value(m_damplingFactor)
+            .end();
 }
+
 

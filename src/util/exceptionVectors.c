@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+
 /**
  * Permet au débugger de fonctionner et d'avor les assertions qui sortent dans la consele
  * Voir les pages suivantes pour plus d'infos :

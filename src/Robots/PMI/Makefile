@@ -152,6 +152,7 @@ CPPSRC = $(ALLCPPSRC) \
        $(SRCDIR)/motorController/Vnh5019.cpp \
        $(SRCDIR)/motorController/Md22.cpp \
        $(SRCDIR)/sampleStream/USBStream.cpp \
+       $(SRCDIR)/sampleStream/configuration/ConfigurationRepresentation.cpp  \
        $(SRCDIR)/Encoders/QuadratureEncoder.cpp \
        $(SRCDIR)/AsservMain.cpp \
        $(SRCDIR)/SpeedController/SpeedController.cpp \
@@ -182,7 +183,9 @@ ASMSRC = $(ALLASMSRC)
 ASMXSRC = $(ALLXASMSRC)
 
 # Inclusion directories.
-INCDIR = $(CONFDIR) $(ALLINC) $(TESTINC) $(CHIBIOS_CONTRIB)/os/various $(SRCDIR)
+INCDIR = $(CONFDIR) $(ALLINC) $(TESTINC) $(CHIBIOS_CONTRIB)/os/various $(SRCDIR) \
+       $(SRCDIR)/sampleStream/configuration \
+       $(SRCDIR)/sampleStream \
 
 # Define C warning options here.
 CWARN = -Wall -Wextra -Wundef -Wstrict-prototypes

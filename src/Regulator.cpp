@@ -34,3 +34,11 @@ float Regulator::updateOutput(float goal)
 
     return m_output;
 }
+
+
+Cbore & Regulator::getConfiguration(Cbore & cbor_representation)
+{
+    return cbor_representation.map()
+        .key("Kp").value(m_Kp)
+        .end();
+}

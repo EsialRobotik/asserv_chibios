@@ -3,21 +3,24 @@
 #include <ch.h>
 #include <hal.h>
 #include "core_cm4.h"
+#include "configuration/ConfigurationRepresentation.h"
 #include <cstring>
 
 const uint32_t synchroWord_stream = 0xCAFED00D;
 const uint32_t synchroWord_config = 0xCAFEDECA;
 const uint32_t synchroWord_connection = 0xDEADBEEF;
 
-USBStream::USBStream()
+
+USBStream::USBStream(ConfigurationRepresentation *configuration_representation )
 {
     m_timestamp = 0;
+    m_configuration_representation = configuration_representation;
 
     chMtxObjectInit (&m_sample_sending_mutex);
     std::memset(m_currentStruct.array, 0xFFFFFFFF, sizeof(m_currentStruct.array));
 }
 
-void USBStream::init(UsbStreamPinConf_t *pinConf)
+void USBStream::init(UsbStreamPinConf_t *pinConf, ConfigurationRepresentation *configuration_representation)
 {
     // Init pin if needed
     if(pinConf)
@@ -29,7 +32,7 @@ void USBStream::init(UsbStreamPinConf_t *pinConf)
 //    palSetPadMode(GPIOA, 11, PAL_MODE_ALTERNATE(10)); //USB D-
 
 
-    s_instance = new USBStream();
+    s_instance = new USBStream(configuration_representation);
     SampleStream::setInstance(s_instance);
 
     /*
@@ -70,11 +73,35 @@ void* USBStream::sendCurrentStream()
     return m_currentPtr;
 }
 
-void USBStream::sendConfig(uint8_t *configBuffer, uint8_t size)
+void USBStream::sendBuffer(uint8_t const *buffer, uint32_t size, uint32_t synchroWord)
 {
-    chnWrite(&SDU1, (uint8_t*)&synchroWord_config, sizeof(synchroWord_config));
-    chnWrite(&SDU1, &size, sizeof(size));
-    chnWrite(&SDU1, configBuffer, size);
+	/*
+	 * It's a bit tricky here !
+	 * As this function is paced by a medium priority thread ( ie: bellow than the rest of this class )
+	 *  sending a description must stop the sending of the asserv loop.
+	 *  To do so, a mutex is used and a new buffer is get for the next loop at the end of this routine.
+	 */
+	chMtxLock(&m_sample_sending_mutex);
+
+	obqGetEmptyBufferTimeout(&SDU1.obqueue, TIME_MS2I(100));
+	uint32_t *ptr_32 = (uint32_t*)SDU1.obqueue.ptr;
+
+	 //The description begin with a synchro word ..
+	ptr_32[0] = synchroWord;
+
+	// ... then the size of the following buffer
+	ptr_32[1] = size;
+
+	// And finaly, the buffer itself
+	char *ptr_str = (char*)&(ptr_32[2]);
+	memcpy(ptr_str, buffer, size);
+
+
+	obqPostFullBuffer(&SDU1.obqueue, size+sizeof(size) + sizeof(synchroWord));
+
+	getEmptyBuffer();
+	chMtxUnlock(&m_sample_sending_mutex);
+
 }
 
 void USBStream::sendFullBuffer()
@@ -127,7 +154,9 @@ void USBStream::releaseBuffer()
     ibqReleaseEmptyBuffer(&SDU1.ibqueue);
 }
 
+
 extern BaseSequentialStream *outputStream;
+
 void USBStream::USBStreamHandleConnection_lowerpriothread(usbStreamCallback callback)
 {
     void *ptr = nullptr;
@@ -136,36 +165,21 @@ void USBStream::USBStreamHandleConnection_lowerpriothread(usbStreamCallback call
     if (size > 0)
     {
         uint32_t *buffer = (uint32_t*) ptr;
+        chprintf(outputStream, "buffer[0] %x : synchroWord_connection %x  synchroWord_config %x\r\n", buffer[0] , synchroWord_connection, synchroWord_config);
+
         if(buffer[0] == synchroWord_connection)
         {
-            chprintf(outputStream, "connection detected\r\n");
-            /*
-             * It's a bit tricky here !
-             * As this function is paced by a medium priority thread ( ie: bellow than the rest of this class )
-             *  sending a description must stop the sending of the asserv loop.
-             *  To do so, a mutex is used and a new buffer is get for the next loop at the end of this routine.
-             */
-            chMtxLock(&m_sample_sending_mutex);
+            chprintf(outputStream, "connection detected sending %d/%d desc\r\n", sizeof(description), strlen(description));
 
-            obqGetEmptyBufferTimeout(&SDU1.obqueue, TIME_MS2I(100));
-            uint32_t *ptr_32 = (uint32_t*)SDU1.obqueue.ptr;
-
-             //The description begin with a synchro word //
-            ptr_32[0] = synchroWord_connection;
-
-            // ... then the size of the following string
-            uint32_t description_size = strlen(description);
-            ptr_32[1] = description_size;
-
-            // And finaly, the description itself
-            char *ptr_str = (char*)&(ptr_32[2]);
-            for(unsigned int i=0;i<description_size; i++)
-                ptr_str[i] = description[i];
-
-            obqPostFullBuffer(&SDU1.obqueue, ((uint8_t*)&ptr_str[description_size]) - ((uint8_t*)ptr_32));
-
-            getEmptyBuffer();
-            chMtxUnlock(&m_sample_sending_mutex);
+            sendBuffer((uint8_t*) description, strlen(description), synchroWord_connection);
+        }
+        else if(buffer[0] == synchroWord_config && m_configuration_representation)
+        {
+            Cbore encoder(cbor_buffer, sizeof(cbor_buffer));
+            m_configuration_representation->generateRepresentation(encoder);
+            chprintf(outputStream, "Config requested from plotjuggler, sending %d bytes\r\n", encoder.getLength());
+            chDbgAssert(encoder.getLength() < sizeof(cbor_buffer), "Not enough space in the cbor buffer.");
+			sendBuffer( cbor_buffer, encoder.getLength(), synchroWord_config);
         }
         else
         {

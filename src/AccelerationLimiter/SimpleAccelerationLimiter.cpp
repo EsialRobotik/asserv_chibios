@@ -18,3 +18,12 @@ void SimpleAccelerationLimiter::setMaxAcceleration(float maxAcceleration)
 {
     m_maxAcceleration = maxAcceleration;
 }
+
+
+Cbore & SimpleAccelerationLimiter::getConfiguration(Cbore & cbor_representation)
+{
+    return cbor_representation.map()
+            .key("name").value("acc_limiter")
+            .key("max_acc").value(m_maxAcceleration)
+            .end();
+}

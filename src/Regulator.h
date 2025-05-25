@@ -2,13 +2,14 @@
 #define REGULATOR_H_
 
 #include <cstdint>
+#include "sampleStream/configuration/ConfigurationInterface.h"
 
-class Regulator
+class Regulator : public Configuration
 {
 public:
     explicit Regulator(float Kp, float max_output);
-    virtual ~Regulator() {};
-
+    virtual ~Regulator(){};
+    
     void updateFeedback(float feedback);
     float updateOutput(float goal);
 
@@ -56,7 +57,8 @@ public:
     {
         m_maxOutput = max_output;
     };
-
+    
+    virtual Cbore & getConfiguration(Cbore & cbor_representation);
 
 private:
     double m_accumulator;

@@ -22,6 +22,8 @@
 #include "AccelerationLimiter/AccelerationDecelerationLimiter.h"
 #include "Pll.h"
 #include "blockingDetector/OldSchoolBlockingDetector.h"
+#include "sampleStream/configuration/ConfigurationRepresentation.h"
+
 
 
 #define ASSERV_THREAD_FREQUENCY (200)
@@ -32,7 +34,7 @@
 #define ENCODERS_WHEELS_DISTANCE_MM (261.2)
 #define ENCODERS_TICKS_BY_TURN (1440*4)
 
-#define MAX_SPEED_MM_PER_SEC (1500)
+#define REGULATOR_MAX_SPEED_MM_PER_SEC (1500)
 
 #define DIST_REGULATOR_KP (5)
 #define DIST_REGULATOR_MAX_ACC_FW (1200)
@@ -99,17 +101,20 @@ AccelerationDecelerationLimiter *distanceAccelerationLimiter;
 CommandManager *commandManager;
 AsservMain *mainAsserv;
 
+ConfigurationRepresentation *conf_json;
+
+
 static void initAsserv()
 {
-    motorEncoder = new MotorEncoderSimulator(ASSERV_THREAD_PERIOD_S, ENCODERS_WHEELS_RADIUS_MM, ENCODERS_TICKS_BY_TURN );
+    odometry = new Odometry (ENCODERS_WHEELS_DISTANCE_MM, 0, 0);
 
-    angleRegulator = new Regulator(ANGLE_REGULATOR_KP, MAX_SPEED_MM_PER_SEC);
+    motorEncoder = new MotorEncoderSimulator(ASSERV_THREAD_PERIOD_S, ENCODERS_WHEELS_RADIUS_MM, ENCODERS_TICKS_BY_TURN, odometry );
+
+    angleRegulator = new Regulator(ANGLE_REGULATOR_KP, REGULATOR_MAX_SPEED_MM_PER_SEC);
     distanceRegulator = new Regulator(DIST_REGULATOR_KP, FLT_MAX);
 
     rightPll = new Pll (PLL_BANDWIDTH);
     leftPll = new Pll(PLL_BANDWIDTH);
-
-    odometry = new Odometry (ENCODERS_WHEELS_DISTANCE_MM, 0, 0);
 
     speedControllerRight = new AdaptativeSpeedController(speed_controller_right_Kp, speed_controller_right_Ki, speed_controller_right_SpeedRange, 100, FLT_MAX, ASSERV_THREAD_FREQUENCY);
     speedControllerLeft = new AdaptativeSpeedController(speed_controller_left_Kp, speed_controller_left_Ki, speed_controller_left_SpeedRange, 100, FLT_MAX, ASSERV_THREAD_FREQUENCY);
@@ -118,7 +123,7 @@ static void initAsserv()
     angleAccelerationlimiter = new SimpleAccelerationLimiter(ANGLE_REGULATOR_MAX_ACC);
 
 
-    distanceAccelerationLimiter = new AccelerationDecelerationLimiter(DIST_REGULATOR_MAX_ACC_FW, DIST_REGULATOR_MAX_DEC_FW, DIST_REGULATOR_MAX_ACC_BW, DIST_REGULATOR_MAX_DEC_BW, MAX_SPEED_MM_PER_SEC, ACC_DEC_DAMPLING, DIST_REGULATOR_KP);
+    distanceAccelerationLimiter = new AccelerationDecelerationLimiter(DIST_REGULATOR_MAX_ACC_FW, DIST_REGULATOR_MAX_DEC_FW, DIST_REGULATOR_MAX_ACC_BW, DIST_REGULATOR_MAX_DEC_BW, REGULATOR_MAX_SPEED_MM_PER_SEC, ACC_DEC_DAMPLING, DIST_REGULATOR_KP);
 
 //    blockingDetector = new OldSchoolBlockingDetector(ASSERV_THREAD_PERIOD_S, *md22MotorController, *odometry,
 //           BLOCKING_DETECTOR_ANGLE_SPEED_THRESHOLD, BLOCKING_DETECTOR_DIST_SPEED_THRESHOLD, BLOCKING_DETECTOR_BLOCKING_DURATION_THRESHOLD);
@@ -137,6 +142,9 @@ static void initAsserv()
                            *speedControllerRight, *speedControllerLeft,
                            *rightPll, *leftPll,
                            blockingDetector);
+
+    conf_json = new ConfigurationRepresentation (angleRegulator, distanceRegulator, angleAccelerationlimiter, distanceAccelerationLimiter, speedControllerRight, speedControllerLeft);
+
 }
 
 
@@ -154,7 +162,7 @@ static THD_FUNCTION(AsservThread, arg)
     (void) arg;
     chRegSetThreadName("AsservThread");
 
-    USBStream::init();
+    USBStream::init(conf_json);
 
     chBSemSignal(&asservStarted_semaphore);
 

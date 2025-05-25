@@ -79,3 +79,15 @@ void AdaptativeSpeedController::getGainsForRange(uint8_t range, float *Kp, float
     *Ki = m_speedKiSet[range];
     *speedRange = m_GainsSpeedRange[range];
 }
+
+
+Cbore & AdaptativeSpeedController::getConfiguration(Cbore & cbor_representation)
+{
+    return cbor_representation.map()
+    .key("name").value("adv_speed_ctrl")
+    .key("Range_0").array().item(m_GainsSpeedRange[0]).item(m_speedKpSet[0]).item(m_speedKiSet[0]).end()
+    .key("Range_1").array().item(m_GainsSpeedRange[1]).item(m_speedKpSet[1]).item(m_speedKiSet[1]).end()
+    .key("Range_2").array().item(m_GainsSpeedRange[2]).item(m_speedKpSet[2]).item(m_speedKiSet[2]).end()
+    .end();
+}
+

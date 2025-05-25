@@ -118,15 +118,18 @@ CPPSRC=$(wildcard $(SRCDIR)/Robots/Simulation/*.cpp ) \
        $(SRCDIR)/AccelerationLimiter/SimpleAccelerationLimiter.cpp \
        $(SRCDIR)/AccelerationLimiter/AdvancedAccelerationLimiter.cpp \
        $(SRCDIR)/AccelerationLimiter/AccelerationDecelerationLimiter.cpp \
-       $(SRCDIR)/blockingDetector/OldSchoolBlockingDetector.cpp 
+       $(SRCDIR)/blockingDetector/OldSchoolBlockingDetector.cpp  \
+       $(SRCDIR)/sampleStream/configuration/ConfigurationRepresentation.cpp  
+       
    
-   # Inclusion directories.
+# Inclusion directories.
 INCDIR = $(CONFDIR) $(ALLINC) $(TESTINC) $(CHIBIOS_CONTRIB)/os/various $(SRCDIR) \
 			$(shell find . -type d)  \
 			$(SRCDIR)/Encoders \
 			$(SRCDIR)/motorController \
-			$(SRCDIR)/sampleStream
-
+			$(SRCDIR)/sampleStream \
+			$(SRCDIR)/sampleStream/configuration 
+			
 # Define C warning options here.
 CWARN = -Wall -Wextra -Wundef -Wstrict-prototypes
 

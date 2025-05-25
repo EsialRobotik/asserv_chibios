@@ -2,8 +2,10 @@
 #define SRC_ACCELERATIONLIMITER_ADVANCEDACCELERATIONLIMITER_H_
 
 #include "AbstractAccelerationLimiter.h"
+#include "sampleStream/configuration/ConfigurationInterface.h"
 
-class AdvancedAccelerationLimiter : public AbstractAccelerationLimiter
+
+class AdvancedAccelerationLimiter : public AbstractAccelerationLimiter , public Configuration
 {
 
     /*
@@ -31,6 +33,8 @@ public:
     inline float getMaxAcceleration() const { return m_maxAcceleration; };
     inline float getMinAcceleration() const { return m_minAcceleration; };
     inline float getHighSpeedThreshold() const{ return m_HighSpeedThreshold; };
+
+    virtual Cbore & getConfiguration(Cbore & cbor_representation);
 
 private:
     virtual float limitOutput(float dt, float targetSpeed, float previousOutput, float currentSpeed);

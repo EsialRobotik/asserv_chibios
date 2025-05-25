@@ -37,3 +37,14 @@ void AdvancedAccelerationLimiter::setHighSpeedThreshold(float highSpeedThreshold
 {
     m_HighSpeedThreshold = highSpeedThreshold;
 }
+
+
+Cbore & AdvancedAccelerationLimiter::getConfiguration(Cbore & cbor_representation)
+{
+    return cbor_representation.map()
+            .key("name").value("adv_acc_limiter")
+            .key("max_acc").value(m_maxAcceleration)
+            .key("min_acc").value(m_minAcceleration)
+            .key("highspeed_threshold").value(m_HighSpeedThreshold)
+            .end();
+}

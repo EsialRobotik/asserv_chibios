@@ -130,8 +130,8 @@ static void initAsserv()
     encoders_ext = new MagEncoders(&encodersI2cPinsConf_SCL_SDA, false, false, true, 400000);
     debug1("initAsserv::MagEncoders OK\r\n");
 
-    angleRegulator = new Regulator(ANGLE_REGULATOR_KP, MAX_SPEED_MM_PER_SEC);
-    distanceRegulator = new Regulator(DIST_REGULATOR_KP, MAX_SPEED_MM_PER_SEC);
+    angleRegulator = new Regulator(ANGLE_REGULATOR_KP, REGULATOR_MAX_SPEED_MM_PER_SEC);
+    distanceRegulator = new Regulator(DIST_REGULATOR_KP, REGULATOR_MAX_SPEED_MM_PER_SEC);
 
     rightPll = new Pll(PLL_BANDWIDTH);
     leftPll = new Pll(PLL_BANDWIDTH);

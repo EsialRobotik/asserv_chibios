@@ -2,8 +2,10 @@
 #define SRC_ACCELERATIONLIMITER_SIMPLEACCELERATIONLIMITER_H_
 
 #include "AbstractAccelerationLimiter.h"
+#include "sampleStream/configuration/ConfigurationInterface.h"
 
-class SimpleAccelerationLimiter : public AbstractAccelerationLimiter
+
+class SimpleAccelerationLimiter : public AbstractAccelerationLimiter, public Configuration
 {
 
     /*
@@ -22,6 +24,9 @@ public:
 
     void setMaxAcceleration(float maxAcceleration);
     inline float getMaxAcceleration() const { return m_maxAcceleration; };
+
+    virtual Cbore & getConfiguration(Cbore & cbor_representation);
+
 
 private:
     virtual float limitOutput(float dt, float targetSpeed, float previousOutput, float currentSpeed);

@@ -2,8 +2,10 @@
 #define SRC_ACCELERATIONDECELERATIONLIMITER_SIMPLEACCELERATIONLIMITER_H_
 
 #include "AccelerationDecelerationLimiterInterface.h"
+#include "sampleStream/configuration/ConfigurationInterface.h"
 
-class AccelerationDecelerationLimiter : public AccelerationDecelerationLimiterInterface
+
+class AccelerationDecelerationLimiter : public AccelerationDecelerationLimiterInterface, public Configuration
 {
 
 public:
@@ -30,6 +32,9 @@ public:
     inline void setMaxDecFW(float value)  { m_maxDecelerationForward = value; };
     inline void setMaxAccBW(float value)  { m_maxAccelerationBackward = value; };
     inline void setMaxDecBW(float value)  { m_maxDecelerationBackward = value; };
+
+    virtual Cbore & getConfiguration(Cbore & cbor_representation);
+
 
 private:
 

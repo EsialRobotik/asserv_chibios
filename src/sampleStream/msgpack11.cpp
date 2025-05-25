@@ -12,6 +12,18 @@
 #include <stdexcept>
 #include <type_traits>
 #include <ch.h>
+#include <cstdint>
+
+extern "C"
+void _fini()
+{
+    /* Either leave empty, or infinite loop here */
+    while (true)
+        __asm volatile ("NOP");
+}
+
+
+
 
 namespace msgpack11 {
 

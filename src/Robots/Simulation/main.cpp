@@ -2,6 +2,7 @@
 #include "Regulator.h"
 #include "Pll.h"
 #include "sampleStream/SampleStreamInterface.h"
+#include "sampleStream/configuration/ConfigurationRepresentation.h"
 #include "robotStub/MotorEncoderSimulator.h"
 #include "Odometry.h"
 #include "SpeedController/AdaptativeSpeedController.h"
@@ -28,7 +29,7 @@
 #define ENCODERS_WHEELS_DISTANCE_MM (261.2)
 #define ENCODERS_TICKS_BY_TURN (1440*4)
 
-#define MAX_SPEED_MM_PER_SEC (1500)
+#define REGULATOR_MAX_SPEED_MM_PER_SEC (1500)
 
 #define DIST_REGULATOR_KP (5)
 #define DIST_REGULATOR_MAX_ACC_FW (1000)
@@ -75,8 +76,7 @@ void shell();
 
 int main(void)
 {
-
-    Regulator angleRegulator(ANGLE_REGULATOR_KP, MAX_SPEED_MM_PER_SEC);
+    Regulator angleRegulator(ANGLE_REGULATOR_KP, REGULATOR_MAX_SPEED_MM_PER_SEC);
     Regulator distanceRegulator(DIST_REGULATOR_KP, FLT_MAX);
 
     Pll rightPll( PLL_BANDWIDTH);
@@ -93,13 +93,13 @@ int main(void)
 
     SimpleAccelerationLimiter angleAccelerationlimiter(ANGLE_REGULATOR_MAX_ACC);
 
-    AccelerationDecelerationLimiter distanceAccelerationLimiter(DIST_REGULATOR_MAX_ACC_FW, DIST_REGULATOR_MAX_DEC_FW, DIST_REGULATOR_MAX_ACC_BW, DIST_REGULATOR_MAX_DEC_BW, MAX_SPEED_MM_PER_SEC, ACC_DEC_DAMPLING, DIST_REGULATOR_KP);
+    AccelerationDecelerationLimiter distanceAccelerationLimiter(DIST_REGULATOR_MAX_ACC_FW, DIST_REGULATOR_MAX_DEC_FW, DIST_REGULATOR_MAX_ACC_BW, DIST_REGULATOR_MAX_DEC_BW, REGULATOR_MAX_SPEED_MM_PER_SEC, ACC_DEC_DAMPLING, DIST_REGULATOR_KP);
 //    SimpleAccelerationLimiter distanceAccelerationLimiter(9000000);
 
     commandManager = new CommandManager( COMMAND_MANAGER_ARRIVAL_DISTANCE_THRESHOLD_mm, COMMAND_MANAGER_ARRIVAL_ANGLE_THRESHOLD_RAD,
                                    preciseGotoConf, waypointGotoConf, gotoNoStopConf,
                                    angleRegulator, distanceRegulator,
-                                   MAX_SPEED_MM_PER_SEC, MAX_SPEED_MM_PER_SEC/3,
+                                   REGULATOR_MAX_SPEED_MM_PER_SEC, REGULATOR_MAX_SPEED_MM_PER_SEC/3,
                                    &distanceAccelerationLimiter,
 //                                   nullptr,
                                    nullptr);
@@ -116,6 +116,10 @@ int main(void)
     NativeStream::init(ASSERV_THREAD_PERIOD_S);
 
     thread thread_shell(shell);
+
+    ConfigurationRepresentation conf_json(&angleRegulator, &distanceRegulator, &angleAccelerationlimiter, &distanceAccelerationLimiter, &speedControllerRight, &speedControllerLeft);
+    conf_json.generateRepresentation();
+
     mainAsserv->mainLoop();
     thread_shell.join();
 }

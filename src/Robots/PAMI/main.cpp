@@ -22,6 +22,7 @@
 #include "blockingDetector/OldSchoolBlockingDetector.h"
 #include "config.h"
 #include "Communication/SerialIO.h"
+#include "sampleStream/configuration/ConfigurationRepresentation.h"
 
 float speed_controller_right_Kp[NB_PI_SUBSET] = { SPEED_CTRL_RIGHT_KP_1, SPEED_CTRL_RIGHT_KP_2, SPEED_CTRL_RIGHT_KP_3};
 float speed_controller_right_Ki[NB_PI_SUBSET] = { SPEED_CTRL_RIGHT_KI_1, SPEED_CTRL_RIGHT_KI_2, SPEED_CTRL_RIGHT_KI_3};
@@ -57,6 +58,8 @@ CommandManager *commandManager;
 AsservMain *mainAsserv;
 
 SerialIO *esp32Io;
+
+ConfigurationRepresentation *configurationRepresentation;
 
 BaseSequentialStream *outputStream;
 BaseSequentialStream *outputStreamIA;
@@ -282,6 +285,9 @@ static void initAsserv()
                            nullptr);
 
     esp32Io = new SerialIO(&SD1, *odometry, *commandManager, *mp6550, *mainAsserv);
+
+    configurationRepresentation = new ConfigurationRepresentation (angleRegulator, distanceRegulator, angleAccelerationlimiter, distanceAccelerationLimiter, speedControllerRight, speedControllerLeft);
+
 }
 
 void raspIoWrapperPositionOutput(void *)
@@ -311,7 +317,7 @@ static THD_FUNCTION(AsservThread, arg)
     mp6550->init();
     encoders->init();
     encoders->start();
-    USBStream::init(nullptr);
+    USBStream::init(nullptr, configurationRepresentation);
 
     chBSemSignal(&asservStarted_semaphore);
 

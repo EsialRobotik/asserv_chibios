@@ -5,6 +5,8 @@
 #include "ch.h"
 #include "hal.h"
 
+class ConfigurationRepresentation;
+
 class USBStream: public SampleStream
 {
 public:
@@ -19,7 +21,7 @@ public:
         uint8_t dataMinusPin_alternate;
     };
 
-    static void init(UsbStreamPinConf_t *pinConf);
+    static void init(UsbStreamPinConf_t *pinConf, ConfigurationRepresentation *configuration_representation);
 
     static USBStream* instance()
     {
@@ -28,7 +30,6 @@ public:
 
     virtual void* sendCurrentStream();
 
-    void sendConfig(uint8_t *configBuffer, uint8_t size);
 
 
     typedef void (*usbStreamCallback)(char *buffer, uint32_t size);
@@ -39,14 +40,18 @@ public:
 
 private:
 
-    USBStream();
+    explicit USBStream( ConfigurationRepresentation *configuration_representation );
     virtual ~USBStream() {};
+
+    void sendBuffer(uint8_t const *buffer, uint32_t size, uint32_t synchroWord);
 
 
     uint32_t m_timestamp;
     mutex_t m_sample_sending_mutex;
+    ConfigurationRepresentation *m_configuration_representation;
     static inline USBStream* s_instance = nullptr;
-
+    
+    uint8_t cbor_buffer[384];
 
 
 
