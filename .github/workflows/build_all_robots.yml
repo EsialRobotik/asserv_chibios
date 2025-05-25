@@ -12,7 +12,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        robot: [Princess, PAMI, PMI, PMX, Simu_F446, Simulation]
+        robot: [Princess, PAMI] #, PMI, PMX, Simu_F446, Simulation]
     continue-on-error: true
     outputs:
       sha: ${{ steps.vars.outputs.sha }}
@@ -52,7 +52,7 @@ jobs:
         draft: false
         prerelease: false
         release_name: ${{ steps.version.outputs.version }}
-        tag_name: ${{ github.ref }}
+        tag_name: Release_$(date +'%Y-%m-%d')
       env:
         GITHUB_TOKEN: ${{ github.token }}
       
