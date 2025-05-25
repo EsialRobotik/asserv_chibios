@@ -75,6 +75,7 @@ jobs:
     - name: Create GitHub Release
       uses: softprops/action-gh-release@v2
       with:
+        files: '*.zip'
         tag_name: ${{ env.RELEASE_TAG }}
         name: Firmware Release ${{ env.RELEASE_TAG }}
         body: |
@@ -83,8 +84,3 @@ jobs:
           ❌ Les échecs ne bloquent plus la release.
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-    - name: Upload Release Assets
-      uses: softprops/action-gh-release@v1
-      with:
-        files: '*.zip'
