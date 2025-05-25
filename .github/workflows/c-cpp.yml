@@ -1,0 +1,59 @@
+name: Build Robot Firmware
+
+on:
+  push:
+    branches: [ "master" ]
+  pull_request:
+    branches: [ "master" ]
+  workflow_dispatch:
+    inputs:
+      robot:
+        description: "Nom du robot à builder"
+        required: true
+        default: "Princess"
+        type: choice
+        options:
+          - PAMI
+          - PMI
+          - PMX
+          - Princess
+          - Simu_F446
+          - Simulation
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        submodules: recursive
+
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y \
+          openocd \
+          binutils-arm-none-eabi \
+          gcc-arm-none-eabi \
+          libnewlib-arm-none-eabi \
+          libstdc++-arm-none-eabi-newlib \
+          gdb-multiarch
+
+    - name: Build firmware
+      run: make ROBOT=${{ github.event.inputs.robot }}
+
+    - name: Set artifact name
+      id: vars
+      run: |
+        echo "date=$(date +'%Y-%m-%d')" >> $GITHUB_OUTPUT
+        echo "sha=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
+
+    - name: Upload firmware artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: ${{ github.event.inputs.robot }}-${{ steps.vars.outputs.date }}-${{ steps.vars.outputs.sha }}
+        path: |
+          src/${{ github.event.inputs.robot }}
+        if-no-files-found: warn
