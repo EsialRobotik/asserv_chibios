@@ -13,14 +13,17 @@ jobs:
     strategy:
       matrix:
         robot: [Princess, PAMI, PMI, PMX, Simu_F446, Simulation]
-    continue-on-error: true  # 🔧 continue même si un build échoue
+    continue-on-error: true
+    outputs:
+      sha: ${{ steps.vars.outputs.sha }}
+      date: ${{ steps.vars.outputs.date }}
 
     steps:
     - name: Checkout repository
       uses: actions/checkout@v4
       with:
         submodules: recursive
-        fetch-depth: 0
+        fetch-depth: 0  # ✅ nécessaire pour git rev-parse
 
     - name: Install dependencies
       run: |
@@ -39,8 +42,8 @@ jobs:
     - name: Set artifact name
       id: vars
       run: |
-        echo "date=$(date +'%Y-%m-%d')" >> $GITHUB_OUTPUT
         echo "sha=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
+        echo "date=$(date +'%Y-%m-%d')" >> $GITHUB_OUTPUT
 
     - name: Upload firmware artifact
       uses: actions/upload-artifact@v4
@@ -61,10 +64,9 @@ jobs:
       with:
         path: release-assets
 
-    - name: Create release tag
-      id: tag
+    - name: Set release tag
       run: |
-        echo "RELEASE_TAG=$(date +'%Y-%m-%d')-${GITHUB_SHA::7}" >> $GITHUB_ENV
+        echo "RELEASE_TAG=${{ needs.build.outputs.date }}-${{ needs.build.outputs.sha }}" >> $GITHUB_ENV
 
     - name: Create GitHub Release
       uses: softprops/action-gh-release@v2
@@ -78,7 +80,7 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-    - name: Upload available firmware to release
+    - name: Upload firmware to release
       run: |
         for dir in release-assets/*; do
           zip -r "${dir}.zip" "$dir"
