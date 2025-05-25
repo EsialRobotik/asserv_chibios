@@ -55,5 +55,5 @@ jobs:
       with:
         name: PAMI-${{ steps.vars.outputs.date }}-${{ steps.vars.outputs.sha }}
         path: |
-          src/PAMI
+          src/Robots/PAMI
         if-no-files-found: warn
