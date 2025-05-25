@@ -84,8 +84,7 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-    - name: Upload firmware archives to release
-      run: |
-        find release-assets -name "*.zip" -exec gh release upload "${{ env.RELEASE_TAG }}" {} --clobber \;
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    - name: Upload Release Assets
+      uses: softprops/action-gh-release@v1
+      with:
+        files: '*.zip'
