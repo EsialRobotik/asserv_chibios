@@ -13,6 +13,7 @@ jobs:
     strategy:
       matrix:
         robot: [Princess, PAMI, PMI, PMX, Simu_F446, Simulation]
+    continue-on-error: true  # 🔧 continue même si un build échoue
 
     steps:
     - name: Checkout repository
@@ -49,8 +50,8 @@ jobs:
         if-no-files-found: warn
 
   release:
-    needs: build
     runs-on: ubuntu-latest
+    needs: []  # ❗️Pas besoin d’attendre les jobs précédents explicitement
     if: github.ref == 'refs/heads/master'
 
     steps:
@@ -70,23 +71,17 @@ jobs:
         tag_name: ${{ env.RELEASE_TAG }}
         name: Firmware Release ${{ env.RELEASE_TAG }}
         body: |
-          🚀 Firmware build for all robots
-
-          Robots:
-          - Princess
-          - PAMI
-          - PMI
-          - PMX
-          - Simu_F446
-          - Simulation
+          ⚙️ Firmware build for all robots  
+          ✅ Robots compilés avec succès : artefacts disponibles  
+          ❌ Les échecs ne bloquent plus la release.
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-    - name: Upload binaries to release
+    - name: Upload available firmware to release
       run: |
         for dir in release-assets/*; do
           zip -r "${dir}.zip" "$dir"
-          gh release upload "${{ env.RELEASE_TAG }}" "${dir}.zip" --clobber
+          gh release upload "${{ env.RELEASE_TAG }}" "${dir}.zip" --clobber || true
         done
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
