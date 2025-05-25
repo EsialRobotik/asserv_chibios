@@ -1,4 +1,4 @@
-name: Build Robot Firmware
+name: Build Robots Firmware
 
 on:
   push:
@@ -13,10 +13,10 @@ on:
         # default: "Princess"
         # type: choice
         # options:
+          # - Princess
           # - PAMI
           # - PMI
           # - PMX
-          # - Princess
           # - Simu_F446
           # - Simulation
 
@@ -41,8 +41,23 @@ jobs:
           libstdc++-arm-none-eabi-newlib \
           gdb-multiarch
 
-    - name: Build firmware
+    - name: Build firmware for Princess
+      run: make ROBOT=Princess all
+      
+    - name: Build firmware for PAMI
       run: make ROBOT=PAMI all
+      
+    - name: Build firmware for PMI
+      run: make ROBOT=PMI all
+      
+    - name: Build firmware for PMX
+      run: make ROBOT=PMX all
+      
+    - name: Build firmware for Simu_F446
+      run: make ROBOT=Simu_F446 all
+      
+    - name: Build firmware for Simulation
+      run: make ROBOT=Simulation all
 
     - name: Set artifact name
       id: vars
@@ -53,7 +68,7 @@ jobs:
     - name: Upload firmware artifact
       uses: actions/upload-artifact@v4
       with:
-        name: PAMI-${{ steps.vars.outputs.date }}-${{ steps.vars.outputs.sha }}
+        name: RobotsFirmware-${{ steps.vars.outputs.date }}-${{ steps.vars.outputs.sha }}
         path: |
-          src/Robots/PAMI
+          src/Robots
         if-no-files-found: warn
