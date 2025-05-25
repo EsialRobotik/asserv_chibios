@@ -12,7 +12,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        robot: [Princess, PAMI] #, PMI, PMX, Simu_F446, Simulation]
+        robot: [Princess, PAMI, PMI, PMX, Simu_F446, Simulation]
     continue-on-error: true
     outputs:
       sha: ${{ steps.vars.outputs.sha }}
@@ -79,6 +79,21 @@ jobs:
         tag_name: ${{ env.RELEASE_TAG }}
         name: Firmware Release ${{ env.RELEASE_TAG }}
         body: |
-          ⚙️ Firmware build for all robots  
-          ✅ Robots compilés avec succès : artefacts disponibles  
-          ❌ Les échecs ne bloquent plus la release.
+         echo "✅ Compilation réussie pour :" > release-notes.txt
+         for robot in Princess PAMI PMI PMX Simu_F446 Simulation; do
+           if [ -f "release-assets/firmware-${robot}/firmware-${robot}.zip" ]; then
+             echo "  - $robot" >> release-notes.txt
+           fi
+         done
+
+         echo "" >> release-notes.txt
+         echo "❌ Compilation échouée pour :" >> release-notes.txt
+         for robot in Princess PAMI PMI PMX Simu_F446 Simulation; do
+           if [ ! -f "release-assets/firmware-${robot}/firmware-${robot}.zip" ]; then
+             echo "  - $robot" >> release-notes.txt
+           fi
+         done
+
+         echo "body<<EOF" >> $GITHUB_OUTPUT
+         cat release-notes.txt >> $GITHUB_OUTPUT
+         echo "EOF" >> $GITHUB_OUTPUT
