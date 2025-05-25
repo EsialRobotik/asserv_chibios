@@ -42,7 +42,7 @@ jobs:
           gdb-multiarch
 
     - name: Build firmware
-      run: make ROBOT=PAMI
+      run: make ROBOT=PAMI all
 
     - name: Set artifact name
       id: vars
