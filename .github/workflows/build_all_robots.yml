@@ -45,13 +45,25 @@ jobs:
         echo "sha=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
         echo "date=$(date +'%Y-%m-%d')" >> $GITHUB_OUTPUT
 
-    - name: Upload firmware artifact
-      uses: actions/upload-release-asset@v1
+    - name: Create Release
+      uses: actions/create-release@v1
+      id: create_release
+      with:
+        draft: false
+        prerelease: false
+        release_name: ${{ steps.version.outputs.version }}
+        tag_name: ${{ github.ref }}
+        body_path: CHANGELOG.md
       env:
         GITHUB_TOKEN: ${{ github.token }}
-      with:
-        upload_url: ${{ steps.create_release.outputs.upload_url }}
-        name: ${{ matrix.robot }}-${{ steps.vars.outputs.date }}-${{ steps.vars.outputs.sha }}
-        path: |
-          src/Robots/${{ matrix.robot }}
-        if-no-files-found: warn
+      
+#    - name: Upload firmware artifact
+#      uses: actions/upload-release-asset@v1
+#      env:
+#        GITHUB_TOKEN: ${{ github.token }}
+#      with:
+#        upload_url: ${{ steps.create_release.outputs.upload_url }}
+#        name: ${{ matrix.robot }}-${{ steps.vars.outputs.date }}-${{ steps.vars.outputs.sha }}
+#        path: |
+#          src/Robots/${{ matrix.robot }}
+#        if-no-files-found: warn
