@@ -18,6 +18,7 @@
 #include "Encoders/QuadratureEncoder.h"
 #include "Odometry.h"
 #include "AccelerationLimiter/SimpleAccelerationLimiter.h"
+#include "AccelerationLimiter/AccelerationDecelerationLimiter.h"
 #include "Pll.h"
 #include "blockingDetector/OldSchoolBlockingDetector.h"
 #include "config.h"
@@ -35,7 +36,7 @@ float speed_controller_left_SpeedRange[NB_PI_SUBSET] = { SPEED_CTRL_LEFT_SPEED_T
 
 Goto::GotoConfiguration preciseGotoConf  = {COMMAND_MANAGER_GOTO_RETURN_THRESHOLD_mm, COMMAND_MANAGER_GOTO_ANGLE_THRESHOLD_RAD, COMMAND_MANAGER_GOTO_PRECISE_ARRIVAL_DISTANCE_mm};
 Goto::GotoConfiguration waypointGotoConf  = {COMMAND_MANAGER_GOTO_RETURN_THRESHOLD_mm, COMMAND_MANAGER_GOTO_ANGLE_THRESHOLD_RAD, COMMAND_MANAGER_GOTO_WAYPOINT_ARRIVAL_DISTANCE_mm};
-GotoNoStop::GotoNoStopConfiguration gotoNoStopConf = {COMMAND_MANAGER_GOTO_ANGLE_THRESHOLD_RAD, COMMAND_MANAGER_GOTONOSTOP_TOO_BIG_ANGLE_THRESHOLD_RAD, (150/DIST_REGULATOR_KP), 85};
+GotoNoStop::GotoNoStopConfiguration gotoNoStopConf = {COMMAND_MANAGER_GOTO_ANGLE_THRESHOLD_RAD, COMMAND_MANAGER_GOTONOSTOP_TOO_BIG_ANGLE_THRESHOLD_RAD, (50/DIST_REGULATOR_KP), 20};
 
 Mp6550 *mp6550;
 QuadratureEncoder *encoders;
@@ -52,7 +53,12 @@ Pll *rightPll;
 Pll *leftPll;
 
 SimpleAccelerationLimiter *angleAccelerationlimiter;
+
+#ifdef STAR
+AccelerationDecelerationLimiter *distanceAccelerationLimiter;
+#else
 SimpleAccelerationLimiter *distanceAccelerationLimiter;
+#endif
 
 CommandManager *commandManager;
 AsservMain *mainAsserv;
@@ -62,49 +68,48 @@ SerialIO *esp32Io;
 ConfigurationRepresentation *configurationRepresentation;
 
 BaseSequentialStream *outputStream;
-BaseSequentialStream *outputStreamIA;
 
 
 
-// ADCConfig structure for stm32 MCUs is empty
-static ADCConfig adccfg = {};
+// // ADCConfig structure for stm32 MCUs is empty
+// static ADCConfig adccfg = {};
 
-// Create buffer to store ADC results. This is
-// one-dimensional interleaved array
-#define ADC_BUF_DEPTH 2 // depth of buffer
-#define ADC_CH_NUM 1    // number of used ADC channels
-static adcsample_t samples_buf[ADC_BUF_DEPTH * ADC_CH_NUM]; // results array
+// // Create buffer to store ADC results. This is
+// // one-dimensional interleaved array
+// #define ADC_BUF_DEPTH 2 // depth of buffer
+// #define ADC_CH_NUM 1    // number of used ADC channels
+// static adcsample_t samples_buf[ADC_BUF_DEPTH * ADC_CH_NUM]; // results array
 
-// Fill ADCConversionGroup structure fields
-static ADCConversionGroup adccg = {
-   // this 3 fields are common for all MCUs
-      // set to TRUE if need circular buffer, set FALSE otherwise
-      TRUE,
-      // number of channels
-      (uint16_t)(ADC_CH_NUM),
-      // callback function, set to NULL for begin
-      NULL,
-   // Resent fields are stm32 specific. They contain ADC control registers data.
-   // Please, refer to ST manual RM0008.pdf to understand what we do.
-      // CR1 register content, set to zero for begin
-      0,
-      // CR2 register content, set to zero for begin
-      0,
-      // SMRP1 register content, set to zero for begin
-      0,
-      // SMRP2 register content, set to zero for begin
-      0,
-      // SQR1 register content. Set channel sequence length
-      ADC_SQR1_NUM_CH(ADC_CH_NUM) | ADC_SQR1_SQ1_N(1),
-      // SQR2 register content, set to zero for begin
-      0,
-      // SQR3 register content. We must select 2 channels
-      // For example 15th and 10th channels. Refer to the
-      // pinout of your MCU to select other pins you need.
-      // On STM32-P103 board they connected to PC15 and PC0 contacts
-      // On STM32-103STK board they connected to EXT2-7 contact and joystick
-      0,
-};
+// // Fill ADCConversionGroup structure fields
+// static ADCConversionGroup adccg = {
+//    // this 3 fields are common for all MCUs
+//       // set to TRUE if need circular buffer, set FALSE otherwise
+//       TRUE,
+//       // number of channels
+//       (uint16_t)(ADC_CH_NUM),
+//       // callback function, set to NULL for begin
+//       NULL,
+//    // Resent fields are stm32 specific. They contain ADC control registers data.
+//    // Please, refer to ST manual RM0008.pdf to understand what we do.
+//       // CR1 register content, set to zero for begin
+//       0,
+//       // CR2 register content, set to zero for begin
+//       0,
+//       // SMRP1 register content, set to zero for begin
+//       0,
+//       // SMRP2 register content, set to zero for begin
+//       0,
+//       // SQR1 register content. Set channel sequence length
+//       ADC_SQR1_NUM_CH(ADC_CH_NUM) | ADC_SQR1_SQ1_N(1),
+//       // SQR2 register content, set to zero for begin
+//       0,
+//       // SQR3 register content. We must select 2 channels
+//       // For example 15th and 10th channels. Refer to the
+//       // pinout of your MCU to select other pins you need.
+//       // On STM32-P103 board they connected to PC15 and PC0 contacts
+//       // On STM32-103STK board they connected to EXT2-7 contact and joystick
+//       0,
+// };
 
 
 static void initAsserv()
@@ -267,13 +272,22 @@ static void initAsserv()
 
 
     angleAccelerationlimiter = new SimpleAccelerationLimiter(ANGLE_REGULATOR_MAX_ACC);
+
+
+    AccelerationDecelerationLimiter *accDecLimiter = nullptr;    
+    #ifdef STAR
+    distanceAccelerationLimiter = new AccelerationDecelerationLimiter(DIST_REGULATOR_MAX_ACC_FW, DIST_REGULATOR_MAX_DEC_FW, DIST_REGULATOR_MAX_ACC_BW, DIST_REGULATOR_MAX_DEC_BW, REGULATOR_MAX_SPEED_MM_PER_SEC, ACC_DEC_DAMPLING, DIST_REGULATOR_KP);
+    accDecLimiter = distanceAccelerationLimiter;
+    #else
     distanceAccelerationLimiter = new SimpleAccelerationLimiter(ANGLE_REGULATOR_MAX_ACC);
+    #endif
 
 
     commandManager = new CommandManager( COMMAND_MANAGER_ARRIVAL_DISTANCE_THRESHOLD_mm, COMMAND_MANAGER_ARRIVAL_ANGLE_THRESHOLD_RAD,
                                    preciseGotoConf, waypointGotoConf, gotoNoStopConf,
                                    *angleRegulator, *distanceRegulator,
-                                   REGULATOR_MAX_SPEED_MM_PER_SEC, REGULATOR_MAX_SPEED_MM_PER_SEC);
+                                   REGULATOR_MAX_SPEED_MM_PER_SEC, REGULATOR_MAX_SPEED_MM_PER_SEC,
+                                   accDecLimiter);
 
     mainAsserv = new AsservMain( ASSERV_THREAD_FREQUENCY, ASSERV_POSITION_DIVISOR,
                            ENCODERS_WHEELS_RADIUS_MM, ENCODERS_WHEELS_DISTANCE_MM, ENCODERS_TICKS_BY_TURN,
@@ -290,13 +304,13 @@ static void initAsserv()
 
 }
 
-void raspIoWrapperPositionOutput(void *)
+void serialIoWrapperPositionOutput(void *)
 {
     esp32Io->positionOutput();
 }
 
 
-void raspIoWrapperCommandInput(void *)
+void serialIoWrapperCommandInput(void *)
 {
     esp32Io->commandInput();
 }
@@ -317,8 +331,7 @@ static THD_FUNCTION(AsservThread, arg)
     mp6550->init();
     encoders->init();
     encoders->start();
-    USBStream::init(nullptr, configurationRepresentation);
-
+    USBStream::init(nullptr, ASSERV_THREAD_FREQUENCY, configurationRepresentation);
     chBSemSignal(&asservStarted_semaphore);
 
     mainAsserv->mainLoop();
@@ -364,6 +377,20 @@ int main(void)
     chSysInit();
     initAsserv();
 
+    /*  
+     * There's an internal pulldown activated at reset on pin PB4 which is an encoder input !
+     *  Write the bit UCPD1_DBDIS in PWR_CR3 to disable this pulldown
+     */
+    
+    PWR->CR3 |= (1<<14);
+
+
+    /* PA6 (not used) is connected to PA15 (PWM output) in the board, so force PA6 to float to avoid any problem.
+     * Same thing for PA5 and PB7 but both are unconnected
+    */
+    palSetPadMode(GPIOA, 6, PAL_STM32_MODE_INPUT | PAL_STM32_PUPDR_FLOATING );
+    palSetPadMode(GPIOB, 7, PAL_STM32_MODE_INPUT | PAL_STM32_PUPDR_FLOATING );
+
     
     /*
      * USART 1:  For communication with the brain µc
@@ -373,9 +400,7 @@ int main(void)
     palSetPadMode(GPIOA, 10, PAL_MODE_ALTERNATE(7));
     palSetPadMode(GPIOA, 9, PAL_MODE_ALTERNATE(7));
     sdStart(&SD1, NULL);
-
-    outputStreamIA = reinterpret_cast<BaseSequentialStream*>(&SD1);
-
+    
 
     /*
     *  LPUSART 1 : built-in usb serial port. For shell only
@@ -385,14 +410,21 @@ int main(void)
     shellInit();
 
 
+    /*
+     * Asserv Thread with sync mecanism
+    */
     chBSemObjectInit(&asservStarted_semaphore, true);
     chThdCreateStatic(waAsservThread, sizeof(waAsservThread), HIGHPRIO, AsservThread, NULL);
     chBSemWait(&asservStarted_semaphore);
 
+
+    /* Create a 'background' thread to handle command received through the USB */
     chThdCreateStatic(waLowPrioUSBThread, sizeof(waLowPrioUSBThread), LOWPRIO, LowPrioUSBThread, NULL);
 
 
-    // Custom commands
+    /*
+     * Shell subSystem Init 
+     */
     const ShellCommand shellCommands[] = { { "asserv", &(asservCommandUSB) }, { nullptr, nullptr } };
     ShellConfig shellCfg =
     {
@@ -412,19 +444,24 @@ int main(void)
 
 
 //    palSetPadMode(GPIOA, 0, PAL_MODE_INPUT_ANALOG); // this is 15th channel
+//    palSetPadMode(GPIOB, 7, PAL_STM32_MODE_INPUT | PAL_STM32_PUPDR_FLOATING );
 //    adcInit();
 //  adcStart(&ADCD1, &adccfg);
 //  adcStartConversion(&ADCD1, &adccg, &samples_buf[0], ADC_BUF_DEPTH);
 
 
-    thread_t *threadPositionOutput = chThdCreateStatic(wa_raspio1, sizeof(wa_raspio1), LOWPRIO, raspIoWrapperPositionOutput, nullptr);
+    /* 
+     *  Needed thread to run SerialIO (ie: here, communication with ESP32).
+     *  C wrapping function are needed to bridge through C and C++
+     */
+    thread_t *threadPositionOutput = chThdCreateStatic(wa_raspio1, sizeof(wa_raspio1), LOWPRIO, serialIoWrapperPositionOutput, nullptr);
     chRegSetThreadNameX(threadPositionOutput, "positionOutput");
-    thread_t *threadCommandInput = chThdCreateStatic(wa_raspio2, sizeof(wa_raspio2), LOWPRIO, raspIoWrapperCommandInput, nullptr);
+    thread_t *threadCommandInput = chThdCreateStatic(wa_raspio2, sizeof(wa_raspio2), LOWPRIO, serialIoWrapperCommandInput, nullptr);
     chRegSetThreadNameX(threadCommandInput, "commandInput");
 
 
     chThdSetPriority(LOWPRIO);
-    char str[32];
+    
     while (true)
     {
         chThdSleepMilliseconds(1000);
@@ -544,6 +581,15 @@ void asservCommandUSB(BaseSequentialStream *chp, int argc, char **argv)
         chprintf(outputStream, "Adding goto(%.2f,%.2f) consign\r\n", X, Y);
 
         commandManager->addGoTo(X, Y);
+    }
+    else if (!strcmp(argv[0], "gototest"))
+    {
+        commandManager->addGoTo(400, 0) ;
+        commandManager->addGoTo(400, 100) ;
+        commandManager->addGoTo(0, 100) ;
+        commandManager->addGoTo(0, 0) ;
+        commandManager->addGoToAngle(400, 0) ;
+
     }
     else
     {

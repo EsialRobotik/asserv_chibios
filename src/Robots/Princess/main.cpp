@@ -67,7 +67,7 @@ AsservMain *mainAsserv;
 
 static void initAsserv()
 {
-    encoders = new QuadratureEncoder(&ESIALCardPinConf_Encoders, true, true, true);
+    encoders = new QuadratureEncoder(&ESIALCardPinConf_Encoders, false, false, false);
     md22MotorController = new Md22(&ESIALCardPinConf_md22, true, true, false, 100000);
 
     angleRegulator = new Regulator(ANGLE_REGULATOR_KP, REGULATOR_MAX_SPEED_MM_PER_SEC);
@@ -128,7 +128,7 @@ static THD_FUNCTION(AsservThread, arg)
         .dataPlusPin_GPIObase = GPIOA, .dataPlusPin_number = 12, .dataPlusPin_alternate = 10,
         .dataMinusPin_GPIObase = GPIOA, .dataMinusPin_number = 11, .dataMinusPin_alternate = 10
     };
-    USBStream::init(&usbPinConf);
+    USBStream::init(&usbPinConf, ASSERV_THREAD_FREQUENCY);
 
     chBSemSignal(&asservStarted_semaphore);
 

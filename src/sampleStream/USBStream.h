@@ -21,7 +21,7 @@ public:
         uint8_t dataMinusPin_alternate;
     };
 
-    static void init(UsbStreamPinConf_t *pinConf, ConfigurationRepresentation *configuration_representation);
+    static void init(UsbStreamPinConf_t *pinConf, uint16_t loopFrequency, ConfigurationRepresentation *configuration_representation);
 
     static USBStream* instance()
     {
@@ -40,8 +40,8 @@ public:
 
 private:
 
-    explicit USBStream( ConfigurationRepresentation *configuration_representation );
-    virtual ~USBStream() {};
+      explicit USBStream(uint16_t loopFrequency, ConfigurationRepresentation *configuration_representation);
+      virtual ~USBStream() {};
 
     void sendBuffer(uint8_t const *buffer, uint32_t size, uint32_t synchroWord);
 
@@ -53,6 +53,7 @@ private:
     
     uint8_t cbor_buffer[384];
 
+    uint16_t m_loopFrequency;
 
 
     void getEmptyBuffer();

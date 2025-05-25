@@ -11,16 +11,16 @@ const uint32_t synchroWord_config = 0xCAFEDECA;
 const uint32_t synchroWord_connection = 0xDEADBEEF;
 
 
-USBStream::USBStream(ConfigurationRepresentation *configuration_representation )
+USBStream::USBStream(uint16_t loopFrequency, ConfigurationRepresentation *configuration_representation )
 {
     m_timestamp = 0;
     m_configuration_representation = configuration_representation;
-
+    m_loopFrequency = loopFrequency;
     chMtxObjectInit (&m_sample_sending_mutex);
     std::memset(m_currentStruct.array, 0xFFFFFFFF, sizeof(m_currentStruct.array));
 }
 
-void USBStream::init(UsbStreamPinConf_t *pinConf, ConfigurationRepresentation *configuration_representation)
+void USBStream::init(UsbStreamPinConf_t *pinConf, uint16_t loopFrequency, ConfigurationRepresentation *configuration_representation)
 {
     // Init pin if needed
     if(pinConf)
@@ -32,7 +32,7 @@ void USBStream::init(UsbStreamPinConf_t *pinConf, ConfigurationRepresentation *c
 //    palSetPadMode(GPIOA, 11, PAL_MODE_ALTERNATE(10)); //USB D-
 
 
-    s_instance = new USBStream(configuration_representation);
+    s_instance = new USBStream(loopFrequency, configuration_representation);
     SampleStream::setInstance(s_instance);
 
     /*
@@ -169,9 +169,43 @@ void USBStream::USBStreamHandleConnection_lowerpriothread(usbStreamCallback call
 
         if(buffer[0] == synchroWord_connection)
         {
-            chprintf(outputStream, "connection detected sending %d/%d desc\r\n", sizeof(description), strlen(description));
+                       chprintf(outputStream, "connection detected\r\n");
+            /*
+             * It's a bit tricky here !
+             * As this function is paced by a medium priority thread ( ie: bellow than the rest of this class )
+             *  sending a description must stop the sending of the asserv loop.
+             *  To do so, a mutex is used and a new buffer is get for the next loop at the end of this routine.
+             */
+            chMtxLock(&m_sample_sending_mutex);
 
-            sendBuffer((uint8_t*) description, strlen(description), synchroWord_connection);
+            obqGetEmptyBufferTimeout(&SDU1.obqueue, TIME_MS2I(100));
+            uint32_t *ptr_32 = (uint32_t*)SDU1.obqueue.ptr;
+
+             //The description begin with a synchro word //
+            ptr_32[0] = synchroWord_connection;
+
+            // ... then the size of the following string plus the size of the frequency loop at the end !
+            // The value will be inserted at the end of this procedure because the frequency loop string isn't computed yet 
+            uint32_t description_size = strlen(description);
+
+            // And finaly, the description itself
+            char *ptr_str = (char*)&(ptr_32[2]);
+            unsigned int i;
+            for(i=0;i<description_size; i++)
+                ptr_str[i] = description[i];
+
+            // But wait, there's more ! At the end send the loop frequency and update the whole descripition size
+            int len = sprintf(&ptr_str[i], "freq=%d", m_loopFrequency);
+            ptr_32[1]+= len;
+            description_size += len;
+            
+            // Insert the size of whole descripition
+            ptr_32[1] = description_size;
+
+            obqPostFullBuffer(&SDU1.obqueue, ((uint8_t*)&ptr_str[description_size]) - ((uint8_t*)ptr_32));
+
+            getEmptyBuffer();
+            chMtxUnlock(&m_sample_sending_mutex);
         }
         else if(buffer[0] == synchroWord_config && m_configuration_representation)
         {

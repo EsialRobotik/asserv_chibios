@@ -14,18 +14,30 @@
 #define ASSERV_POSITION_DIVISOR (5)
 
 #define ENCODERS_WHEELS_RADIUS_MM (73.2/2.0)
-#define ENCODERS_WHEELS_DISTANCE_MM (86.03)
+#define ENCODERS_WHEELS_DISTANCE_MM (87.55)
 #define ENCODERS_TICKS_BY_TURN (546*4)
 
-#define REGULATOR_MAX_SPEED_MM_PER_SEC (600)
+#define REGULATOR_MAX_SPEED_MM_PER_SEC (550)
 #define WHEELS_MAX_SPEED_MM_PER_SEC (650)
 
-#define DIST_REGULATOR_KP (6)
-#define DIST_REGULATOR_MAX_ACC (1200)
+#define DIST_REGULATOR_KP (5)
+#define DIST_REGULATOR_MAX_ACC (900) 
 
 
-#define ANGLE_REGULATOR_KP (330)
-#define ANGLE_REGULATOR_MAX_ACC (1000)
+/* For STAR PAMI */
+#define DIST_REGULATOR_MAX_ACC_FW (500)
+#define DIST_REGULATOR_MAX_DEC_FW (500)
+#define DIST_REGULATOR_MAX_ACC_BW (500)
+#define DIST_REGULATOR_MAX_DEC_BW (500)
+#define ACC_DEC_DAMPLING (1.2)
+#define DIST_REGULATOR_MAX_ACC_FW_SLOW (500)
+#define DIST_REGULATOR_MAX_DEC_FW_SLOW (500)
+#define DIST_REGULATOR_MAX_ACC_BW_SLOW (500)
+#define DIST_REGULATOR_MAX_DEC_BW_SLOW (500)
+
+
+#define ANGLE_REGULATOR_KP (300)
+#define ANGLE_REGULATOR_MAX_ACC (1500)
 
 #define SPEED_CTRL_LEFT_KP_1 (0.5)
 #define SPEED_CTRL_LEFT_KP_2 (0.2)
@@ -64,18 +76,7 @@
 
 
 #define COMMAND_MANAGER_GOTO_PRECISE_ARRIVAL_DISTANCE_mm (3)
-#define COMMAND_MANAGER_GOTO_WAYPOINT_ARRIVAL_DISTANCE_mm (20)
+#define COMMAND_MANAGER_GOTO_WAYPOINT_ARRIVAL_DISTANCE_mm (10)
 #define COMMAND_MANAGER_GOTONOSTOP_TOO_BIG_ANGLE_THRESHOLD_RAD (M_PI/2)
-
-extern Odometry *odometry;
-extern AsservMain *mainAsserv;
-extern CommandManager *commandManager;
-
-extern Regulator *angleRegulator;
-extern Regulator *distanceRegulator;
-
-extern SimpleAccelerationLimiter *angleAccelerationlimiter;
-extern SimpleAccelerationLimiter *distanceAccelerationLimiter;
-
 
 #endif /* SRC_ROBOTS_PRINCESS_CONFIG_H_ */

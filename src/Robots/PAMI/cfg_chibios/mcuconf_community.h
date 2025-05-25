@@ -66,15 +66,15 @@
 /*
  * COMP driver system settings.
  */
-#define STM32_COMP_USE_COMP1                  TRUE
-#define STM32_COMP_USE_COMP2                  TRUE
-#define STM32_COMP_USE_COMP3                  TRUE
-#define STM32_COMP_USE_COMP4                  TRUE
-#define STM32_COMP_USE_COMP5                  TRUE
-#define STM32_COMP_USE_COMP6                  TRUE
-#define STM32_COMP_USE_COMP7                  TRUE
+#define STM32_COMP_USE_COMP1                  FALSE
+#define STM32_COMP_USE_COMP2                  FALSE
+#define STM32_COMP_USE_COMP3                  FALSE
+#define STM32_COMP_USE_COMP4                  FALSE
+#define STM32_COMP_USE_COMP5                  FALSE
+#define STM32_COMP_USE_COMP6                  FALSE
+#define STM32_COMP_USE_COMP7                  FALSE
 
-#define STM32_COMP_USE_INTERRUPTS             TRUE
+#define STM32_COMP_USE_INTERRUPTS             FALSE
 #define STM32_COMP_1_2_3_IRQ_PRIORITY         5
 #define STM32_COMP_4_5_6_IRQ_PRIORITY         5
 #define STM32_COMP_7_IRQ_PRIORITY             5
@@ -107,15 +107,15 @@
 /*
  * CRC driver system settings.
  */
-#define STM32_CRC_USE_CRC1                  TRUE
+#define STM32_CRC_USE_CRC1                  FALSE
 #define STM32_CRC_CRC1_DMA_IRQ_PRIORITY     1
 #define STM32_CRC_CRC1_DMA_PRIORITY         2
 #define STM32_CRC_CRC1_DMA_STREAM           STM32_DMA1_STREAM2
 
 #define CRCSW_USE_CRC1                      FALSE
-#define CRCSW_CRC32_TABLE                   TRUE
-#define CRCSW_CRC16_TABLE                   TRUE
-#define CRCSW_PROGRAMMABLE                  TRUE
+#define CRCSW_CRC32_TABLE                   FALSE
+#define CRCSW_CRC16_TABLE                   FALSE
+#define CRCSW_PROGRAMMABLE                  FALSE
 
 /*
  * LTDC driver system settings.
