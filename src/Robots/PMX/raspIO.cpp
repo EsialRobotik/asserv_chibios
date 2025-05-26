@@ -36,7 +36,7 @@ static void serialReadLine(char *buffer, unsigned int buffer_size)
     buffer[i] = '\0';
 }
 
-THD_FUNCTION(asservCommandSerial, p)
+THD_FUNCTION(raspioAsservCommandSerialThread, p)
 {
     (void) p;
     /*
@@ -217,7 +217,7 @@ THD_FUNCTION(asservCommandSerial, p)
     }
 }
 
-THD_FUNCTION(asservPositionSerial, p)
+THD_FUNCTION(raspioAsservPositionSerialThread, p)
 {
     (void) p;
     const time_conv_t loopPeriod_ms = 100;
@@ -230,10 +230,10 @@ THD_FUNCTION(asservPositionSerial, p)
                 (uint8_t) commandManager->getPendingCommandCount(), (int32_t)md22MotorController->getMotorLeftSpeedNonInverted(),
                 (int32_t)md22MotorController->getMotorRightSpeedNonInverted(), debg);
         //DEBUG
-        chprintf(outputStream,    "#%d;%d;%f;%d;%u;%d;%d;%u\r\n", (int32_t) odometry->getX(),
-                (int32_t) odometry->getY(), odometry->getTheta(), (int8_t) commandManager->getCommandStatus(),
-                (uint8_t) commandManager->getPendingCommandCount(), (int32_t)md22MotorController->getMotorLeftSpeedNonInverted(),
-                (int32_t)md22MotorController->getMotorRightSpeedNonInverted(), debg);
+//        chprintf(outputStream,    "#%d;%d;%f;%d;%u;%d;%d;%u\r\n", (int32_t) odometry->getX(),
+//                (int32_t) odometry->getY(), odometry->getTheta(), (int8_t) commandManager->getCommandStatus(),
+//                (uint8_t) commandManager->getPendingCommandCount(), (int32_t)md22MotorController->getMotorLeftSpeedNonInverted(),
+//                (int32_t)md22MotorController->getMotorRightSpeedNonInverted(), debg);
 
         chThdSleepUntil(time);
         time += TIME_MS2I(loopPeriod_ms);

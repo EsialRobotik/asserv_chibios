@@ -56,12 +56,12 @@ GotoNoStop::GotoNoStopConfiguration gotoNoStopConf = { COMMAND_MANAGER_GOTO_ANGL
 COMMAND_MANAGER_GOTONOSTOP_TOO_BIG_ANGLE_THRESHOLD_RAD, (100 / DIST_REGULATOR_KP), 85 };
 
 Md22::I2cPinInit md22PMXCardPinConf_SCL_SDA = { GPIOB, 6, GPIOB, 7 };
-QuadratureEncoder::GpioPinInit qePMXCardPinConf_E1ch1_E1ch2_E2ch1_E2ch2 = { GPIOC, 6, GPIOA, 7, GPIOA, 5, GPIOB, 9 };
-MagEncoders::I2cPinInit encodersI2cPinsConf_SCL_SDA = { GPIOB, 10, GPIOB, 3 };
-
-QuadratureEncoder *encoders;
-MagEncoders *encoders_ext;
 Md22 *md22MotorController;
+MagEncoders::I2cPinInit encodersI2cPinsConf_SCL_SDA = { GPIOB, 10, GPIOB, 3 };
+MagEncoders *encoders_ext;
+
+//QuadratureEncoder::GpioPinInit qePMXCardPinConf_E1ch1_E1ch2_E2ch1_E2ch2 = { GPIOC, 6, GPIOA, 7, GPIOA, 5, GPIOB, 9 };
+//QuadratureEncoder *encoders;
 
 Regulator *angleRegulator;
 Regulator *distanceRegulator;
@@ -96,7 +96,7 @@ static void initAsserv()
 
 	md22MotorController = new Md22(&md22PMXCardPinConf_SCL_SDA, false, false, false, 400000); //400k
 	debug1("initAsserv::md22MotorController OK\r\n");
-	encoders = new QuadratureEncoder(&qePMXCardPinConf_E1ch1_E1ch2_E2ch1_E2ch2, false, true, false);
+	//encoders = new QuadratureEncoder(&qePMXCardPinConf_E1ch1_E1ch2_E2ch1_E2ch2, false, true, false);
 	debug1("initAsserv::QuadratureEncoder OK\r\n");
 	encoders_ext = new MagEncoders(&encodersI2cPinsConf_SCL_SDA, false, false, true, 400000);
 	debug1("initAsserv::MagEncoders OK\r\n");
@@ -161,10 +161,10 @@ static THD_FUNCTION(AsservThread, arg)
 	md22MotorController->init();
 	debug1("AsservThread::md22MotorController OK\r\n");
 
-	encoders->init();
-	debug1("AsservThread::encoders init OK\r\n");
-	encoders->start();
-	debug1("AsservThread::encoders start OK\r\n");
+//	encoders->init();
+//	debug1("AsservThread::encoders init OK\r\n");
+//	encoders->start();
+//	debug1("AsservThread::encoders start OK\r\n");
 
 	encoders_ext->init();
 	debug1("AsservThread::encodersEXT start OK\r\n");
@@ -212,9 +212,9 @@ static THD_FUNCTION(LowPrioUSBThread, arg)
 }
 
 THD_WORKING_AREA(wa_shell, 2048);
-THD_WORKING_AREA(wa_controlPanel, 256);
-THD_WORKING_AREA(wa_shell_serie, 2048);
-THD_WORKING_AREA(wa_controlPanel_serie, 256);
+THD_WORKING_AREA(wa_raspio_position, 256);
+THD_WORKING_AREA(wa_raspio_shell_serie, 2048);
+//THD_WORKING_AREA(wa_controlPanel_serie, 256);
 //THD_FUNCTION(ControlPanelThread, p);
 
 char history_buffer[SHELL_MAX_HIST_BUFF];
@@ -287,6 +287,7 @@ int main(void)
 	chBSemWait(&asservStarted_semaphore);
 	//debug1("main::waAsservThread END.\r\n");
 
+	//Pour plotjuggler
 	chThdCreateStatic(waLowPrioUSBThread, sizeof(waLowPrioUSBThread), LOWPRIO, LowPrioUSBThread, NULL);
 
 	shellInit();
@@ -318,53 +319,17 @@ int main(void)
 #endif
 			};
 
-//#ifdef ENABLE_SHELL
-//	bool startShell = true;
-//#else
-//    bool startShell = false;
-//#endif
-//	if (startShell)
-//	{
-//		//debug1("main::startShell ...\r\n");
-//
-//		thread_t *shellThd = chThdCreateStatic(wa_shell, sizeof(wa_shell), LOWPRIO, shellThread, &shellCfg);
-//		chRegSetThreadNameX(shellThd, "shell");
-//
-//		// Le thread controlPanel n'a de sens que quand le shell tourne
-//		thread_t *controlPanelThd = chThdCreateStatic(wa_controlPanel, sizeof(wa_controlPanel), LOWPRIO,
-//				ControlPanelThread, nullptr);
-//		chRegSetThreadNameX(controlPanelThd, "controlPanel");
-//
-//		thread_t *asserCmdSerialThread = chThdCreateStatic(wa_shell_serie, sizeof(wa_shell_serie), LOWPRIO,
-//				asservCommandSerial, nullptr);
-//		chRegSetThreadNameX(asserCmdSerialThread, "asserv Command serial");
-//
-//		thread_t *controlPanelThdSerial = chThdCreateStatic(wa_controlPanel_serie, sizeof(wa_controlPanel_serie),
-//		LOWPRIO, asservPositionSerial, nullptr);
-//		chRegSetThreadNameX(controlPanelThdSerial, "asserv position update serial");
-//
-//	}
-//
-//	deactivateHeapAllocation();
-#ifdef ENABLE_SHELL
-    bool startShell = true;
-#else
-    bool startShell = false;
-#endif
-    if (startShell)
-    {
-        thread_t *shellThd = chThdCreateStatic(wa_shell, sizeof(wa_shell), LOWPRIO, shellThread, &shellCfg);
-        chRegSetThreadNameX(shellThd, "shell");
-    }
-    else
-    {
-        thread_t *asserCmdSerialThread = chThdCreateStatic(wa_shell, sizeof(wa_shell), LOWPRIO, asservCommandSerial, nullptr);
-        chRegSetThreadNameX(asserCmdSerialThread, "asserv Command serial");
 
-        thread_t *controlPanelThd = chThdCreateStatic(wa_controlPanel, sizeof(wa_controlPanel), LOWPRIO, asservPositionSerial, nullptr);
-        chRegSetThreadNameX(controlPanelThd, "asserv position update serial");
+	thread_t *shellThd = chThdCreateStatic(wa_shell, sizeof(wa_shell), LOWPRIO, shellThread, &shellCfg);
+	chRegSetThreadNameX(shellThd, "shell");
 
-    }
+	thread_t *raspioAsserCmdSerialThd = chThdCreateStatic(wa_raspio_shell_serie, sizeof(wa_raspio_shell_serie), LOWPRIO, raspioAsservCommandSerialThread, nullptr);
+	chRegSetThreadNameX(raspioAsserCmdSerialThd, "raspio asserv Command serial");
+
+	thread_t *raspioAsservPositionSerialThd = chThdCreateStatic(wa_raspio_position, sizeof(wa_raspio_position), LOWPRIO, raspioAsservPositionSerialThread, nullptr);
+	chRegSetThreadNameX(raspioAsservPositionSerialThd, "raspio asserv position update serial");
+
+
 
     deactivateHeapAllocation();
 
@@ -377,7 +342,7 @@ int main(void)
 		chThdSleepMilliseconds(400);
 		//palSetPad(GPIOA, GPIOA_ARD_D8);
 		palSetPad(GPIOA, GPIOA_ARD_D12);
-		chThdSleepMilliseconds(600);
+		chThdSleepMilliseconds(400);
 
 		//debug1("blinking ...\r\n");
 	}
@@ -542,13 +507,13 @@ void asservCommandUSB(BaseSequentialStream *chp, int argc, char **argv)
 		bool enable = !(atoi(argv[1]) == 0);
 		chprintf(outputStream, "%s motor output\r\n", (enable ? "enabling" : "disabling"));
 		mainAsserv->enableMotors(enable);
-	} else if (!strcmp(argv[0], "coders"))
-	{
-		float deltaEncoderRight;
-		float deltaEncoderLeft;
-		encoders->getValues(&deltaEncoderRight, &deltaEncoderLeft);
-		chprintf(outputStream, "Encoders count R %d L %d \r\n", encoders->getRightEncoderTotalCount(),
-				encoders->getLeftEncoderTotalCount());
+//	} else if (!strcmp(argv[0], "coders"))
+//	{
+//		float deltaEncoderRight;
+//		float deltaEncoderLeft;
+//		encoders->getValues(&deltaEncoderRight, &deltaEncoderLeft);
+//		chprintf(outputStream, "Encoders count R %d L %d \r\n", encoders->getRightEncoderTotalCount(),
+//				encoders->getLeftEncoderTotalCount());
 
 	} else if (!strcmp(argv[0], "ext"))
 	{
