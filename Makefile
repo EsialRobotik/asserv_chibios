@@ -4,12 +4,13 @@ ifeq (,$(wildcard src/Robots/$(ROBOT)/main.cpp))
 $(error Unknown ROBOT specified! Knowns are : $(AVAILABLE_ROBOTS))
 endif
 
-MAKE_PID := $(shell echo $$PPID)
-JOBS := $(shell ps T | sed -n 's%.*$(MAKE_PID).*$(MAKE).* \(-j\|--jobs=\) *\([0-9][0-9]*\).*%\2%p')
+JOBS := $(shell cat /proc/cpuinfo | grep "processor	:" | wc -l)
 
 ifeq ($(JOBS),)
-JOBS := 1
+JOBS := 4
 endif
+
+default: all 
 
 %:
 	cd src/Robots/$(ROBOT) && make $@ -j $(JOBS)
