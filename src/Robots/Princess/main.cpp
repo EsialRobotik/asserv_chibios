@@ -153,7 +153,7 @@ static THD_FUNCTION(LowPrioUSBThread, arg)
 
 THD_WORKING_AREA(wa_shell, 2048);
 THD_WORKING_AREA(wa_controlPanel, 256);
-THD_FUNCTION(ControlPanelThread, p);
+//THD_FUNCTION(ControlPanelThread, p);
 
 char history_buffer[SHELL_MAX_HIST_BUFF];
 char *completion_buffer[SHELL_MAX_COMPLETIONS];

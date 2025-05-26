@@ -10,7 +10,7 @@
 #include "AccelerationLimiter/SimpleAccelerationLimiter.h"
 #include "AccelerationLimiter/AccelerationDecelerationLimiter.h"
 
-#define ASSERV_THREAD_FREQUENCY (600) //200=>5ms 300=>3ms 600
+#define ASSERV_THREAD_FREQUENCY (600) //200=>5ms 300=>3ms 600=>1.5ms ?
 #define ASSERV_THREAD_PERIOD_S (1.0/ASSERV_THREAD_FREQUENCY)
 #define ASSERV_POSITION_DIVISOR (15)
 

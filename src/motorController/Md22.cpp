@@ -33,6 +33,7 @@ constexpr uint8_t controlMode = 0x01; // Wanted value for mode register. Ie: -12
 
 void Md22::init()
 {
+
     // Enable I2C SDA & SCL pin
     // External pullups with correct resistance value shall be used !
     // see : http://wiki.chibios.org/dokuwiki/doku.php?id=chibios:community:guides:i2c_trouble_shooting
@@ -76,12 +77,6 @@ void Md22::init()
     msg = i2cMasterTransmitTimeout(&I2CD1, md22Address, cmd, sizeof(cmd), NULL, 0, tmo);
     chDbgAssert(msg == MSG_OK, "Config MD22 - i2cMasterTransmitTimeout Set mode ERROR NOK\r\n");
 
-    // Set acceleration
-    cmd[0] = accReg;
-    cmd[1] = 0;
-    msg = i2cMasterTransmitTimeout(&I2CD1, md22Address, cmd, sizeof(cmd), NULL, 0, tmo);
-    chDbgAssert(msg == MSG_OK, "Config MD22 - i2cMasterTransmitTimeout Set acceleration ERROR NOK\r\n");
-
     // Set motor speed to zero
     cmd[0] = motor1Reg;
     cmd[1] = 0;
@@ -92,6 +87,12 @@ void Md22::init()
     cmd[1] = 0;
     msg = i2cMasterTransmitTimeout(&I2CD1, md22Address, cmd, sizeof(cmd), NULL, 0, tmo);
     chDbgAssert(msg == MSG_OK, "Config MD22 - i2cMasterTransmitTimeout motor2Reg ERROR NOK\r\n");
+
+    // Set acceleration
+	cmd[0] = accReg;
+	cmd[1] = 0;
+	msg = i2cMasterTransmitTimeout(&I2CD1, md22Address, cmd, sizeof(cmd), NULL, 0, tmo);
+	chDbgAssert(msg == MSG_OK, "Config MD22 - i2cMasterTransmitTimeout Set acceleration ERROR NOK\r\n");
 
     i2cReleaseBus(&I2CD1);
 }

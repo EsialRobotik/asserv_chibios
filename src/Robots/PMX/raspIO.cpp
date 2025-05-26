@@ -230,10 +230,10 @@ THD_FUNCTION(asservPositionSerial, p)
                 (uint8_t) commandManager->getPendingCommandCount(), (int32_t)md22MotorController->getMotorLeftSpeedNonInverted(),
                 (int32_t)md22MotorController->getMotorRightSpeedNonInverted(), debg);
         //DEBUG
-//        chprintf(outputStream,    "#%d;%d;%f;%d;%u;%d;%d;%u\r\n", (int32_t) odometry->getX(),
-//                (int32_t) odometry->getY(), odometry->getTheta(), (int8_t) commandManager->getCommandStatus(),
-//                (uint8_t) commandManager->getPendingCommandCount(), (int32_t)md22MotorController->getMotorLeftSpeedNonInverted(),
-//                (int32_t)md22MotorController->getMotorRightSpeedNonInverted(), debg);
+        chprintf(outputStream,    "#%d;%d;%f;%d;%u;%d;%d;%u\r\n", (int32_t) odometry->getX(),
+                (int32_t) odometry->getY(), odometry->getTheta(), (int8_t) commandManager->getCommandStatus(),
+                (uint8_t) commandManager->getPendingCommandCount(), (int32_t)md22MotorController->getMotorLeftSpeedNonInverted(),
+                (int32_t)md22MotorController->getMotorRightSpeedNonInverted(), debg);
 
         chThdSleepUntil(time);
         time += TIME_MS2I(loopPeriod_ms);

@@ -135,7 +135,7 @@ static void initAsserv()
 
 	mainAsserv = new AsservMain( ASSERV_THREAD_FREQUENCY, ASSERV_POSITION_DIVISOR,
 	ENCODERS_WHEELS_RADIUS_MM, ENCODERS_WHEELS_DISTANCE_MM, ENCODERS_TICKS_BY_TURN, *commandManager,
-			*md22MotorController, *encoders, *odometry, *angleRegulator, *distanceRegulator, *angleAccelerationlimiter,
+			*md22MotorController, *encoders_ext, *odometry, *angleRegulator, *distanceRegulator, *angleAccelerationlimiter,
 			*distanceAccelerationLimiterAdv, *speedControllerRight, *speedControllerLeft, *rightPll, *leftPll,
 			blockingDetector);
 
@@ -155,7 +155,8 @@ static THD_FUNCTION(AsservThread, arg)
 {
 	(void) arg;
 	chRegSetThreadName("AsservThread");
-	debug1("AsservThread()...\r\n");
+
+	debug1("AsservThread()....\r\n");
 
 	md22MotorController->init();
 	debug1("AsservThread::md22MotorController OK\r\n");
@@ -177,11 +178,13 @@ static THD_FUNCTION(AsservThread, arg)
 
 	debug1("AsservThread::USBStream init OK + chBSemSignal\r\n");
 
+
 	chBSemSignal(&asservStarted_semaphore);
 
-	//desactivation au demarrage
-	mainAsserv->enableMotors(false);
-	//debug1("AsservThread::enableMotors false\r\n");
+	//desactivation au demarrage ?
+		mainAsserv->enableMotors(true);
+		//debug1("AsservThread::enableMotors false\r\n");
+
 
 	mainAsserv->mainLoop();
 
@@ -371,10 +374,10 @@ int main(void)
 	{
 		//palClearPad(GPIOA, GPIOA_ARD_D8);
 		palClearPad(GPIOA, GPIOA_ARD_D12);
-		chThdSleepMilliseconds(1000);
+		chThdSleepMilliseconds(400);
 		//palSetPad(GPIOA, GPIOA_ARD_D8);
 		palSetPad(GPIOA, GPIOA_ARD_D12);
-		chThdSleepMilliseconds(1000);
+		chThdSleepMilliseconds(600);
 
 		//debug1("blinking ...\r\n");
 	}
@@ -401,7 +404,7 @@ void asservCommandUSB(BaseSequentialStream *chp, int argc, char **argv)
 			chprintf(outputStream," - asserv angleaccdec acc_fw dec_fw acc_bw dec_bw damp \r\n");
 			chprintf(outputStream," - asserv distacc delta_speed \r\n");
 			chprintf(outputStream," ------------------- \r\n");
-			chprintf(outputStream," - asserv addangle angle_rad \r\n");
+			chprintf(outputStream," - asserv addangle angleInDeg \r\n");
 			chprintf(outputStream," - asserv anglereset\r\n");
 			chprintf(outputStream," - asserv anglecontrol Kp\r\n");
 			chprintf(outputStream," ------------------- \r\n");
@@ -499,9 +502,9 @@ void asservCommandUSB(BaseSequentialStream *chp, int argc, char **argv)
 		distanceAccelerationLimiter->setDamplingFactor(damp);
 	} else if (!strcmp(argv[0], "addangle"))
 	{
-		float angle = atof(argv[1]);
-		chprintf(outputStream, "Adding angle %.2frad \r\n", angle);
-		commandManager->addTurn(angle);
+		float angleInDeg = atof(argv[1]);
+		chprintf(outputStream, "Adding angle %.2fdeg \r\n", angleInDeg * M_PI / 180.0);
+		commandManager->addTurn(angleInDeg * M_PI / 180.0);
 	} else if (!strcmp(argv[0], "anglereset"))
 	{
 		chprintf(outputStream, "Reseting angle accumulator \r\n");
