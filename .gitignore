@@ -4,3 +4,6 @@ build/*
 .project
 .settings/
 **/build/*
+.idea/*
+.metadata/*
+asserv_chibios.iml
