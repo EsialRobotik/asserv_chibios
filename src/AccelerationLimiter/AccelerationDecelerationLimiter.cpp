@@ -111,7 +111,6 @@ float AccelerationDecelerationLimiter::limitAcceleration(float dt, float targetS
     instance->setDistanceLimiterTimeFromVmaxToZero(m_timeFromVmaxToZero);
     instance->setMaxAcceleration(maxAcceleration);
     instance->setMaxDeceleration(maxDeceleration);
-    
     instance->setMaxDeltaUp(max_delta_up);
     instance->setMaxDeltaDown(max_delta_down);
 
@@ -123,8 +122,10 @@ float AccelerationDecelerationLimiter::limitAcceleration(float dt, float targetS
 
 void AccelerationDecelerationLimiter::enable()
 {
-       m_enabled = true;
-       reset();  // When enabling again this limiter, reset the internal values. This should fix the famous bug "the moustache of rami"
+    if( !m_enabled)
+        reset();  // When enabling again this limiter, reset the internal values. This should fix the famous bug "the moustache of rami"
+
+    m_enabled = true;
 }
 
 void AccelerationDecelerationLimiter::disable()
