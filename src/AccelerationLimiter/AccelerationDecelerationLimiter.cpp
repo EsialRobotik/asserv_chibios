@@ -81,6 +81,7 @@ float AccelerationDecelerationLimiter::limitAcceleration(float dt, float targetS
 
     if(m_CompensatedOutput > m_previousLimitedOutput+max_delta_up)
         m_CompensatedOutput = m_previousLimitedOutput+max_delta_up;
+    
     if(m_CompensatedOutput < m_previousLimitedOutput-max_delta_down)
         m_CompensatedOutput = m_previousLimitedOutput-max_delta_down;
 
@@ -93,7 +94,7 @@ float AccelerationDecelerationLimiter::limitAcceleration(float dt, float targetS
    if( targetSpeed > 0 && m_CompensatedOutput > targetSpeed)
        m_CompensatedOutput = targetSpeed;
 
-   if( targetSpeed < 0 && m_CompensatedOutput - targetSpeed)
+   if( targetSpeed < 0 && m_CompensatedOutput < targetSpeed)
        m_CompensatedOutput = targetSpeed;
 
 
@@ -108,6 +109,11 @@ float AccelerationDecelerationLimiter::limitAcceleration(float dt, float targetS
     instance->setDistanceLimiterTimeToVMax(m_timeToVmax);
     instance->setDistanceLimiterMaxAttainableSpeed(m_maxAttainableSpeed);
     instance->setDistanceLimiterTimeFromVmaxToZero(m_timeFromVmaxToZero);
+    instance->setMaxAcceleration(maxAcceleration);
+    instance->setMaxDeceleration(maxDeceleration);
+    
+    instance->setMaxDeltaUp(max_delta_up);
+    instance->setMaxDeltaDown(max_delta_down);
 
 
     m_previousLimitedOutput = m_CompensatedOutput;
