@@ -130,14 +130,14 @@ static void initAsserv()
 	COMMAND_MANAGER_ARRIVAL_ANGLE_THRESHOLD_RAD, preciseGotoConf, waypointGotoConf, gotoNoStopConf, *angleRegulator,
 			*distanceRegulator, REGULATOR_MAX_SPEED_MM_PER_SEC,
 			REGULATOR_MAX_SPEED_MM_PER_SEC / 3 /* This value should maybe be fine tuned ?*/,
-			nullptr, blockingDetector); //distanceAccelerationLimiter
+			nullptr);//, blockingDetector); //distanceAccelerationLimiter
 	debug1("initAsserv::commandManager OK\r\n");
 
 	mainAsserv = new AsservMain( ASSERV_THREAD_FREQUENCY, ASSERV_POSITION_DIVISOR,
 	ENCODERS_WHEELS_RADIUS_MM, ENCODERS_WHEELS_DISTANCE_MM, ENCODERS_TICKS_BY_TURN, *commandManager,
 			*md22MotorController, *encoders_ext, *odometry, *angleRegulator, *distanceRegulator, *angleAccelerationlimiter,
-			*distanceAccelerationLimiterAdv, *speedControllerRight, *speedControllerLeft, *rightPll, *leftPll,
-			blockingDetector);
+			*distanceAccelerationLimiterAdv, *speedControllerRight, *speedControllerLeft, *rightPll, *leftPll
+			);//, blockingDetector);
 
 	//debug1("initAsserv::mainAsserv OK\r\n");
 

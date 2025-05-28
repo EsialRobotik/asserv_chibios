@@ -6,6 +6,9 @@
 #include <cstring>
 #include <cstdio>
 #include <cfloat>
+#include "util/asservMath.h"
+#include "config.h"
+
 
 /*
  * All this part is absolutely terrible !
@@ -21,6 +24,9 @@ extern Odometry *odometry;
 extern AsservMain *mainAsserv;
 extern Md22 *md22MotorController;
 extern CommandManager *commandManager;
+
+extern Regulator *angleRegulator;
+extern Regulator *distanceRegulator;
 
 extern BaseSequentialStream *outputStream;
 extern BaseSequentialStream *outputStreamSd4;
@@ -79,6 +85,8 @@ THD_FUNCTION(raspioAsservCommandSerialThread, p)
     float consigneValue3 = 0;
     char buffer[64];
     int int_as_bool = 0;
+    float percentD = 100;
+    float percentA = 100;
 
     //chprintf(outputStream, "Started\r\n");
     chprintf(outputStreamSd4, "Started\r\n");
@@ -188,6 +196,21 @@ THD_FUNCTION(raspioAsservCommandSerialThread, p)
             mainAsserv->setPosition(consigneValue1, consigneValue2, consigneValue3);
             break;
 
+        case 'N': //reduction de la vitesse max en pourcentage
+			serialReadLine(buffer, sizeof(buffer));
+			sscanf(buffer, "%f#%f", &consigneValue1, &consigneValue2);
+			percentD = consigneValue1 * REGULATOR_MAX_SPEED_MM_PER_SEC / 100.0;
+			percentA = consigneValue2 * REGULATOR_MAX_SPEED_MM_PER_SEC / 100.0;
+			if (consigneValue1 >= 0.5) //Si Zero, on ne fait rien
+			{
+				distanceRegulator->setMaxOutput(percentD);
+			}
+			if (consigneValue2 >= 0.5)
+			{
+				angleRegulator->setMaxOutput(percentA);
+			}
+			break;
+
         case 'M': // M0 = coupe les moteurs / M1 = remet les moteurs
             serialReadLine(buffer, sizeof(buffer));
             sscanf(buffer, "%f", &consigneValue1);
@@ -200,10 +223,9 @@ THD_FUNCTION(raspioAsservCommandSerialThread, p)
             mainAsserv->limitMotorControllerConsignToPercentage(consigneValue1);
             break;
 
-        case 'I':
-            break;
-
         case '!':
+        	distanceRegulator->setMaxOutput(REGULATOR_MAX_SPEED_MM_PER_SEC);
+        	angleRegulator->setMaxOutput(REGULATOR_MAX_SPEED_MM_PER_SEC);
             break;
 
         case 'R':
