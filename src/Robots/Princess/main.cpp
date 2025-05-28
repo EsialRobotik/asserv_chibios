@@ -8,7 +8,6 @@
 #include <cfloat>
 
 #include "sampleStream/USBStream.h"
-#include "raspIO.h"
 #include "util/asservMath.h"
 #include "util/chibiOsAllocatorWrapper.h"
 #include "AsservMain.h"
@@ -23,6 +22,8 @@
 #include "Pll.h"
 #include "blockingDetector/OldSchoolBlockingDetector.h"
 #include "config.h"
+#include "Communication/RaspIO.h"
+
 
 float speed_controller_right_Kp[NB_PI_SUBSET] = { SPEED_CTRL_RIGHT_KP_1, SPEED_CTRL_RIGHT_KP_2, SPEED_CTRL_RIGHT_KP_3};
 float speed_controller_right_Ki[NB_PI_SUBSET] = { SPEED_CTRL_RIGHT_KI_1, SPEED_CTRL_RIGHT_KI_2, SPEED_CTRL_RIGHT_KI_3};
@@ -36,6 +37,27 @@ float speed_controller_left_SpeedRange[NB_PI_SUBSET] = { SPEED_CTRL_LEFT_SPEED_T
 Goto::GotoConfiguration preciseGotoConf  = {COMMAND_MANAGER_GOTO_RETURN_THRESHOLD_mm, COMMAND_MANAGER_GOTO_ANGLE_THRESHOLD_RAD, COMMAND_MANAGER_GOTO_PRECISE_ARRIVAL_DISTANCE_mm};
 Goto::GotoConfiguration waypointGotoConf  = {COMMAND_MANAGER_GOTO_RETURN_THRESHOLD_mm, COMMAND_MANAGER_GOTO_ANGLE_THRESHOLD_RAD, COMMAND_MANAGER_GOTO_WAYPOINT_ARRIVAL_DISTANCE_mm};
 GotoNoStop::GotoNoStopConfiguration gotoNoStopConf = {COMMAND_MANAGER_GOTO_ANGLE_THRESHOLD_RAD, COMMAND_MANAGER_GOTONOSTOP_TOO_BIG_ANGLE_THRESHOLD_RAD, (150/DIST_REGULATOR_KP), 85};
+
+RaspIO::AccDecConfiguration normalAccDec =
+{
+    ANGLE_REGULATOR_MAX_ACC,
+    DIST_REGULATOR_MAX_ACC_FW,
+    DIST_REGULATOR_MAX_DEC_FW,
+    DIST_REGULATOR_MAX_ACC_BW,
+    DIST_REGULATOR_MAX_DEC_BW
+};
+
+
+RaspIO::AccDecConfiguration slowAccDec =
+{
+    ANGLE_REGULATOR_MAX_ACC_SLOW,
+    DIST_REGULATOR_MAX_ACC_FW_SLOW,
+    DIST_REGULATOR_MAX_DEC_FW_SLOW,
+    DIST_REGULATOR_MAX_ACC_BW_SLOW,
+    DIST_REGULATOR_MAX_DEC_BW_SLOW
+};
+
+
 
 Md22::I2cPinInit ESIALCardPinConf_md22 = {GPIOB, 6, GPIOB, 7};
 QuadratureEncoder::GpioPinInit ESIALCardPinConf_Encoders = {GPIOC, 6, GPIOA, 7, GPIOA, 1, GPIOA, 0};
@@ -64,6 +86,7 @@ AccelerationDecelerationLimiter *distanceAccelerationLimiter;
 CommandManager *commandManager;
 AsservMain *mainAsserv;
 
+RaspIO *raspIO;
 
 static void initAsserv()
 {
@@ -103,8 +126,26 @@ static void initAsserv()
                            *speedControllerRight, *speedControllerLeft,
                            *rightPll, *leftPll,
                            blockingDetector);
+
+
+    
+    raspIO = new RaspIO(&SD2, *odometry, *commandManager, *md22MotorController, *mainAsserv,
+    *angleAccelerationlimiter, *distanceAccelerationLimiter,
+    normalAccDec, slowAccDec);
 }
 
+
+void serialIoWrapperPositionOutput(void *)
+{
+    SerialIO *serialIO = (SerialIO*)raspIO;
+    serialIO->positionOutput();
+}
+
+
+void serialIoWrapperCommandInput(void *)
+{
+    raspIO->commandInput();
+}
 
 
 /*
@@ -151,9 +192,12 @@ static THD_FUNCTION(LowPrioUSBThread, arg)
 }
 
 
+#ifdef ENABLE_SHELL
 THD_WORKING_AREA(wa_shell, 2048);
-THD_WORKING_AREA(wa_controlPanel, 256);
-THD_FUNCTION(ControlPanelThread, p);
+#else
+THD_WORKING_AREA(wa_raspio1, 512);
+THD_WORKING_AREA(wa_raspio2, 512);
+#endif
 
 char history_buffer[SHELL_MAX_HIST_BUFF];
 char *completion_buffer[SHELL_MAX_COMPLETIONS];
@@ -198,25 +242,21 @@ int main(void)
 #endif
     };
 
+    
 #ifdef ENABLE_SHELL
-    bool startShell = true;
-#else
-    bool startShell = false;
-#endif
-    if (startShell)
-    {
         thread_t *shellThd = chThdCreateStatic(wa_shell, sizeof(wa_shell), LOWPRIO, shellThread, &shellCfg);
         chRegSetThreadNameX(shellThd, "shell");
-    }
-    else
-    {
-        thread_t *asserCmdSerialThread = chThdCreateStatic(wa_shell, sizeof(wa_shell), LOWPRIO, asservCommandSerial, nullptr);
-        chRegSetThreadNameX(asserCmdSerialThread, "asserv Command serial");
+#else
+    /* 
+     *  Needed thread to run SerialIO (ie: here, communication with ESP32).
+     *  C wrapping function are needed to bridge through C and C++
+     */
+        thread_t *threadPositionOutput = chThdCreateStatic(wa_raspio1, sizeof(wa_raspio1), LOWPRIO, serialIoWrapperPositionOutput, nullptr);
+        chRegSetThreadNameX(threadPositionOutput, "positionOutput");
+        thread_t *threadCommandInput = chThdCreateStatic(wa_raspio2, sizeof(wa_raspio2), LOWPRIO, serialIoWrapperCommandInput, nullptr);
+        chRegSetThreadNameX(threadCommandInput, "commandInput");
+#endif
 
-        thread_t *controlPanelThd = chThdCreateStatic(wa_controlPanel, sizeof(wa_controlPanel), LOWPRIO, asservPositionSerial, nullptr);
-        chRegSetThreadNameX(controlPanelThd, "asserv position update serial");
-
-    }
 
     deactivateHeapAllocation();
 
