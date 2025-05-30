@@ -198,7 +198,7 @@ static THD_FUNCTION(LowPrioUSBThread, arg)
 THD_WORKING_AREA(wa_shell, 2048);
 #else
 THD_WORKING_AREA(wa_raspio1, 512);
-THD_WORKING_AREA(wa_raspio2, 512);
+THD_WORKING_AREA(wa_raspio2, 1024);
 #endif
 
 char history_buffer[SHELL_MAX_HIST_BUFF];
