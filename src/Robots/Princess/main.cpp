@@ -157,7 +157,7 @@ void serialIoWrapperCommandInput(void *)
  */
 static binary_semaphore_t asservStarted_semaphore;
 
-static THD_WORKING_AREA(waAsservThread, 512);
+static THD_WORKING_AREA(waAsservThread, 1024);
 static THD_FUNCTION(AsservThread, arg)
 {
     (void) arg;
@@ -179,7 +179,7 @@ static THD_FUNCTION(AsservThread, arg)
 }
 
 void usbSerialCallback(char *buffer, uint32_t size);
-static THD_WORKING_AREA(waLowPrioUSBThread, 512);
+static THD_WORKING_AREA(waLowPrioUSBThread, 1024);
 static THD_FUNCTION(LowPrioUSBThread, arg)
 {
     (void) arg;
@@ -226,7 +226,7 @@ int main(void)
     chBSemWait(&asservStarted_semaphore);
 
     outputStream = reinterpret_cast<BaseSequentialStream*>(&SD2);
-    chThdCreateStatic(waLowPrioUSBThread, sizeof(waLowPrioUSBThread), LOWPRIO, LowPrioUSBThread, NULL);
+    // chThdCreateStatic(waLowPrioUSBThread, sizeof(waLowPrioUSBThread), LOWPRIO, LowPrioUSBThread, NULL);
 
 
     // Custom commands
@@ -253,9 +253,9 @@ int main(void)
      *  Needed thread to run SerialIO (ie: here, communication with ESP32).
      *  C wrapping function are needed to bridge through C and C++
      */
-        thread_t *threadPositionOutput = chThdCreateStatic(wa_raspio1, sizeof(wa_raspio1), LOWPRIO, serialIoWrapperPositionOutput, nullptr);
+        thread_t *threadPositionOutput = chThdCreateStatic(wa_raspio1, sizeof(wa_raspio1), LOWPRIO+1, serialIoWrapperPositionOutput, nullptr);
         chRegSetThreadNameX(threadPositionOutput, "positionOutput");
-        thread_t *threadCommandInput = chThdCreateStatic(wa_raspio2, sizeof(wa_raspio2), LOWPRIO, serialIoWrapperCommandInput, nullptr);
+        thread_t *threadCommandInput = chThdCreateStatic(wa_raspio2, sizeof(wa_raspio2), LOWPRIO+2, serialIoWrapperCommandInput, nullptr);
         chRegSetThreadNameX(threadCommandInput, "commandInput");
 #endif
 

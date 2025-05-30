@@ -138,7 +138,7 @@ void USBStream::USBStreamHandleConnection_lowerpriothread(usbStreamCallback call
         uint32_t *buffer = (uint32_t*) ptr;
         if(buffer[0] == synchroWord_connection)
         {
-            chprintf(outputStream, "connection detected\r\n");
+            // chprintf(outputStream, "connection detected\r\n");
             /*
              * It's a bit tricky here !
              * As this function is paced by a medium priority thread ( ie: bellow than the rest of this class )
