@@ -38,6 +38,13 @@ public:
     virtual bool noStop() const = 0;
 
     virtual AsservMain::mixing_type_t getMixingType() const = 0;
+
+    
+    void setIndex(uint32_t index) {m_index = index;};
+    uint32_t getIndex() {return m_index;};
+
+    private:
+     uint32_t m_index;
 };
 
 #endif /* SRC_COMMAND_H_ */

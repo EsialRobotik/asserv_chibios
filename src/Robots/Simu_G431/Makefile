@@ -96,6 +96,7 @@ BUILDDIR := ./build
 DEPDIR   := ./.dep
 SRCDIR   := ../../../src
 
+
 # Licensing files.
 include $(CHIBIOS)/os/license/license.mk
 # Startup files.
@@ -119,26 +120,6 @@ include $(CHIBIOS)/os/hal/lib/streams/streams.mk
 # Define linker script file here
 LDSCRIPT= $(STARTUPLD)/STM32G431xB.ld
 
-# Custom part: Depending on a input variable ROBOT, the used main.cpp is different
-
-## Check if the specified ROBOT exist
-#AVAILABLE_ROBOTS=$(shell find src/Robots -mindepth 1 -type d -exec basename {} \;)
-#ifeq (,$(wildcard $(SRCDIR)/Robots/$(ROBOT)/main.cpp))
-#$(error Unknown ROBOT specified! Knowns are : $(AVAILABLE_ROBOTS))
-#
-#endif
-
-
-ifneq ($(STAR),)  # enable the shell
-	PAMI_STAR_DEFINE = -DSTAR
-endif
-
-ifneq ($(SHELL_ENABLE),)  # enable the shell
-	SHELL_MODE_DEFINE = -DENABLE_SHELL
-endif
-
-SHELL_MODE_DEFINE = -DENABLE_SHELL
-#$(error ALLSRC : >$(ALLCSRC)<)
 
 # C sources that can be compiled in ARM or THUMB mode depending on the global
 # setting.
@@ -156,7 +137,9 @@ CSRC = $(ALLCSRC)\
 # C++ sources that can be compiled in ARM or THUMB mode depending on the global
 # setting.
 CPPSRC = $(ALLCPPSRC) \
-       $(wildcard $(SRCDIR)/Robots/PAMI/*.cpp ) \
+       $(wildcard $(SRCDIR)/Robots/Simu_G431/*.cpp ) \
+       $(SRCDIR)/robotStub/MotorEncoderSimulator.cpp \
+       $(SRCDIR)/robotStub/FirstOrderSim.cpp \
        $(SRCDIR)/sampleStream/USBStream.cpp \
        $(SRCDIR)/Encoders/QuadratureEncoder.cpp \
        $(SRCDIR)/AsservMain.cpp \
@@ -174,17 +157,15 @@ CPPSRC = $(ALLCPPSRC) \
        $(SRCDIR)/commandManager/Commands/GotoNoStop.cpp \
        $(SRCDIR)/commandManager/Commands/WheelSpeed.cpp \
        $(SRCDIR)/commandManager/Commands/OrbitalTurn.cpp \
-       $(SRCDIR)/motorController/Mp6550.cpp \
        $(SRCDIR)/util/chibiOsAllocatorWrapper.cpp  \
        $(SRCDIR)/AccelerationLimiter/AbstractAccelerationLimiter.cpp \
        $(SRCDIR)/AccelerationLimiter/SimpleAccelerationLimiter.cpp \
        $(SRCDIR)/AccelerationLimiter/AdvancedAccelerationLimiter.cpp \
        $(SRCDIR)/AccelerationLimiter/AccelerationDecelerationLimiter.cpp \
-       $(SRCDIR)/blockingDetector/OldSchoolBlockingDetector.cpp  \
-       $(SRCDIR)/Communication/SerialIO.cpp \
-       $(SRCDIR)/Communication/RaspIO.cpp \
+       $(SRCDIR)/blockingDetector/OldSchoolBlockingDetector.cpp \
        $(SRCDIR)/Communication/SerialCbor.cpp \
        $(SRCDIR)/Communication/cborStream/CborStreamStateMachine.cpp
+
 
     
 
@@ -212,7 +193,7 @@ CPPWARN = -Wall -Wextra -Wundef
 #
 
 # List all user C define here, like -D_DEBUG=1
-UDEFS = $(SHELL_MODE_DEFINE) $(PAMI_STAR_DEFINE)
+UDEFS = $(SHELL_MODE_DEFINE)
 
 # Define ASM defines here
 UADEFS =
@@ -247,8 +228,8 @@ include $(RULESPATH)/rules.mk
 #
 help :
 	@echo "make                                 :   build with default robot config"
-	@echo "make ROBOT=PAMI                      :   build using the robot config (PAMI here)"
-	@echo "make ROBOT=myRobot STAR=true         :   build using the PAMI Robot config and set it in STAR mode "
+	@echo "make ROBOT=myRobot                   :   build using the myRobot config. A myRobot dir must be present in src/Robots"
+	@echo "make ROBOT=myRobot SHELL_ENABLE=true :   build using the myRobot config and enable the shell (Ie: ENABLE_SHELL will be defined and must be handled in src/Robots/myRobot/main.cpp ! ) "
 	@echo "make flash                           :   load the generated elf to the board"
 	@echo "make debug                           :   load the generated elf to the board & wait for a debugger to connect (with arm-none-eabi-gdb build/asservNucleo.elf -ex \"target remote :3333\" )"
 	@echo "make robots                          :   print the knows robots"

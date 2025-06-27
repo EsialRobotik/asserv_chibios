@@ -1,8 +1,8 @@
 #ifndef MOTOR_CONTROLLER_SIMULATION_H_
 #define MOTOR_CONTROLLER_SIMULATION_H_
 
-#include "MotorController.h"
-#include "Encoder.h"
+#include "motorController/MotorController.h"
+#include "Encoders/Encoder.h"
 #include "ch.h"
 #include "FirstOrderSim.h"
 #include <string>

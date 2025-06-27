@@ -1,26 +1,79 @@
 {
     "makefile.configurations": [
         {
-            "name": "Default",
-            "makeArgs": ["ROBOT=PMI"]
+            "name": "PAMI",
+            "makeArgs": ["ROBOT=PAMI"]
         },
-        {
-            "name": "Print make version",
-            "makeArgs": ["ROBOT=PMI", "clean"]
-        }
     ],
-    "makefile.launchConfigurations": [
-        {
-            "cwd": "/home/nickman/Documents/Nickman/60-69 MicroBiz/61 Draft.dev/makefiles",
-            "binaryPath": "/home/nickman/Documents/Nickman/60-69 MicroBiz/61 Draft.dev/makefiles/target/CoinFlipper.out",
-            "binaryArgs": [
-                "101"
-            ]
-        },
-        {
-            "cwd": "/home/cheff/git/vscode_makefile/target",
-            "binaryPath": "/home/cheff/git/vscode_makefile/target/CoinFlipper.out",
-            "binaryArgs": []
-        }
-    ]
+    "files.associations": {
+        "random": "cpp",
+        "cstdlib": "c",
+        "stacktrace": "cpp",
+        "cstdint": "c",
+        "future": "cpp",
+        "array": "cpp",
+        "atomic": "cpp",
+        "bit": "cpp",
+        "*.tcc": "cpp",
+        "bitset": "cpp",
+        "charconv": "cpp",
+        "chrono": "cpp",
+        "deque": "cpp",
+        "forward_list": "cpp",
+        "list": "cpp",
+        "string": "cpp",
+        "unordered_map": "cpp",
+        "unordered_set": "cpp",
+        "vector": "cpp",
+        "algorithm": "cpp",
+        "memory_resource": "cpp",
+        "string_view": "cpp",
+        "memory": "cpp",
+        "format": "cpp",
+        "fstream": "cpp",
+        "initializer_list": "cpp",
+        "istream": "cpp",
+        "ranges": "cpp",
+        "span": "cpp",
+        "spanstream": "cpp",
+        "sstream": "cpp",
+        "stdexcept": "cpp",
+        "syncstream": "cpp",
+        "regex": "cpp",
+        "tuple": "cpp",
+        "type_traits": "cpp",
+        "valarray": "cpp",
+        "shared_mutex": "c",
+        "cctype": "cpp",
+        "clocale": "cpp",
+        "cmath": "cpp",
+        "compare": "cpp",
+        "concepts": "cpp",
+        "cstdarg": "cpp",
+        "cstddef": "cpp",
+        "cstdio": "cpp",
+        "cstring": "cpp",
+        "ctime": "cpp",
+        "cwchar": "cpp",
+        "cwctype": "cpp",
+        "exception": "cpp",
+        "functional": "cpp",
+        "iterator": "cpp",
+        "optional": "cpp",
+        "ratio": "cpp",
+        "system_error": "cpp",
+        "utility": "cpp",
+        "iomanip": "cpp",
+        "iosfwd": "cpp",
+        "limits": "cpp",
+        "new": "cpp",
+        "numbers": "cpp",
+        "ostream": "cpp",
+        "semaphore": "cpp",
+        "stop_token": "cpp",
+        "streambuf": "cpp",
+        "thread": "cpp",
+        "typeinfo": "cpp",
+        "variant": "cpp"
+    },
 }

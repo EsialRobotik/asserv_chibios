@@ -189,11 +189,9 @@ bool SerialIO::classicCommandHandle(char readChar)
     return res;
 }
 
+
 void SerialIO::commandInput()
 {
-
-    chprintf(m_outputStream, "Started\r\n");
-
 
     while(true)
     {

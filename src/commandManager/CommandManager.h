@@ -37,16 +37,16 @@ class CommandManager
         /*
          * Commandes ajoutables a la liste des consignes du robot
          */
-        bool addStraightLine(float valueInmm);
-        bool addTurn(float angleInDeg);
-        bool addGoTo(float posXInmm, float posYInmm);
-        bool addGoToWaypoint(float posXInmm, float posYInmm);
-        bool addGoToBack(float posXInmm, float posYInmm);
-        bool addGoToNoStop(float posXInmm, float posYInmm);
-        bool addGoToNoStopBack(float posXInmm, float posYInmm);
-        bool addGoToAngle(float posXInmm, float posYInmm);
-        bool addGOrbitalTurn(float angleInDeg, bool forward, bool turnToTheRight);
-        bool addWheelsSpeed(float rightWheelSpeedInmmpersec, float leftWheelSpeedInmmpersec, uint32_t stepDurationInms);
+        bool addStraightLine(float valueInmm, uint32_t index = 0);
+        bool addTurn(float angleInDeg, uint32_t index = 0);
+        bool addGoTo(float posXInmm, float posYInmm, uint32_t index = 0);
+        bool addGoToWaypoint(float posXInmm, float posYInmm, uint32_t index = 0);
+        bool addGoToBack(float posXInmm, float posYInmm, uint32_t index = 0);
+        bool addGoToNoStop(float posXInmm, float posYInmm, uint32_t index = 0);
+        bool addGoToNoStopBack(float posXInmm, float posYInmm, uint32_t index = 0);
+        bool addGoToAngle(float posXInmm, float posYInmm, uint32_t index = 0);
+        bool addGOrbitalTurn(float angleInDeg, bool forward, bool turnToTheRight, uint32_t index = 0);
+        bool addWheelsSpeed(float rightWheelSpeedInmmpersec, float leftWheelSpeedInmmpersec, uint32_t stepDurationInms, uint32_t index = 0);
 
         /*
          * Gestion de l'arret d'urgence
@@ -70,6 +70,7 @@ class CommandManager
          */
         CommandManager::CommandStatus getCommandStatus();
         uint8_t getPendingCommandCount();
+        uint32_t getCurrentCommandIndex();
 
         AsservMain::mixing_type_t getCurrentCommandMixingType() const;
 
