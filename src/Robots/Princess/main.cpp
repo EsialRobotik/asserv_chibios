@@ -131,7 +131,7 @@ static void initAsserv()
 
 
     
-    raspIO = new RaspIO(&SD2, *odometry, *commandManager, *md22MotorController, *mainAsserv,
+    raspIO = new RaspIO(&SD3, *odometry, *commandManager, *md22MotorController, *mainAsserv,
     *angleAccelerationlimiter, *distanceAccelerationLimiter,
     normalAccDec, slowAccDec);
 }
