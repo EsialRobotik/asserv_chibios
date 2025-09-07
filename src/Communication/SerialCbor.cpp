@@ -158,7 +158,6 @@ void SerialCbor::decode_cmd(CborStreamStateMachine::cmd_t &cmd)
         break;
 
         case CborStreamStateMachine::goto_front:
-            //  chprintf(reinterpret_cast<BaseSequentialStream*>(&LPSD1), "goto_front %f %f \r\n", cmd.arg1, cmd.arg2);
             m_commandManager.addGoTo(cmd.arg1, cmd.arg2, cmd.cmd_id);
         break;
 
@@ -167,7 +166,12 @@ void SerialCbor::decode_cmd(CborStreamStateMachine::cmd_t &cmd)
         break;
 
         case CborStreamStateMachine::goto_nostop:
-            m_commandManager.addGoToNoStop(cmd.arg1, cmd.arg2);
+            m_commandManager.addGoToNoStop(cmd.arg1, cmd.arg2, cmd.cmd_id);
+        break;
+
+        case CborStreamStateMachine::orbital_turn:
+            // Use float as boolean is absolutely not a thing todo, but this case doesn't exist when this was conceived. TODO: refactor to have a clear design!
+            m_commandManager.addGOrbitalTurn(degToRad(cmd.arg1), (cmd.arg2 == 1.0), (cmd.arg3 == 1.0), cmd.cmd_id);
         break;
 
         case CborStreamStateMachine::max_motor_speed:

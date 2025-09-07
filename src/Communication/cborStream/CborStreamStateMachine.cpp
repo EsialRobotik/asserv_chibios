@@ -154,6 +154,13 @@ void CborStreamStateMachine::CborStreamState_decode::validate_payload()
                 cmd.arg2 = float(bigFloat);
             }
 
+
+            if( cmd.cmd_type >= orbital_turn)
+            {
+                QCBORDecode_GetDouble(&m_cborDecoderCtx, &bigFloat);
+                cmd.arg3 = float(bigFloat);
+            }
+
             QCBORDecode_GetInt64(&m_cborDecoderCtx, &BigInteger);
             cmd.cmd_id = (int)BigInteger;
         }

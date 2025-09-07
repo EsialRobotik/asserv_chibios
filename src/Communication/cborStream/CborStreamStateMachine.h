@@ -28,7 +28,9 @@ public:
         face=22,
         goto_front=23,
         goto_back=24,
-        goto_nostop=25
+        goto_nostop=25,
+    //Four param messages
+        orbital_turn=30
     } cmd_type_t;
 
 
@@ -37,6 +39,7 @@ public:
         int cmd_id;
         float arg1; 
         float arg2; 
+        float arg3; 
     } cmd_t;
 
 
