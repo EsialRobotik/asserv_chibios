@@ -20,10 +20,9 @@ void SimpleAccelerationLimiter::setMaxAcceleration(float maxAcceleration)
 }
 
 
-Cbore & SimpleAccelerationLimiter::getConfiguration(Cbore & cbor_representation)
+void SimpleAccelerationLimiter::getConfiguration(QCBOREncodeContext &EncodeCtx)
 {
-    return cbor_representation.map()
-            .key("name").value("acc_limiter")
-            .key("max_acc").value(m_maxAcceleration)
-            .end();
+    UsefulBufC name = {.ptr = "acc_limiter", .len = strlen("acc_limiter")};
+    QCBOREncode_AddTextToMapSZ (&EncodeCtx, "name", name);
+    QCBOREncode_AddFloatToMapSZ(&EncodeCtx, "max_acc", m_maxAcceleration);
 }

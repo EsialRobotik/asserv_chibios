@@ -169,7 +169,6 @@ void USBStream::USBStreamHandleConnection_lowerpriothread(usbStreamCallback call
 
         if(buffer[0] == synchroWord_connection)
         {
-                       chprintf(outputStream, "connection detected\r\n");
             /*
              * It's a bit tricky here !
              * As this function is paced by a medium priority thread ( ie: bellow than the rest of this class )
@@ -209,11 +208,20 @@ void USBStream::USBStreamHandleConnection_lowerpriothread(usbStreamCallback call
         }
         else if(buffer[0] == synchroWord_config && m_configuration_representation)
         {
-            Cbore encoder(cbor_buffer, sizeof(cbor_buffer));
-            m_configuration_representation->generateRepresentation(encoder);
-            chprintf(outputStream, "Config requested from plotjuggler, sending %d bytes\r\n", encoder.getLength());
-            chDbgAssert(encoder.getLength() < sizeof(cbor_buffer), "Not enough space in the cbor buffer.");
-			sendBuffer( cbor_buffer, encoder.getLength(), synchroWord_config);
+            QCBOREncodeContext EncodeCtx;
+            UsefulBuf qcoborBuffer = {cbor_buffer, sizeof(cbor_buffer)};
+            QCBOREncode_Init(&EncodeCtx, qcoborBuffer);
+
+
+            m_configuration_representation->generateRepresentation(EncodeCtx);
+            UsefulBufC EncodedCBOR;
+            QCBORError uErr = QCBOREncode_Finish(&EncodeCtx, &EncodedCBOR);
+            if(uErr == QCBOR_SUCCESS) 
+            {   
+                chprintf(outputStream, "Config requested from plotjuggler, sending %d bytes\r\n", EncodedCBOR.len);
+                chDbgAssert(EncodedCBOR.len < sizeof(cbor_buffer), "Not enough space in the cbor buffer.");
+                sendBuffer( (const uint8_t*)EncodedCBOR.ptr, EncodedCBOR.len, synchroWord_config);
+            }
         }
         else
         {

@@ -10,7 +10,7 @@ public:
 										 Configuration *angle_acc, Configuration *dist_acc,
 										 Configuration *speed_right, Configuration *speed_left);
 
-	void generateRepresentation(Cbore & cbor_representation);
+	void generateRepresentation(QCBOREncodeContext &EncodeCtx);
 private:
 
 	Configuration * m_angle_regulator;

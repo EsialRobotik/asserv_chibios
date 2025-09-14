@@ -33,7 +33,7 @@ public:
     inline void setMaxAccBW(float value)  { m_maxAccelerationBackward = value; };
     inline void setMaxDecBW(float value)  { m_maxDecelerationBackward = value; };
 
-    virtual Cbore & getConfiguration(Cbore & cbor_representation);
+    virtual void getConfiguration(QCBOREncodeContext &EncodeCtx);
 
 
 private:

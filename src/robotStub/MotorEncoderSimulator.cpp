@@ -7,7 +7,7 @@
 
 
 #define MAX_SPEED 3000
-#define TAU 0.4
+#define TAU 0.2
 
  MotorEncoderSimulator::MotorEncoderSimulator(float period, float wheelRadius_mm, float encodersTicksByTurn, Odometry *odometry) :
         MotorController(), Encoders(),

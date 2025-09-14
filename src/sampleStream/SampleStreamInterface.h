@@ -91,6 +91,12 @@ public:
         DistanceLimiterTimeToVMax,              accDec/distance/TimeToVMax,
         DistanceLimiterMaxAttainableSpeed,      accDec/distance/MaxAttainableSpeed,
         DistanceLimitercurrentSpeed,            accDec/distance/currentSpeed,
+        MaxAcceleration,                        accDec/distance/maxAcc,
+        MaxDeceleration,                        accDec/distance/maxDec,
+        
+        MaxDeltaUp,                             accDec/distance/maxDeltaUp,
+        MaxDeltaDown,                          accDec/distance/maxDeltaDown,
+
         BlockingDuration,                       blockingDetector/blockingDuration,
         BlockingDetected,                       blockingDetector/blockingDetected
         );

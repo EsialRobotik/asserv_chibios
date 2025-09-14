@@ -32,7 +32,6 @@ bool RaspIO::customCommandHandle(char readChar)
     bool res = true;
     switch (readChar) 
     {
-
         case 'N': // Restore du comportement Normal du robot
             m_angleAccelerationlimiter.setMaxAcceleration(m_normalAccDec.maxAngleAcceleration);
         	m_distanceAccelerationLimiter.disable();
@@ -64,8 +63,6 @@ bool RaspIO::customCommandHandle(char readChar)
 
 void RaspIO::commandInput()
 {
-
-    chprintf(m_outputStream, "Started\r\n");
 
 
     while(true)

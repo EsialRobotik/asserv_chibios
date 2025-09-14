@@ -48,7 +48,7 @@ void Odometry::refresh(float m_encoderDeltaRight_mm, float m_encoderDeltaLeft_mm
      *               distance entre les roues
      */
     m_deltaDist = (m_encoderDeltaLeft_mm + m_encoderDeltaRight_mm) / 2;
-    float diffCount = m_encoderDeltaRight_mm - m_encoderDeltaLeft_mm;
+    double diffCount = m_encoderDeltaRight_mm - m_encoderDeltaLeft_mm;
     m_deltaTheta = diffCount / double(m_encoderWheelsDistance_mm); // En radian
 
     if (diffCount == 0)    // On considère le mouvement comme une ligne droite

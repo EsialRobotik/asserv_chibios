@@ -41,9 +41,9 @@ Command::consign_type_t GotoNoStop::computeInitialConsign(float X_mm, float Y_mm
        /* If the distance is lower than nextDistanceConsign_mm,
         *  We want to go precisely to the goal, use a classic goto algorithm
         */
-       float projectedDist = deltaDist * cosf(deltaTheta);
        if (deltaDist < m_gotoConfiguration->gotoReturnThreshold_mm)
        {
+           float projectedDist = deltaDist * cosf(deltaTheta);
            consign.distance_consign = distance_regulator.getAccumulator() + m_backModeCorrection * projectedDist ;
        }
        else

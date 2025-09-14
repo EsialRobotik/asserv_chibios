@@ -39,12 +39,11 @@ void AdvancedAccelerationLimiter::setHighSpeedThreshold(float highSpeedThreshold
 }
 
 
-Cbore & AdvancedAccelerationLimiter::getConfiguration(Cbore & cbor_representation)
+void AdvancedAccelerationLimiter::getConfiguration(QCBOREncodeContext &EncodeCtx)
 {
-    return cbor_representation.map()
-            .key("name").value("adv_acc_limiter")
-            .key("max_acc").value(m_maxAcceleration)
-            .key("min_acc").value(m_minAcceleration)
-            .key("highspeed_threshold").value(m_HighSpeedThreshold)
-            .end();
+    UsefulBufC name = {.ptr = "adv_acc_limiter", .len = strlen("adv_acc_limiter")};
+    QCBOREncode_AddTextToMapSZ (&EncodeCtx, "name", name);
+    QCBOREncode_AddFloatToMapSZ(&EncodeCtx, "max_acc", m_maxAcceleration);
+    QCBOREncode_AddFloatToMapSZ(&EncodeCtx, "min_acc", m_minAcceleration);
+    QCBOREncode_AddFloatToMapSZ(&EncodeCtx, "highspeed_threshold", m_HighSpeedThreshold);
 }

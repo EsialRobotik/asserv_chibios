@@ -4,8 +4,6 @@
 #include <cstdint>
 #include <type_traits>
 
-#include "VitiMath.hpp"
-
 template <typename T>
 class Filter {
     static_assert(std::is_floating_point<T>(), "Only floating points allowed");

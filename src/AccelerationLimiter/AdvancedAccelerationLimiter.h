@@ -34,7 +34,7 @@ public:
     inline float getMinAcceleration() const { return m_minAcceleration; };
     inline float getHighSpeedThreshold() const{ return m_HighSpeedThreshold; };
 
-    virtual Cbore & getConfiguration(Cbore & cbor_representation);
+    virtual void getConfiguration(QCBOREncodeContext &EncodeCtx);
 
 private:
     virtual float limitOutput(float dt, float targetSpeed, float previousOutput, float currentSpeed);

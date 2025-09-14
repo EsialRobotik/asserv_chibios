@@ -25,7 +25,7 @@ public:
     void setMaxAcceleration(float maxAcceleration);
     inline float getMaxAcceleration() const { return m_maxAcceleration; };
 
-    virtual Cbore & getConfiguration(Cbore & cbor_representation);
+    virtual void getConfiguration(QCBOREncodeContext &EncodeCtx);
 
 
 private:

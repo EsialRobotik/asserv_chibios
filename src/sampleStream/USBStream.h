@@ -53,6 +53,7 @@ private:
     
     uint8_t cbor_buffer[384];
 
+
     uint16_t m_loopFrequency;
 
 

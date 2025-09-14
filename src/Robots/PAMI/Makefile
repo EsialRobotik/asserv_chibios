@@ -145,6 +145,11 @@ SHELL_MODE_DEFINE = -DENABLE_SHELL
 CSRC = $(ALLCSRC)\
        $(SRCDIR)/usbcfg.c \
        $(SRCDIR)/util/exceptionVectors.c \
+       $(SRCDIR)/util/qcbor/src/ieee754.c \
+       $(SRCDIR)/util/qcbor/src/qcbor_decode.c \
+       $(SRCDIR)/util/qcbor/src/qcbor_encode.c \
+       $(SRCDIR)/util/qcbor/src/UsefulBuf.c \
+       $(SRCDIR)/util/qcbor/src/qcbor_err_to_str.c \
        $(TESTSRC) 
 
 
@@ -180,7 +185,8 @@ CPPSRC = $(ALLCPPSRC) \
        $(SRCDIR)/Communication/RaspIO.cpp \
        $(SRCDIR)/sampleStream/configuration/ConfigurationRepresentation.cpp \
        $(SRCDIR)/sampleStream/configuration/cborg/CborBase.cpp \
-       $(SRCDIR)/sampleStream/configuration/cborg/Cbore.cpp \
+       $(SRCDIR)/Communication/SerialCbor.cpp \
+       $(SRCDIR)/Communication/cborStream/CborStreamStateMachine.cpp 
 
 
     
@@ -192,7 +198,7 @@ ASMSRC = $(ALLASMSRC)
 ASMXSRC = $(ALLXASMSRC)
 
 # Inclusion directories.
-INCDIR = $(CONFDIR) $(ALLINC) $(TESTINC) $(CHIBIOS_CONTRIB)/os/various $(SRCDIR) \
+INCDIR = $(CONFDIR) $(ALLINC) $(TESTINC) $(CHIBIOS_CONTRIB)/os/various $(SRCDIR) $(SRCDIR)/util/ $(SRCDIR)/util/qcbor/inc \
 			$(shell find . -type d)  \
 			$(SRCDIR)/Encoders \
 			$(SRCDIR)/motorController \

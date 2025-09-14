@@ -23,6 +23,7 @@
 #include "blockingDetector/OldSchoolBlockingDetector.h"
 #include "config.h"
 #include "Communication/SerialIO.h"
+#include "Communication/SerialCbor.h"
 #include "sampleStream/configuration/ConfigurationRepresentation.h"
 
 float speed_controller_right_Kp[NB_PI_SUBSET] = { SPEED_CTRL_RIGHT_KP_1, SPEED_CTRL_RIGHT_KP_2, SPEED_CTRL_RIGHT_KP_3};
@@ -63,7 +64,7 @@ SimpleAccelerationLimiter *distanceAccelerationLimiter;
 CommandManager *commandManager;
 AsservMain *mainAsserv;
 
-SerialIO *esp32Io;
+SerialCbor *esp32IoCbor;
 
 ConfigurationRepresentation *configurationRepresentation;
 
@@ -298,7 +299,7 @@ static void initAsserv()
                            *rightPll, *leftPll,
                            nullptr);
 
-    esp32Io = new SerialIO(&SD1, *odometry, *commandManager, *mp6550, *mainAsserv);
+    esp32IoCbor = new SerialCbor(&LPSD1, *odometry, *commandManager, *mp6550, *mainAsserv);
 
     configurationRepresentation = new ConfigurationRepresentation (angleRegulator, distanceRegulator, angleAccelerationlimiter, distanceAccelerationLimiter, speedControllerRight, speedControllerLeft);
 
@@ -306,13 +307,13 @@ static void initAsserv()
 
 void serialIoWrapperPositionOutput(void *)
 {
-    esp32Io->positionOutput();
+    esp32IoCbor->positionOutput();
 }
 
 
 void serialIoWrapperCommandInput(void *)
 {
-    esp32Io->commandInput();
+    esp32IoCbor->commandInput();
 }
 
 /*
@@ -348,6 +349,7 @@ static THD_FUNCTION(LowPrioUSBThread, arg)
     while (!chThdShouldTerminateX())
     {
        USBStream::instance()->USBStreamHandleConnection_lowerpriothread(usbSerialCallback);
+       chThdSleepMilliseconds(50);
     }
 
 }
@@ -368,8 +370,8 @@ void asservCommandUSB(BaseSequentialStream *chp, int argc, char **argv);
 
 
 
-THD_WORKING_AREA(wa_raspio1, 512);
-THD_WORKING_AREA(wa_raspio2, 512);
+THD_WORKING_AREA(wa_raspioInput, 1024);
+THD_WORKING_AREA(wa_raspioOutput, 1024);
 
 int main(void)
 {
@@ -406,7 +408,7 @@ int main(void)
     *  LPUSART 1 : built-in usb serial port. For shell only
     */
     sdStart(&LPSD1, NULL);
-    outputStream = reinterpret_cast<BaseSequentialStream*>(&LPSD1);
+    outputStream = reinterpret_cast<BaseSequentialStream*>(&SD1);
     shellInit();
 
 
@@ -419,7 +421,7 @@ int main(void)
 
 
     /* Create a 'background' thread to handle command received through the USB */
-    chThdCreateStatic(waLowPrioUSBThread, sizeof(waLowPrioUSBThread), LOWPRIO, LowPrioUSBThread, NULL);
+    chThdCreateStatic(waLowPrioUSBThread, sizeof(waLowPrioUSBThread), LOWPRIO+2, LowPrioUSBThread, NULL);
 
 
     /*
@@ -439,7 +441,7 @@ int main(void)
 #endif
     };
 
-    thread_t *shellThd = chThdCreateStatic(wa_shell, sizeof(wa_shell), LOWPRIO, shellThread, &shellCfg);
+    thread_t *shellThd = chThdCreateStatic(wa_shell, sizeof(wa_shell), LOWPRIO+1, shellThread, &shellCfg);
     chRegSetThreadNameX(shellThd, "shell");
 
 
@@ -454,9 +456,9 @@ int main(void)
      *  Needed thread to run SerialIO (ie: here, communication with ESP32).
      *  C wrapping function are needed to bridge through C and C++
      */
-    thread_t *threadPositionOutput = chThdCreateStatic(wa_raspio1, sizeof(wa_raspio1), LOWPRIO, serialIoWrapperPositionOutput, nullptr);
+    thread_t *threadPositionOutput = chThdCreateStatic(wa_raspioInput, sizeof(wa_raspioInput), LOWPRIO+3, serialIoWrapperPositionOutput, nullptr);
     chRegSetThreadNameX(threadPositionOutput, "positionOutput");
-    thread_t *threadCommandInput = chThdCreateStatic(wa_raspio2, sizeof(wa_raspio2), LOWPRIO, serialIoWrapperCommandInput, nullptr);
+    thread_t *threadCommandInput = chThdCreateStatic(wa_raspioOutput, sizeof(wa_raspioOutput), LOWPRIO+4, serialIoWrapperCommandInput, nullptr);
     chRegSetThreadNameX(threadCommandInput, "commandInput");
 
 

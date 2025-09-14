@@ -2,7 +2,7 @@
 #define CONFIGURATION_ITF_H_
 
 
-#include "cborg/Cbor.h"
+#include "qcbor/qcbor_encode.h"
 
 
 class Configuration
@@ -10,7 +10,7 @@ class Configuration
 public:
     virtual ~Configuration(){}
 
-    virtual Cbore & getConfiguration(Cbore & cbor_representation) = 0;
+    virtual void getConfiguration(QCBOREncodeContext &EncodeCtx) = 0;
 };
 
 

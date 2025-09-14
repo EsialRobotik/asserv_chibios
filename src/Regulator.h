@@ -58,7 +58,8 @@ public:
         m_maxOutput = max_output;
     };
     
-    virtual Cbore & getConfiguration(Cbore & cbor_representation);
+    virtual void getConfiguration(QCBOREncodeContext &EncodeCtx);
+    
 
 private:
     double m_accumulator;

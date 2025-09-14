@@ -42,113 +42,132 @@ CommandManager::CommandManager(float straitLineArrivalWindows_mm, float turnArri
 
 }
 
-bool CommandManager::addStraightLine(float valueInmm)
+bool CommandManager::addStraightLine(float valueInmm, uint32_t index)
 {
     Command *ptr = m_cmdList.getFree();
     if(ptr == nullptr)
         return false;
 
     new (ptr) StraitLine(valueInmm, m_straitLineArrivalWindows_mm);
+    ptr->setIndex(index);
 
     return m_cmdList.push();
 }
 
-bool CommandManager::addTurn(float angleInRad)
+bool CommandManager::addTurn(float angleInRad, uint32_t index)
 {
     Command *ptr = m_cmdList.getFree();
     if(ptr == nullptr)
         return false;
 
     new (ptr) Turn(angleInRad, m_turnArrivalWindows_rad);
+    ptr->setIndex(index);
+
     m_cmdList.push();
     return true;
 }
 
-bool CommandManager::addGOrbitalTurn(float angleInRad, bool forward, bool turnToTheRight)
+bool CommandManager::addGOrbitalTurn(float angleInRad, bool forward, bool turnToTheRight, uint32_t index)
 {
     Command *ptr = m_cmdList.getFree();
     if(ptr == nullptr)
         return false;
 
     new (ptr) OrbitalTurn(angleInRad, forward, turnToTheRight, m_turnArrivalWindows_rad, m_angle_regulator_normal_max_output, m_angle_regulator_orbital_max_output, m_angle_regulator);
+    ptr->setIndex(index);
+
     m_cmdList.push();
     return true;
 }
 
-bool CommandManager::addWheelsSpeed(float rightWheelSpeedInmmpersec, float leftWheelSpeedInmmpersec, uint32_t stepDurationInms)
+bool CommandManager::addWheelsSpeed(float rightWheelSpeedInmmpersec, float leftWheelSpeedInmmpersec, uint32_t stepDurationInms, uint32_t index)
 {
     Command *ptr = m_cmdList.getFree();
      if(ptr == nullptr)
          return false;
 
      new (ptr) WheelSpeed(rightWheelSpeedInmmpersec, leftWheelSpeedInmmpersec, stepDurationInms);
+     ptr->setIndex(index);
+
      m_cmdList.push();
      return true;
 }
 
 
-bool CommandManager::addGoTo(float posXInmm, float posYInmm)
+bool CommandManager::addGoTo(float posXInmm, float posYInmm, uint32_t index)
 {
     Command *ptr = m_cmdList.getFree();
     if(ptr == nullptr)
         return false;
 
     new (ptr) Goto(posXInmm, posYInmm, &m_preciseGotoConfiguration);
+    ptr->setIndex(index);
+
     m_cmdList.push();
     return true;
 }
 
-bool CommandManager::addGoToWaypoint(float posXInmm, float posYInmm)
+bool CommandManager::addGoToWaypoint(float posXInmm, float posYInmm, uint32_t index)
 {
     Command *ptr = m_cmdList.getFree();
     if(ptr == nullptr)
         return false;
 
     new (ptr) Goto(posXInmm, posYInmm, &m_waypointGotoConfiguration);
+    ptr->setIndex(index);
+
     m_cmdList.push();
     return true;
 }
 
-bool CommandManager::addGoToBack(float posXInmm, float posYInmm)
+bool CommandManager::addGoToBack(float posXInmm, float posYInmm, uint32_t index)
 {
     Command *ptr = m_cmdList.getFree();
     if(ptr == nullptr)
         return false;
 
     new (ptr) Goto(posXInmm, posYInmm, &m_preciseGotoConfiguration, true);
+    ptr->setIndex(index);
+
     m_cmdList.push();
     return true;
 }
 
-bool CommandManager::addGoToNoStop(float posXInmm, float posYInmm)
+bool CommandManager::addGoToNoStop(float posXInmm, float posYInmm, uint32_t index)
 {
     Command *ptr = m_cmdList.getFree();
     if(ptr == nullptr)
         return false;
 
     new (ptr) GotoNoStop(posXInmm, posYInmm, &m_gotoNoStopConfiguration, &m_preciseGotoConfiguration, false, m_accelerationDecelerationLimiter);
+    ptr->setIndex(index);
+
     m_cmdList.push();
     return true;
 }
 
-bool CommandManager::addGoToNoStopBack(float posXInmm, float posYInmm)
+bool CommandManager::addGoToNoStopBack(float posXInmm, float posYInmm, uint32_t index)
 {
     Command *ptr = m_cmdList.getFree();
     if(ptr == nullptr)
         return false;
 
     new (ptr) GotoNoStop(posXInmm, posYInmm, &m_gotoNoStopConfiguration, &m_preciseGotoConfiguration, true);
+    ptr->setIndex(index);
+
     m_cmdList.push();
     return true;
 }
 
-bool CommandManager::addGoToAngle(float posXInmm, float posYInmm)
+bool CommandManager::addGoToAngle(float posXInmm, float posYInmm, uint32_t index)
 {
     Command *ptr = m_cmdList.getFree();
     if(ptr == nullptr)
         return false;
 
     new (ptr) GotoAngle(posXInmm, posYInmm, m_turnArrivalWindows_rad);
+    ptr->setIndex(index);
+
     m_cmdList.push();
     return true;
 }
@@ -190,6 +209,14 @@ CommandManager::CommandStatus CommandManager::getCommandStatus()
 uint8_t CommandManager::getPendingCommandCount()
 {
     return m_cmdList.size();
+}
+
+uint32_t CommandManager::getCurrentCommandIndex()
+{
+    if( m_currentCmd != nullptr)
+        return m_currentCmd->getIndex();
+
+    return 0;
 }
 
 

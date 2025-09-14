@@ -22,7 +22,7 @@ class AdaptativeSpeedController : public SpeedController, public Configuration
 
         void getGainsForRange(uint8_t range, float *Kp, float *Ki, float *speedRange);
 
-        virtual Cbore & getConfiguration(Cbore & cbor_representation);
+        virtual void getConfiguration(QCBOREncodeContext &EncodeCtx);
 
 
     private:

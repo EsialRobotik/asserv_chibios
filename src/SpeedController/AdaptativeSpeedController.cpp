@@ -81,13 +81,26 @@ void AdaptativeSpeedController::getGainsForRange(uint8_t range, float *Kp, float
 }
 
 
-Cbore & AdaptativeSpeedController::getConfiguration(Cbore & cbor_representation)
+void AdaptativeSpeedController::getConfiguration(QCBOREncodeContext &EncodeCtx)
 {
-    return cbor_representation.map()
-    .key("name").value("adv_speed_ctrl")
-    .key("Range_0").array().item(m_GainsSpeedRange[0]).item(m_speedKpSet[0]).item(m_speedKiSet[0]).end()
-    .key("Range_1").array().item(m_GainsSpeedRange[1]).item(m_speedKpSet[1]).item(m_speedKiSet[1]).end()
-    .key("Range_2").array().item(m_GainsSpeedRange[2]).item(m_speedKpSet[2]).item(m_speedKiSet[2]).end()
-    .end();
+    UsefulBufC name = {.ptr = "adv_speed_ctrl", .len = strlen("adv_speed_ctrl")};
+    QCBOREncode_AddTextToMapSZ (&EncodeCtx, "name", name);
+    QCBOREncode_OpenArrayInMapSZ(&EncodeCtx, "Range_0");
+    QCBOREncode_AddFloat(&EncodeCtx, m_GainsSpeedRange[0]);
+    QCBOREncode_AddFloat(&EncodeCtx, m_speedKpSet[0]);
+    QCBOREncode_AddFloat(&EncodeCtx, m_speedKiSet[0]);
+    QCBOREncode_CloseArray(&EncodeCtx);
+
+    QCBOREncode_OpenArrayInMapSZ(&EncodeCtx, "Range_1");
+    QCBOREncode_AddFloat(&EncodeCtx, m_GainsSpeedRange[1]);
+    QCBOREncode_AddFloat(&EncodeCtx, m_speedKpSet[1]);
+    QCBOREncode_AddFloat(&EncodeCtx, m_speedKiSet[1]);
+    QCBOREncode_CloseArray(&EncodeCtx);
+
+    QCBOREncode_OpenArrayInMapSZ(&EncodeCtx, "Range_2");
+    QCBOREncode_AddFloat(&EncodeCtx, m_GainsSpeedRange[2]);
+    QCBOREncode_AddFloat(&EncodeCtx, m_speedKpSet[2]);
+    QCBOREncode_AddFloat(&EncodeCtx, m_speedKiSet[2]);
+    QCBOREncode_CloseArray(&EncodeCtx);
 }
 

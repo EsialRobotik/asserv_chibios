@@ -88,6 +88,7 @@ float AccelerationDecelerationLimiter::limitAcceleration(float dt, float targetS
 
     if(m_CompensatedOutput > m_previousLimitedOutput+max_delta_up)
         m_CompensatedOutput = m_previousLimitedOutput+max_delta_up;
+    
     if(m_CompensatedOutput < m_previousLimitedOutput-max_delta_down)
         m_CompensatedOutput = m_previousLimitedOutput-max_delta_down;
 
@@ -100,7 +101,7 @@ float AccelerationDecelerationLimiter::limitAcceleration(float dt, float targetS
    if( targetSpeed > 0 && m_CompensatedOutput > targetSpeed)
        m_CompensatedOutput = targetSpeed;
 
-   if( targetSpeed < 0 && m_CompensatedOutput - targetSpeed)
+   if( targetSpeed < 0 && m_CompensatedOutput < targetSpeed)
        m_CompensatedOutput = targetSpeed;
 
 
@@ -115,6 +116,10 @@ float AccelerationDecelerationLimiter::limitAcceleration(float dt, float targetS
     instance->setDistanceLimiterTimeToVMax(m_timeToVmax);
     instance->setDistanceLimiterMaxAttainableSpeed(m_maxAttainableSpeed);
     instance->setDistanceLimiterTimeFromVmaxToZero(m_timeFromVmaxToZero);
+    instance->setMaxAcceleration(maxAcceleration);
+    instance->setMaxDeceleration(maxDeceleration);
+    instance->setMaxDeltaUp(max_delta_up);
+    instance->setMaxDeltaDown(max_delta_down);
 
 
     m_previousLimitedOutput = m_CompensatedOutput;
@@ -124,8 +129,10 @@ float AccelerationDecelerationLimiter::limitAcceleration(float dt, float targetS
 
 void AccelerationDecelerationLimiter::enable()
 {
-       m_enabled = true;
-       reset();  // When enabling again this limiter, reset the internal values. This should fix the famous bug "the moustache of rami"
+    if( !m_enabled)
+        reset();  // When enabling again this limiter, reset the internal values. This should fix the famous bug "the moustache of rami"
+
+    m_enabled = true;
 }
 
 void AccelerationDecelerationLimiter::disable()
@@ -135,16 +142,15 @@ void AccelerationDecelerationLimiter::disable()
 
 
 
-Cbore & AccelerationDecelerationLimiter::getConfiguration(Cbore & cbor_representation)
+void AccelerationDecelerationLimiter::getConfiguration(QCBOREncodeContext &EncodeCtx)
 {
-    return cbor_representation.map()
-            .key("name").value("acc_dec_limiter")
-            .key("max_acc_fw").value(m_maxAccelerationForward)
-            .key("max_acc_bw").value(m_maxAccelerationBackward)
-            .key("max_dec_fw").value(m_maxDecelerationForward)
-            .key("max_dec_bw").value(m_maxDecelerationBackward)
-            .key("dampling").value(m_damplingFactor)
-            .end();
+    UsefulBufC name = {.ptr = "acc_dec_limiter", .len = strlen("acc_dec_limiter")};
+    QCBOREncode_AddTextToMapSZ (&EncodeCtx, "name", name);
+    QCBOREncode_AddFloatToMapSZ(&EncodeCtx, "max_acc_fw", m_maxAccelerationForward);
+    QCBOREncode_AddFloatToMapSZ(&EncodeCtx, "max_acc_bw", m_maxAccelerationBackward);
+    QCBOREncode_AddFloatToMapSZ(&EncodeCtx, "max_dec_fw", m_maxDecelerationForward);
+    QCBOREncode_AddFloatToMapSZ(&EncodeCtx, "max_dec_bw", m_maxDecelerationBackward);
+    QCBOREncode_AddFloatToMapSZ(&EncodeCtx, "dampling", m_damplingFactor);
 }
 
 

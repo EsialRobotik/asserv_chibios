@@ -36,9 +36,7 @@ float Regulator::updateOutput(float goal)
 }
 
 
-Cbore & Regulator::getConfiguration(Cbore & cbor_representation)
+void Regulator::getConfiguration(QCBOREncodeContext &EncodeCtx)
 {
-    return cbor_representation.map()
-        .key("Kp").value(m_Kp)
-        .end();
+    QCBOREncode_AddFloatToMapSZ(&EncodeCtx, "Kp", m_Kp);
 }
