@@ -4,11 +4,13 @@
 #include <hal.h>
 #include "core_cm4.h"
 #include "configuration/ConfigurationRepresentation.h"
+#include "qcbor/qcbor_spiffy_decode.h"
 #include <cstring>
 
 const uint32_t synchroWord_stream = 0xCAFED00D;
-const uint32_t synchroWord_config = 0xCAFEDECA;
+const uint32_t synchroWord_get_config = 0xCAFEDECA;
 const uint32_t synchroWord_connection = 0xDEADBEEF;
+const uint32_t synchroWord_tune = 0xBAADC0DE;
 
 
 USBStream::USBStream(uint16_t loopFrequency, ConfigurationRepresentation *configuration_representation )
@@ -165,7 +167,7 @@ void USBStream::USBStreamHandleConnection_lowerpriothread(usbStreamCallback call
     if (size > 0)
     {
         uint32_t *buffer = (uint32_t*) ptr;
-        chprintf(outputStream, "buffer[0] %x : synchroWord_connection %x  synchroWord_config %x\r\n", buffer[0] , synchroWord_connection, synchroWord_config);
+        // chprintf(outputStream, "buffer[0] %x : synchroWord_connection %x  synchroWord_get_config %x\r\n", buffer[0] , synchroWord_connection, synchroWord_get_config);
 
         if(buffer[0] == synchroWord_connection)
         {
@@ -193,7 +195,7 @@ void USBStream::USBStreamHandleConnection_lowerpriothread(usbStreamCallback call
             for(i=0;i<description_size; i++)
                 ptr_str[i] = description[i];
 
-            // But wait, there's more ! At the end send the loop frequency and update the whole descripition size
+            // But wait, there's more ! At the end send the loop frequency and update the whole description size
             int len = sprintf(&ptr_str[i], "freq=%d", m_loopFrequency);
             ptr_32[1]+= len;
             description_size += len;
@@ -206,7 +208,7 @@ void USBStream::USBStreamHandleConnection_lowerpriothread(usbStreamCallback call
             getEmptyBuffer();
             chMtxUnlock(&m_sample_sending_mutex);
         }
-        else if(buffer[0] == synchroWord_config && m_configuration_representation)
+        else if(buffer[0] == synchroWord_get_config && m_configuration_representation)
         {
             QCBOREncodeContext EncodeCtx;
             UsefulBuf qcoborBuffer = {cbor_buffer, sizeof(cbor_buffer)};
@@ -218,10 +220,19 @@ void USBStream::USBStreamHandleConnection_lowerpriothread(usbStreamCallback call
             QCBORError uErr = QCBOREncode_Finish(&EncodeCtx, &EncodedCBOR);
             if(uErr == QCBOR_SUCCESS) 
             {   
-                chprintf(outputStream, "Config requested from plotjuggler, sending %d bytes\r\n", EncodedCBOR.len);
+                // chprintf(outputStream, "Config requested from plotjuggler, sending %d bytes\r\n", EncodedCBOR.len);
                 chDbgAssert(EncodedCBOR.len < sizeof(cbor_buffer), "Not enough space in the cbor buffer.");
-                sendBuffer( (const uint8_t*)EncodedCBOR.ptr, EncodedCBOR.len, synchroWord_config);
+                sendBuffer( (const uint8_t*)EncodedCBOR.ptr, EncodedCBOR.len, synchroWord_get_config);
             }
+        }
+        else if(buffer[0] == synchroWord_tune && m_configuration_representation)
+        {
+            UsefulBufC encoded_cbor = {.ptr = &buffer[1], .len = size-sizeof(uint32_t)};
+           
+            QCBORDecode_Init(&m_cborDecoderCtx, encoded_cbor, QCBOR_DECODE_MODE_NORMAL);
+
+            m_configuration_representation->applyConfiguration(m_cborDecoderCtx);
+            QCBORDecode_Finish(&m_cborDecoderCtx);
         }
         else
         {

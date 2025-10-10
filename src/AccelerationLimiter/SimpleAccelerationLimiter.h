@@ -27,6 +27,7 @@ public:
 
     virtual void getConfiguration(QCBOREncodeContext &EncodeCtx);
 
+    virtual void applyConfiguration(QCBORDecodeContext &decodeCtx);
 
 private:
     virtual float limitOutput(float dt, float targetSpeed, float previousOutput, float currentSpeed);

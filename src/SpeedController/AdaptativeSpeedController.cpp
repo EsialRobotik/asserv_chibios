@@ -3,6 +3,10 @@
 #include "ch.h"
 #include <cmath>
 
+#include <ch.h>
+#include <hal.h>
+#include <chprintf.h>
+
 
 AdaptativeSpeedController::AdaptativeSpeedController(
         float KpGains[NB_PI_SUBSET], float KiGains[NB_PI_SUBSET], float speedRange[NB_PI_SUBSET],
@@ -104,3 +108,34 @@ void AdaptativeSpeedController::getConfiguration(QCBOREncodeContext &EncodeCtx)
     QCBOREncode_CloseArray(&EncodeCtx);
 }
 
+void AdaptativeSpeedController::applyConfiguration(QCBORDecodeContext &decodeCtx)
+{
+
+	QCBORDecode_EnterArrayFromMapSZ(&decodeCtx, "Range_0");
+    double Kp0;
+	QCBORDecode_GetDouble(&decodeCtx,  &Kp0);
+    double Ki0;
+	QCBORDecode_GetDouble(&decodeCtx,  &Ki0);
+    QCBORDecode_ExitArray(&decodeCtx);
+
+    QCBORDecode_EnterArrayFromMapSZ(&decodeCtx, "Range_1");
+    double Kp1;
+	QCBORDecode_GetDouble(&decodeCtx,  &Kp1);
+    double Ki1;
+	QCBORDecode_GetDouble(&decodeCtx,  &Ki1);
+    QCBORDecode_ExitArray(&decodeCtx);
+
+    QCBORDecode_EnterArrayFromMapSZ(&decodeCtx, "Range_2");
+    double Kp2;
+	QCBORDecode_GetDouble(&decodeCtx,  &Kp2);
+    double Ki2;
+	QCBORDecode_GetDouble(&decodeCtx,  &Ki2);
+    QCBORDecode_ExitArray(&decodeCtx);
+
+    if( QCBORDecode_GetError(&decodeCtx) == QCBOR_SUCCESS)
+    {
+        setGains(Kp0, Ki0, 0);
+        setGains(Kp1, Ki1, 1);
+        setGains(Kp2, Ki2, 2);
+    }
+}

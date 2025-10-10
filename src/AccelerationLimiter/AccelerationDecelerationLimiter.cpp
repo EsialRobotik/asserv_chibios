@@ -154,3 +154,25 @@ void AccelerationDecelerationLimiter::getConfiguration(QCBOREncodeContext &Encod
 }
 
 
+void AccelerationDecelerationLimiter::applyConfiguration(QCBORDecodeContext &decodeCtx)
+{
+    double max_acc_fw;
+	QCBORDecode_GetDoubleInMapSZ(&decodeCtx, "max_acc_fw", &max_acc_fw);
+    double max_acc_bw;
+	QCBORDecode_GetDoubleInMapSZ(&decodeCtx, "max_acc_bw", &max_acc_bw);
+    double max_dec_fw;
+	QCBORDecode_GetDoubleInMapSZ(&decodeCtx, "max_dec_fw", &max_dec_fw);
+    double max_dec_bw;
+	QCBORDecode_GetDoubleInMapSZ(&decodeCtx, "max_dec_bw", &max_dec_bw);
+    double dampling;
+	QCBORDecode_GetDoubleInMapSZ(&decodeCtx, "dampling", &dampling);
+
+    if( QCBORDecode_GetError(&decodeCtx) == QCBOR_SUCCESS)
+    {
+        setMaxAccFW(max_acc_fw);
+        setMaxAccBW(max_acc_bw);
+        setMaxDecFW(max_dec_fw);
+        setMaxDecBW(max_dec_bw);
+        setDamplingFactor(dampling);
+    }
+}

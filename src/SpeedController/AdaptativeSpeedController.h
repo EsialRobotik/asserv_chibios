@@ -24,6 +24,8 @@ class AdaptativeSpeedController : public SpeedController, public Configuration
 
         virtual void getConfiguration(QCBOREncodeContext &EncodeCtx);
 
+        virtual void applyConfiguration(QCBORDecodeContext &decodeCtx);
+
 
     private:
         void  updateGains(float actualSpeed);

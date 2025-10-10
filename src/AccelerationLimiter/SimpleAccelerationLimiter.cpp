@@ -26,3 +26,15 @@ void SimpleAccelerationLimiter::getConfiguration(QCBOREncodeContext &EncodeCtx)
     QCBOREncode_AddTextToMapSZ (&EncodeCtx, "name", name);
     QCBOREncode_AddFloatToMapSZ(&EncodeCtx, "max_acc", m_maxAcceleration);
 }
+
+
+void SimpleAccelerationLimiter::applyConfiguration(QCBORDecodeContext &decodeCtx)
+{
+    double max_acc;
+	QCBORDecode_GetDoubleInMapSZ(&decodeCtx, "max_acc", &max_acc);
+
+    if( QCBORDecode_GetError(&decodeCtx) == QCBOR_SUCCESS)
+    {
+        setMaxAcceleration(max_acc);
+    }
+}

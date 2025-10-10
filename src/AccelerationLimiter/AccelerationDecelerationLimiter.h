@@ -35,6 +35,8 @@ public:
 
     virtual void getConfiguration(QCBOREncodeContext &EncodeCtx);
 
+    virtual void applyConfiguration(QCBORDecodeContext &decodeCtx);
+
 
 private:
 

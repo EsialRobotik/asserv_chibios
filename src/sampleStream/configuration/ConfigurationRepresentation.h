@@ -11,6 +11,9 @@ public:
 										 Configuration *speed_right, Configuration *speed_left);
 
 	void generateRepresentation(QCBOREncodeContext &EncodeCtx);
+
+	void applyConfiguration(QCBORDecodeContext &decodeCtx);
+
 private:
 
 	Configuration * m_angle_regulator;

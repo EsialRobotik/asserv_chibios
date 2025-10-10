@@ -40,3 +40,15 @@ void Regulator::getConfiguration(QCBOREncodeContext &EncodeCtx)
 {
     QCBOREncode_AddFloatToMapSZ(&EncodeCtx, "Kp", m_Kp);
 }
+
+
+void Regulator::applyConfiguration(QCBORDecodeContext &decodeCtx)
+{
+    double Kp;
+	QCBORDecode_GetDoubleInMapSZ(&decodeCtx, "Kp", &Kp);
+
+    if( QCBORDecode_GetError(&decodeCtx) == QCBOR_SUCCESS)
+    {
+        setGain(Kp);
+    }
+}

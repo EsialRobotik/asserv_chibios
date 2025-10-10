@@ -47,3 +47,20 @@ void AdvancedAccelerationLimiter::getConfiguration(QCBOREncodeContext &EncodeCtx
     QCBOREncode_AddFloatToMapSZ(&EncodeCtx, "min_acc", m_minAcceleration);
     QCBOREncode_AddFloatToMapSZ(&EncodeCtx, "highspeed_threshold", m_HighSpeedThreshold);
 }
+
+void AdvancedAccelerationLimiter::applyConfiguration(QCBORDecodeContext &decodeCtx)
+{
+    double max_acc;
+	QCBORDecode_GetDoubleInMapSZ(&decodeCtx, "max_acc", &max_acc);
+    double min_acc;
+	QCBORDecode_GetDoubleInMapSZ(&decodeCtx, "min_acc", &min_acc);
+    double highspeed_threshold;
+	QCBORDecode_GetDoubleInMapSZ(&decodeCtx, "highspeed_threshold", &highspeed_threshold);
+
+    if( QCBORDecode_GetError(&decodeCtx) == QCBOR_SUCCESS)
+    {
+        setMaxAcceleration(max_acc);
+        setMinAcceleration(min_acc);
+        setHighSpeedThreshold(highspeed_threshold);
+    }
+}

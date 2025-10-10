@@ -4,6 +4,8 @@
 #include "SampleStreamInterface.h"
 #include "ch.h"
 #include "hal.h"
+#include "qcbor/qcbor_decode.h"
+
 
 class ConfigurationRepresentation;
 
@@ -52,6 +54,7 @@ private:
     static inline USBStream* s_instance = nullptr;
     
     uint8_t cbor_buffer[384];
+    QCBORDecodeContext m_cborDecoderCtx;
 
 
     uint16_t m_loopFrequency;

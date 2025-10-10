@@ -299,7 +299,7 @@ static void initAsserv()
                            *rightPll, *leftPll,
                            nullptr);
 
-    esp32IoCbor = new SerialCbor(&LPSD1, *odometry, *commandManager, *mp6550, *mainAsserv);
+    esp32IoCbor = new SerialCbor(&SD1, *odometry, *commandManager, *mp6550, *mainAsserv);
 
     configurationRepresentation = new ConfigurationRepresentation (angleRegulator, distanceRegulator, angleAccelerationlimiter, distanceAccelerationLimiter, speedControllerRight, speedControllerLeft);
 
@@ -339,7 +339,7 @@ static THD_FUNCTION(AsservThread, arg)
 }
 
 void usbSerialCallback(char *buffer, uint32_t size);
-static THD_WORKING_AREA(waLowPrioUSBThread, 512);
+static THD_WORKING_AREA(waLowPrioUSBThread, 1024);
 static THD_FUNCTION(LowPrioUSBThread, arg)
 {
     (void) arg;
@@ -408,7 +408,7 @@ int main(void)
     *  LPUSART 1 : built-in usb serial port. For shell only
     */
     sdStart(&LPSD1, NULL);
-    outputStream = reinterpret_cast<BaseSequentialStream*>(&SD1);
+    outputStream = reinterpret_cast<BaseSequentialStream*>(&LPSD1);
     shellInit();
 
 

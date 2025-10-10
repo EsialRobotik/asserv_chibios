@@ -1,4 +1,6 @@
 #include "ConfigurationRepresentation.h"
+#include <ch.h>
+#include <hal.h>
 
 ConfigurationRepresentation::ConfigurationRepresentation(
 		Configuration *angle_regulator, Configuration *dist_regulator,
@@ -43,4 +45,41 @@ void ConfigurationRepresentation::generateRepresentation(QCBOREncodeContext &Enc
 	
 
 	QCBOREncode_CloseMap(&EncodeCtx);
+}
+
+
+void ConfigurationRepresentation::applyConfiguration(QCBORDecodeContext &decodeCtx)
+{
+	QCBORDecode_EnterMap(&decodeCtx, NULL);
+		
+	UsefulBufC name;
+	QCBORDecode_GetTextStringInMapSZ(&decodeCtx, "name", &name);
+
+
+	if ( strncmp((char*)name.ptr, "dist_acc" ,strlen("dist_acc")) == 0 )
+	{
+		m_dist_acc->applyConfiguration(decodeCtx);
+	}
+	else if ( strncmp((char*)name.ptr, "speed_left" ,strlen("speed_left")) == 0 )
+	{
+		m_speed_left->applyConfiguration(decodeCtx);
+	}
+	else if ( strncmp((char*)name.ptr, "speed_right" ,strlen("speed_right")) == 0 )
+	{
+		m_speed_right->applyConfiguration(decodeCtx);
+	}
+	else if ( strncmp((char*)name.ptr, "dist_regulator" ,strlen("dist_regulator")) == 0 )
+	{
+		m_dist_regulator->applyConfiguration(decodeCtx);
+	}
+	else if ( strncmp((char*)name.ptr, "angle_regulator" ,strlen("angle_regulator")) == 0 )
+	{
+		m_angle_regulator->applyConfiguration(decodeCtx);
+	}
+	else if ( strncmp((char*)name.ptr, "angle_acc" ,strlen("angle_acc")) == 0 )
+	{
+		m_angle_acc->applyConfiguration(decodeCtx);
+	}
+	
+	QCBORDecode_ExitMap(&decodeCtx);
 }
