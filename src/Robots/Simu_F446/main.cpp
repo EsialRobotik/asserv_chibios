@@ -22,7 +22,7 @@
 #include "AccelerationLimiter/AccelerationDecelerationLimiter.h"
 #include "Pll.h"
 #include "blockingDetector/OldSchoolBlockingDetector.h"
-#include "sampleStream/configuration/ConfigurationRepresentation.h"
+#include "sampleStream/configuration/ConfigurationHandler.h"
 
 
 
@@ -101,7 +101,7 @@ AccelerationDecelerationLimiter *distanceAccelerationLimiter;
 CommandManager *commandManager;
 AsservMain *mainAsserv;
 
-ConfigurationRepresentation *conf_json;
+ConfigurationHandler *conf_json;
 
 
 static void initAsserv()
@@ -143,7 +143,7 @@ static void initAsserv()
                            *rightPll, *leftPll,
                            blockingDetector);
 
-    conf_json = new ConfigurationRepresentation (angleRegulator, distanceRegulator, angleAccelerationlimiter, distanceAccelerationLimiter, speedControllerRight, speedControllerLeft);
+    conf_json = new ConfigurationHandler (angleRegulator, distanceRegulator, angleAccelerationlimiter, distanceAccelerationLimiter, speedControllerRight, speedControllerLeft);
 
 }
 

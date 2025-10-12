@@ -152,7 +152,7 @@ CPPSRC = $(ALLCPPSRC) \
        $(SRCDIR)/motorController/Vnh5019.cpp \
        $(SRCDIR)/motorController/Md22.cpp \
        $(SRCDIR)/sampleStream/USBStream.cpp \
-       $(SRCDIR)/sampleStream/configuration/ConfigurationRepresentation.cpp  \
+       $(SRCDIR)/sampleStream/configuration/ConfigurationHandler.cpp  \
        $(SRCDIR)/Encoders/QuadratureEncoder.cpp \
        $(SRCDIR)/AsservMain.cpp \
        $(SRCDIR)/SpeedController/SpeedController.cpp \

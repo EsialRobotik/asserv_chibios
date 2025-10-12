@@ -7,7 +7,8 @@
 #include "qcbor/qcbor_decode.h"
 
 
-class ConfigurationRepresentation;
+class ConfigurationHandler;
+class CommandHandler;
 
 class USBStream: public SampleStream
 {
@@ -23,7 +24,7 @@ public:
         uint8_t dataMinusPin_alternate;
     };
 
-    static void init(UsbStreamPinConf_t *pinConf, uint16_t loopFrequency, ConfigurationRepresentation *configuration_representation);
+    static void init(UsbStreamPinConf_t *pinConf, uint16_t loopFrequency, ConfigurationHandler *configuration_handler = nullptr, CommandHandler *command_handler = nullptr);
 
     static USBStream* instance()
     {
@@ -32,17 +33,14 @@ public:
 
     virtual void* sendCurrentStream();
 
-
-
-    typedef void (*usbStreamCallback)(char *buffer, uint32_t size);
-    void USBStreamHandleConnection_lowerpriothread(usbStreamCallback callback);
+    void USBStreamHandleConnection_lowerpriothread();
 
     void releaseBuffer();
     void getFullBuffer(void** ptr, uint32_t* size);
 
 private:
 
-      explicit USBStream(uint16_t loopFrequency, ConfigurationRepresentation *configuration_representation);
+      explicit USBStream(uint16_t loopFrequency, ConfigurationHandler *configuration_handler, CommandHandler *command_handler);
       virtual ~USBStream() {};
 
     void sendBuffer(uint8_t const *buffer, uint32_t size, uint32_t synchroWord);
@@ -50,7 +48,8 @@ private:
 
     uint32_t m_timestamp;
     mutex_t m_sample_sending_mutex;
-    ConfigurationRepresentation *m_configuration_representation;
+    ConfigurationHandler *m_configuration_handler;
+    CommandHandler *m_cmd_handler;
     static inline USBStream* s_instance = nullptr;
     
     uint8_t cbor_buffer[384];

@@ -24,7 +24,8 @@
 #include "config.h"
 #include "Communication/SerialIO.h"
 #include "Communication/SerialCbor.h"
-#include "sampleStream/configuration/ConfigurationRepresentation.h"
+#include "sampleStream/configuration/ConfigurationHandler.h"
+#include "sampleStream/commands/CommandHandler.h"
 
 float speed_controller_right_Kp[NB_PI_SUBSET] = { SPEED_CTRL_RIGHT_KP_1, SPEED_CTRL_RIGHT_KP_2, SPEED_CTRL_RIGHT_KP_3};
 float speed_controller_right_Ki[NB_PI_SUBSET] = { SPEED_CTRL_RIGHT_KI_1, SPEED_CTRL_RIGHT_KI_2, SPEED_CTRL_RIGHT_KI_3};
@@ -66,7 +67,9 @@ AsservMain *mainAsserv;
 
 SerialCbor *esp32IoCbor;
 
-ConfigurationRepresentation *configurationRepresentation;
+ConfigurationHandler *configurationHandler;
+
+CommandHandler *commandHandler;
 
 BaseSequentialStream *outputStream;
 
@@ -301,7 +304,9 @@ static void initAsserv()
 
     esp32IoCbor = new SerialCbor(&SD1, *odometry, *commandManager, *mp6550, *mainAsserv);
 
-    configurationRepresentation = new ConfigurationRepresentation (angleRegulator, distanceRegulator, angleAccelerationlimiter, distanceAccelerationLimiter, speedControllerRight, speedControllerLeft);
+    configurationHandler = new ConfigurationHandler (angleRegulator, distanceRegulator, angleAccelerationlimiter, distanceAccelerationLimiter, speedControllerRight, speedControllerLeft);
+
+    commandHandler = new CommandHandler(*commandManager, *mainAsserv);
 
 }
 
@@ -332,13 +337,12 @@ static THD_FUNCTION(AsservThread, arg)
     mp6550->init();
     encoders->init();
     encoders->start();
-    USBStream::init(nullptr, ASSERV_THREAD_FREQUENCY, configurationRepresentation);
+    USBStream::init(nullptr, ASSERV_THREAD_FREQUENCY, configurationHandler, commandHandler);
     chBSemSignal(&asservStarted_semaphore);
 
     mainAsserv->mainLoop();
 }
 
-void usbSerialCallback(char *buffer, uint32_t size);
 static THD_WORKING_AREA(waLowPrioUSBThread, 1024);
 static THD_FUNCTION(LowPrioUSBThread, arg)
 {
@@ -348,7 +352,7 @@ static THD_FUNCTION(LowPrioUSBThread, arg)
 
     while (!chThdShouldTerminateX())
     {
-       USBStream::instance()->USBStreamHandleConnection_lowerpriothread(usbSerialCallback);
+       USBStream::instance()->USBStreamHandleConnection_lowerpriothread();
        chThdSleepMilliseconds(50);
     }
 
@@ -359,9 +363,6 @@ static THD_FUNCTION(LowPrioUSBThread, arg)
 
 
 THD_WORKING_AREA(wa_shell, 2048);
-THD_WORKING_AREA(wa_controlPanel, 256);
-//THD_FUNCTION(ControlPanelThread, p);
-
 char history_buffer[SHELL_MAX_HIST_BUFF];
 char *completion_buffer[SHELL_MAX_COMPLETIONS];
 
@@ -596,43 +597,5 @@ void asservCommandUSB(BaseSequentialStream *chp, int argc, char **argv)
     else
     {
         printUsage(argv[0]);
-    }
-}
-
-void usbSerialCallback(char *buffer, uint32_t size)
-{
-    if (size > 0)
-    {
-        /*
-         *  On transforme la commande recu dans une version argv/argc
-         *    de manière a utiliser les commandes shell déjà définie...
-         */
-        bool prevWasSpace = false;
-        char* firstArg = buffer;
-        int nb_arg = 0;
-        char *argv[10];
-        for (uint32_t i = 0; i < size; i++)
-        {
-            if (prevWasSpace && buffer[i] != ' ')
-            {
-                argv[nb_arg++] = &buffer[i];
-            }
-
-            if (buffer[i] == ' ' || buffer[i] == '\r' || buffer[i] == '\n')
-            {
-                prevWasSpace = true;
-                buffer[i] = 0;
-            }
-            else
-            {
-                prevWasSpace = false;
-            }
-        }
-
-        // On évite de faire appel au shell si le nombre d'arg est mauvais ou si la 1ière commande est mauvaise...
-        if (nb_arg > 0 && !strcmp(firstArg, "asserv"))
-        {
-            asservCommandUSB(nullptr, nb_arg, argv);
-        }
     }
 }

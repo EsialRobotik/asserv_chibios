@@ -3,7 +3,7 @@
 #include <ch.h>
 #include <hal.h>
 #include "core_cm4.h"
-#include "configuration/ConfigurationRepresentation.h"
+#include "configuration/ConfigurationHandler.h"
 #include <cstring>
 
 const uint32_t synchroWord_stream = 0xCAFED00D;
@@ -11,7 +11,7 @@ const uint32_t synchroWord_config = 0xCAFEDECA;
 const uint32_t synchroWord_connection = 0xDEADBEEF;
 
 
-USBStream::USBStream(uint16_t loopFrequency, ConfigurationRepresentation *configuration_representation )
+USBStream::USBStream(uint16_t loopFrequency, ConfigurationHandler *configuration_representation )
 {
     m_timestamp = 0;
     m_configuration_representation = configuration_representation;
@@ -20,7 +20,7 @@ USBStream::USBStream(uint16_t loopFrequency, ConfigurationRepresentation *config
     std::memset(m_currentStruct.array, 0xFFFFFFFF, sizeof(m_currentStruct.array));
 }
 
-void USBStream::init(UsbStreamPinConf_t *pinConf, uint16_t loopFrequency, ConfigurationRepresentation *configuration_representation)
+void USBStream::init(UsbStreamPinConf_t *pinConf, uint16_t loopFrequency, ConfigurationHandler *configuration_representation)
 {
     // Init pin if needed
     if(pinConf)

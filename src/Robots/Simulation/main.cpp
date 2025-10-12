@@ -2,7 +2,7 @@
 #include "Regulator.h"
 #include "Pll.h"
 #include "sampleStream/SampleStreamInterface.h"
-#include "sampleStream/configuration/ConfigurationRepresentation.h"
+#include "sampleStream/configuration/ConfigurationHandler.h"
 #include "robotStub/MotorEncoderSimulator.h"
 #include "Odometry.h"
 #include "SpeedController/AdaptativeSpeedController.h"
@@ -117,7 +117,7 @@ int main(void)
 
     thread thread_shell(shell);
 
-    ConfigurationRepresentation conf_json(&angleRegulator, &distanceRegulator, &angleAccelerationlimiter, &distanceAccelerationLimiter, &speedControllerRight, &speedControllerLeft);
+    ConfigurationHandler conf_json(&angleRegulator, &distanceRegulator, &angleAccelerationlimiter, &distanceAccelerationLimiter, &speedControllerRight, &speedControllerLeft);
     conf_json.generateRepresentation();
 
     mainAsserv->mainLoop();

@@ -119,7 +119,7 @@ CPPSRC=$(wildcard $(SRCDIR)/Robots/Simulation/*.cpp ) \
        $(SRCDIR)/AccelerationLimiter/AdvancedAccelerationLimiter.cpp \
        $(SRCDIR)/AccelerationLimiter/AccelerationDecelerationLimiter.cpp \
        $(SRCDIR)/blockingDetector/OldSchoolBlockingDetector.cpp  \
-       $(SRCDIR)/sampleStream/configuration/ConfigurationRepresentation.cpp  
+       $(SRCDIR)/sampleStream/configuration/ConfigurationHandler.cpp  
        
    
 # Inclusion directories.

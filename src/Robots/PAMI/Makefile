@@ -183,7 +183,8 @@ CPPSRC = $(ALLCPPSRC) \
        $(SRCDIR)/blockingDetector/OldSchoolBlockingDetector.cpp  \
        $(SRCDIR)/Communication/SerialIO.cpp \
        $(SRCDIR)/Communication/RaspIO.cpp \
-       $(SRCDIR)/sampleStream/configuration/ConfigurationRepresentation.cpp \
+       $(SRCDIR)/sampleStream/configuration/ConfigurationHandler.cpp \
+       $(SRCDIR)/sampleStream/commands/CommandHandler.cpp \
        $(SRCDIR)/Communication/SerialCbor.cpp \
        $(SRCDIR)/Communication/cborStream/CborStreamStateMachine.cpp 
 

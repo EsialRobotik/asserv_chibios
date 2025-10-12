@@ -24,7 +24,7 @@
 #include "config.h"
 #include "Communication/SerialIO.h"
 <<<<<<< HEAD
-#include "sampleStream/configuration/ConfigurationRepresentation.h"
+#include "sampleStream/configuration/ConfigurationHandler.h"
 =======
 #include "Communication/SerialCbor.h"
 >>>>>>> origin/master
@@ -69,7 +69,7 @@ AsservMain *mainAsserv;
 
 SerialCbor *esp32IoCbor;
 
-ConfigurationRepresentation *configurationRepresentation;
+ConfigurationHandler *configurationRepresentation;
 
 BaseSequentialStream *outputStream;
 
@@ -305,7 +305,7 @@ static void initAsserv()
 <<<<<<< HEAD
     esp32Io = new SerialIO(&SD1, *odometry, *commandManager, *mp6550, *mainAsserv);
 
-    configurationRepresentation = new ConfigurationRepresentation (angleRegulator, distanceRegulator, angleAccelerationlimiter, distanceAccelerationLimiter, speedControllerRight, speedControllerLeft);
+    configurationRepresentation = new ConfigurationHandler (angleRegulator, distanceRegulator, angleAccelerationlimiter, distanceAccelerationLimiter, speedControllerRight, speedControllerLeft);
 
 =======
     esp32IoCbor = new SerialCbor(&LPSD1, *odometry, *commandManager, *mp6550, *mainAsserv);

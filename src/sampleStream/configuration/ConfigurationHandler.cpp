@@ -1,8 +1,8 @@
-#include "ConfigurationRepresentation.h"
+#include "ConfigurationHandler.h"
 #include <ch.h>
 #include <hal.h>
 
-ConfigurationRepresentation::ConfigurationRepresentation(
+ConfigurationHandler::ConfigurationHandler(
 		Configuration *angle_regulator, Configuration *dist_regulator,
 		Configuration *angle_acc, Configuration *dist_acc,
 		Configuration *speed_right, Configuration *speed_left)
@@ -15,7 +15,7 @@ ConfigurationRepresentation::ConfigurationRepresentation(
 	m_speed_left = speed_left;
 }
 
-void ConfigurationRepresentation::generateRepresentation(QCBOREncodeContext &EncodeCtx)
+void ConfigurationHandler::generateRepresentation(QCBOREncodeContext &EncodeCtx)
 {
 	QCBOREncode_OpenMap(&EncodeCtx);
 	QCBOREncode_OpenMapInMapSZ(&EncodeCtx, "dist_regulator");
@@ -48,7 +48,7 @@ void ConfigurationRepresentation::generateRepresentation(QCBOREncodeContext &Enc
 }
 
 
-void ConfigurationRepresentation::applyConfiguration(QCBORDecodeContext &decodeCtx)
+void ConfigurationHandler::applyConfiguration(QCBORDecodeContext &decodeCtx)
 {
 	QCBORDecode_EnterMap(&decodeCtx, NULL);
 		

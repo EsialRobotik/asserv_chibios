@@ -3,10 +3,10 @@
 
 #include "ConfigurationInterface.h"
 
-class ConfigurationRepresentation
+class ConfigurationHandler
 {
 public:
-	explicit ConfigurationRepresentation(Configuration *angle_regulator, Configuration *dist_regulator,
+	explicit ConfigurationHandler(Configuration *angle_regulator, Configuration *dist_regulator,
 										 Configuration *angle_acc, Configuration *dist_acc,
 										 Configuration *speed_right, Configuration *speed_left);
 

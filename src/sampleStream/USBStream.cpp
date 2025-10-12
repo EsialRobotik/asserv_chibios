@@ -3,7 +3,8 @@
 #include <ch.h>
 #include <hal.h>
 #include "core_cm4.h"
-#include "configuration/ConfigurationRepresentation.h"
+#include "configuration/ConfigurationHandler.h"
+#include "commands/CommandHandler.h"
 #include "qcbor/qcbor_spiffy_decode.h"
 #include <cstring>
 
@@ -11,18 +12,20 @@ const uint32_t synchroWord_stream = 0xCAFED00D;
 const uint32_t synchroWord_get_config = 0xCAFEDECA;
 const uint32_t synchroWord_connection = 0xDEADBEEF;
 const uint32_t synchroWord_tune = 0xBAADC0DE;
+const uint32_t synchroWord_cmd = 0xB00B5B1D;
 
 
-USBStream::USBStream(uint16_t loopFrequency, ConfigurationRepresentation *configuration_representation )
+USBStream::USBStream(uint16_t loopFrequency, ConfigurationHandler *configuration_handler, CommandHandler *command_handler )
 {
     m_timestamp = 0;
-    m_configuration_representation = configuration_representation;
+    m_configuration_handler = configuration_handler;
+    m_cmd_handler = command_handler;
     m_loopFrequency = loopFrequency;
     chMtxObjectInit (&m_sample_sending_mutex);
     std::memset(m_currentStruct.array, 0xFFFFFFFF, sizeof(m_currentStruct.array));
 }
 
-void USBStream::init(UsbStreamPinConf_t *pinConf, uint16_t loopFrequency, ConfigurationRepresentation *configuration_representation)
+void USBStream::init(UsbStreamPinConf_t *pinConf, uint16_t loopFrequency, ConfigurationHandler *configuration_handler, CommandHandler *command_handler )
 {
     // Init pin if needed
     if(pinConf)
@@ -34,7 +37,7 @@ void USBStream::init(UsbStreamPinConf_t *pinConf, uint16_t loopFrequency, Config
 //    palSetPadMode(GPIOA, 11, PAL_MODE_ALTERNATE(10)); //USB D-
 
 
-    s_instance = new USBStream(loopFrequency, configuration_representation);
+    s_instance = new USBStream(loopFrequency, configuration_handler, command_handler);
     SampleStream::setInstance(s_instance);
 
     /*
@@ -157,9 +160,9 @@ void USBStream::releaseBuffer()
 }
 
 
-extern BaseSequentialStream *outputStream;
+// extern BaseSequentialStream *outputStream;
 
-void USBStream::USBStreamHandleConnection_lowerpriothread(usbStreamCallback callback)
+void USBStream::USBStreamHandleConnection_lowerpriothread()
 {
     void *ptr = nullptr;
     uint32_t size = 0;
@@ -208,37 +211,38 @@ void USBStream::USBStreamHandleConnection_lowerpriothread(usbStreamCallback call
             getEmptyBuffer();
             chMtxUnlock(&m_sample_sending_mutex);
         }
-        else if(buffer[0] == synchroWord_get_config && m_configuration_representation)
+        else if(buffer[0] == synchroWord_get_config && m_configuration_handler)
         {
             QCBOREncodeContext EncodeCtx;
             UsefulBuf qcoborBuffer = {cbor_buffer, sizeof(cbor_buffer)};
             QCBOREncode_Init(&EncodeCtx, qcoborBuffer);
 
 
-            m_configuration_representation->generateRepresentation(EncodeCtx);
+            m_configuration_handler->generateRepresentation(EncodeCtx);
             UsefulBufC EncodedCBOR;
             QCBORError uErr = QCBOREncode_Finish(&EncodeCtx, &EncodedCBOR);
             if(uErr == QCBOR_SUCCESS) 
             {   
-                // chprintf(outputStream, "Config requested from plotjuggler, sending %d bytes\r\n", EncodedCBOR.len);
                 chDbgAssert(EncodedCBOR.len < sizeof(cbor_buffer), "Not enough space in the cbor buffer.");
                 sendBuffer( (const uint8_t*)EncodedCBOR.ptr, EncodedCBOR.len, synchroWord_get_config);
             }
         }
-        else if(buffer[0] == synchroWord_tune && m_configuration_representation)
+        else if(buffer[0] == synchroWord_tune && m_configuration_handler)
         {
             UsefulBufC encoded_cbor = {.ptr = &buffer[1], .len = size-sizeof(uint32_t)};
-           
             QCBORDecode_Init(&m_cborDecoderCtx, encoded_cbor, QCBOR_DECODE_MODE_NORMAL);
 
-            m_configuration_representation->applyConfiguration(m_cborDecoderCtx);
+            m_configuration_handler->applyConfiguration(m_cborDecoderCtx);
             QCBORDecode_Finish(&m_cborDecoderCtx);
         }
-        else
+        else if(buffer[0] == synchroWord_cmd && m_cmd_handler)
         {
-            char *str = (char*) ptr;
-            str[size] = 0;
-            callback(str, size);
+            UsefulBufC encoded_cbor = {.ptr = &buffer[1], .len = size-sizeof(uint32_t)};
+            QCBORDecode_Init(&m_cborDecoderCtx, encoded_cbor, QCBOR_DECODE_MODE_NORMAL);
+
+            m_cmd_handler->applyCommand(m_cborDecoderCtx);
+            
+            QCBORDecode_Finish(&m_cborDecoderCtx);
         }
         releaseBuffer();
     }
