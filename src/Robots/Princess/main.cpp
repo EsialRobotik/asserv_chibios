@@ -22,7 +22,10 @@
 #include "Pll.h"
 #include "blockingDetector/OldSchoolBlockingDetector.h"
 #include "config.h"
-#include "Communication/RaspIO.h"
+#include "Communication/SerialCbor.h"
+#include "Communication/Crc/SoftwareCrcCalculator.h"
+#include "sampleStream/configuration/ConfigurationHandler.h"
+#include "sampleStream/commands/CommandHandler.h"
 
 
 float speed_controller_right_Kp[NB_PI_SUBSET] = { SPEED_CTRL_RIGHT_KP_1, SPEED_CTRL_RIGHT_KP_2, SPEED_CTRL_RIGHT_KP_3};
@@ -38,7 +41,7 @@ Goto::GotoConfiguration preciseGotoConf  = {COMMAND_MANAGER_GOTO_RETURN_THRESHOL
 Goto::GotoConfiguration waypointGotoConf  = {COMMAND_MANAGER_GOTO_RETURN_THRESHOLD_mm, COMMAND_MANAGER_GOTO_ANGLE_THRESHOLD_RAD, COMMAND_MANAGER_GOTO_WAYPOINT_ARRIVAL_DISTANCE_mm};
 GotoNoStop::GotoNoStopConfiguration gotoNoStopConf = {COMMAND_MANAGER_GOTO_ANGLE_THRESHOLD_RAD, COMMAND_MANAGER_GOTONOSTOP_TOO_BIG_ANGLE_THRESHOLD_RAD, (150/DIST_REGULATOR_KP), 85};
 
-RaspIO::AccDecConfiguration normalAccDec =
+SerialCbor::AccDecConfiguration normalAccDec =
 {
     ANGLE_REGULATOR_MAX_ACC,
     DIST_REGULATOR_MAX_ACC_FW,
@@ -48,7 +51,7 @@ RaspIO::AccDecConfiguration normalAccDec =
 };
 
 
-RaspIO::AccDecConfiguration slowAccDec =
+SerialCbor::AccDecConfiguration slowAccDec =
 {
     ANGLE_REGULATOR_MAX_ACC_SLOW,
     DIST_REGULATOR_MAX_ACC_FW_SLOW,
@@ -86,7 +89,13 @@ AccelerationDecelerationLimiter *distanceAccelerationLimiter;
 CommandManager *commandManager;
 AsservMain *mainAsserv;
 
-RaspIO *raspIO;
+SoftwareCrc32Calculator *crc32Calculator;
+SerialCbor *esp32IoCbor;
+
+ConfigurationHandler *configurationHandler;
+
+CommandHandler *commandHandler;
+
 
 static void initAsserv()
 {
@@ -129,24 +138,25 @@ static void initAsserv()
                            *rightPll, *leftPll,
                            blockingDetector);
 
+    crc32Calculator = new SoftwareCrc32Calculator();
 
-    
-    raspIO = new RaspIO(&SD2, *odometry, *commandManager, *md22MotorController, *mainAsserv,
-    *angleAccelerationlimiter, *distanceAccelerationLimiter,
-    normalAccDec, slowAccDec);
+    esp32IoCbor = new SerialCbor(&SD2, crc32Calculator, *odometry, *commandManager, *md22MotorController, *mainAsserv, angleAccelerationlimiter, distanceAccelerationLimiter, &normalAccDec, &slowAccDec);
+
+    configurationHandler = new ConfigurationHandler (angleRegulator, distanceRegulator, angleAccelerationlimiter, distanceAccelerationLimiter, speedControllerRight, speedControllerLeft);
+
+    commandHandler = new CommandHandler(*commandManager, *mainAsserv);
 }
 
 
 void serialIoWrapperPositionOutput(void *)
 {
-    SerialIO *serialIO = (SerialIO*)raspIO;
-    serialIO->positionOutput();
+    esp32IoCbor->positionOutput();
 }
 
 
 void serialIoWrapperCommandInput(void *)
 {
-    raspIO->commandInput();
+    esp32IoCbor->commandInput();
 }
 
 
@@ -171,14 +181,14 @@ static THD_FUNCTION(AsservThread, arg)
         .dataPlusPin_GPIObase = GPIOA, .dataPlusPin_number = 12, .dataPlusPin_alternate = 10,
         .dataMinusPin_GPIObase = GPIOA, .dataMinusPin_number = 11, .dataMinusPin_alternate = 10
     };
-    USBStream::init(&usbPinConf, ASSERV_THREAD_FREQUENCY);
+    USBStream::init(&usbPinConf, ASSERV_THREAD_FREQUENCY, configurationHandler, commandHandler);
+
 
     chBSemSignal(&asservStarted_semaphore);
 
     mainAsserv->mainLoop();
 }
 
-void usbSerialCallback(char *buffer, uint32_t size);
 static THD_WORKING_AREA(waLowPrioUSBThread, 1024);
 static THD_FUNCTION(LowPrioUSBThread, arg)
 {
@@ -188,7 +198,7 @@ static THD_FUNCTION(LowPrioUSBThread, arg)
 
     while (!chThdShouldTerminateX())
     {
-       USBStream::instance()->USBStreamHandleConnection_lowerpriothread(usbSerialCallback);
+       USBStream::instance()->USBStreamHandleConnection_lowerpriothread();
     }
 
 }
@@ -197,14 +207,13 @@ static THD_FUNCTION(LowPrioUSBThread, arg)
 #ifdef ENABLE_SHELL
 THD_WORKING_AREA(wa_shell, 2048);
 #else
-THD_WORKING_AREA(wa_raspio1, 512);
-THD_WORKING_AREA(wa_raspio2, 1024);
+THD_WORKING_AREA(wa_raspioInput, 1024);
+THD_WORKING_AREA(wa_raspioOutput, 1024);
 #endif
 
 char history_buffer[SHELL_MAX_HIST_BUFF];
 char *completion_buffer[SHELL_MAX_COMPLETIONS];
 
-float config_buffer[35];
 void asservCommandUSB(BaseSequentialStream *chp, int argc, char **argv);
 
 void asservCommandSerial();
@@ -226,8 +235,9 @@ int main(void)
     chBSemWait(&asservStarted_semaphore);
 
     outputStream = reinterpret_cast<BaseSequentialStream*>(&SD2);
-    // chThdCreateStatic(waLowPrioUSBThread, sizeof(waLowPrioUSBThread), LOWPRIO, LowPrioUSBThread, NULL);
 
+    /* Create a 'background' thread to handle command received through the USB */
+    chThdCreateStatic(waLowPrioUSBThread, sizeof(waLowPrioUSBThread), LOWPRIO+2, LowPrioUSBThread, NULL);
 
     // Custom commands
     const ShellCommand shellCommands[] = { { "asserv", &(asservCommandUSB) }, { nullptr, nullptr } };
@@ -253,9 +263,9 @@ int main(void)
      *  Needed thread to run SerialIO (ie: here, communication with ESP32).
      *  C wrapping function are needed to bridge through C and C++
      */
-        thread_t *threadPositionOutput = chThdCreateStatic(wa_raspio1, sizeof(wa_raspio1), LOWPRIO+1, serialIoWrapperPositionOutput, nullptr);
+        thread_t *threadPositionOutput = chThdCreateStatic(wa_raspioInput, sizeof(wa_raspioInput), LOWPRIO+3, serialIoWrapperPositionOutput, nullptr);
         chRegSetThreadNameX(threadPositionOutput, "positionOutput");
-        thread_t *threadCommandInput = chThdCreateStatic(wa_raspio2, sizeof(wa_raspio2), LOWPRIO+2, serialIoWrapperCommandInput, nullptr);
+        thread_t *threadCommandInput = chThdCreateStatic(wa_raspioOutput, sizeof(wa_raspioOutput), LOWPRIO+4, serialIoWrapperCommandInput, nullptr);
         chRegSetThreadNameX(threadCommandInput, "commandInput");
 #endif
 
@@ -488,40 +498,6 @@ void asservCommandUSB(BaseSequentialStream *chp, int argc, char **argv)
         mainAsserv->setEmergencyStop();
 
     }
-    else if (!strcmp(argv[0], "get_config"))
-    {
-        uint8_t index = 0;
-
-        // SpeedControllerLeft
-        for( int i=0; i<NB_PI_SUBSET; i++)
-        {
-            speedControllerLeft->getGainsForRange(i, &config_buffer[index], &config_buffer[index+1], &config_buffer[index+2] );
-            index += 3;
-        }
-
-        // SpeedControllerRight
-        for( int i=0; i<NB_PI_SUBSET; i++)
-        {
-            speedControllerRight->getGainsForRange(i, &config_buffer[index], &config_buffer[index+1], &config_buffer[index+2]);
-            index += 3;
-        }
-
-        //Regulators
-        config_buffer[index++] = distanceRegulator->getGain();
-        config_buffer[index++] = angleRegulator->getGain();
-
-        // accel limiter
-        config_buffer[index++] = angleAccelerationlimiter->getMaxAcceleration();
-        config_buffer[index++] = distanceAccelerationLimiter->getMaxAccFW();
-        config_buffer[index++] = distanceAccelerationLimiter->getMaxDecFW();
-        config_buffer[index++] = distanceAccelerationLimiter->getMaxAccBW();
-        config_buffer[index++] = distanceAccelerationLimiter->getMaxDecBW();
-        config_buffer[index++] = distanceAccelerationLimiter->getDamplingFactor();
-    
-
-        chprintf(outputStream, "sending %d float of config !\r\n", index);
-        USBStream::instance()->sendConfig((uint8_t*)config_buffer, index*sizeof(config_buffer[0]));
-    }
     else
     {
         printUsage();
@@ -529,40 +505,3 @@ void asservCommandUSB(BaseSequentialStream *chp, int argc, char **argv)
 }
 
 
-void usbSerialCallback(char *buffer, uint32_t size)
-{
-    if (size > 0)
-    {
-        /*
-         *  On transforme la commande recu dans une version argv/argc
-         *    de manière a utiliser les commandes shell déjà définie...
-         */
-        bool prevWasSpace = false;
-        char* firstArg = buffer;
-        int nb_arg = 0;
-        char *argv[10];
-        for (uint32_t i = 0; i < size; i++)
-        {
-            if (prevWasSpace && buffer[i] != ' ')
-            {
-                argv[nb_arg++] = &buffer[i];
-            }
-
-            if (buffer[i] == ' ' || buffer[i] == '\r' || buffer[i] == '\n')
-            {
-                prevWasSpace = true;
-                buffer[i] = 0;
-            }
-            else
-            {
-                prevWasSpace = false;
-            }
-        }
-
-        // On évite de faire appel au shell si le nombre d'arg est mauvais ou si la 1ière commande est mauvaise...
-        if (nb_arg > 0 && !strcmp(firstArg, "asserv"))
-        {
-            asservCommandUSB(nullptr, nb_arg, argv);
-        }
-    }
-}

@@ -184,7 +184,7 @@ ASMSRC = $(ALLASMSRC)
 ASMXSRC = $(ALLXASMSRC)
 
 # Inclusion directories.
-INCDIR = $(CONFDIR) $(ALLINC) $(TESTINC) $(CHIBIOS_CONTRIB)/os/various $(SRCDIR)
+INCDIR = $(CONFDIR) $(ALLINC) $(TESTINC) $(CHIBIOS_CONTRIB)/os/various $(SRCDIR) $(SRCDIR)/util/ $(SRCDIR)/util/qcbor/inc 
 
 # Define C warning options here.
 CWARN = -Wall -Wextra -Wundef -Wstrict-prototypes

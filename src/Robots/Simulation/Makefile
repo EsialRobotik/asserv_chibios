@@ -95,6 +95,12 @@ SRCDIR   := ../../../src
 # Note the single quotes around the * expressions. The shell will incorrectly expand these otherwise, but we want to send the * directly to the find command.
 # SRCS := $(shell find $(SRC_DIRS) -name '*.cpp' -or -name '*.c' -or -name '*.s')
 
+CSRC = $(SRCDIR)/util/qcbor/src/ieee754.c \
+       $(SRCDIR)/util/qcbor/src/qcbor_decode.c \
+       $(SRCDIR)/util/qcbor/src/qcbor_encode.c \
+       $(SRCDIR)/util/qcbor/src/UsefulBuf.c \
+       $(SRCDIR)/util/qcbor/src/qcbor_err_to_str.c 
+
 CPPSRC=$(wildcard $(SRCDIR)/Robots/Simulation/*.cpp ) \
        $(wildcard $(SRCDIR)/robotStub/*.cpp ) \
        $(wildcard $(SRCDIR)/Robots/Simulation/chibiosStub/*.cpp ) \
@@ -119,11 +125,11 @@ CPPSRC=$(wildcard $(SRCDIR)/Robots/Simulation/*.cpp ) \
        $(SRCDIR)/AccelerationLimiter/AdvancedAccelerationLimiter.cpp \
        $(SRCDIR)/AccelerationLimiter/AccelerationDecelerationLimiter.cpp \
        $(SRCDIR)/blockingDetector/OldSchoolBlockingDetector.cpp  \
-       $(SRCDIR)/sampleStream/configuration/ConfigurationHandler.cpp  
+       $(SRCDIR)/sampleStream/configuration/ConfigurationHandler.cpp  \
        
    
 # Inclusion directories.
-INCDIR = $(CONFDIR) $(ALLINC) $(TESTINC) $(CHIBIOS_CONTRIB)/os/various $(SRCDIR) \
+INCDIR = $(CONFDIR) $(ALLINC) $(TESTINC) $(CHIBIOS_CONTRIB)/os/various $(SRCDIR) $(SRCDIR)/util/ $(SRCDIR)/util/qcbor/inc \
 			$(shell find . -type d)  \
 			$(SRCDIR)/Encoders \
 			$(SRCDIR)/motorController \

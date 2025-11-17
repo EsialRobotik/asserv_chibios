@@ -141,6 +141,11 @@ endif
 CSRC = $(ALLCSRC)\
        $(SRCDIR)/usbcfg.c \
        $(SRCDIR)/util/exceptionVectors.c \
+       $(SRCDIR)/util/qcbor/src/ieee754.c \
+       $(SRCDIR)/util/qcbor/src/qcbor_decode.c \
+       $(SRCDIR)/util/qcbor/src/qcbor_encode.c \
+       $(SRCDIR)/util/qcbor/src/UsefulBuf.c \
+       $(SRCDIR)/util/qcbor/src/qcbor_err_to_str.c \
        $(TESTSRC) 
 
 
@@ -173,11 +178,13 @@ CPPSRC = $(ALLCPPSRC) \
        $(SRCDIR)/AccelerationLimiter/AdvancedAccelerationLimiter.cpp \
        $(SRCDIR)/AccelerationLimiter/AccelerationDecelerationLimiter.cpp \
        $(SRCDIR)/blockingDetector/OldSchoolBlockingDetector.cpp \
-      $(SRCDIR)/Communication/SerialIO.cpp \
-       $(SRCDIR)/Communication/RaspIO.cpp 
+       $(SRCDIR)/Communication/SerialIO.cpp \
+       $(SRCDIR)/Communication/SerialCbor.cpp \
+       $(SRCDIR)/Communication/Crc/SoftwareCrcCalculator.cpp \
+       $(SRCDIR)/Communication/cborStream/CborStreamStateMachine.cpp \
+       $(SRCDIR)/sampleStream/configuration/ConfigurationHandler.cpp \
+       $(SRCDIR)/sampleStream/commands/CommandHandler.cpp 
 
-
-    
 
 # List ASM source files here.
 ASMSRC = $(ALLASMSRC)
@@ -186,7 +193,7 @@ ASMSRC = $(ALLASMSRC)
 ASMXSRC = $(ALLXASMSRC)
 
 # Inclusion directories.
-INCDIR = $(CONFDIR) $(ALLINC) $(TESTINC) $(CHIBIOS_CONTRIB)/os/various $(SRCDIR)
+INCDIR = $(CONFDIR) $(ALLINC) $(TESTINC) $(CHIBIOS_CONTRIB)/os/various $(SRCDIR) $(SRCDIR)/util/ $(SRCDIR)/util/qcbor/inc 
 
 # Define C warning options here.
 CWARN = -Wall -Wextra -Wundef -Wstrict-prototypes

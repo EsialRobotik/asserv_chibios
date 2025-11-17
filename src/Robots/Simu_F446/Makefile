@@ -140,17 +140,21 @@ endif
 CSRC = $(ALLCSRC)\
        $(SRCDIR)/usbcfg.c \
        $(SRCDIR)/util/exceptionVectors.c \
+       $(SRCDIR)/util/qcbor/src/ieee754.c \
+       $(SRCDIR)/util/qcbor/src/qcbor_decode.c \
+       $(SRCDIR)/util/qcbor/src/qcbor_encode.c \
+       $(SRCDIR)/util/qcbor/src/UsefulBuf.c \
+       $(SRCDIR)/util/qcbor/src/qcbor_err_to_str.c \
        $(TESTSRC) 
 
 
 # C++ sources that can be compiled in ARM or THUMB mode depending on the global
 # setting.
 CPPSRC = $(ALLCPPSRC) \
-       $(wildcard $(SRCDIR)/Robots/PMI/*.cpp ) \
+       $(wildcard $(SRCDIR)/Robots/Simu_F446/*.cpp ) \
        $(SRCDIR)/robotStub/MotorEncoderSimulator.cpp \
        $(SRCDIR)/robotStub/FirstOrderSim.cpp \
        $(SRCDIR)/sampleStream/USBStream.cpp \
-       $(SRCDIR)/sampleStream/msgpack11.cpp \
        $(SRCDIR)/Encoders/QuadratureEncoder.cpp \
        $(SRCDIR)/AsservMain.cpp \
        $(SRCDIR)/SpeedController/SpeedController.cpp \
@@ -165,13 +169,18 @@ CPPSRC = $(ALLCPPSRC) \
        $(SRCDIR)/commandManager/Commands/Goto.cpp \
        $(SRCDIR)/commandManager/Commands/GotoAngle.cpp \
        $(SRCDIR)/commandManager/Commands/GotoNoStop.cpp \
+       $(SRCDIR)/commandManager/Commands/WheelSpeed.cpp \
+       $(SRCDIR)/commandManager/Commands/OrbitalTurn.cpp \
        $(SRCDIR)/util/chibiOsAllocatorWrapper.cpp  \
        $(SRCDIR)/AccelerationLimiter/AbstractAccelerationLimiter.cpp \
        $(SRCDIR)/AccelerationLimiter/SimpleAccelerationLimiter.cpp \
        $(SRCDIR)/AccelerationLimiter/AdvancedAccelerationLimiter.cpp \
        $(SRCDIR)/AccelerationLimiter/AccelerationDecelerationLimiter.cpp \
        $(SRCDIR)/blockingDetector/OldSchoolBlockingDetector.cpp \
-       $(SRCDIR)/sampleStream/configuration/ConfigurationHandler.cpp  
+       $(SRCDIR)/Communication/SerialCbor.cpp \
+       $(SRCDIR)/Communication/cborStream/CborStreamStateMachine.cpp \
+       $(SRCDIR)/sampleStream/configuration/ConfigurationHandler.cpp \
+       $(SRCDIR)/sampleStream/commands/CommandHandler.cpp 
 
 
     
@@ -183,12 +192,7 @@ ASMSRC = $(ALLASMSRC)
 ASMXSRC = $(ALLXASMSRC)
 
 # Inclusion directories.
-INCDIR = $(CONFDIR) $(ALLINC) $(TESTINC) $(CHIBIOS_CONTRIB)/os/various $(SRCDIR) \
-			$(shell find . -type d)  \
-			$(SRCDIR)/Encoders \
-			$(SRCDIR)/motorController \
-			$(SRCDIR)/sampleStream \
-			$(SRCDIR)/sampleStream/configuration 
+INCDIR = $(CONFDIR) $(ALLINC) $(TESTINC) $(CHIBIOS_CONTRIB)/os/various $(SRCDIR) $(SRCDIR)/util/ $(SRCDIR)/util/qcbor/inc 
 			
 # Define C warning options here.
 CWARN = -Wall -Wextra -Wundef -Wstrict-prototypes

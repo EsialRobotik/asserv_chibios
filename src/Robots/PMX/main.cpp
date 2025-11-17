@@ -7,7 +7,7 @@
 #include <cstdio>
 #include <cfloat>
 
-#include "raspIO.h"
+#include "Communication/RaspIO.h"
 #include "util/asservMath.h"
 #include "util/chibiOsAllocatorWrapper.h"
 #include "AsservMain.h"
@@ -85,6 +85,28 @@ Goto::GotoConfiguration waypointGotoConf = { COMMAND_MANAGER_GOTO_RETURN_THRESHO
 GotoNoStop::GotoNoStopConfiguration gotoNoStopConf = { COMMAND_MANAGER_GOTO_ANGLE_THRESHOLD_RAD,
         COMMAND_MANAGER_GOTONOSTOP_TOO_BIG_ANGLE_THRESHOLD_RAD, (100 / DIST_REGULATOR_KP), 85 };
 
+
+RaspIO::AccDecConfiguration normalAccDec =
+{
+    ANGLE_REGULATOR_MAX_ACC,
+    DIST_REGULATOR_MAX_ACC_FW,
+    DIST_REGULATOR_MAX_DEC_FW,
+    DIST_REGULATOR_MAX_ACC_BW,
+    DIST_REGULATOR_MAX_DEC_BW
+};
+
+
+RaspIO::AccDecConfiguration slowAccDec =
+{
+    ANGLE_REGULATOR_MAX_ACC_SLOW,
+    DIST_REGULATOR_MAX_ACC_FW_SLOW,
+    DIST_REGULATOR_MAX_DEC_FW_SLOW,
+    DIST_REGULATOR_MAX_ACC_BW_SLOW,
+    DIST_REGULATOR_MAX_DEC_BW_SLOW
+};
+
+
+
 Md22::I2cPinInit md22PMXCardPinConf_SCL_SDA = { GPIOB, 6, GPIOB, 7 };
 QuadratureEncoder::GpioPinInit qePMXCardPinConf_E1ch1_E1ch2_E2ch1_E2ch2 = { GPIOC, 6, GPIOA, 7, GPIOA, 5, GPIOB, 9 };
 MagEncoders::I2cPinInit encodersI2cPinsConf_SCL_SDA = { GPIOB, 10, GPIOB, 3 };
@@ -114,6 +136,9 @@ AsservMain *mainAsserv;
 
 BaseSequentialStream *outputStream;
 BaseSequentialStream *outputStreamSd4;
+
+
+RaspIO *raspIo;
 
 static void initAsserv()
 {
@@ -166,6 +191,9 @@ static void initAsserv()
             *angleAccelerationlimiter, *distanceAccelerationLimiter, *speedControllerRight, *speedControllerLeft,
             *rightPll, *leftPll, blockingDetector);
 
+
+    raspIo = new RaspIO(&SD4, *odometry, *commandManager, *md22MotorController, *mainAsserv, *angleAccelerationlimiter, *distanceAccelerationLimiter, );
+
     //debug1("initAsserv::mainAsserv OK\r\n");
 
 }
@@ -197,7 +225,12 @@ static THD_FUNCTION(AsservThread, arg)
     encoders_ext->start();
     debug1("AsservThread::encodersEXT start OK\r\n");
 
-    USBStream::init();
+    USBStream::UsbStreamPinConf_t usbPinConf =
+    {
+        .dataPlusPin_GPIObase = GPIOA, .dataPlusPin_number = 12, .dataPlusPin_alternate = 10,
+        .dataMinusPin_GPIObase = GPIOA, .dataMinusPin_number = 11, .dataMinusPin_alternate = 10
+    };
+    USBStream::init(&usbPinConf, ASSERV_THREAD_FREQUENCY);
     debug1("AsservThread::USBStream init OK + chBSemSignal\r\n");
 
     chBSemSignal(&asservStarted_semaphore);
@@ -220,7 +253,6 @@ static THD_FUNCTION(AsservThread, arg)
 
 
 
-void usbSerialCallback(char *buffer, uint32_t size);
 static THD_WORKING_AREA(waLowPrioUSBThread, 512);
 static THD_FUNCTION(LowPrioUSBThread, arg)
 {
@@ -230,7 +262,7 @@ static THD_FUNCTION(LowPrioUSBThread, arg)
 
     while (!chThdShouldTerminateX())
     {
-       USBStream::instance()->USBStreamHandleConnection_lowerpriothread(usbSerialCallback);
+       USBStream::instance()->USBStreamHandleConnection_lowerpriothread();
     }
 
 }
@@ -357,11 +389,6 @@ int main(void)
 
         thread_t *shellThd = chThdCreateStatic(wa_shell, sizeof(wa_shell), LOWPRIO, shellThread, &shellCfg);
         chRegSetThreadNameX(shellThd, "shell");
-
-        // Le thread controlPanel n'a de sens que quand le shell tourne
-        thread_t *controlPanelThd = chThdCreateStatic(wa_controlPanel, sizeof(wa_controlPanel), LOWPRIO,
-                ControlPanelThread, nullptr);
-        chRegSetThreadNameX(controlPanelThd, "controlPanel");
 
         thread_t *asserCmdSerialThread = chThdCreateStatic(wa_shell_serie, sizeof(wa_shell_serie), LOWPRIO,
                 asservCommandSerial, nullptr);
@@ -617,82 +644,3 @@ void asservCommandUSB(BaseSequentialStream *chp, int argc, char **argv)
     }
 }
 
-THD_FUNCTION(ControlPanelThread, p)
-{
-    (void) p;
-    void *ptr = nullptr;
-    uint32_t size = 0;
-    char *firstArg = nullptr;
-    char *argv[7];
-    while (!chThdShouldTerminateX()) {
-        USBStream::instance()->getFullBuffer(&ptr, &size);
-        if (size > 0) {
-            char *buffer = (char*) ptr;
-            buffer[size] = 0;
-            /*
-             *  On transforme la commande recu dans une version argv/argc
-             *    de manière a utiliser les commandes shell déjà définie...
-             */
-            bool prevWasSpace = false;
-            firstArg = buffer;
-            int nb_arg = 0;
-            for (uint32_t i = 0; i < size; i++) {
-                if (prevWasSpace && buffer[i] != ' ') {
-                    argv[nb_arg++] = &buffer[i];
-                }
-
-                if (buffer[i] == ' ' || buffer[i] == '\r' || buffer[i] == '\n') {
-                    prevWasSpace = true;
-                    buffer[i] = '\0';
-                } else {
-                    prevWasSpace = false;
-                }
-            }
-
-            // On évite de faire appel au shell si le nombre d'arg est mauvais ou si la 1ière commande est mauvaise...
-            if (nb_arg > 0 && !strcmp(firstArg, "asserv")) {
-                asservCommandUSB(nullptr, nb_arg, argv);
-            }
-            USBStream::instance()->releaseBuffer();
-        }
-    }
-}
-
-
-void usbSerialCallback(char *buffer, uint32_t size)
-{
-    if (size > 0)
-    {
-        /*
-         *  On transforme la commande recu dans une version argv/argc
-         *    de manière a utiliser les commandes shell déjà définie...
-         */
-        bool prevWasSpace = false;
-        char* firstArg = buffer;
-        int nb_arg = 0;
-        char *argv[10];
-        for (uint32_t i = 0; i < size; i++)
-        {
-            if (prevWasSpace && buffer[i] != ' ')
-            {
-                argv[nb_arg++] = &buffer[i];
-            }
-
-            if (buffer[i] == ' ' || buffer[i] == '\r' || buffer[i] == '\n')
-            {
-                prevWasSpace = true;
-                buffer[i] = '\0';
-            }
-            else
-            {
-                prevWasSpace = false;
-            }
-        }
-
-        // On évite de faire appel au shell si le nombre d'arg est mauvais ou si la 1ière commande est mauvaise...
-        if (nb_arg > 0 && !strcmp(firstArg, "asserv"))
-        {
-            asservCommandUSB(nullptr, nb_arg, argv);
-        }
-    }
-}

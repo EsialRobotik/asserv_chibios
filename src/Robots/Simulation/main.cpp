@@ -116,10 +116,7 @@ int main(void)
     NativeStream::init(ASSERV_THREAD_PERIOD_S);
 
     thread thread_shell(shell);
-
-    ConfigurationHandler conf_json(&angleRegulator, &distanceRegulator, &angleAccelerationlimiter, &distanceAccelerationLimiter, &speedControllerRight, &speedControllerLeft);
-    conf_json.generateRepresentation();
-
+    
     mainAsserv->mainLoop();
     thread_shell.join();
 }

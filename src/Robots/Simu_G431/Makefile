@@ -164,7 +164,9 @@ CPPSRC = $(ALLCPPSRC) \
        $(SRCDIR)/AccelerationLimiter/AccelerationDecelerationLimiter.cpp \
        $(SRCDIR)/blockingDetector/OldSchoolBlockingDetector.cpp \
        $(SRCDIR)/Communication/SerialCbor.cpp \
-       $(SRCDIR)/Communication/cborStream/CborStreamStateMachine.cpp
+       $(SRCDIR)/Communication/cborStream/CborStreamStateMachine.cpp \
+       $(SRCDIR)/sampleStream/configuration/ConfigurationHandler.cpp \
+       $(SRCDIR)/sampleStream/commands/CommandHandler.cpp 
 
 
     

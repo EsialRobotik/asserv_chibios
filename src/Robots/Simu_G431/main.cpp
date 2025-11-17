@@ -22,6 +22,8 @@
 #include "Pll.h"
 #include "blockingDetector/OldSchoolBlockingDetector.h"
 #include "Communication/SerialCbor.h"
+#include "sampleStream/configuration/ConfigurationHandler.h"
+#include "sampleStream/commands/CommandHandler.h"
 
 
 #define ASSERV_THREAD_FREQUENCY (200)
@@ -101,6 +103,12 @@ AsservMain *mainAsserv;
 
 SerialCbor *esp32IoCbor;
 
+ConfigurationHandler *configurationHandler;
+
+CommandHandler *commandHandler;
+
+
+
 static void initAsserv()
 {
     odometry = new Odometry (ENCODERS_WHEELS_DISTANCE_MM, 0, 0);
@@ -139,6 +147,10 @@ static void initAsserv()
                            blockingDetector);
                            
     esp32IoCbor = new SerialCbor(&LPSD1, *odometry, *commandManager, *motorEncoder, *mainAsserv);
+
+    configurationHandler = new ConfigurationHandler (angleRegulator, distanceRegulator, angleAccelerationlimiter, distanceAccelerationLimiter, speedControllerRight, speedControllerLeft);
+
+    commandHandler = new CommandHandler(*commandManager, *mainAsserv);
 }
 
 void serialIoWrapperPositionOutput(void *)
@@ -166,14 +178,13 @@ static THD_FUNCTION(AsservThread, arg)
     (void) arg;
     chRegSetThreadName("AsservThread");
 
-    USBStream::init(nullptr, ASSERV_THREAD_FREQUENCY);
+    USBStream::init(nullptr, ASSERV_THREAD_FREQUENCY, configurationHandler, commandHandler);
 
     chBSemSignal(&asservStarted_semaphore);
 
     mainAsserv->mainLoop();
 }
 
-void usbSerialCallback(char *buffer, uint32_t size);
 static THD_WORKING_AREA(waLowPrioUSBThread, 512);
 static THD_FUNCTION(LowPrioUSBThread, arg)
 {
@@ -183,7 +194,7 @@ static THD_FUNCTION(LowPrioUSBThread, arg)
 
     while (!chThdShouldTerminateX())
     {
-       USBStream::instance()->USBStreamHandleConnection_lowerpriothread(usbSerialCallback);
+       USBStream::instance()->USBStreamHandleConnection_lowerpriothread();
     }
 
 }
@@ -545,131 +556,10 @@ void asservCommandUSB(BaseSequentialStream *chp, int argc, char **argv)
 
 
     }
-    else if (!strcmp(argv[0], "get_config"))
-    {
-        uint8_t index = 0;
-
-        // SpeedControllerLeft
-        for( int i=0; i<NB_PI_SUBSET; i++)
-        {
-            speedControllerLeft->getGainsForRange(i, &config_buffer[index], &config_buffer[index+1], &config_buffer[index+2] );
-            index += 3;
-        }
-
-        // SpeedControllerRight
-        for( int i=0; i<NB_PI_SUBSET; i++)
-        {
-            speedControllerRight->getGainsForRange(i, &config_buffer[index], &config_buffer[index+1], &config_buffer[index+2]);
-            index += 3;
-        }
-
-        //Regulators
-        config_buffer[index++] = distanceRegulator->getGain();
-        config_buffer[index++] = angleRegulator->getGain();
-
-        // accel limiter
-        config_buffer[index++] = angleAccelerationlimiter->getMaxAcceleration();
-//        config_buffer[index++] = distanceAccelerationLimiter->getMaxAcceleration();
-//        config_buffer[index++] = distanceAccelerationLimiter->getMinAcceleration();
-//        config_buffer[index++] = distanceAccelerationLimiter->getHighSpeedThreshold();
-        // config_buffer[index++] = distanceAccelerationLimiter->getMaxAccFW();
-        // config_buffer[index++] = distanceAccelerationLimiter->getMaxDecFW();
-        // config_buffer[index++] = distanceAccelerationLimiter->getMaxAccBW();
-        // config_buffer[index++] = distanceAccelerationLimiter->getMaxDecBW();
-
-        chprintf(outputStream, "sending %d float of config !\r\n", index);
-//        USBStream::instance()->sendConfig((uint8_t*)config_buffer, index*sizeof(config_buffer[0]));
-    }
     else
     {
         printUsage();
     }
 }
 
-//THD_FUNCTION(ControlPanelThread, p)
-//{
-//    (void) p;
-//    void *ptr = nullptr;
-//    uint32_t size = 0;
-//    char *firstArg = nullptr;
-//    char *argv[7];
-//    while (!chThdShouldTerminateX())
-//    {
-//        USBStream::instance()->getFullBuffer(&ptr, &size);
-//        if (size > 0)
-//        {
-//            char *buffer = (char*) ptr;
-//            buffer[size] = 0;
-//
-//            /*
-//             *  On transforme la commande recu dans une version argv/argc
-//             *    de manière a utiliser les commandes shell déjà définie...
-//             */
-//            bool prevWasSpace = false;
-//            firstArg = buffer;
-//            int nb_arg = 0;
-//            for (uint32_t i = 0; i < size; i++)
-//            {
-//                if (prevWasSpace && buffer[i] != ' ')
-//                {
-//                    argv[nb_arg++] = &buffer[i];
-//                }
-//
-//                if (buffer[i] == ' ' || buffer[i] == '\r' || buffer[i] == '\n')
-//                {
-//                    prevWasSpace = true;
-//                    buffer[i] = 0;
-//                }
-//                else
-//                {
-//                    prevWasSpace = false;
-//                }
-//            }
-//
-//            // On évite de faire appel au shell si le nombre d'arg est mauvais ou si la 1ière commande est mauvaise...
-//            if (nb_arg > 0 && !strcmp(firstArg, "asserv"))
-//            {
-//                asservCommandUSB(nullptr, nb_arg, argv);
-//            }
-//            USBStream::instance()->releaseBuffer();
-//        }
-//    }
-//}
 
-void usbSerialCallback(char *buffer, uint32_t size)
-{
-    if (size > 0)
-    {
-        /*
-         *  On transforme la commande recu dans une version argv/argc
-         *    de manière a utiliser les commandes shell déjà définie...
-         */
-        bool prevWasSpace = false;
-        char* firstArg = buffer;
-        int nb_arg = 0;
-        char *argv[10];
-        for (uint32_t i = 0; i < size; i++)
-        {
-            if (prevWasSpace && buffer[i] != ' ')
-            {
-                argv[nb_arg++] = &buffer[i];
-            }
-
-            if (buffer[i] == ' ' || buffer[i] == '\r' || buffer[i] == '\n')
-            {
-                prevWasSpace = true;
-                buffer[i] = 0;
-            }
-            else
-            {
-                prevWasSpace = false;
-            }
-        }
-
-        // On évite de faire appel au shell si le nombre d'arg est mauvais ou si la 1ière commande est mauvaise...
-        if (nb_arg > 0 && !strcmp(firstArg, "asserv"))
-        {
-            asservCommandUSB(nullptr, nb_arg, argv);
-        }
-    }
-}
