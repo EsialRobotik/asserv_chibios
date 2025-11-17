@@ -1,10 +1,11 @@
 #include "ch.h"
 #include "hal.h"
+#include "Communication/Crc/CrcCalculator.h"
 #include <chprintf.h>
 #include "CborStreamStateMachine.h"
 #include "qcbor/qcbor_spiffy_decode.h"
 
-CborStreamStateMachine::CborStreamStateMachine(CRCDriver *crcDriver) : m_decodeState(crcDriver)
+CborStreamStateMachine::CborStreamStateMachine(Crc32Calculator *crc32Calculator) : m_decodeState(crc32Calculator)
 {   
     m_currentState = &m_synchroLookupState;
 }
@@ -71,10 +72,10 @@ CborStreamStateMachine::state_transition_t CborStreamStateMachine::CborStreamSta
  * Implementation of decode state : 
  */
 
- CborStreamStateMachine::CborStreamState_decode::CborStreamState_decode(CRCDriver *crcDriver) 
+ CborStreamStateMachine::CborStreamState_decode::CborStreamState_decode(Crc32Calculator *crc32Calculator) 
     : CborStreamStateInterface(), cmd_list(5)
 {
-    m_crcDriver = crcDriver;
+    m_crc32Calculator = crc32Calculator;
     reset();
 }
 
@@ -123,10 +124,11 @@ CborStreamStateMachine::state_transition_t CborStreamStateMachine::CborStreamSta
 void CborStreamStateMachine::CborStreamState_decode::validate_payload()
 {
     // First compute CRC
-    crcAcquireUnit(m_crcDriver);
-    crcReset(m_crcDriver);
-    uint32_t computed_crc = crcCalc(m_crcDriver, m_nbByteOfPayloadRead, m_payload);
-    crcReleaseUnit(m_crcDriver);
+    // crcAcquireUnit(m_crcDriver);
+    // crcReset(m_crcDriver);
+    // uint32_t computed_crc = crcCalc(m_crcDriver, m_nbByteOfPayloadRead, m_payload);
+    // crcReleaseUnit(m_crcDriver);
+    uint32_t computed_crc = m_crc32Calculator->compute(m_payload, m_nbByteOfPayloadRead);
 
 
     if( computed_crc == m_crc)

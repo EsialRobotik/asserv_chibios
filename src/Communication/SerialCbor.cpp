@@ -16,25 +16,21 @@
 #include "AccelerationLimiter/SimpleAccelerationLimiter.h"
 #include "AccelerationLimiter/AccelerationDecelerationLimiter.h"
 #include "qcbor/qcbor_encode.h"
+#include "Crc/CrcCalculator.h"
+
 
 const uint32_t synchroWord = 0xDEADBEEF;
 
-static const CRCConfig crc32_config = {
-    .poly_size         = 32,
-    .poly              = 0xf4acfb13,
-    .initial_val       = 0xFFFFFFFF,
-    .final_val         = 0xffffffff,
-    .reflect_data      = 1,
-    .reflect_remainder = 1
-   };
 
-SerialCbor::SerialCbor(SerialDriver *serialDriver, Odometry &odometry, CommandManager &commandManager, MotorController &motorController, AsservMain &mainAsserv,
+SerialCbor::SerialCbor(SerialDriver *serialDriver, Crc32Calculator *crc32Calculator,
+    Odometry &odometry, CommandManager &commandManager, MotorController &motorController, AsservMain &mainAsserv,
     SimpleAccelerationLimiter *angleAccelerationlimiter, AccelerationDecelerationLimiter *distanceAccelerationLimiter,
     AccDecConfiguration *normalAccDec, AccDecConfiguration *slowAccDec)
-:m_cborSm(&CRCD1), m_odometry(odometry), m_commandManager(commandManager), m_motorController(motorController), m_mainAsserv(mainAsserv)
+: m_cborSm(crc32Calculator), m_odometry(odometry), m_commandManager(commandManager), m_motorController(motorController), m_mainAsserv(mainAsserv)
 {   
     m_serialDriver = serialDriver;
     m_outputStream = reinterpret_cast<BaseSequentialStream*>(serialDriver);
+    m_crc32Calculator = crc32Calculator;
 
     chDbgAssert( 
             (angleAccelerationlimiter != nullptr && distanceAccelerationLimiter != nullptr && normalAccDec != nullptr &&  slowAccDec != nullptr)
@@ -49,9 +45,6 @@ SerialCbor::SerialCbor(SerialDriver *serialDriver, Odometry &odometry, CommandMa
     if( slowAccDec)
         m_slowAccDec = *slowAccDec;
 
-    crcAcquireUnit(&CRCD1);
-    crcStart(&CRCD1, &crc32_config);
-    crcReleaseUnit(&CRCD1);
 }
 
 
@@ -104,10 +97,11 @@ void SerialCbor::positionOutput()
         if(uErr == QCBOR_SUCCESS) 
         {
             *encodedSizeWordPtr = EncodedCBOR.len;
-            crcAcquireUnit(&CRCD1);
-            crcReset(&CRCD1);
-            *crcWordPtr = crcCalc(&CRCD1, EncodedCBOR.len, EncodedCBOR.ptr);
-            crcReleaseUnit(&CRCD1);
+            *crcWordPtr = m_crc32Calculator->compute(EncodedCBOR.ptr, EncodedCBOR.len);
+            // crcAcquireUnit(&CRCD1);
+            // crcReset(&CRCD1);
+            //  = crcCalc(&CRCD1, , );
+            // crcReleaseUnit(&CRCD1);
 
 
             streamWrite(m_serialDriver, (const uint8_t*)m_qcborOutputBuffer, EncodedCBOR.len+4*3);

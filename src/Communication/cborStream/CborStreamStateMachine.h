@@ -7,7 +7,7 @@
 #include "qcbor/qcbor_decode.h"
 
 
-class CRCDriver;
+class Crc32Calculator;
 
 
 class CborStreamStateMachine
@@ -43,7 +43,7 @@ public:
     } cmd_t;
 
 
-    explicit CborStreamStateMachine(CRCDriver *crcDriver);
+    explicit CborStreamStateMachine(Crc32Calculator *crc32Calculator);
     virtual ~CborStreamStateMachine() {};
 
     void push_byte(uint8_t byte);
@@ -85,7 +85,7 @@ public:
     class CborStreamState_decode : public CborStreamStateInterface
     {
         public:
-            explicit CborStreamState_decode(CRCDriver *crcDriver);
+            explicit CborStreamState_decode(Crc32Calculator *crc32Calculator);
             virtual ~CborStreamState_decode() {};
 
             virtual state_transition_t push_byte(uint8_t byte);
@@ -94,7 +94,7 @@ public:
 
         private:
             QCBORDecodeContext m_cborDecoderCtx;
-            CRCDriver *m_crcDriver;
+            Crc32Calculator *m_crc32Calculator;
             uint32_t m_size;
             uint32_t m_nbByteOfSizeRead;
             uint32_t m_crc;

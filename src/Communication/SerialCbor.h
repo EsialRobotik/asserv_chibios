@@ -4,12 +4,14 @@
 
 #include "ch.h"
 #include "cborStream/CborStreamStateMachine.h"
+
 class Odometry;
 class CommandManager;
 class MotorController;
 class mainAsserv;
 class SimpleAccelerationLimiter;
 class AccelerationDecelerationLimiter;
+class Crc32Calculator;
 
 class SerialCbor
 {
@@ -24,7 +26,7 @@ public:
         float maxDistDecelerationBackward;
     };
 
-    explicit SerialCbor(SerialDriver *serialDriver, Odometry &odometry, CommandManager &commandManager, MotorController &motorController,
+    explicit SerialCbor(SerialDriver *serialDriver, Crc32Calculator *crc32Calculator, Odometry &odometry, CommandManager &commandManager, MotorController &motorController,
         AsservMain &mainAsserv, SimpleAccelerationLimiter *angleAccelerationlimiter = nullptr, AccelerationDecelerationLimiter *distanceAccelerationLimiter= nullptr,
         AccDecConfiguration *normalAccDec= nullptr, AccDecConfiguration *slowAccDec= nullptr);
     virtual ~SerialCbor() {};
@@ -37,6 +39,7 @@ private:
     CborStreamStateMachine m_cborSm;
     SerialDriver *m_serialDriver;
     BaseSequentialStream *m_outputStream;
+    Crc32Calculator *m_crc32Calculator;
     Odometry &m_odometry;
     CommandManager &m_commandManager;
     MotorController &m_motorController;

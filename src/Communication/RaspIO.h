@@ -22,15 +22,15 @@ public:
     };
 
     explicit RaspIO(SerialDriver *serialDriver, Odometry &odometry, CommandManager &commandManager, MotorController &motorController,
-        AsservMain &mainAsserv, SimpleAccelerationLimiter &angleAccelerationlimiter, AccelerationDecelerationLimiter &distanceAccelerationLimiter,
-        AccDecConfiguration &normalAccDec, AccDecConfiguration &slowAccDec);
+        AsservMain &mainAsserv, SimpleAccelerationLimiter *angleAccelerationlimiter = nullptr, AccelerationDecelerationLimiter *distanceAccelerationLimiter = nullptr,
+        AccDecConfiguration *normalAccDec = nullptr, AccDecConfiguration *slowAccDec = nullptr);
     virtual ~RaspIO() {};
 
     virtual void commandInput();
 
 private:
-    SimpleAccelerationLimiter &m_angleAccelerationlimiter;
-    AccelerationDecelerationLimiter &m_distanceAccelerationLimiter;
+    SimpleAccelerationLimiter *m_angleAccelerationlimiter;
+    AccelerationDecelerationLimiter *m_distanceAccelerationLimiter;
     AccDecConfiguration m_normalAccDec;
     AccDecConfiguration m_slowAccDec;
 
