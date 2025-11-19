@@ -22,6 +22,7 @@
 #include "Pll.h"
 #include "blockingDetector/OldSchoolBlockingDetector.h"
 #include "Communication/SerialCbor.h"
+#include "Communication/Crc/HardwareCrcCalculator.h"
 #include "sampleStream/configuration/ConfigurationHandler.h"
 #include "sampleStream/commands/CommandHandler.h"
 
@@ -101,6 +102,7 @@ AccelerationDecelerationLimiter *distanceAccelerationLimiter;
 CommandManager *commandManager;
 AsservMain *mainAsserv;
 
+HardwareCrc32Calculator *crc32Calculator;
 SerialCbor *esp32IoCbor;
 
 ConfigurationHandler *configurationHandler;
@@ -145,8 +147,10 @@ static void initAsserv()
                            *speedControllerRight, *speedControllerLeft,
                            *rightPll, *leftPll,
                            blockingDetector);
+
+    crc32Calculator = new HardwareCrc32Calculator(&CRCD1);
                            
-    esp32IoCbor = new SerialCbor(&LPSD1, *odometry, *commandManager, *motorEncoder, *mainAsserv);
+    esp32IoCbor = new SerialCbor(&LPSD1, crc32Calculator, *odometry, *commandManager, *motorEncoder, *mainAsserv);
 
     configurationHandler = new ConfigurationHandler (angleRegulator, distanceRegulator, angleAccelerationlimiter, distanceAccelerationLimiter, speedControllerRight, speedControllerLeft);
 

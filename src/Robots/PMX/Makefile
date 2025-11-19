@@ -141,6 +141,11 @@ SHELL_MODE_DEFINE = -DENABLE_SHELL
 CSRC = $(ALLCSRC)\
        $(SRCDIR)/usbcfg.c \
        $(SRCDIR)/util/exceptionVectors.c \
+       $(SRCDIR)/util/qcbor/src/ieee754.c \
+       $(SRCDIR)/util/qcbor/src/qcbor_decode.c \
+       $(SRCDIR)/util/qcbor/src/qcbor_encode.c \
+       $(SRCDIR)/util/qcbor/src/UsefulBuf.c \
+       $(SRCDIR)/util/qcbor/src/qcbor_err_to_str.c \
        $(TESTSRC) 
 
 
@@ -167,12 +172,19 @@ CPPSRC = $(ALLCPPSRC) \
        $(SRCDIR)/commandManager/Commands/Goto.cpp \
        $(SRCDIR)/commandManager/Commands/GotoAngle.cpp \
        $(SRCDIR)/commandManager/Commands/GotoNoStop.cpp \
+       $(SRCDIR)/commandManager/Commands/WheelSpeed.cpp \
        $(SRCDIR)/util/chibiOsAllocatorWrapper.cpp  \
        $(SRCDIR)/AccelerationLimiter/AbstractAccelerationLimiter.cpp \
        $(SRCDIR)/AccelerationLimiter/SimpleAccelerationLimiter.cpp \
        $(SRCDIR)/AccelerationLimiter/AdvancedAccelerationLimiter.cpp \
        $(SRCDIR)/AccelerationLimiter/AccelerationDecelerationLimiter.cpp \
-       $(SRCDIR)/blockingDetector/OldSchoolBlockingDetector.cpp 
+       $(SRCDIR)/blockingDetector/OldSchoolBlockingDetector.cpp \
+       $(SRCDIR)/Communication/SerialIO.cpp \
+       $(SRCDIR)/Communication/SerialCbor.cpp \
+       $(SRCDIR)/Communication/Crc/SoftwareCrcCalculator.cpp \
+       $(SRCDIR)/Communication/cborStream/CborStreamStateMachine.cpp \
+       $(SRCDIR)/sampleStream/configuration/ConfigurationHandler.cpp \
+       $(SRCDIR)/sampleStream/commands/CommandHandler.cpp 
        #$(SRCDIR)/blockingDetector/SpeedErrorBlockingDetector.cpp 
 
     

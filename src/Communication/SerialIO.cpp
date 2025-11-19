@@ -7,7 +7,6 @@
 #include <cstdio>
 #include <cfloat>
 #include "util/asservMath.h"
-#include "config.h"
 #include "Odometry.h"
 #include "SerialIO.h"
 #include "commandManager/CommandManager.h"

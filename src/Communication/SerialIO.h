@@ -7,8 +7,7 @@
 class Odometry;
 class CommandManager;
 class MotorController;
-class mainAsserv;
-
+class AsservMain;
 
 class SerialIO
 {

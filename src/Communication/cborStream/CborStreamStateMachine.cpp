@@ -124,10 +124,6 @@ CborStreamStateMachine::state_transition_t CborStreamStateMachine::CborStreamSta
 void CborStreamStateMachine::CborStreamState_decode::validate_payload()
 {
     // First compute CRC
-    // crcAcquireUnit(m_crcDriver);
-    // crcReset(m_crcDriver);
-    // uint32_t computed_crc = crcCalc(m_crcDriver, m_nbByteOfPayloadRead, m_payload);
-    // crcReleaseUnit(m_crcDriver);
     uint32_t computed_crc = m_crc32Calculator->compute(m_payload, m_nbByteOfPayloadRead);
 
 

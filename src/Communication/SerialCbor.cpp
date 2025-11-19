@@ -98,12 +98,6 @@ void SerialCbor::positionOutput()
         {
             *encodedSizeWordPtr = EncodedCBOR.len;
             *crcWordPtr = m_crc32Calculator->compute(EncodedCBOR.ptr, EncodedCBOR.len);
-            // crcAcquireUnit(&CRCD1);
-            // crcReset(&CRCD1);
-            //  = crcCalc(&CRCD1, , );
-            // crcReleaseUnit(&CRCD1);
-
-
             streamWrite(m_serialDriver, (const uint8_t*)m_qcborOutputBuffer, EncodedCBOR.len+4*3);
         } 
         chThdSleepUntil(time);

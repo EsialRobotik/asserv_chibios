@@ -182,7 +182,7 @@ CPPSRC = $(ALLCPPSRC) \
        $(SRCDIR)/AccelerationLimiter/AccelerationDecelerationLimiter.cpp \
        $(SRCDIR)/blockingDetector/OldSchoolBlockingDetector.cpp  \
        $(SRCDIR)/Communication/SerialIO.cpp \
-       $(SRCDIR)/Communication/RaspIO.cpp \
+       $(SRCDIR)/Communication/Crc/HardwareCrcCalculator.cpp \
        $(SRCDIR)/sampleStream/configuration/ConfigurationHandler.cpp \
        $(SRCDIR)/sampleStream/commands/CommandHandler.cpp \
        $(SRCDIR)/Communication/SerialCbor.cpp \

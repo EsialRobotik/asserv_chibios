@@ -7,7 +7,7 @@
 #include <cstdio>
 #include <cfloat>
 
-#include "Communication/RaspIO.h"
+#include "raspIO.h"
 #include "util/asservMath.h"
 #include "util/chibiOsAllocatorWrapper.h"
 #include "AsservMain.h"
@@ -25,7 +25,7 @@
 #include "blockingDetector/OldSchoolBlockingDetector.h"
 #include "util/debug.h"
 
-#define ENABLE_SHELL
+// #define ENABLE_SHELL
 
 #define ASSERV_THREAD_FREQUENCY (600) //200=>5ms 300=>3ms 600
 #define ASSERV_THREAD_PERIOD_S (1.0/ASSERV_THREAD_FREQUENCY)
@@ -86,26 +86,6 @@ GotoNoStop::GotoNoStopConfiguration gotoNoStopConf = { COMMAND_MANAGER_GOTO_ANGL
         COMMAND_MANAGER_GOTONOSTOP_TOO_BIG_ANGLE_THRESHOLD_RAD, (100 / DIST_REGULATOR_KP), 85 };
 
 
-RaspIO::AccDecConfiguration normalAccDec =
-{
-    ANGLE_REGULATOR_MAX_ACC,
-    DIST_REGULATOR_MAX_ACC_FW,
-    DIST_REGULATOR_MAX_DEC_FW,
-    DIST_REGULATOR_MAX_ACC_BW,
-    DIST_REGULATOR_MAX_DEC_BW
-};
-
-
-RaspIO::AccDecConfiguration slowAccDec =
-{
-    ANGLE_REGULATOR_MAX_ACC_SLOW,
-    DIST_REGULATOR_MAX_ACC_FW_SLOW,
-    DIST_REGULATOR_MAX_DEC_FW_SLOW,
-    DIST_REGULATOR_MAX_ACC_BW_SLOW,
-    DIST_REGULATOR_MAX_DEC_BW_SLOW
-};
-
-
 
 Md22::I2cPinInit md22PMXCardPinConf_SCL_SDA = { GPIOB, 6, GPIOB, 7 };
 QuadratureEncoder::GpioPinInit qePMXCardPinConf_E1ch1_E1ch2_E2ch1_E2ch2 = { GPIOC, 6, GPIOA, 7, GPIOA, 5, GPIOB, 9 };
@@ -138,7 +118,7 @@ BaseSequentialStream *outputStream;
 BaseSequentialStream *outputStreamSd4;
 
 
-RaspIO *raspIo;
+// RaspIO *raspIo;
 
 static void initAsserv()
 {
@@ -155,8 +135,8 @@ static void initAsserv()
     encoders_ext = new MagEncoders(&encodersI2cPinsConf_SCL_SDA, false, false, true, 400000);
     debug1("initAsserv::MagEncoders OK\r\n");
 
-    angleRegulator = new Regulator(ANGLE_REGULATOR_KP, REGULATOR_MAX_SPEED_MM_PER_SEC);
-    distanceRegulator = new Regulator(DIST_REGULATOR_KP, REGULATOR_MAX_SPEED_MM_PER_SEC);
+    angleRegulator = new Regulator(ANGLE_REGULATOR_KP, MAX_SPEED_MM_PER_SEC);
+    distanceRegulator = new Regulator(DIST_REGULATOR_KP, MAX_SPEED_MM_PER_SEC);
 
     rightPll = new Pll(PLL_BANDWIDTH);
     leftPll = new Pll(PLL_BANDWIDTH);
@@ -179,9 +159,11 @@ static void initAsserv()
 
     debug1("initAsserv::blockingDetector OK\r\n");
 
-    commandManager = new CommandManager( COMMAND_MANAGER_ARRIVAL_DISTANCE_THRESHOLD_mm,
-            COMMAND_MANAGER_ARRIVAL_ANGLE_THRESHOLD_RAD, preciseGotoConf, waypointGotoConf, gotoNoStopConf,
-            *angleRegulator, *distanceRegulator, nullptr, blockingDetector);
+    commandManager = new CommandManager( COMMAND_MANAGER_ARRIVAL_DISTANCE_THRESHOLD_mm, COMMAND_MANAGER_ARRIVAL_ANGLE_THRESHOLD_RAD,
+        preciseGotoConf, waypointGotoConf, gotoNoStopConf,
+        *angleRegulator, *distanceRegulator,
+        MAX_SPEED_MM_PER_SEC, MAX_SPEED_MM_PER_SEC/3 /* This value should maybe be fine tuned ?*/, 
+        nullptr, blockingDetector);
 
     debug1("initAsserv::commandManager OK\r\n");
 
@@ -192,7 +174,7 @@ static void initAsserv()
             *rightPll, *leftPll, blockingDetector);
 
 
-    raspIo = new RaspIO(&SD4, *odometry, *commandManager, *md22MotorController, *mainAsserv, *angleAccelerationlimiter, *distanceAccelerationLimiter, );
+    // raspIo = new RaspIO(&SD4, *odometry, *commandManager, *md22MotorController, *mainAsserv, angleAccelerationlimiter );
 
     //debug1("initAsserv::mainAsserv OK\r\n");
 
@@ -281,7 +263,8 @@ char *completion_buffer[SHELL_MAX_COMPLETIONS];
 float config_buffer[30];
 void asservCommandUSB(BaseSequentialStream *chp, int argc, char **argv);
 
-void asservCommandSerial();
+void asservCommandSerial(void *);
+void asservPositionSerial(void *);
 
 int main(void)
 {
@@ -464,30 +447,27 @@ void asservCommandUSB(BaseSequentialStream *chp, int argc, char **argv)
 
         float speedRight = speedGoal;
         float speedLeft = 0;
-        if (side == 'l') {
+        if (side == 'l')
+        {
             speedLeft = speedGoal;
             speedRight = 0;
         }
 
-        mainAsserv->setWheelsSpeed(speedRight, speedLeft);
-        chThdSleepMilliseconds(time);
-        mainAsserv->setWheelsSpeed(0, 0);
+        bool ok = commandManager->addWheelsSpeed(speedRight, speedLeft, time);
     } else if (!strcmp(argv[0], "robotfwspeedstep")) {
         float speedGoal = atof(argv[1]);
         int time = atoi(argv[2]);
         chprintf(outputStream, "setting fw robot speed %.2f rad/s for %d ms\r\n", speedGoal, time);
 
-        mainAsserv->setRegulatorsSpeed(speedGoal, 0);
-        chThdSleepMilliseconds(time);
-        mainAsserv->setRegulatorsSpeed(0, 0);
+        bool ok = commandManager->addWheelsSpeed(speedGoal, speedGoal, time);
+
     } else if (!strcmp(argv[0], "robotangspeedstep")) {
         float speedGoal = atof(argv[1]);
         int time = atoi(argv[2]);
         chprintf(outputStream, "setting angle robot speed %.2f rad/s for %d ms\r\n", speedGoal, time);
 
-        mainAsserv->setRegulatorsSpeed(0, speedGoal);
-        chThdSleepMilliseconds(time);
-        mainAsserv->setRegulatorsSpeed(0, 0);
+        bool ok = commandManager->addWheelsSpeed(speedGoal/2.0, -speedGoal/2.0, time);
+
     } else if (!strcmp(argv[0], "speedcontrol")) {
         char side = *argv[1];
         float Kp = atof(argv[2]);
@@ -519,7 +499,6 @@ void asservCommandUSB(BaseSequentialStream *chp, int argc, char **argv)
         float angle = atof(argv[1]);
         chprintf(outputStream, "Adding angle %.2frad \r\n", angle);
 
-        mainAsserv->resetToNormalMode();
         commandManager->addTurn(angle);
     } else if (!strcmp(argv[0], "anglereset")) {
         chprintf(outputStream, "Reseting angle accumulator \r\n");
@@ -530,8 +509,8 @@ void asservCommandUSB(BaseSequentialStream *chp, int argc, char **argv)
     } else if (!strcmp(argv[0], "adddist")) {
         float dist = atof(argv[1]);
 
-        mainAsserv->resetToNormalMode();
         bool ok = commandManager->addStraightLine(dist);
+
         chprintf(outputStream, "Adding distance %.2fmm %d\r\n", dist, ok);
 
     } else if (!strcmp(argv[0], "anglecontrol")) {
@@ -579,17 +558,16 @@ void asservCommandUSB(BaseSequentialStream *chp, int argc, char **argv)
         bool enable = !(atoi(argv[1]) == 0);
         chprintf(outputStream, "%s polar control\r\n", (enable ? "enabling" : "disabling"));
 
-        mainAsserv->enablePolar(enable);
+        // mainAsserv->enablePolar(enable);
 
     } else if (!strcmp(argv[0], "addgoto")) {
         float X = atof(argv[1]);
         float Y = atof(argv[2]);
         chprintf(outputStream, "Adding goto(%.2f,%.2f) consign\r\n", X, Y);
 
-        mainAsserv->resetToNormalMode();
         commandManager->addGoTo(X, Y);
+
     } else if (!strcmp(argv[0], "gototest")) {
-        mainAsserv->resetToNormalMode();
         mainAsserv->limitMotorControllerConsignToPercentage(50);
 
         commandManager->addGoTo(200, 0);
@@ -610,35 +588,6 @@ void asservCommandUSB(BaseSequentialStream *chp, int argc, char **argv)
         commandManager->addGoTo(0, 0);
         commandManager->addGoToAngle(100, 0);
 
-    } else if (!strcmp(argv[0], "get_config")) {
-        uint8_t index = 0;
-
-        // SpeedControllerLeft
-        for (int i = 0; i < NB_PI_SUBSET; i++) {
-            speedControllerLeft->getGainsForRange(i, &config_buffer[index], &config_buffer[index + 1],
-                    &config_buffer[index + 2]);
-            index += 3;
-        }
-
-        // SpeedControllerRight
-        for (int i = 0; i < NB_PI_SUBSET; i++) {
-            speedControllerRight->getGainsForRange(i, &config_buffer[index], &config_buffer[index + 1],
-                    &config_buffer[index + 2]);
-            index += 3;
-        }
-
-        //Regulators
-        config_buffer[index++] = distanceRegulator->getGain();
-        config_buffer[index++] = angleRegulator->getGain();
-
-        // accel limiter
-        config_buffer[index++] = angleAccelerationlimiter->getMaxAcceleration();
-        config_buffer[index++] = distanceAccelerationLimiter->getMaxAcceleration();
-        config_buffer[index++] = distanceAccelerationLimiter->getMinAcceleration();
-        config_buffer[index++] = distanceAccelerationLimiter->getHighSpeedThreshold();
-
-        chprintf(outputStream, "sending %d float of config !\r\n", index);
-        USBStream::instance()->sendConfig((uint8_t*) config_buffer, index * sizeof(config_buffer[0]));
     } else {
         printUsage();
     }
