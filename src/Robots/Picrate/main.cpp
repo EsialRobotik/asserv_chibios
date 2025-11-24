@@ -111,8 +111,8 @@ static void initAsserv()
 
     odometry = new Odometry (ENCODERS_WHEELS_DISTANCE_MM, 0, 0);
 
-    speedControllerRight = new AdaptativeSpeedController(speed_controller_right_Kp, speed_controller_right_Ki, speed_controller_right_SpeedRange, 10, WHEELS_MAX_SPEED_MM_PER_SEC, ASSERV_THREAD_FREQUENCY);
-    speedControllerLeft = new AdaptativeSpeedController(speed_controller_left_Kp, speed_controller_left_Ki, speed_controller_left_SpeedRange, 10, WHEELS_MAX_SPEED_MM_PER_SEC, ASSERV_THREAD_FREQUENCY);
+    speedControllerRight = new AdaptativeSpeedController(speed_controller_right_Kp, speed_controller_right_Ki, speed_controller_right_SpeedRange, 100, WHEELS_MAX_SPEED_MM_PER_SEC, ASSERV_THREAD_FREQUENCY);
+    speedControllerLeft = new AdaptativeSpeedController(speed_controller_left_Kp, speed_controller_left_Ki, speed_controller_left_SpeedRange, 100, WHEELS_MAX_SPEED_MM_PER_SEC, ASSERV_THREAD_FREQUENCY);
 
 
     angleAccelerationlimiter = new SimpleAccelerationLimiter(ANGLE_REGULATOR_MAX_ACC);
@@ -169,7 +169,7 @@ void serialIoWrapperCommandInput(void *)
  */
 static binary_semaphore_t asservStarted_semaphore;
 
-static THD_WORKING_AREA(waAsservThread, 1024);
+static THD_WORKING_AREA(waAsservThread, 2048);
 static THD_FUNCTION(AsservThread, arg)
 {
     (void) arg;
@@ -190,7 +190,7 @@ static THD_FUNCTION(AsservThread, arg)
     mainAsserv->mainLoop();
 }
 
-static THD_WORKING_AREA(waLowPrioUSBThread, 1024);
+static THD_WORKING_AREA(waLowPrioUSBThread, 2048);
 static THD_FUNCTION(LowPrioUSBThread, arg)
 {
     (void) arg;
@@ -208,8 +208,8 @@ static THD_FUNCTION(LowPrioUSBThread, arg)
 #ifdef ENABLE_SHELL
 THD_WORKING_AREA(wa_shell, 2048);
 #else
-THD_WORKING_AREA(wa_raspioInput, 1024);
-THD_WORKING_AREA(wa_raspioOutput, 1024);
+THD_WORKING_AREA(wa_raspioInput, 2048);
+THD_WORKING_AREA(wa_raspioOutput, 2048);
 #endif
 
 char history_buffer[SHELL_MAX_HIST_BUFF];

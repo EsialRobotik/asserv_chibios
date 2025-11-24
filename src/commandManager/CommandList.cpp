@@ -1,6 +1,7 @@
 #include "CommandList.h"
 #include "Commands/Command.h"
 #include <cstdlib>
+#include "ch.h"
 
 CommandList::CommandList(uint8_t nbElements, uint8_t elementSize)
 {
@@ -9,9 +10,11 @@ CommandList::CommandList(uint8_t nbElements, uint8_t elementSize)
     full = false;
     nbElement = nbElements;
     commandList = (Command **) malloc(sizeof(Command *) * nbElement);
+    chDbgAssert( commandList != nullptr ,"Unable to alloc commandList");
     for(int i=0; i<nbElement; i++)
     {
         commandList[i] = (Command *) malloc(elementSize);
+        chDbgAssert( commandList[i] != nullptr ,"Unable to alloc commandList element");
     }
 }
 

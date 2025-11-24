@@ -5,7 +5,7 @@
 
 # Compiler options here.
 ifeq ($(USE_OPT),)
-  USE_OPT = -Og -g -ggdb -fomit-frame-pointer -falign-functions=16 -lm 
+  USE_OPT = -Og -g -ggdb -fomit-frame-pointer -falign-functions=16 -lm  
 endif
 
 # C specific options here (added to USE_OPT).
@@ -25,7 +25,7 @@ endif
 
 # Linker extra options here.
 ifeq ($(USE_LDOPT),)
-  USE_LDOPT = -lstdc++
+  USE_LDOPT = -lstdc++,--print-memory-usage
 endif
 
 # Enable this if you want link time optimizations (LTO).
@@ -35,7 +35,7 @@ endif
 
 # Enable this if you want to see the full log while compiling.
 ifeq ($(USE_VERBOSE_COMPILE),)
-  USE_VERBOSE_COMPILE = no
+  USE_VERBOSE_COMPILE = yes
 endif
 
 # If enabled, this option makes the build process faster by not compiling
@@ -55,7 +55,7 @@ endif
 # Stack size to be allocated to the Cortex-M process stack. This stack is
 # the stack used by the main() thread.
 ifeq ($(USE_PROCESS_STACKSIZE),)
-  USE_PROCESS_STACKSIZE = 0x1400
+  USE_PROCESS_STACKSIZE = 1024
 endif
 
 # Stack size to the allocated to the Cortex-M main/exceptions stack. This

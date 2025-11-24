@@ -305,7 +305,7 @@ static void initAsserv()
 
     crc32Calculator = new HardwareCrc32Calculator(&CRCD1);
 
-    esp32IoCbor = new SerialCbor(&SD1, crc32Calculator, *odometry, *commandManager, *mp6550, *mainAsserv);
+    esp32IoCbor = new SerialCbor(&LPSD1, crc32Calculator, *odometry, *commandManager, *mp6550, *mainAsserv);
 
     configurationHandler = new ConfigurationHandler (angleRegulator, distanceRegulator, angleAccelerationlimiter, distanceAccelerationLimiter, speedControllerRight, speedControllerLeft);
 
@@ -331,7 +331,7 @@ void serialIoWrapperCommandInput(void *)
  */
 static binary_semaphore_t asservStarted_semaphore;
 
-static THD_WORKING_AREA(waAsservThread, 512);
+static THD_WORKING_AREA(waAsservThread, 1024);
 static THD_FUNCTION(AsservThread, arg)
 {
     (void) arg;
@@ -346,7 +346,7 @@ static THD_FUNCTION(AsservThread, arg)
     mainAsserv->mainLoop();
 }
 
-static THD_WORKING_AREA(waLowPrioUSBThread, 1024);
+static THD_WORKING_AREA(waLowPrioUSBThread, 2048);
 static THD_FUNCTION(LowPrioUSBThread, arg)
 {
     (void) arg;
@@ -356,7 +356,6 @@ static THD_FUNCTION(LowPrioUSBThread, arg)
     while (!chThdShouldTerminateX())
     {
        USBStream::instance()->USBStreamHandleConnection_lowerpriothread();
-       chThdSleepMilliseconds(50);
     }
 
 }
@@ -365,7 +364,7 @@ static THD_FUNCTION(LowPrioUSBThread, arg)
 
 
 
-THD_WORKING_AREA(wa_shell, 2048);
+THD_WORKING_AREA(wa_shell, 512);
 char history_buffer[SHELL_MAX_HIST_BUFF];
 char *completion_buffer[SHELL_MAX_COMPLETIONS];
 
@@ -374,7 +373,7 @@ void asservCommandUSB(BaseSequentialStream *chp, int argc, char **argv);
 
 
 
-THD_WORKING_AREA(wa_raspioInput, 1024);
+THD_WORKING_AREA(wa_raspioInput, 2048);
 THD_WORKING_AREA(wa_raspioOutput, 1024);
 
 int main(void)
@@ -406,13 +405,12 @@ int main(void)
     palSetPadMode(GPIOA, 10, PAL_MODE_ALTERNATE(7));
     palSetPadMode(GPIOA, 9, PAL_MODE_ALTERNATE(7));
     sdStart(&SD1, NULL);
-    
+    outputStream = reinterpret_cast<BaseSequentialStream*>(&SD1);
 
     /*
     *  LPUSART 1 : built-in usb serial port. For shell only
     */
     sdStart(&LPSD1, NULL);
-    outputStream = reinterpret_cast<BaseSequentialStream*>(&LPSD1);
     shellInit();
 
 

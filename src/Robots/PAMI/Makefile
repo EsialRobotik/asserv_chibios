@@ -25,7 +25,7 @@ endif
 
 # Linker extra options here.
 ifeq ($(USE_LDOPT),)
-  USE_LDOPT = -lstdc++
+  USE_LDOPT = -lstdc++,--print-memory-usage
 endif
 
 # Enable this if you want link time optimizations (LTO).
@@ -55,7 +55,7 @@ endif
 # Stack size to be allocated to the Cortex-M process stack. This stack is
 # the stack used by the main() thread.
 ifeq ($(USE_PROCESS_STACKSIZE),)
-  USE_PROCESS_STACKSIZE = 0x1400
+  USE_PROCESS_STACKSIZE = 1024
 endif
 
 # Stack size to the allocated to the Cortex-M main/exceptions stack. This
