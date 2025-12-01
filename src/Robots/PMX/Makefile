@@ -129,13 +129,6 @@ LDSCRIPT= $(STARTUPLD)/STM32F446xE.ld
 #
 #endif
 
-ifneq ($(SHELL_ENABLE),)  # enable the shell
-	SHELL_MODE_DEFINE = -DENABLE_SHELL
-endif
-
-SHELL_MODE_DEFINE = -DENABLE_SHELL
-#$(error ALLSRC : >$(ALLCSRC)<)
-
 # C sources that can be compiled in ARM or THUMB mode depending on the global
 # setting.
 CSRC = $(ALLCSRC)\
@@ -185,7 +178,6 @@ CPPSRC = $(ALLCPPSRC) \
        $(SRCDIR)/Communication/cborStream/CborStreamStateMachine.cpp \
        $(SRCDIR)/sampleStream/configuration/ConfigurationHandler.cpp \
        $(SRCDIR)/sampleStream/commands/CommandHandler.cpp 
-       #$(SRCDIR)/blockingDetector/SpeedErrorBlockingDetector.cpp 
 
     
 

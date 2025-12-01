@@ -20,12 +20,11 @@
 #include "sampleStream/USBStream.h"
 #include "AccelerationLimiter/SimpleAccelerationLimiter.h"
 #include "AccelerationLimiter/AdvancedAccelerationLimiter.h"
+#include "Communication/SerialIO.h"
 #include "Pll.h"
 #include "Encoders/MagEncoders.h"
 #include "blockingDetector/OldSchoolBlockingDetector.h"
 #include "util/debug.h"
-
-// #define ENABLE_SHELL
 
 #define ASSERV_THREAD_FREQUENCY (600) //200=>5ms 300=>3ms 600
 #define ASSERV_THREAD_PERIOD_S (1.0/ASSERV_THREAD_FREQUENCY)
@@ -119,6 +118,7 @@ BaseSequentialStream *outputStreamSd4;
 
 
 // RaspIO *raspIo;
+SerialIO *serialIo;
 
 static void initAsserv()
 {
@@ -175,9 +175,20 @@ static void initAsserv()
 
 
     // raspIo = new RaspIO(&SD4, *odometry, *commandManager, *md22MotorController, *mainAsserv, angleAccelerationlimiter );
-
+    serialIo = new SerialIO(&SD4, *odometry, *commandManager, *md22MotorController, *mainAsserv);
     //debug1("initAsserv::mainAsserv OK\r\n");
+}
 
+
+void serialIoWrapperPositionOutput(void *)
+{
+    serialIo->positionOutput();
+}
+
+
+void serialIoWrapperCommandInput(void *)
+{
+    serialIo->commandInput();
 }
 
 /*
@@ -187,7 +198,7 @@ static void initAsserv()
  */
 static binary_semaphore_t asservStarted_semaphore;
 
-static THD_WORKING_AREA(waAsservThread, 512);
+static THD_WORKING_AREA(waAsservThread, 1024);
 static THD_FUNCTION(AsservThread, arg)
 {
     (void) arg;
@@ -222,20 +233,16 @@ static THD_FUNCTION(AsservThread, arg)
     //debug1("AsservThread::enableMotors false\r\n");
 
     mainAsserv->mainLoop();
-
-//    while (true)
-//    {
-//        palClearPad(GPIOA, GPIOA_ARD_D12);
-//        chThdSleepMilliseconds(200);
-//        palSetPad(GPIOA, GPIOA_ARD_D12);
-//        chThdSleepMilliseconds(200);
-//    }
 }
 
 
+// Static allocation of all Working-Area for heap & stack of each thread.
+THD_WORKING_AREA(wa_shell, 512);
+THD_WORKING_AREA(wa_raspioInput, 2048);
+THD_WORKING_AREA(wa_raspioOutput, 1024);
 
 
-static THD_WORKING_AREA(waLowPrioUSBThread, 512);
+static THD_WORKING_AREA(waLowPrioUSBThread, 2048);
 static THD_FUNCTION(LowPrioUSBThread, arg)
 {
     (void) arg;
@@ -250,21 +257,10 @@ static THD_FUNCTION(LowPrioUSBThread, arg)
 }
 
 
-
-THD_WORKING_AREA(wa_shell, 2048);
-THD_WORKING_AREA(wa_controlPanel, 256);
-THD_WORKING_AREA(wa_shell_serie, 2048);
-THD_WORKING_AREA(wa_controlPanel_serie, 256);
-THD_FUNCTION(ControlPanelThread, p);
-
 char history_buffer[SHELL_MAX_HIST_BUFF];
 char *completion_buffer[SHELL_MAX_COMPLETIONS];
-
-float config_buffer[30];
 void asservCommandUSB(BaseSequentialStream *chp, int argc, char **argv);
 
-void asservCommandSerial(void *);
-void asservPositionSerial(void *);
 
 int main(void)
 {
@@ -362,26 +358,20 @@ int main(void)
 #endif
             };
 
-#ifdef ENABLE_SHELL
-    bool startShell = true;
-#else
-    bool startShell = false;
-#endif
-    if (startShell) {
-        //debug1("main::startShell ...\r\n");
+    // Shell thread start
+    thread_t *shellThd = chThdCreateStatic(wa_shell, sizeof(wa_shell), LOWPRIO, shellThread, &shellCfg);
+    chRegSetThreadNameX(shellThd, "shell");
 
-        thread_t *shellThd = chThdCreateStatic(wa_shell, sizeof(wa_shell), LOWPRIO, shellThread, &shellCfg);
-        chRegSetThreadNameX(shellThd, "shell");
+    /* 
+     *  Needed thread to run SerialIO (ie: here, communication with linux card armadeus).
+     *  C wrapping function are needed to bridge through C and C++
+     */
+    thread_t *threadPositionOutput = chThdCreateStatic(wa_raspioInput, sizeof(wa_raspioInput), LOWPRIO+3, serialIoWrapperPositionOutput, nullptr);
+    chRegSetThreadNameX(threadPositionOutput, "positionOutput");
+    thread_t *threadCommandInput = chThdCreateStatic(wa_raspioOutput, sizeof(wa_raspioOutput), LOWPRIO+4, serialIoWrapperCommandInput, nullptr);
+    chRegSetThreadNameX(threadCommandInput, "commandInput");
 
-        thread_t *asserCmdSerialThread = chThdCreateStatic(wa_shell_serie, sizeof(wa_shell_serie), LOWPRIO,
-                asservCommandSerial, nullptr);
-        chRegSetThreadNameX(asserCmdSerialThread, "asserv Command serial");
 
-        thread_t *controlPanelThdSerial = chThdCreateStatic(wa_controlPanel_serie, sizeof(wa_controlPanel_serie),
-                LOWPRIO, asservPositionSerial, nullptr);
-        chRegSetThreadNameX(controlPanelThdSerial, "asserv position update serial");
-
-    }
 
     deactivateHeapAllocation();
 
