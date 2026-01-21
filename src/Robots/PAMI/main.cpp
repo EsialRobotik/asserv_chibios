@@ -253,7 +253,7 @@ static void initAsserv()
         .GPIObase = GPIOB,
         .pinNumber = 5
     };
-    mp6550 = new Mp6550(mp6550Conf, &sleepPinConf, true, false, true);
+    mp6550 = new Mp6550(mp6550Conf, &sleepPinConf, false, false, true);
 
 
 
@@ -262,7 +262,7 @@ static void initAsserv()
      * TIM 2 chan 1/2 : PA5/PA1
      */
     QuadratureEncoder::GpioPinInit pami_encoders = {GPIOB, 4, GPIOA, 4, GPIOA, 5, GPIOA, 1};
-    encoders = new QuadratureEncoder (&pami_encoders, true, false, true);
+    encoders = new QuadratureEncoder (&pami_encoders, false, false, true);
 
     angleRegulator = new Regulator(ANGLE_REGULATOR_KP, REGULATOR_MAX_SPEED_MM_PER_SEC);
     distanceRegulator = new Regulator(DIST_REGULATOR_KP, REGULATOR_MAX_SPEED_MM_PER_SEC);
@@ -305,7 +305,7 @@ static void initAsserv()
 
     crc32Calculator = new HardwareCrc32Calculator(&CRCD1);
 
-    esp32IoCbor = new SerialCbor(&LPSD1, crc32Calculator, *odometry, *commandManager, *mp6550, *mainAsserv);
+    esp32IoCbor = new SerialCbor(&SD1, crc32Calculator, *odometry, *commandManager, *mp6550, *mainAsserv);
 
     configurationHandler = new ConfigurationHandler (angleRegulator, distanceRegulator, angleAccelerationlimiter, distanceAccelerationLimiter, speedControllerRight, speedControllerLeft);
 
@@ -405,12 +405,12 @@ int main(void)
     palSetPadMode(GPIOA, 10, PAL_MODE_ALTERNATE(7));
     palSetPadMode(GPIOA, 9, PAL_MODE_ALTERNATE(7));
     sdStart(&SD1, NULL);
-    outputStream = reinterpret_cast<BaseSequentialStream*>(&SD1);
 
     /*
     *  LPUSART 1 : built-in usb serial port. For shell only
     */
     sdStart(&LPSD1, NULL);
+    outputStream = reinterpret_cast<BaseSequentialStream*>(&LPSD1);
     shellInit();
 
 
