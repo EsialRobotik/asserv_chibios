@@ -8,7 +8,7 @@ WheelSpeed::WheelSpeed(float rightWheelSpeed_mmpersec, float leftWheelSpeed_mmpe
  : m_rightWheelSpeed_mmpersec(rightWheelSpeed_mmpersec), m_leftWheelSpeed_mmpersec(leftWheelSpeed_mmpersec)
 {
     m_step_endtime = chVTGetSystemTime();
-    m_step_endtime += TIME_US2I(stepDuration_ms);
+    m_step_endtime += TIME_MS2I(stepDuration_ms);
 }
 
 Command::consign_type_t WheelSpeed::computeInitialConsign(float, float , float , consign_t & consign, const Regulator &, const Regulator &)

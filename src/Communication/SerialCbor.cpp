@@ -58,8 +58,6 @@ void SerialCbor::positionOutput()
     QCBOREncodeContext EncodeCtx;
     UsefulBuf qcoborBuffer = {m_qcborOutputBuffer+4*3, sizeof(m_qcborOutputBuffer)};
 
-    int idx=0;
-
     const time_conv_t loopPeriod_ms = 100;
     systime_t time = chVTGetSystemTime();
     time += TIME_MS2I(loopPeriod_ms);
@@ -100,6 +98,7 @@ void SerialCbor::positionOutput()
             *crcWordPtr = m_crc32Calculator->compute(EncodedCBOR.ptr, EncodedCBOR.len);
             streamWrite(m_serialDriver, (const uint8_t*)m_qcborOutputBuffer, EncodedCBOR.len+4*3);
         } 
+        chDbgAssert(chVTGetSystemTime() < time, "SerialCbor output thread missed deadline !");
         chThdSleepUntil(time);
         time += TIME_MS2I(loopPeriod_ms);
     }

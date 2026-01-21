@@ -205,9 +205,9 @@ public:
 
   /// Copy constructor
   ring_buffer (const ring_buffer& other)
-    : front_idx (other.front_idx)
+    : cap (other.cap)
+    , front_idx (other.front_idx)
     , back_idx (other.back_idx)
-    , cap (other.cap)
     , sz (other.sz)
   {
     if (other.cap)
@@ -480,5 +480,5 @@ private:
   }
 
   std::unique_ptr<T[]> buf;
-  size_t front_idx, back_idx, cap, sz;
+  size_t cap, front_idx, back_idx,  sz;
 };

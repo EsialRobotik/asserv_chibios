@@ -253,14 +253,24 @@ void CommandManager::update(float X_mm, float Y_mm, float theta_rad)
 
 
     if (m_currentCmd != nullptr && !m_currentCmd->isGoalReached(X_mm, Y_mm, theta_rad, m_angle_regulator, m_distance_regulator, m_cmdList.getSecond()))
-    {
+{
         m_currentCmd->updateConsign(X_mm, Y_mm, theta_rad, m_consign, m_angle_regulator, m_distance_regulator);
     }
     else
     {
         switchToNextCommand();
         if( m_currentCmd != nullptr )
+        {
             m_consign.type = m_currentCmd->computeInitialConsign(X_mm, Y_mm, theta_rad, m_consign, m_angle_regulator, m_distance_regulator);
+        }
+        else
+        {
+            // No further command, just set a consign where we are.
+            m_consign.type = Command::consign_type_t::consign_acceleration_limited;
+            m_consign.angle_consign = m_angle_regulator.getAccumulator();
+            m_consign.distance_consign = m_distance_regulator.getAccumulator();
+        }
+            
     }
 }
 
