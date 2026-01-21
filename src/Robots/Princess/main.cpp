@@ -239,6 +239,8 @@ int main(void)
     /* Create a 'background' thread to handle command received through the USB */
     chThdCreateStatic(waLowPrioUSBThread, sizeof(waLowPrioUSBThread), LOWPRIO+2, LowPrioUSBThread, NULL);
 
+#ifdef ENABLE_SHELL
+
     // Custom commands
     const ShellCommand shellCommands[] = { { "asserv", &(asservCommandUSB) }, { nullptr, nullptr } };
     ShellConfig shellCfg =
@@ -254,8 +256,6 @@ int main(void)
 #endif
     };
 
-    
-#ifdef ENABLE_SHELL
         thread_t *shellThd = chThdCreateStatic(wa_shell, sizeof(wa_shell), LOWPRIO, shellThread, &shellCfg);
         chRegSetThreadNameX(shellThd, "shell");
 #else
@@ -335,7 +335,7 @@ void asservCommandUSB(BaseSequentialStream *chp, int argc, char **argv)
             speedRight = 0;
         }
 
-        bool ok = commandManager->addWheelsSpeed(speedRight, speedLeft, time);
+        commandManager->addWheelsSpeed(speedRight, speedLeft, time);
     }
     else if (!strcmp(argv[0], "robotfwspeedstep"))
     {
@@ -343,7 +343,7 @@ void asservCommandUSB(BaseSequentialStream *chp, int argc, char **argv)
         int time = atoi(argv[2]);
         chprintf(outputStream, "setting fw robot speed %.2f rad/s for %d ms\r\n", speedGoal, time);
 
-        bool ok = commandManager->addWheelsSpeed(speedGoal, speedGoal, time);
+        commandManager->addWheelsSpeed(speedGoal, speedGoal, time);
     }
     else if (!strcmp(argv[0], "speedcontrol"))
     {
@@ -413,7 +413,7 @@ void asservCommandUSB(BaseSequentialStream *chp, int argc, char **argv)
     {
         float dist = atof(argv[1]);
 
-        bool ok = commandManager->addStraightLine(dist);
+        commandManager->addStraightLine(dist);
         chprintf(outputStream, "Adding distance %.2fmm argc %d (%s)\r\n", dist,argc,  argv[1] );
 
     }
@@ -490,7 +490,7 @@ void asservCommandUSB(BaseSequentialStream *chp, int argc, char **argv)
     }
     else if (!strcmp(argv[0], "gototest"))
     {
-        bool ok = commandManager->addStraightLine(1500);
+        commandManager->addStraightLine(1500);
         chprintf(outputStream, "Adding distance %.2fmm \r\n", 1500 );
         chThdSleepMilliseconds(600);
         chprintf(outputStream, "Stop!\r\n");
