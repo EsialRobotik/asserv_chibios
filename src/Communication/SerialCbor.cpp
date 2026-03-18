@@ -109,7 +109,7 @@ void SerialCbor::commandInput()
 {
     while(true)
     {
-        int read = sdReadTimeout(m_serialDriver, m_qcborInputBuffer, sizeof(m_qcborInputBuffer), TIME_MS2I(10));
+        int read = sdReadTimeout(m_serialDriver, m_qcborInputBuffer, sizeof(m_qcborInputBuffer), TIME_MS2I(50));
         for(int i=0; i<read; i++)
             m_cborSm.push_byte(m_qcborInputBuffer[i]);
 

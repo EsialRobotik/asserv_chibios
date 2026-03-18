@@ -380,7 +380,6 @@ int main(void)
 {
     halInit();
     chSysInit();
-    initAsserv();
 
     /*  
      * There's an internal pulldown activated at reset on pin PB4 which is an encoder input !
@@ -406,6 +405,7 @@ int main(void)
     palSetPadMode(GPIOA, 9, PAL_MODE_ALTERNATE(7));
     sdStart(&SD1, NULL);
 
+
     /*
     *  LPUSART 1 : built-in usb serial port. For shell only
     */
@@ -417,6 +417,7 @@ int main(void)
     /*
      * Asserv Thread with sync mecanism
     */
+    initAsserv();
     chBSemObjectInit(&asservStarted_semaphore, true);
     chThdCreateStatic(waAsservThread, sizeof(waAsservThread), HIGHPRIO, AsservThread, NULL);
     chBSemWait(&asservStarted_semaphore);
