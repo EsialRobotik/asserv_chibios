@@ -37,9 +37,11 @@ void Md22::init()
     // External pullups with correct resistance value shall be used !
     // see : http://wiki.chibios.org/dokuwiki/doku.php?id=chibios:community:guides:i2c_trouble_shooting
     palSetPadMode(m_i2cPinConf.GPIObaseSCL, m_i2cPinConf.pinNumberSCL,
-            PAL_MODE_ALTERNATE(4) | PAL_STM32_OTYPE_OPENDRAIN);
+            PAL_MODE_ALTERNATE(m_i2cPinConf.SCLPinAlternate) | PAL_STM32_OTYPE_OPENDRAIN);
+            // PAL_MODE_ALTERNATE(4) | PAL_STM32_OTYPE_OPENDRAIN);
     palSetPadMode(m_i2cPinConf.GPIObaseSDA, m_i2cPinConf.pinNumberSDA,
-            PAL_MODE_ALTERNATE(4) | PAL_STM32_OTYPE_OPENDRAIN);
+            PAL_MODE_ALTERNATE(m_i2cPinConf.SDAPinAlternate) | PAL_STM32_OTYPE_OPENDRAIN);
+            // PAL_MODE_ALTERNATE(4) | PAL_STM32_OTYPE_OPENDRAIN);
 
 
     i2cStart(&I2CD1, &m_i2cconfig);

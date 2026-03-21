@@ -62,8 +62,8 @@ SerialCbor::AccDecConfiguration slowAccDec =
 
 
 
-Md22::I2cPinInit ESIALCardPinConf_md22 = {GPIOB, 6, GPIOB, 7};
-QuadratureEncoder::GpioPinInit ESIALCardPinConf_Encoders = {GPIOC, 6, GPIOA, 7, GPIOA, 1, GPIOA, 0};
+Md22::I2cPinInit ESIALCardPinConf_md22 = {GPIOB, 6, 4, GPIOB, 7, 4};
+QuadratureEncoder::GpioPinInit ESIALCardPinConf_Encoders = {GPIOC, 6, 2, GPIOA, 7, 2, GPIOA, 1, 1, GPIOA, 0, 1};
 
 
 QuadratureEncoder *encoders;

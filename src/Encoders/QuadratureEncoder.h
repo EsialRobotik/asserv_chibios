@@ -12,12 +12,16 @@ public:
     {
         stm32_gpio_t* GPIObaseE1ch1;
         uint8_t pinNumberE1ch1;
+        uint8_t pinE1ch1Alternate;
         stm32_gpio_t* GPIObaseE1ch2;
         uint8_t pinNumberE1ch2;
+        uint8_t pinE1ch2Alternate;
         stm32_gpio_t* GPIObaseE2ch1;
         uint8_t pinNumberE2ch1;
+        uint8_t pinE2ch1Alternate;
         stm32_gpio_t* GPIObaseE2ch2;
         uint8_t pinNumberE2ch2;
+        uint8_t pinE2ch2Alternate;
     };
 
     QuadratureEncoder(GpioPinInit *gpioPins, bool is1EncoderRight, bool invertEncoderR = false, bool invertEncoderL = false);

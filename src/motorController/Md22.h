@@ -14,8 +14,10 @@ public:
     {
         stm32_gpio_t* GPIObaseSCL;
         uint8_t pinNumberSCL;
+        uint8_t SCLPinAlternate;
         stm32_gpio_t* GPIObaseSDA;
         uint8_t pinNumberSDA;
+        uint8_t SDAPinAlternate;
     };
 
     explicit Md22(I2cPinInit *i2cPins, bool is1motorRight, bool invertMotorRight, bool invertMotorLeft, uint32_t i2cFrequency);

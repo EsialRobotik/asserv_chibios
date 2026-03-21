@@ -62,8 +62,8 @@ SerialCbor::AccDecConfiguration slowAccDec =
 
 
 
-Md22::I2cPinInit ESIALCardPinConf_md22 = {GPIOB, 6, 4, GPIOB, 7, 4};
-QuadratureEncoder::GpioPinInit ESIALCardPinConf_Encoders = {GPIOC, 6, 2, GPIOA, 7, 2, GPIOA, 1, 1, GPIOA, 0, 1};
+Md22::I2cPinInit ESIALCardPinConf_md22 = {GPIOA, 8, 2, GPIOB, 5, 8};
+QuadratureEncoder::GpioPinInit ESIALCardPinConf_Encoders = {GPIOB, 4, 2, GPIOA, 4, 2, GPIOB, 6, 1, GPIOB, 7, 1};
 
 
 QuadratureEncoder *encoders;
@@ -97,11 +97,10 @@ ConfigurationHandler *configurationHandler;
 CommandHandler *commandHandler;
 
 
-
 static void initAsserv()
 {
-    encoders = new QuadratureEncoder(&ESIALCardPinConf_Encoders, true, false, false);
-    md22MotorController = new Md22(&ESIALCardPinConf_md22, false, false, true, 100000);
+    encoders = new QuadratureEncoder(&ESIALCardPinConf_Encoders, false, false, false);
+    md22MotorController = new Md22(&ESIALCardPinConf_md22, true, true, false, 100000);
 
     angleRegulator = new Regulator(ANGLE_REGULATOR_KP, REGULATOR_MAX_SPEED_MM_PER_SEC);
     distanceRegulator = new Regulator(DIST_REGULATOR_KP, FLT_MAX);
@@ -111,8 +110,8 @@ static void initAsserv()
 
     odometry = new Odometry (ENCODERS_WHEELS_DISTANCE_MM, 0, 0);
 
-    speedControllerRight = new AdaptativeSpeedController(speed_controller_right_Kp, speed_controller_right_Ki, speed_controller_right_SpeedRange, 100, WHEELS_MAX_SPEED_MM_PER_SEC, ASSERV_THREAD_FREQUENCY);
-    speedControllerLeft = new AdaptativeSpeedController(speed_controller_left_Kp, speed_controller_left_Ki, speed_controller_left_SpeedRange, 100, WHEELS_MAX_SPEED_MM_PER_SEC, ASSERV_THREAD_FREQUENCY);
+    speedControllerRight = new AdaptativeSpeedController(speed_controller_right_Kp, speed_controller_right_Ki, speed_controller_right_SpeedRange, 100, REGULATOR_MAX_SPEED_MM_PER_SEC, ASSERV_THREAD_FREQUENCY);
+    speedControllerLeft = new AdaptativeSpeedController(speed_controller_left_Kp, speed_controller_left_Ki, speed_controller_left_SpeedRange, 100, REGULATOR_MAX_SPEED_MM_PER_SEC, ASSERV_THREAD_FREQUENCY);
 
 
     angleAccelerationlimiter = new SimpleAccelerationLimiter(ANGLE_REGULATOR_MAX_ACC);
@@ -141,7 +140,7 @@ static void initAsserv()
 
     crc32Calculator = new SoftwareCrc32Calculator();
 
-    esp32IoCbor = new SerialCbor(&SD2, crc32Calculator,  *odometry, *commandManager, *md22MotorController, *mainAsserv, angleAccelerationlimiter, distanceAccelerationLimiter, &normalAccDec, &slowAccDec);
+    esp32IoCbor = new SerialCbor(&SD2, crc32Calculator, *odometry, *commandManager, *md22MotorController, *mainAsserv, angleAccelerationlimiter, distanceAccelerationLimiter, &normalAccDec, &slowAccDec);
 
     configurationHandler = new ConfigurationHandler (angleRegulator, distanceRegulator, angleAccelerationlimiter, distanceAccelerationLimiter, speedControllerRight, speedControllerLeft);
 
@@ -159,7 +158,6 @@ void serialIoWrapperCommandInput(void *)
 {
     esp32IoCbor->commandInput();
 }
-
 
 
 /*
@@ -184,6 +182,7 @@ static THD_FUNCTION(AsservThread, arg)
         .dataMinusPin_GPIObase = GPIOA, .dataMinusPin_number = 11, .dataMinusPin_alternate = 10
     };
     USBStream::init(&usbPinConf, ASSERV_THREAD_FREQUENCY, configurationHandler, commandHandler);
+
 
     chBSemSignal(&asservStarted_semaphore);
 
@@ -226,6 +225,15 @@ int main(void)
     halInit();
     chSysInit();
 
+    /*
+     * USART 1:  For communication with the brain µc
+     * RX: PA10
+     * TX: PA9
+     */
+    palSetPadMode(GPIOA, 10, PAL_MODE_ALTERNATE(7));
+    palSetPadMode(GPIOA, 9, PAL_MODE_ALTERNATE(7));
+    sdStart(&SD1, NULL);
+
     initAsserv();
 
     sdStart(&SD2, NULL);
@@ -236,11 +244,11 @@ int main(void)
     chBSemWait(&asservStarted_semaphore);
 
     outputStream = reinterpret_cast<BaseSequentialStream*>(&SD2);
-    
+
     /* Create a 'background' thread to handle command received through the USB */
     chThdCreateStatic(waLowPrioUSBThread, sizeof(waLowPrioUSBThread), LOWPRIO+2, LowPrioUSBThread, NULL);
 
-
+#ifdef ENABLE_SHELL
 
     // Custom commands
     const ShellCommand shellCommands[] = { { "asserv", &(asservCommandUSB) }, { nullptr, nullptr } };
@@ -257,20 +265,17 @@ int main(void)
 #endif
     };
 
-
-    
-#ifdef ENABLE_SHELL
-    thread_t *shellThd = chThdCreateStatic(wa_shell, sizeof(wa_shell), LOWPRIO, shellThread, &shellCfg);
-    chRegSetThreadNameX(shellThd, "shell");
+        thread_t *shellThd = chThdCreateStatic(wa_shell, sizeof(wa_shell), LOWPRIO, shellThread, &shellCfg);
+        chRegSetThreadNameX(shellThd, "shell");
 #else
     /* 
      *  Needed thread to run SerialIO (ie: here, communication with ESP32).
      *  C wrapping function are needed to bridge through C and C++
      */
-    thread_t *threadPositionOutput = chThdCreateStatic(wa_raspioInput, sizeof(wa_raspioInput), LOWPRIO+3, serialIoWrapperPositionOutput, nullptr);
-    chRegSetThreadNameX(threadPositionOutput, "positionOutput");
-    thread_t *threadCommandInput = chThdCreateStatic(wa_raspioOutput, sizeof(wa_raspioOutput), LOWPRIO+4, serialIoWrapperCommandInput, nullptr);
-    chRegSetThreadNameX(threadCommandInput, "commandInput");
+        thread_t *threadPositionOutput = chThdCreateStatic(wa_raspioInput, sizeof(wa_raspioInput), LOWPRIO+3, serialIoWrapperPositionOutput, nullptr);
+        chRegSetThreadNameX(threadPositionOutput, "positionOutput");
+        thread_t *threadCommandInput = chThdCreateStatic(wa_raspioOutput, sizeof(wa_raspioOutput), LOWPRIO+4, serialIoWrapperCommandInput, nullptr);
+        chRegSetThreadNameX(threadCommandInput, "commandInput");
 #endif
 
 
@@ -339,7 +344,7 @@ void asservCommandUSB(BaseSequentialStream *chp, int argc, char **argv)
             speedRight = 0;
         }
 
-        bool ok = commandManager->addWheelsSpeed(speedRight, speedLeft, time);
+        commandManager->addWheelsSpeed(speedRight, speedLeft, time);
     }
     else if (!strcmp(argv[0], "robotfwspeedstep"))
     {
@@ -347,7 +352,7 @@ void asservCommandUSB(BaseSequentialStream *chp, int argc, char **argv)
         int time = atoi(argv[2]);
         chprintf(outputStream, "setting fw robot speed %.2f rad/s for %d ms\r\n", speedGoal, time);
 
-        bool ok = commandManager->addWheelsSpeed(speedGoal, speedGoal, time);
+        commandManager->addWheelsSpeed(speedGoal, speedGoal, time);
     }
     else if (!strcmp(argv[0], "speedcontrol"))
     {
@@ -417,7 +422,7 @@ void asservCommandUSB(BaseSequentialStream *chp, int argc, char **argv)
     {
         float dist = atof(argv[1]);
 
-        bool ok = commandManager->addStraightLine(dist);
+        commandManager->addStraightLine(dist);
         chprintf(outputStream, "Adding distance %.2fmm argc %d (%s)\r\n", dist,argc,  argv[1] );
 
     }
@@ -494,7 +499,7 @@ void asservCommandUSB(BaseSequentialStream *chp, int argc, char **argv)
     }
     else if (!strcmp(argv[0], "gototest"))
     {
-        bool ok = commandManager->addStraightLine(1500);
+        commandManager->addStraightLine(1500);
         chprintf(outputStream, "Adding distance %.2fmm \r\n", 1500 );
         chThdSleepMilliseconds(600);
         chprintf(outputStream, "Stop!\r\n");
@@ -507,3 +512,5 @@ void asservCommandUSB(BaseSequentialStream *chp, int argc, char **argv)
         printUsage();
     }
 }
+
+

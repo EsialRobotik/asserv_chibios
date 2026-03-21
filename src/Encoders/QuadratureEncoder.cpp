@@ -47,12 +47,12 @@ void QuadratureEncoder::init()
 {
     // TODO : Alternate conf should be configurable like the PIN....
     // Encoder 1
-    palSetPadMode(m_gpioPinConf.GPIObaseE1ch2, m_gpioPinConf.pinNumberE1ch2, PAL_MODE_ALTERNATE(2)); //TIM3_chan2
-    palSetPadMode(m_gpioPinConf.GPIObaseE1ch1, m_gpioPinConf.pinNumberE1ch1, PAL_MODE_ALTERNATE(2)); //TIM3_chan1
+    palSetPadMode(m_gpioPinConf.GPIObaseE1ch2, m_gpioPinConf.pinNumberE1ch2, PAL_MODE_ALTERNATE(m_gpioPinConf.pinE1ch1Alternate)); //TIM3_chan2
+    palSetPadMode(m_gpioPinConf.GPIObaseE1ch1, m_gpioPinConf.pinNumberE1ch1, PAL_MODE_ALTERNATE(m_gpioPinConf.pinE1ch2Alternate)); //TIM3_chan1
     qeiStart(&QEID3, &qeicfg1);
     // Encoder 2
-    palSetPadMode(m_gpioPinConf.GPIObaseE2ch2, m_gpioPinConf.pinNumberE2ch2, PAL_MODE_ALTERNATE(1)); //TIM2_chan2
-    palSetPadMode(m_gpioPinConf.GPIObaseE2ch1, m_gpioPinConf.pinNumberE2ch1, PAL_MODE_ALTERNATE(1)); //TIM2_chan1
+    palSetPadMode(m_gpioPinConf.GPIObaseE2ch2, m_gpioPinConf.pinNumberE2ch2, PAL_MODE_ALTERNATE(m_gpioPinConf.pinE2ch1Alternate)); //TIM2_chan2
+    palSetPadMode(m_gpioPinConf.GPIObaseE2ch1, m_gpioPinConf.pinNumberE2ch1, PAL_MODE_ALTERNATE(m_gpioPinConf.pinE2ch2Alternate)); //TIM2_chan1
     qeiStart(&QEID2, &qeicfg2);
 }
 

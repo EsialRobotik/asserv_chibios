@@ -1,0 +1,94 @@
+#ifndef SRC_ROBOTS_PRINCESS_CONFIG_H_
+#define SRC_ROBOTS_PRINCESS_CONFIG_H_
+
+#include "ch.h"
+#include "hal.h"
+#include "Odometry.h"
+#include "AsservMain.h"
+#include "commandManager/CommandManager.h"
+#include "motorController/Md22.h"
+#include "AccelerationLimiter/SimpleAccelerationLimiter.h"
+#include "AccelerationLimiter/AccelerationDecelerationLimiter.h"
+
+
+#define ASSERV_THREAD_FREQUENCY (600)
+#define ASSERV_THREAD_PERIOD_S (1.0/ASSERV_THREAD_FREQUENCY)
+#define ASSERV_POSITION_DIVISOR (5)
+
+#define ENCODERS_WHEELS_RADIUS_MM (31.83/2.0)
+#define ENCODERS_WHEELS_DISTANCE_MM (271.0)
+#define ENCODERS_TICKS_BY_TURN (1024*4)
+
+#define REGULATOR_MAX_SPEED_MM_PER_SEC (1200)
+#define WHEELS_MAX_SPEED_MM_PER_SEC (1500)
+
+#define DIST_REGULATOR_KP (6)
+#define DIST_REGULATOR_MAX_ACC_FW (3000)
+#define DIST_REGULATOR_MAX_DEC_FW (3000)
+#define DIST_REGULATOR_MAX_ACC_BW (3000)
+#define DIST_REGULATOR_MAX_DEC_BW (2800)
+#define ACC_DEC_DAMPLING (1.7)
+#define DIST_REGULATOR_MAX_ACC_FW_SLOW (1000)
+#define DIST_REGULATOR_MAX_DEC_FW_SLOW (800)
+#define DIST_REGULATOR_MAX_ACC_BW_SLOW (1000)
+#define DIST_REGULATOR_MAX_DEC_BW_SLOW (800)
+
+
+#define ANGLE_REGULATOR_KP (900)
+#define ANGLE_REGULATOR_MAX_ACC (3500)
+#define ANGLE_REGULATOR_MAX_ACC_SLOW (1000)
+
+#define SPEED_CTRL_LEFT_KP_1 (0.1)
+#define SPEED_CTRL_LEFT_KP_2 (0.1)
+#define SPEED_CTRL_LEFT_KP_3 (0.1)
+#define SPEED_CTRL_LEFT_KI_1 (1.0)
+#define SPEED_CTRL_LEFT_KI_2 (0.8)
+#define SPEED_CTRL_LEFT_KI_3 (0.6)
+#define SPEED_CTRL_LEFT_SPEED_THRES_1 (20)
+#define SPEED_CTRL_LEFT_SPEED_THRES_2 (50)
+#define SPEED_CTRL_LEFT_SPEED_THRES_3 (60)
+
+
+#define SPEED_CTRL_RIGHT_KP_1 (0.1)
+#define SPEED_CTRL_RIGHT_KP_2 (0.1)
+#define SPEED_CTRL_RIGHT_KP_3 (0.1)
+#define SPEED_CTRL_RIGHT_KI_1 (1.0)
+#define SPEED_CTRL_RIGHT_KI_2 (0.8)
+#define SPEED_CTRL_RIGHT_KI_3 (0.6)
+#define SPEED_CTRL_RIGHT_SPEED_THRES_1 (20)
+#define SPEED_CTRL_RIGHT_SPEED_THRES_2 (50)
+#define SPEED_CTRL_RIGHT_SPEED_THRES_3 (60)
+
+
+#define PLL_BANDWIDTH (150)
+
+#define BLOCKING_DETECTOR_ANGLE_SPEED_THRESHOLD (M_PI/8)
+#define BLOCKING_DETECTOR_DIST_SPEED_THRESHOLD (20)
+#define BLOCKING_DETECTOR_BLOCKING_DURATION_THRESHOLD (0.5)
+
+
+#define COMMAND_MANAGER_ARRIVAL_ANGLE_THRESHOLD_RAD (0.02)
+#define COMMAND_MANAGER_ARRIVAL_DISTANCE_THRESHOLD_mm (2.5)
+#define COMMAND_MANAGER_GOTO_ANGLE_THRESHOLD_RAD (M_PI/8)
+#define COMMAND_MANAGER_GOTO_RETURN_THRESHOLD_mm (15)
+#define COMMAND_MANAGER_ALIGN_ONLY_EXIT_ANGLE_THRESHOLD_RAD (COMMAND_MANAGER_GOTO_ANGLE_THRESHOLD_RAD/10)
+
+
+#define COMMAND_MANAGER_GOTO_PRECISE_ARRIVAL_DISTANCE_mm (3)
+#define COMMAND_MANAGER_GOTO_WAYPOINT_ARRIVAL_DISTANCE_mm (20)
+#define COMMAND_MANAGER_GOTONOSTOP_TOO_BIG_ANGLE_THRESHOLD_RAD (M_PI/2)
+
+extern BaseSequentialStream *outputStream;
+extern Odometry *odometry;
+extern AsservMain *mainAsserv;
+extern Md22 *md22MotorController;
+extern CommandManager *commandManager;
+
+extern Regulator *angleRegulator;
+extern Regulator *distanceRegulator;
+
+extern SimpleAccelerationLimiter *angleAccelerationlimiter;
+extern AccelerationDecelerationLimiter *distanceAccelerationLimiter;
+
+
+#endif /* SRC_ROBOTS_PRINCESS_CONFIG_H_ */

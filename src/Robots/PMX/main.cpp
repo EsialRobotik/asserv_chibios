@@ -86,8 +86,8 @@ GotoNoStop::GotoNoStopConfiguration gotoNoStopConf = { COMMAND_MANAGER_GOTO_ANGL
 
 
 
-Md22::I2cPinInit md22PMXCardPinConf_SCL_SDA = { GPIOB, 6, GPIOB, 7 };
-QuadratureEncoder::GpioPinInit qePMXCardPinConf_E1ch1_E1ch2_E2ch1_E2ch2 = { GPIOC, 6, GPIOA, 7, GPIOA, 5, GPIOB, 9 };
+Md22::I2cPinInit md22PMXCardPinConf_SCL_SDA = { GPIOB, 6, 4, GPIOB, 7, 4};
+QuadratureEncoder::GpioPinInit qePMXCardPinConf_E1ch1_E1ch2_E2ch1_E2ch2 = { GPIOC, 6, 2, GPIOA, 7, 2, GPIOA, 5, 1, GPIOB, 9, 1};
 MagEncoders::I2cPinInit encodersI2cPinsConf_SCL_SDA = { GPIOB, 10, GPIOB, 3 };
 
 QuadratureEncoder *encoders;
