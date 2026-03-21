@@ -161,6 +161,10 @@ void SerialCbor::decode_cmd(CborStreamStateMachine::cmd_t &cmd)
             m_commandManager.addGOrbitalTurn(degToRad(cmd.arg1), (cmd.arg2 == 1.0), (cmd.arg3 == 1.0), cmd.cmd_id);
         break;
 
+        case CborStreamStateMachine::set_position:
+            m_mainAsserv.setPosition(cmd.arg1, cmd.arg2, cmd.arg3);
+        break;
+
         case CborStreamStateMachine::max_motor_speed:
             m_mainAsserv.limitMotorControllerConsignToPercentage(cmd.arg1);
         break;
