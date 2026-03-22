@@ -101,7 +101,7 @@ CommandHandler *commandHandler;
 static void initAsserv()
 {
     encoders = new QuadratureEncoder(&ESIALCardPinConf_Encoders, true, false, false);
-    md22MotorController = new Md22(&ESIALCardPinConf_md22, false, false, true, 100000);
+    md22MotorController = new Md22(&ESIALCardPinConf_md22, &I2CD1, false, false, true, 100000);
 
     angleRegulator = new Regulator(ANGLE_REGULATOR_KP, REGULATOR_MAX_SPEED_MM_PER_SEC);
     distanceRegulator = new Regulator(DIST_REGULATOR_KP, FLT_MAX);

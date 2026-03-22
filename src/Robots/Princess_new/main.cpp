@@ -23,7 +23,7 @@
 #include "blockingDetector/OldSchoolBlockingDetector.h"
 #include "config.h"
 #include "Communication/SerialCbor.h"
-#include "Communication/Crc/SoftwareCrcCalculator.h"
+#include "Communication/Crc/HardwareCrcCalculator.h"
 #include "sampleStream/configuration/ConfigurationHandler.h"
 #include "sampleStream/commands/CommandHandler.h"
 
@@ -89,7 +89,7 @@ AccelerationDecelerationLimiter *distanceAccelerationLimiter;
 CommandManager *commandManager;
 AsservMain *mainAsserv;
 
-SoftwareCrc32Calculator *crc32Calculator;
+HardwareCrc32Calculator *crc32Calculator;
 SerialCbor *esp32IoCbor;
 
 ConfigurationHandler *configurationHandler;
@@ -100,7 +100,7 @@ CommandHandler *commandHandler;
 static void initAsserv()
 {
     encoders = new QuadratureEncoder(&ESIALCardPinConf_Encoders, false, false, false);
-    md22MotorController = new Md22(&ESIALCardPinConf_md22, true, true, false, 100000);
+    md22MotorController = new Md22(&ESIALCardPinConf_md22, &I2CD3, true, true, false, 100000);
 
     angleRegulator = new Regulator(ANGLE_REGULATOR_KP, REGULATOR_MAX_SPEED_MM_PER_SEC);
     distanceRegulator = new Regulator(DIST_REGULATOR_KP, FLT_MAX);
@@ -138,9 +138,9 @@ static void initAsserv()
                            *rightPll, *leftPll,
                            blockingDetector);
 
-    crc32Calculator = new SoftwareCrc32Calculator();
+    crc32Calculator = new HardwareCrc32Calculator(&CRCD1);
 
-    esp32IoCbor = new SerialCbor(&SD2, crc32Calculator, *odometry, *commandManager, *md22MotorController, *mainAsserv, angleAccelerationlimiter, distanceAccelerationLimiter, &normalAccDec, &slowAccDec);
+    esp32IoCbor = new SerialCbor(&SD1, crc32Calculator, *odometry, *commandManager, *md22MotorController, *mainAsserv, angleAccelerationlimiter, distanceAccelerationLimiter, &normalAccDec, &slowAccDec);
 
     configurationHandler = new ConfigurationHandler (angleRegulator, distanceRegulator, angleAccelerationlimiter, distanceAccelerationLimiter, speedControllerRight, speedControllerLeft);
 
@@ -167,7 +167,7 @@ void serialIoWrapperCommandInput(void *)
  */
 static binary_semaphore_t asservStarted_semaphore;
 
-static THD_WORKING_AREA(waAsservThread, 2048);
+static THD_WORKING_AREA(waAsservThread, 1024);
 static THD_FUNCTION(AsservThread, arg)
 {
     (void) arg;
@@ -204,13 +204,8 @@ static THD_FUNCTION(LowPrioUSBThread, arg)
 }
 
 
-#ifdef ENABLE_SHELL
-THD_WORKING_AREA(wa_shell, 2048);
-#else
-THD_WORKING_AREA(wa_raspioInput, 2048);
-THD_WORKING_AREA(wa_raspioOutput, 2048);
-#endif
 
+THD_WORKING_AREA(wa_shell, 512);
 char history_buffer[SHELL_MAX_HIST_BUFF];
 char *completion_buffer[SHELL_MAX_COMPLETIONS];
 
@@ -218,12 +213,28 @@ void asservCommandUSB(BaseSequentialStream *chp, int argc, char **argv);
 
 void asservCommandSerial();
 
+THD_WORKING_AREA(wa_raspioInput, 2048);
+THD_WORKING_AREA(wa_raspioOutput, 1024);
+
 
 BaseSequentialStream *outputStream;
 int main(void)
 {
     halInit();
     chSysInit();
+
+    /*  
+     * There's an internal pulldown activated at reset on pin PB4 which is an encoder input !
+     *  Write the bit UCPD1_DBDIS in PWR_CR3 to disable this pulldown
+     */
+    
+    PWR->CR3 |= (1<<14);
+
+    /* PA6 (not used) is connected to PA15 (PWM output) in the board, so force PA6 to float to avoid any problem.
+     * Same thing for PA5 (not used) and PB7 (encoder) 
+    */
+    palSetPadMode(GPIOA, 6, PAL_STM32_MODE_INPUT | PAL_STM32_PUPDR_FLOATING );
+    palSetPadMode(GPIOA, 5, PAL_STM32_MODE_INPUT | PAL_STM32_PUPDR_FLOATING );
 
     /*
      * USART 1:  For communication with the brain µc
@@ -234,21 +245,26 @@ int main(void)
     palSetPadMode(GPIOA, 9, PAL_MODE_ALTERNATE(7));
     sdStart(&SD1, NULL);
 
-    initAsserv();
-
-    sdStart(&SD2, NULL);
+    /*
+    *  LPUSART 1 : built-in usb serial port. For shell only
+    */
+    sdStart(&LPSD1, NULL);
+    outputStream = reinterpret_cast<BaseSequentialStream*>(&LPSD1);
     shellInit();
 
+
+    /*
+     * Asserv Thread with sync mecanism
+    */
+    initAsserv();
     chBSemObjectInit(&asservStarted_semaphore, true);
     chThdCreateStatic(waAsservThread, sizeof(waAsservThread), HIGHPRIO, AsservThread, NULL);
     chBSemWait(&asservStarted_semaphore);
 
-    outputStream = reinterpret_cast<BaseSequentialStream*>(&SD2);
 
     /* Create a 'background' thread to handle command received through the USB */
     chThdCreateStatic(waLowPrioUSBThread, sizeof(waLowPrioUSBThread), LOWPRIO+2, LowPrioUSBThread, NULL);
 
-#ifdef ENABLE_SHELL
 
     // Custom commands
     const ShellCommand shellCommands[] = { { "asserv", &(asservCommandUSB) }, { nullptr, nullptr } };
@@ -265,19 +281,18 @@ int main(void)
 #endif
     };
 
-        thread_t *shellThd = chThdCreateStatic(wa_shell, sizeof(wa_shell), LOWPRIO, shellThread, &shellCfg);
-        chRegSetThreadNameX(shellThd, "shell");
-#else
+    thread_t *shellThd = chThdCreateStatic(wa_shell, sizeof(wa_shell), LOWPRIO, shellThread, &shellCfg);
+    chRegSetThreadNameX(shellThd, "shell");
+
+
     /* 
      *  Needed thread to run SerialIO (ie: here, communication with ESP32).
      *  C wrapping function are needed to bridge through C and C++
      */
-        thread_t *threadPositionOutput = chThdCreateStatic(wa_raspioInput, sizeof(wa_raspioInput), LOWPRIO+3, serialIoWrapperPositionOutput, nullptr);
-        chRegSetThreadNameX(threadPositionOutput, "positionOutput");
-        thread_t *threadCommandInput = chThdCreateStatic(wa_raspioOutput, sizeof(wa_raspioOutput), LOWPRIO+4, serialIoWrapperCommandInput, nullptr);
-        chRegSetThreadNameX(threadCommandInput, "commandInput");
-#endif
-
+    thread_t *threadPositionOutput = chThdCreateStatic(wa_raspioInput, sizeof(wa_raspioInput), LOWPRIO+3, serialIoWrapperPositionOutput, nullptr);
+    chRegSetThreadNameX(threadPositionOutput, "positionOutput");
+    thread_t *threadCommandInput = chThdCreateStatic(wa_raspioOutput, sizeof(wa_raspioOutput), LOWPRIO+4, serialIoWrapperCommandInput, nullptr);
+    chRegSetThreadNameX(threadCommandInput, "commandInput");
 
     deactivateHeapAllocation();
 

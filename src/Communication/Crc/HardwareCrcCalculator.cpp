@@ -7,7 +7,8 @@ static const CRCConfig crc32_config = {
     .initial_val       = 0xFFFFFFFF,
     .final_val         = 0xffffffff,
     .reflect_data      = 1,
-    .reflect_remainder = 1
+    .reflect_remainder = 1,
+    .end_cb            = 0
    };
 
 HardwareCrc32Calculator::HardwareCrc32Calculator(CRCDriver *crcDriver)

@@ -153,7 +153,6 @@ CSRC = $(ALLCSRC)\
 # setting.
 CPPSRC = $(ALLCPPSRC) \
        $(wildcard $(SRCDIR)/Robots/Princess/*.cpp ) \
-       $(SRCDIR)/motorController/Vnh5019.cpp \
        $(SRCDIR)/motorController/Md22.cpp \
        $(SRCDIR)/sampleStream/USBStream.cpp \
        $(SRCDIR)/Encoders/QuadratureEncoder.cpp \

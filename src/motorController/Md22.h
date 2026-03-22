@@ -20,7 +20,7 @@ public:
         uint8_t SDAPinAlternate;
     };
 
-    explicit Md22(I2cPinInit *i2cPins, bool is1motorRight, bool invertMotorRight, bool invertMotorLeft, uint32_t i2cFrequency);
+    explicit Md22(I2cPinInit *i2cPins, I2CDriver *i2cDriver, bool is1motorRight, bool invertMotorRight, bool invertMotorLeft, uint32_t i2cFrequency);
     virtual ~Md22() {};
 
     void init();
@@ -32,8 +32,8 @@ public:
     virtual float getMotorLeftSpeedNonInverted() const;
 
 private:
-    I2CConfig m_i2cconfig;
     I2cPinInit m_i2cPinConf;
+    I2CDriver *m_i2cDriver;
     bool m_invertMotorLeft;
     bool m_invertMotorRight;
     bool m_is1motorRight;

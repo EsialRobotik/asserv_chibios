@@ -210,7 +210,7 @@
  * @note    Disabling this option saves both code and data space.
  */
 #if !defined(PAL_USE_CALLBACKS) || defined(__DOXYGEN__)
-#define PAL_USE_CALLBACKS                   FALSE
+#define PAL_USE_CALLBACKS                   TRUE
 #endif
 
 /**
@@ -218,7 +218,7 @@
  * @note    Disabling this option saves both code and data space.
  */
 #if !defined(PAL_USE_WAIT) || defined(__DOXYGEN__)
-#define PAL_USE_WAIT                        FALSE
+#define PAL_USE_WAIT                        TRUE
 #endif
 
 /*===========================================================================*/
@@ -412,7 +412,7 @@
  *          buffers.
  */
 #if !defined(SERIAL_BUFFERS_SIZE) || defined(__DOXYGEN__)
-#define SERIAL_BUFFERS_SIZE                 512
+#define SERIAL_BUFFERS_SIZE                 16
 #endif
 
 /*===========================================================================*/
@@ -455,10 +455,11 @@
  * @note    The default is 2 buffers.
  */
 #if !defined(SERIAL_USB_BUFFERS_NUMBER) || defined(__DOXYGEN__)
-#define SERIAL_USB_BUFFERS_NUMBER           6
+#define SERIAL_USB_BUFFERS_NUMBER           2
 #endif
 
 #define BOARD_OTG_NOVBUSSENS
+
 
 /*===========================================================================*/
 /* SPI driver related settings.                                              */
@@ -479,7 +480,6 @@
 #if !defined(SPI_USE_CIRCULAR) || defined(__DOXYGEN__)
 #define SPI_USE_CIRCULAR                    FALSE
 #endif
-
 
 /**
  * @brief   Enables the @p spiAcquireBus() and @p spiReleaseBus() APIs.
@@ -556,7 +556,6 @@
 #endif
 
 #include "halconf_community.h"
-
 
 
 #endif /* HALCONF_H */

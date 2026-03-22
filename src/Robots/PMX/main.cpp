@@ -128,7 +128,7 @@ static void initAsserv()
     palClearPad(GPIOA, GPIOA_ARD_D8);
     palClearPad(GPIOA, GPIOA_ARD_D12);
 
-    md22MotorController = new Md22(&md22PMXCardPinConf_SCL_SDA, false, false, false, 400000); //400k
+    md22MotorController = new Md22(&md22PMXCardPinConf_SCL_SDA, &I2CD1, false, false, false, 400000); //400k
     debug1("initAsserv::md22MotorController OK\r\n");
     encoders = new QuadratureEncoder(&qePMXCardPinConf_E1ch1_E1ch2_E2ch1_E2ch2, false, true, false);
     debug1("initAsserv::QuadratureEncoder OK\r\n");

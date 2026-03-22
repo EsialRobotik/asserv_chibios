@@ -99,11 +99,11 @@ SRCDIR   := ../../../src
 # Licensing files.
 include $(CHIBIOS)/os/license/license.mk
 # Startup files.
-include $(CHIBIOS)/os/common/startup/ARMCMx/compilers/GCC/mk/startup_stm32f4xx.mk
+include $(CHIBIOS)/os/common/startup/ARMCMx/compilers/GCC/mk/startup_stm32g4xx.mk
 # HAL-OSAL files (optional).
 include $(CHIBIOS_CONTRIB)/os/hal/hal.mk
-include $(CHIBIOS_CONTRIB)/os/hal/ports/STM32/STM32F4xx/platform.mk
-include $(CHIBIOS)/os/hal/boards/ST_NUCLEO64_F446RE/board.mk
+include $(CHIBIOS_CONTRIB)/os/hal/ports/STM32/STM32G4xx/platform.mk
+include $(CHIBIOS)/os/hal/boards/ST_NUCLEO64_G431RB/board.mk
 include $(CHIBIOS)/os/hal/osal/rt-nil/osal.mk
 # RTOS files (optional).
 include $(CHIBIOS)/os/rt/rt.mk
@@ -116,9 +116,8 @@ include $(CHIBIOS)/os/various/shell/shell.mk
 include $(CHIBIOS)/os/hal/lib/streams/streams.mk
 
 
-
 # Define linker script file here
-LDSCRIPT= $(STARTUPLD)/STM32F446xE.ld
+LDSCRIPT= $(STARTUPLD)/STM32G431xB.ld
 
 # Custom part: Depending on a input variable ROBOT, the used main.cpp is different
 
@@ -152,8 +151,7 @@ CSRC = $(ALLCSRC)\
 # C++ sources that can be compiled in ARM or THUMB mode depending on the global
 # setting.
 CPPSRC = $(ALLCPPSRC) \
-       $(wildcard $(SRCDIR)/Robots/Princess/*.cpp ) \
-       $(SRCDIR)/motorController/Vnh5019.cpp \
+       $(wildcard $(SRCDIR)/Robots/Princess_new/*.cpp ) \
        $(SRCDIR)/motorController/Md22.cpp \
        $(SRCDIR)/sampleStream/USBStream.cpp \
        $(SRCDIR)/Encoders/QuadratureEncoder.cpp \
@@ -180,7 +178,7 @@ CPPSRC = $(ALLCPPSRC) \
        $(SRCDIR)/blockingDetector/OldSchoolBlockingDetector.cpp \
        $(SRCDIR)/Communication/SerialIO.cpp \
        $(SRCDIR)/Communication/SerialCbor.cpp \
-       $(SRCDIR)/Communication/Crc/SoftwareCrcCalculator.cpp \
+       $(SRCDIR)/Communication/Crc/HardwareCrcCalculator.cpp \
        $(SRCDIR)/Communication/cborStream/CborStreamStateMachine.cpp \
        $(SRCDIR)/sampleStream/configuration/ConfigurationHandler.cpp \
        $(SRCDIR)/sampleStream/commands/CommandHandler.cpp 

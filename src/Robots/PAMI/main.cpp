@@ -368,7 +368,6 @@ THD_WORKING_AREA(wa_shell, 512);
 char history_buffer[SHELL_MAX_HIST_BUFF];
 char *completion_buffer[SHELL_MAX_COMPLETIONS];
 
-float config_buffer[30];
 void asservCommandUSB(BaseSequentialStream *chp, int argc, char **argv);
 
 
@@ -464,6 +463,7 @@ int main(void)
     thread_t *threadCommandInput = chThdCreateStatic(wa_raspioOutput, sizeof(wa_raspioOutput), LOWPRIO+4, serialIoWrapperCommandInput, nullptr);
     chRegSetThreadNameX(threadCommandInput, "commandInput");
 
+    deactivateHeapAllocation();
 
     chThdSetPriority(LOWPRIO);
     
