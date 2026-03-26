@@ -43,6 +43,7 @@ private:
 
     float m_rightMotorPercentage;
     float m_leftMotorPercentage;
+    uint32_t m_i2cFrequency;
 };
 
 #endif /* MD22_H_ */

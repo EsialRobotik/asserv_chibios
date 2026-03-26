@@ -24,6 +24,7 @@ constexpr uint8_t controlMode = 0x01; // Wanted value for mode register. Ie: -12
     m_rightMotorPercentage = 0;
     m_leftMotorPercentage = 0;
 
+    m_i2cFrequency = i2cFrequency;
     chDbgAssert(i2cFrequency <= 400000, "Md22: i2cFrequency shall be lower than 400khz \r\n");
 }
 
@@ -32,15 +33,14 @@ void Md22::init()
     I2CConfig m_i2cconfig;
 
     #ifdef STM32F4
-    if (i2cFrequency <= 100000)
-        m_i2cconfig = { OPMODE_I2C, i2cFrequency, STD_DUTY_CYCLE };
-    else if (i2cFrequency > 100000)
-        m_i2cconfig = { OPMODE_I2C, i2cFrequency, FAST_DUTY_CYCLE_2 };
-
+    if (m_i2cFrequency <= 100000)
+        m_i2cconfig = { OPMODE_I2C, m_i2cFrequency, STD_DUTY_CYCLE };
+    else if (m_i2cFrequency > 100000)
+        m_i2cconfig = { OPMODE_I2C, m_i2cFrequency, FAST_DUTY_CYCLE_2 };
     #endif
-    
-    #ifdef STM32F4
-        m_i2cconfig = {0x20B17DB6, 0, 0}; // 1ist value is timingr register, this specific value is computed by cubeMX for an Nucleo G431KB. Need to be adapted if used on another CPU
+
+    #ifndef STM32F4
+        m_i2cconfig = {0x20B17DB6, 0, 0}; // timingr register computed by cubeMX for Nucleo G431KB
     #endif
 
     // Enable I2C SDA & SCL pin
