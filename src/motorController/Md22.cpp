@@ -40,7 +40,7 @@ void Md22::init()
     #endif
 
     #ifndef STM32F4
-        m_i2cconfig = {0x20B17DB6, 0, 0}; // timingr register computed by cubeMX for Nucleo G431KB
+        m_i2cconfig = {0x20B17DB6, 0, 0}; // 1ist value is timingr register, this specific value is computed by cubeMX for an Nucleo G431KB. Need to be adapted if used on another CPU.
     #endif
 
     // Enable I2C SDA & SCL pin
