@@ -34,6 +34,7 @@ public:
 private:
     I2cPinInit m_i2cPinConf;
     I2CDriver *m_i2cDriver;
+    uint32_t m_i2cFrequency;
     bool m_invertMotorLeft;
     bool m_invertMotorRight;
     bool m_is1motorRight;
