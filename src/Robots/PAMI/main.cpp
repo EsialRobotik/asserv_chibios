@@ -423,7 +423,7 @@ int main(void)
 
 
     /* Create a 'background' thread to handle command received through the USB */
-    chThdCreateStatic(waLowPrioUSBThread, sizeof(waLowPrioUSBThread), LOWPRIO+2, LowPrioUSBThread, NULL);
+    chThdCreateStatic(waLowPrioUSBThread, sizeof(waLowPrioUSBThread), LOWPRIO+1, LowPrioUSBThread, NULL);
 
 
     /*
@@ -443,7 +443,7 @@ int main(void)
 #endif
     };
 
-    thread_t *shellThd = chThdCreateStatic(wa_shell, sizeof(wa_shell), LOWPRIO+1, shellThread, &shellCfg);
+    thread_t *shellThd = chThdCreateStatic(wa_shell, sizeof(wa_shell), LOWPRIO+2, shellThread, &shellCfg);
     chRegSetThreadNameX(shellThd, "shell");
 
 
@@ -469,7 +469,10 @@ int main(void)
     
     while (true)
     {
-        chThdSleepMilliseconds(1000);
+        // palClearPad(GPIOB, 8);
+        // chThdSleepMilliseconds(250);
+        // palSetPad(GPIOB, 8);
+        // chThdSleepMilliseconds(250);
     }
 }
 
