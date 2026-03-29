@@ -76,7 +76,7 @@ jobs:
     - name: Generate release notes
       id: notes
       run: |
-        ROBOTS=("Princess" "PAMI" "PMI" "PMX" "Simu_F446" "Simulation")
+        ROBOTS=("Princess" "PAMI" "PMX" "Simu_F446" "Simulation")
 
         echo "✅ Compilation réussie pour :" > release-notes.txt
         for robot in "${ROBOTS[@]}"; do
