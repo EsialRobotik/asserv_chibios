@@ -23,6 +23,7 @@ static inline systime_t chVTGetSystemTime(void) {
 }
 
 #define TIME_US2I(usecs) (usecs)
+#define TIME_MS2I(mssecs) (mssecs)
 
 #define chDbgAssert(c,r) assert(c && r)
 

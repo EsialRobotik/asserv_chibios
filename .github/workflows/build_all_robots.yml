@@ -13,7 +13,7 @@ jobs:
     strategy:
       #Use parallelization to build the list of robot (warning, see "Release Note" step is new robot is added
       matrix:
-        robot: [Princess, PAMI, PMI, PMX, Simu_F446, Simulation]
+        robot: [Princess, PAMI, PMX, Simu_F446, Simulation]
     continue-on-error: true #if a build fails, this allows the process to continue anyway
     outputs:
       sha: ${{ steps.vars.outputs.sha }}
@@ -76,7 +76,7 @@ jobs:
     - name: Generate release notes
       id: notes
       run: |
-        ROBOTS=("Princess" "PAMI" "PMI" "PMX" "Simu_F446" "Simulation")
+        ROBOTS=("Princess" "PAMI" "PMX" "Simu_F446" "Simulation")
 
         echo "✅ Compilation réussie pour :" > release-notes.txt
         for robot in "${ROBOTS[@]}"; do
