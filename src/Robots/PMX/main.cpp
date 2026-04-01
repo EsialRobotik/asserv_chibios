@@ -20,7 +20,7 @@
 #include "sampleStream/USBStream.h"
 #include "AccelerationLimiter/SimpleAccelerationLimiter.h"
 #include "AccelerationLimiter/AdvancedAccelerationLimiter.h"
-#include "Communication/SerialIO.h"
+#include "Opos6ulSerialIO.h"
 #include "Pll.h"
 #include "Encoders/MagEncoders.h"
 #include "blockingDetector/OldSchoolBlockingDetector.h"
@@ -118,7 +118,7 @@ BaseSequentialStream *outputStreamSd4;
 
 
 // RaspIO *raspIo;
-SerialIO *serialIo;
+Opos6ulSerialIO *serialIo;
 
 static void initAsserv()
 {
@@ -163,7 +163,7 @@ static void initAsserv()
         preciseGotoConf, waypointGotoConf, gotoNoStopConf,
         *angleRegulator, *distanceRegulator,
         MAX_SPEED_MM_PER_SEC, MAX_SPEED_MM_PER_SEC/3 /* This value should maybe be fine tuned ?*/, 
-        nullptr, blockingDetector);
+        nullptr, nullptr); // blockingDetector désactivé pour debug
 
     debug1("initAsserv::commandManager OK\r\n");
 
@@ -175,7 +175,7 @@ static void initAsserv()
 
 
     // raspIo = new RaspIO(&SD4, *odometry, *commandManager, *md22MotorController, *mainAsserv, angleAccelerationlimiter );
-    serialIo = new SerialIO(&SD4, *odometry, *commandManager, *md22MotorController, *mainAsserv);
+    serialIo = new Opos6ulSerialIO(&SD4, *odometry, *commandManager, *md22MotorController, *mainAsserv);
     //debug1("initAsserv::mainAsserv OK\r\n");
 }
 
@@ -229,7 +229,7 @@ static THD_FUNCTION(AsservThread, arg)
     chBSemSignal(&asservStarted_semaphore);
 
     //desactivation au demarrage
-    mainAsserv->enableMotors(false);
+    mainAsserv->enableMotors(true);
     //debug1("AsservThread::enableMotors false\r\n");
 
     mainAsserv->mainLoop();
@@ -264,8 +264,52 @@ void asservCommandUSB(BaseSequentialStream *chp, int argc, char **argv);
 
 int main(void)
 {
+    // FIX glitch I2C + rétention registres MD22
+    // Voir ASSERV_BUG_GLITCH_I2C.md pour le détail du problème.
+    // Problème 1 : Au boot STM32, PB6/PB7 flottent → glitches I2C → MD22 reçoit des vitesses aléatoires
+    // Problème 2 : Après ARU, la MD22 (5V maintenu) conserve la dernière vitesse commandée
+    // Solution : bit-bang I2C AVANT halInit/chSysInit pour envoyer vitesse=0 immédiatement
+    {
+        // 1. Init GPIO — PB6 (SCL) et PB7 (SDA) en open-drain output HIGH
+        RCC->AHB1ENR |= RCC_AHB1ENR_GPIOBEN;
+        GPIOB->OTYPER |= (1 << 6) | (1 << 7);
+        GPIOB->ODR |= (1 << 6) | (1 << 7);
+        GPIOB->MODER = (GPIOB->MODER & ~(0xF << 12)) | (0x5 << 12);
+
+        // 2. Bit-bang I2C : envoyer Mode 1 + vitesse 0 aux 2 moteurs
+        //    ~10kHz bit-bang (delay ~50us par demi-période) — robuste et simple
+        auto bbDelay = []() { for (volatile int i = 0; i < 200; i++); };
+        auto sdaLow  = [&]() { GPIOB->ODR &= ~(1 << 7); bbDelay(); };
+        auto sdaHigh = [&]() { GPIOB->ODR |=  (1 << 7); bbDelay(); };
+        auto sclLow  = [&]() { GPIOB->ODR &= ~(1 << 6); bbDelay(); };
+        auto sclHigh = [&]() { GPIOB->ODR |=  (1 << 6); bbDelay(); };
+
+        auto i2cStart = [&]() { sdaHigh(); sclHigh(); sdaLow(); sclLow(); };
+        auto i2cStop  = [&]() { sdaLow(); sclHigh(); sdaHigh(); };
+        auto i2cByte  = [&](uint8_t byte) {
+            for (int bit = 7; bit >= 0; bit--) {
+                if (byte & (1 << bit)) sdaHigh(); else sdaLow();
+                sclHigh(); sclLow();
+            }
+            sdaHigh(); sclHigh(); sclLow(); // ACK clock (ignore ACK)
+        };
+        // Envoie un registre + valeur à l'adresse MD22 (0xB0 = write)
+        auto i2cWriteReg = [&](uint8_t reg, uint8_t val) {
+            i2cStart();
+            i2cByte(0xB0);  // MD22 address + write
+            i2cByte(reg);
+            i2cByte(val);
+            i2cStop();
+        };
+
+        i2cWriteReg(0x00, 0x01);  // Mode 1 (signed: 0=stop)
+        i2cWriteReg(0x01, 0x00);  // Motor 1 = 0
+        i2cWriteReg(0x02, 0x00);  // Motor 2 = 0
+    }
+
     halInit();
     chSysInit();
+
     //Config des PINs pour LEDs
     palSetPadMode(GPIOA, 6, PAL_MODE_OUTPUT_PUSHPULL);
     palSetPadMode(GPIOA, 9, PAL_MODE_OUTPUT_PUSHPULL);
@@ -287,7 +331,7 @@ int main(void)
     //LED GO
     palSetPad(GPIOA, GPIOA_ARD_D8);
     palSetPad(GPIOA, GPIOA_ARD_D12);
-    chThdSleepMilliseconds(500);
+    //chThdSleepMilliseconds(500);
 //    while (true)
 //        {
 //            palClearPad(GPIOA, GPIOA_ARD_D8);
@@ -308,8 +352,8 @@ int main(void)
 #endif
 
     //config UART4 for raspIO
-    palSetPadMode(GPIOA, 0, PAL_MODE_ALTERNATE(8));
-    palSetPadMode(GPIOA, 1, PAL_MODE_ALTERNATE(8));
+    palSetPadMode(GPIOA, 0, PAL_MODE_ALTERNATE(8));  // TX
+    palSetPadMode(GPIOA, 1, PAL_MODE_ALTERNATE(8));  // RX
     sdStart(&SD4, NULL);
     outputStreamSd4 = reinterpret_cast<BaseSequentialStream*>(&SD4);
     chprintf(outputStreamSd4, "main::SD4 OK\r\n");
