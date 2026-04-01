@@ -1,8 +1,8 @@
 {
     "makefile.configurations": [
         {
-            "name": "PAMI",
-            "makeArgs": ["ROBOT=PAMI"]
+            "name": "PMX",
+            "makeArgs": ["ROBOT=PMX"]
         },
     ],
     "files.associations": {
