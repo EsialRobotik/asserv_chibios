@@ -39,7 +39,7 @@ CommandManager::CommandManager(float straitLineArrivalWindows_mm, float turnArri
     m_consign.distance_consign = 0;
     m_angle_regulator_normal_max_output = angle_regulator_normal_max_output;
     m_angle_regulator_orbital_max_output = angle_regulator_orbital_max_output;
-
+    m_current_index = 0;
 }
 
 bool CommandManager::addStraightLine(float valueInmm, uint32_t index)
@@ -213,10 +213,7 @@ uint8_t CommandManager::getPendingCommandCount()
 
 uint32_t CommandManager::getCurrentCommandIndex()
 {
-    if( m_currentCmd != nullptr)
-        return m_currentCmd->getIndex();
-
-    return 0;
+    return m_current_index;
 }
 
 
@@ -226,6 +223,9 @@ void CommandManager::switchToNextCommand()
        m_cmdList.pop();
 
     m_currentCmd = m_cmdList.getFirst();
+    
+    if( m_currentCmd)
+        m_current_index = m_currentCmd->getIndex();
 }
 
 

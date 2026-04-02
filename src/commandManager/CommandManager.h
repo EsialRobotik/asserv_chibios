@@ -106,6 +106,8 @@ class CommandManager
         BlockingDetector *m_blockingDetector;
 
         Command::consign_t m_consign;
+
+        uint32_t m_current_index;
 };
 
 #endif
