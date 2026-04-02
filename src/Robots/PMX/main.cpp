@@ -20,7 +20,11 @@
 #include "sampleStream/USBStream.h"
 #include "AccelerationLimiter/SimpleAccelerationLimiter.h"
 #include "AccelerationLimiter/AdvancedAccelerationLimiter.h"
-#include "Opos6ulSerialIO.h"
+// Protocole CBOR (actif)
+#include "Opos6ulSerialCbor.h"
+#include "Communication/Crc/SoftwareCrcCalculator.h"
+// Protocole ASCII (commenté — décommenter pour revenir à l'ancien protocole)
+// #include "Opos6ulSerialIO.h"
 #include "Pll.h"
 #include "Encoders/MagEncoders.h"
 #include "blockingDetector/OldSchoolBlockingDetector.h"
@@ -117,8 +121,11 @@ BaseSequentialStream *outputStream;
 BaseSequentialStream *outputStreamSd4;
 
 
-// RaspIO *raspIo;
-Opos6ulSerialIO *serialIo;
+// Protocole CBOR (actif)
+SoftwareCrc32Calculator crc32Calculator;
+Opos6ulSerialCbor *serialIo;
+// Protocole ASCII (commenté)
+// Opos6ulSerialIO *serialIo;
 
 static void initAsserv()
 {
@@ -174,8 +181,11 @@ static void initAsserv()
             *rightPll, *leftPll, blockingDetector);
 
 
-    // raspIo = new RaspIO(&SD4, *odometry, *commandManager, *md22MotorController, *mainAsserv, angleAccelerationlimiter );
-    serialIo = new Opos6ulSerialIO(&SD4, *odometry, *commandManager, *md22MotorController, *mainAsserv);
+    // Protocole CBOR (actif)
+    serialIo = new Opos6ulSerialCbor(&SD4, &crc32Calculator, *odometry, *commandManager, *md22MotorController, *mainAsserv,
+                                  nullptr, nullptr, nullptr, nullptr);
+    // Protocole ASCII (commenté)
+    // serialIo = new Opos6ulSerialIO(&SD4, *odometry, *commandManager, *md22MotorController, *mainAsserv);
     //debug1("initAsserv::mainAsserv OK\r\n");
 }
 

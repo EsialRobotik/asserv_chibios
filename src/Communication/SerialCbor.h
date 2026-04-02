@@ -35,7 +35,7 @@ public:
 
     void commandInput();
 
-private:
+protected:
     CborStreamStateMachine m_cborSm;
     SerialDriver *m_serialDriver;
     BaseSequentialStream *m_outputStream;
@@ -51,7 +51,7 @@ private:
     uint8_t m_qcborOutputBuffer[64]; 
     uint8_t m_qcborInputBuffer[32]; 
 
-    void decode_cmd(CborStreamStateMachine::cmd_t &cmd);
+    virtual void decode_cmd(CborStreamStateMachine::cmd_t &cmd);
 };
 
 
