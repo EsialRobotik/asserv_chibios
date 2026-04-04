@@ -30,6 +30,7 @@ public:
         goto_back=24,
         goto_nostop=25,
         set_position=26,
+        face_back=27,
     //Four param messages
         orbital_turn=30,
     } cmd_type_t;

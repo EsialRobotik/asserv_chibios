@@ -144,6 +144,10 @@ void SerialCbor::decode_cmd(CborStreamStateMachine::cmd_t &cmd)
             m_commandManager.addGoToAngle(cmd.arg1, cmd.arg2, cmd.cmd_id);
         break;
 
+        case CborStreamStateMachine::face_back:
+            m_commandManager.addGoToAngleBack(cmd.arg1, cmd.arg2, cmd.cmd_id);
+        break;
+
         case CborStreamStateMachine::goto_front:
             m_commandManager.addGoTo(cmd.arg1, cmd.arg2, cmd.cmd_id);
         break;

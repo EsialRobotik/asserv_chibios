@@ -172,6 +172,19 @@ bool CommandManager::addGoToAngle(float posXInmm, float posYInmm, uint32_t index
     return true;
 }
 
+bool CommandManager::addGoToAngleBack(float posXInmm, float posYInmm, uint32_t index)
+{
+    Command *ptr = m_cmdList.getFree();
+    if(ptr == nullptr)
+        return false;
+
+    new (ptr) GotoAngle(posXInmm, posYInmm, m_turnArrivalWindows_rad, true);
+    ptr->setIndex(index);
+
+    m_cmdList.push();
+    return true;
+}
+
 void CommandManager::setEmergencyStop()
 {
     m_consign.type = Command::consign_type_t::consign_acceleration_limited;

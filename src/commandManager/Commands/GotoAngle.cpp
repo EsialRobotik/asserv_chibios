@@ -6,9 +6,10 @@
 #include <cmath>
 
 GotoAngle::GotoAngle(float consignX_mm, float consignY_mm,
-        float arrivalAngleThreshold_rad)
+        float arrivalAngleThreshold_rad, bool backMode)
 : m_consignX_mm(consignX_mm), m_consignY_mm(consignY_mm),
-  m_arrivalAngleThreshold_rad(arrivalAngleThreshold_rad)
+  m_arrivalAngleThreshold_rad(arrivalAngleThreshold_rad),
+  m_backModeCorrection(backMode ? -1.0f : 1.0f)
 {
 }
 
@@ -17,8 +18,7 @@ Command::consign_type_t GotoAngle::computeInitialConsign(float X_mm, float Y_mm,
    float deltaX = m_consignX_mm - X_mm;
    float deltaY = m_consignY_mm - Y_mm;
 
-   // La différence entre le thetaCible (= cap à atteindre) et le theta (= cap actuel du robot) donne l'angle à parcourir
-   float deltaTheta = Goto::computeDeltaTheta(deltaX, deltaY, theta_rad);
+   float deltaTheta = Goto::computeDeltaTheta(m_backModeCorrection * deltaX, m_backModeCorrection * deltaY, theta_rad);
 
    consign.angle_consign =  angle_regulator.getAccumulator() + deltaTheta;
    return  consign_type_t::consign_acceleration_limited;
@@ -36,7 +36,7 @@ bool GotoAngle::isGoalReached(float X_mm, float Y_mm, float theta_rad, const Reg
     float deltaX = m_consignX_mm - X_mm;
     float deltaY = m_consignY_mm - Y_mm;
 
-    return fabs(Goto::computeDeltaTheta(deltaX, deltaY, theta_rad)) < m_arrivalAngleThreshold_rad;
+    return fabs(Goto::computeDeltaTheta(m_backModeCorrection * deltaX, m_backModeCorrection * deltaY, theta_rad)) < m_arrivalAngleThreshold_rad;
 }
 
 bool GotoAngle::noStop() const

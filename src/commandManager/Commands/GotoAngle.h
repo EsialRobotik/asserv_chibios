@@ -7,7 +7,7 @@ class GotoAngle : public Command
 {
     public:
         explicit GotoAngle(float consignX_mm, float consignY_mm,
-                float arrivalAngleThreshold_rad);
+                float arrivalAngleThreshold_rad, bool backMode = false);
 
         virtual ~GotoAngle() {};
 
@@ -24,6 +24,7 @@ class GotoAngle : public Command
         float m_consignY_mm;
 
         float m_arrivalAngleThreshold_rad;
+        float m_backModeCorrection;
 };
 
 #endif /* GOTOANGLE_H_ */
