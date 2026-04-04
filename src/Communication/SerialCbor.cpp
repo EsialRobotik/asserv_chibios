@@ -160,6 +160,10 @@ void SerialCbor::decode_cmd(CborStreamStateMachine::cmd_t &cmd)
             m_commandManager.addGoToNoStop(cmd.arg1, cmd.arg2, cmd.cmd_id);
         break;
 
+        case CborStreamStateMachine::goto_back_nostop:
+            m_commandManager.addGoToNoStopBack(cmd.arg1, cmd.arg2, cmd.cmd_id);
+        break;
+
         case CborStreamStateMachine::orbital_turn:
             // Use float as boolean is absolutely not a thing todo, but this case doesn't exist when this was conceived. TODO: refactor to have a clear design!
             m_commandManager.addGOrbitalTurn(degToRad(cmd.arg1), (cmd.arg2 == 1.0), (cmd.arg3 == 1.0), cmd.cmd_id);
