@@ -45,6 +45,7 @@ SerialCbor::SerialCbor(SerialDriver *serialDriver, Crc32Calculator *crc32Calcula
     if( slowAccDec)
         m_slowAccDec = *slowAccDec;
 
+    m_positionOutputPeriod_ms = 100;
 }
 
 
@@ -58,7 +59,7 @@ void SerialCbor::positionOutput()
     QCBOREncodeContext EncodeCtx;
     UsefulBuf qcoborBuffer = {m_qcborOutputBuffer+4*3, sizeof(m_qcborOutputBuffer)};
 
-    const time_conv_t loopPeriod_ms = 100;
+    const time_conv_t loopPeriod_ms = m_positionOutputPeriod_ms;
     systime_t time = chVTGetSystemTime();
     time += TIME_MS2I(loopPeriod_ms);
     while(true)

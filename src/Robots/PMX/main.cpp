@@ -184,6 +184,7 @@ static void initAsserv()
     // Protocole CBOR (actif)
     serialIo = new Opos6ulSerialCbor(&SD4, &crc32Calculator, *odometry, *commandManager, *md22MotorController, *mainAsserv,
                                   nullptr, nullptr, nullptr, nullptr);
+    serialIo->setPositionOutputPeriod(50); //TODO a tester 25ms
     // Protocole ASCII (commenté)
     // serialIo = new Opos6ulSerialIO(&SD4, *odometry, *commandManager, *md22MotorController, *mainAsserv);
     //debug1("initAsserv::mainAsserv OK\r\n");

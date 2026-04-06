@@ -49,7 +49,8 @@ protected:
     AccDecConfiguration m_normalAccDec;
     AccDecConfiguration m_slowAccDec;
     uint8_t m_qcborOutputBuffer[64]; 
-    uint8_t m_qcborInputBuffer[32]; 
+    uint8_t m_qcborInputBuffer[32];
+    time_conv_t m_positionOutputPeriod_ms;
 
     virtual void decode_cmd(CborStreamStateMachine::cmd_t &cmd);
 };
