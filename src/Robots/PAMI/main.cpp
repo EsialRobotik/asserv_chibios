@@ -261,7 +261,7 @@ static void initAsserv()
      * TIM_3 chan 1/2 : PB4/PA4
      * TIM 2 chan 1/2 : PA5/PA1
      */
-    QuadratureEncoder::GpioPinInit pami_encoders = {GPIOB, 4, 2, GPIOA, 4, 2, GPIOA, 5, 1, GPIOA, 1, 1};
+    QuadratureEncoder::GpioPinInit pami_encoders = {&QEID3, GPIOB, 4, 2, GPIOA, 4, 2, &QEID2, GPIOA, 5, 1, GPIOA, 1, 1};
     encoders = new QuadratureEncoder (&pami_encoders, false, false, true);
 
     angleRegulator = new Regulator(ANGLE_REGULATOR_KP, REGULATOR_MAX_SPEED_MM_PER_SEC);
