@@ -99,7 +99,7 @@ CommandHandler *commandHandler;
 
 static void initAsserv()
 {
-    encoders = new QuadratureEncoder(&ESIALCardPinConf_Encoders, false, false, false);
+    encoders = new QuadratureEncoder(&ESIALCardPinConf_Encoders, true, false, false);
     md22MotorController = new Md22(&ESIALCardPinConf_md22, &I2CD3, true, true, false, 100000);
 
     angleRegulator = new Regulator(ANGLE_REGULATOR_KP, REGULATOR_MAX_SPEED_MM_PER_SEC);
