@@ -253,7 +253,7 @@ void CommandManager::update(float X_mm, float Y_mm, float theta_rad)
 
 
     if (m_currentCmd != nullptr && !m_currentCmd->isGoalReached(X_mm, Y_mm, theta_rad, m_angle_regulator, m_distance_regulator, m_cmdList.getSecond()))
-{
+    {
         m_currentCmd->updateConsign(X_mm, Y_mm, theta_rad, m_consign, m_angle_regulator, m_distance_regulator);
     }
     else
@@ -263,19 +263,6 @@ void CommandManager::update(float X_mm, float Y_mm, float theta_rad)
         {
             m_consign.type = m_currentCmd->computeInitialConsign(X_mm, Y_mm, theta_rad, m_consign, m_angle_regulator, m_distance_regulator);
         }
-        /*
-         * This code introduce weird behaviour, when there's no more further consign, the current position is keept as target.
-         *   Doing so, the target isn't the real one + when we push the robot, it doesn't try to retrieve the target position.
-         *   But, this code was introduced for a reason that I cannot remember. Comment it for now, wait'n'see. 
-         */
-        // else
-        // {
-        //     // No further command, just set a consign where we are.
-        //     m_consign.type = Command::consign_type_t::consign_acceleration_limited;
-        //     m_consign.angle_consign = m_angle_regulator.getAccumulator();
-        //     m_consign.distance_consign = m_distance_regulator.getAccumulator();
-        // }
-            
     }
 }
 

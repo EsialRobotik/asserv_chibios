@@ -29,6 +29,7 @@ class WheelSpeed : public Command
         float m_rightWheelSpeed_mmpersec;
         float m_leftWheelSpeed_mmpersec;
         systime_t m_step_endtime;
+        consign_t * m_consign_ref;
 
 };
 
