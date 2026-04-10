@@ -284,7 +284,7 @@ static void initAsserv()
     distanceAccelerationLimiter = new AccelerationDecelerationLimiter(DIST_REGULATOR_MAX_ACC_FW, DIST_REGULATOR_MAX_DEC_FW, DIST_REGULATOR_MAX_ACC_BW, DIST_REGULATOR_MAX_DEC_BW, REGULATOR_MAX_SPEED_MM_PER_SEC, ACC_DEC_DAMPLING, DIST_REGULATOR_KP);
     accDecLimiter = distanceAccelerationLimiter;
     #else
-    distanceAccelerationLimiter = new SimpleAccelerationLimiter(ANGLE_REGULATOR_MAX_ACC);
+    distanceAccelerationLimiter = new SimpleAccelerationLimiter(DIST_REGULATOR_MAX_ACC);
     #endif
 
 
