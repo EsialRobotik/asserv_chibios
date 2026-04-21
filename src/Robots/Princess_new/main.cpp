@@ -419,9 +419,9 @@ void asservCommandUSB(BaseSequentialStream *chp, int argc, char **argv)
     else if (!strcmp(argv[0], "addangle"))
     {
         float angle = atof(argv[1]);
-        chprintf(outputStream, "Adding angle %.2frad \r\n", angle);
+        chprintf(outputStream, "Adding angle %.1fdeg \r\n", angle);
 
-        commandManager->addTurn(angle);
+        commandManager->addTurn(degToRad(angle))
     }
     else if (!strcmp(argv[0], "anglereset"))
     {

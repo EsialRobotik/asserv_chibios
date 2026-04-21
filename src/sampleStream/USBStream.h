@@ -52,7 +52,7 @@ private:
     CommandHandler *m_cmd_handler;
     static inline USBStream* s_instance = nullptr;
     
-    uint8_t cbor_buffer[384];
+    uint8_t cbor_buffer[450];
     QCBORDecodeContext m_cborDecoderCtx;
 
 
