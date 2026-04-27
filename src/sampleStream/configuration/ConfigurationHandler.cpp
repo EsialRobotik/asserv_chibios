@@ -18,6 +18,7 @@ ConfigurationHandler::ConfigurationHandler(
 void ConfigurationHandler::generateRepresentation(QCBOREncodeContext &EncodeCtx)
 {
 	QCBOREncode_OpenMap(&EncodeCtx);
+	
 	QCBOREncode_OpenMapInMapSZ(&EncodeCtx, "dist_regulator");
 	m_dist_regulator->getConfiguration( EncodeCtx);
 	QCBOREncode_CloseMap(&EncodeCtx);

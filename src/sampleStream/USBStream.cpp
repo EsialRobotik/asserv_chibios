@@ -160,7 +160,7 @@ void USBStream::releaseBuffer()
 }
 
 
-// extern BaseSequentialStream *outputStream;
+extern BaseSequentialStream *outputStream;
 
 void USBStream::USBStreamHandleConnection_lowerpriothread()
 {
@@ -221,6 +221,8 @@ void USBStream::USBStreamHandleConnection_lowerpriothread()
             m_configuration_handler->generateRepresentation(EncodeCtx);
             UsefulBufC EncodedCBOR;
             QCBORError uErr = QCBOREncode_Finish(&EncodeCtx, &EncodedCBOR);
+            chprintf(outputStream, "Send config %d bytes \r\n", EncodedCBOR.len);
+
             if(uErr == QCBOR_SUCCESS) 
             {   
                 chDbgAssert(EncodedCBOR.len < sizeof(cbor_buffer), "Not enough space in the cbor buffer.");

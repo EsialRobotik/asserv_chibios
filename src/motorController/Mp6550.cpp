@@ -89,9 +89,9 @@ void Mp6550::setMotorLeftSpeed(float percentage)
     }
     else
     {
-        // Set both pwm to 1 to brake
-       pwmEnableChannel(pwm1->pwmDriver, pwm1->used_channel, PWM_PERCENTAGE_TO_WIDTH(pwm1->pwmDriver, 10000));
-       pwmEnableChannel(pwm2->pwmDriver, pwm2->used_channel, PWM_PERCENTAGE_TO_WIDTH(pwm2->pwmDriver, 10000));
+        // Set both pwm to 0 to coast ( it's possible to brake, but crossing zero during transient phase may induce problems)
+       pwmEnableChannel(pwm1->pwmDriver, pwm1->used_channel, PWM_PERCENTAGE_TO_WIDTH(pwm1->pwmDriver, 0));
+       pwmEnableChannel(pwm2->pwmDriver, pwm2->used_channel, PWM_PERCENTAGE_TO_WIDTH(pwm2->pwmDriver, 0));
     }
 }
 

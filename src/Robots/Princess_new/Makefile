@@ -253,10 +253,10 @@ robots :
 	@echo "Available robots :  $(AVAILABLE_ROBOTS)" 
 	
 flash : all
-	openocd -c "tcl_port disabled" -c "telnet_port disabled" -c "source [find board/st_nucleo_f4.cfg]" -c "stm32f4x.cpu configure -rtos chibios" -c "init" -c "reset halt" -c "flash write_image erase unlock $(BUILDDIR)/$(PROJECT).elf" -c "verify_image $(BUILDDIR)/$(PROJECT).elf" -c "reset run" -c "shutdown"
+	openocd -c "tcl_port disabled" -c "telnet_port disabled" -c "source [find board/st_nucleo_g4.cfg]" -c "stm32g4x.cpu configure -rtos chibios" -c "init" -c "reset halt" -c "flash write_image erase unlock $(BUILDDIR)/$(PROJECT).elf" -c "verify_image $(BUILDDIR)/$(PROJECT).elf" -c "reset run" -c "shutdown"
 
 debug : all
-	openocd -c "tcl_port disabled" -c "telnet_port disabled" -c "source [find board/st_nucleo_f4.cfg]" -c "stm32f4x.cpu configure -rtos chibios" -c "init" -c "reset halt" -c "flash write_image erase unlock $(BUILDDIR)/$(PROJECT).elf" -c "verify_image $(BUILDDIR)/$(PROJECT).elf" -c "reset halt"
+	openocd -c "tcl_port disabled" -c "telnet_port disabled" -c "source [find board/st_nucleo_g4.cfg]" -c "stm32g4x.cpu configure -rtos chibios" -c "init" -c "reset halt" -c "flash write_image erase unlock $(BUILDDIR)/$(PROJECT).elf" -c "verify_image $(BUILDDIR)/$(PROJECT).elf" -c "reset halt"
 
 	
 

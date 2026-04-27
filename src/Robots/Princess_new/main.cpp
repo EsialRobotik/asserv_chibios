@@ -63,7 +63,7 @@ SerialCbor::AccDecConfiguration slowAccDec =
 
 
 Md22::I2cPinInit ESIALCardPinConf_md22 = {GPIOA, 8, 2, GPIOB, 5, 8};
-QuadratureEncoder::GpioPinInit ESIALCardPinConf_Encoders = {GPIOB, 4, 2, GPIOA, 4, 2, GPIOB, 6, 1, GPIOB, 7, 1};
+QuadratureEncoder::GpioPinInit ESIALCardPinConf_Encoders = {&QEID3, GPIOB, 4, 2, GPIOA, 4, 2, &QEID4, GPIOB, 6, 2, GPIOB, 7, 2};
 
 
 QuadratureEncoder *encoders;
@@ -99,7 +99,7 @@ CommandHandler *commandHandler;
 
 static void initAsserv()
 {
-    encoders = new QuadratureEncoder(&ESIALCardPinConf_Encoders, false, false, false);
+    encoders = new QuadratureEncoder(&ESIALCardPinConf_Encoders, true, true, false);
     md22MotorController = new Md22(&ESIALCardPinConf_md22, &I2CD3, true, true, false, 100000);
 
     angleRegulator = new Regulator(ANGLE_REGULATOR_KP, REGULATOR_MAX_SPEED_MM_PER_SEC);
@@ -263,7 +263,7 @@ int main(void)
 
 
     /* Create a 'background' thread to handle command received through the USB */
-    chThdCreateStatic(waLowPrioUSBThread, sizeof(waLowPrioUSBThread), LOWPRIO+2, LowPrioUSBThread, NULL);
+    chThdCreateStatic(waLowPrioUSBThread, sizeof(waLowPrioUSBThread), LOWPRIO+1, LowPrioUSBThread, NULL);
 
 
     // Custom commands
@@ -281,7 +281,7 @@ int main(void)
 #endif
     };
 
-    thread_t *shellThd = chThdCreateStatic(wa_shell, sizeof(wa_shell), LOWPRIO, shellThread, &shellCfg);
+    thread_t *shellThd = chThdCreateStatic(wa_shell, sizeof(wa_shell), LOWPRIO+2, shellThread, &shellCfg);
     chRegSetThreadNameX(shellThd, "shell");
 
 
@@ -419,9 +419,9 @@ void asservCommandUSB(BaseSequentialStream *chp, int argc, char **argv)
     else if (!strcmp(argv[0], "addangle"))
     {
         float angle = atof(argv[1]);
-        chprintf(outputStream, "Adding angle %.2frad \r\n", angle);
+        chprintf(outputStream, "Adding angle %.1fdeg \r\n", angle);
 
-        commandManager->addTurn(angle);
+        commandManager->addTurn(degToRad(angle))
     }
     else if (!strcmp(argv[0], "anglereset"))
     {

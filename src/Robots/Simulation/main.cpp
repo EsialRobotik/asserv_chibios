@@ -144,10 +144,15 @@ void shell()
         }
         else if( line.c_str()[0] == 'c' )
         {
-            printf("test !\r\n");
-
-            commandManager->addStraightLine(1000);
-
+            commandManager->addGOrbitalTurn(degToRad(90), true, true );
+        }
+        else if( line.c_str()[0] == 'C' )
+        {
+            commandManager->addGOrbitalTurn(degToRad(-90), true, true );
+        }
+        else if( line.c_str()[0] == 'v' )
+        {
+            commandManager->addGOrbitalTurn(degToRad(90), false, true );
         }
         else if( line.c_str()[0] == 'b' )
         {

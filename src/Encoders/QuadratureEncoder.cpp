@@ -45,23 +45,22 @@ QuadratureEncoder::~QuadratureEncoder()
 
 void QuadratureEncoder::init()
 {
-    // TODO : Alternate conf should be configurable like the PIN....
     // Encoder 1
-    palSetPadMode(m_gpioPinConf.GPIObaseE1ch2, m_gpioPinConf.pinNumberE1ch2, PAL_MODE_ALTERNATE(m_gpioPinConf.pinE1ch1Alternate)); //TIM3_chan2
-    palSetPadMode(m_gpioPinConf.GPIObaseE1ch1, m_gpioPinConf.pinNumberE1ch1, PAL_MODE_ALTERNATE(m_gpioPinConf.pinE1ch2Alternate)); //TIM3_chan1
-    qeiStart(&QEID3, &qeicfg1);
+    palSetPadMode(m_gpioPinConf.GPIObaseE1ch2, m_gpioPinConf.pinNumberE1ch2, PAL_MODE_ALTERNATE(m_gpioPinConf.pinE1ch1Alternate));
+    palSetPadMode(m_gpioPinConf.GPIObaseE1ch1, m_gpioPinConf.pinNumberE1ch1, PAL_MODE_ALTERNATE(m_gpioPinConf.pinE1ch2Alternate));
+    qeiStart(m_gpioPinConf.chan1Driver, &qeicfg1);
     // Encoder 2
-    palSetPadMode(m_gpioPinConf.GPIObaseE2ch2, m_gpioPinConf.pinNumberE2ch2, PAL_MODE_ALTERNATE(m_gpioPinConf.pinE2ch1Alternate)); //TIM2_chan2
-    palSetPadMode(m_gpioPinConf.GPIObaseE2ch1, m_gpioPinConf.pinNumberE2ch1, PAL_MODE_ALTERNATE(m_gpioPinConf.pinE2ch2Alternate)); //TIM2_chan1
-    qeiStart(&QEID2, &qeicfg2);
+    palSetPadMode(m_gpioPinConf.GPIObaseE2ch2, m_gpioPinConf.pinNumberE2ch2, PAL_MODE_ALTERNATE(m_gpioPinConf.pinE2ch1Alternate));
+    palSetPadMode(m_gpioPinConf.GPIObaseE2ch1, m_gpioPinConf.pinNumberE2ch1, PAL_MODE_ALTERNATE(m_gpioPinConf.pinE2ch2Alternate));
+    qeiStart(m_gpioPinConf.chan2Driver, &qeicfg2);
 }
 
 void QuadratureEncoder::start()
 {
-    qeiEnable (&QEID3);
-    qeiEnable (&QEID2);
-    m_encoder1Previous = qeiGetCount(&QEID3);
-    m_encoder2Previous = qeiGetCount(&QEID2);
+    qeiEnable (m_gpioPinConf.chan1Driver);
+    qeiEnable (m_gpioPinConf.chan2Driver);
+    m_encoder1Previous = qeiGetCount(m_gpioPinConf.chan1Driver);
+    m_encoder2Previous = qeiGetCount(m_gpioPinConf.chan2Driver);
     m_encoderRSum = 0;
     m_encoderLSum = 0;
 
@@ -69,15 +68,15 @@ void QuadratureEncoder::start()
 
 void QuadratureEncoder::stop()
 {
-    qeiDisable (&QEID3);
-    qeiDisable (&QEID2);
+    qeiDisable (m_gpioPinConf.chan1Driver);
+    qeiDisable (m_gpioPinConf.chan2Driver);
 }
 
 void QuadratureEncoder::getValues(float *deltaEncoderRight, float *deltaEncoderLeft)
 {
-    int16_t encoder2 = qeiGetCount(&QEID2);
-    int16_t encoder1 = qeiGetCount(&QEID3);
-
+    int16_t encoder1 = qeiGetCount(m_gpioPinConf.chan1Driver);
+    int16_t encoder2 = qeiGetCount(m_gpioPinConf.chan2Driver);
+    
     int16_t deltaRight;
     int16_t deltaLeft;
 

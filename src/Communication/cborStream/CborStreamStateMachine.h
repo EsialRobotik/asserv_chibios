@@ -29,11 +29,11 @@ public:
         goto_front=23,
         goto_back=24,
         goto_nostop=25,
-        set_position=26,
         face_back=27,
         goto_back_nostop=28,
     //Four param messages
         orbital_turn=30,
+        set_position=31,
     } cmd_type_t;
 
 

@@ -56,11 +56,7 @@ Pll *leftPll;
 
 SimpleAccelerationLimiter *angleAccelerationlimiter;
 
-#ifdef STAR
 AccelerationDecelerationLimiter *distanceAccelerationLimiter;
-#else
-SimpleAccelerationLimiter *distanceAccelerationLimiter;
-#endif
 
 CommandManager *commandManager;
 AsservMain *mainAsserv;
@@ -261,11 +257,11 @@ static void initAsserv()
      * TIM_3 chan 1/2 : PB4/PA4
      * TIM 2 chan 1/2 : PA5/PA1
      */
-    QuadratureEncoder::GpioPinInit pami_encoders = {GPIOB, 4, 2, GPIOA, 4, 2, GPIOA, 5, 1, GPIOA, 1, 1};
+    QuadratureEncoder::GpioPinInit pami_encoders = {&QEID3, GPIOB, 4, 2, GPIOA, 4, 2, &QEID2, GPIOA, 5, 1, GPIOA, 1, 1};
     encoders = new QuadratureEncoder (&pami_encoders, false, false, true);
 
     angleRegulator = new Regulator(ANGLE_REGULATOR_KP, REGULATOR_MAX_SPEED_MM_PER_SEC);
-    distanceRegulator = new Regulator(DIST_REGULATOR_KP, REGULATOR_MAX_SPEED_MM_PER_SEC);
+    distanceRegulator = new Regulator(DIST_REGULATOR_KP, FLT_MAX);
 
     rightPll = new Pll (PLL_BANDWIDTH);
     leftPll = new Pll(PLL_BANDWIDTH);
@@ -280,12 +276,8 @@ static void initAsserv()
 
 
     AccelerationDecelerationLimiter *accDecLimiter = nullptr;    
-    #ifdef STAR
     distanceAccelerationLimiter = new AccelerationDecelerationLimiter(DIST_REGULATOR_MAX_ACC_FW, DIST_REGULATOR_MAX_DEC_FW, DIST_REGULATOR_MAX_ACC_BW, DIST_REGULATOR_MAX_DEC_BW, REGULATOR_MAX_SPEED_MM_PER_SEC, ACC_DEC_DAMPLING, DIST_REGULATOR_KP);
     accDecLimiter = distanceAccelerationLimiter;
-    #else
-    distanceAccelerationLimiter = new SimpleAccelerationLimiter(ANGLE_REGULATOR_MAX_ACC);
-    #endif
 
 
     commandManager = new CommandManager( COMMAND_MANAGER_ARRIVAL_DISTANCE_THRESHOLD_mm, COMMAND_MANAGER_ARRIVAL_ANGLE_THRESHOLD_RAD,
@@ -469,17 +461,14 @@ int main(void)
     
     while (true)
     {
-        // palClearPad(GPIOB, 8);
-        // chThdSleepMilliseconds(250);
-        // palSetPad(GPIOB, 8);
-        // chThdSleepMilliseconds(250);
+        chThdYield();
     }
 }
 
 void asservCommandUSB(BaseSequentialStream *chp, int argc, char **argv)
 {
     float encoderR, encoderL;
-    auto printUsage = [](char * str)
+    auto printUsage = [](char const * str)
     {
         chprintf(outputStream,"Unknown command : %s \r\n", str);
         chprintf(outputStream,"Usage :");
@@ -496,7 +485,76 @@ void asservCommandUSB(BaseSequentialStream *chp, int argc, char **argv)
         return;
     }
 
-    if (!strcmp(argv[0], "wheelspeedstep"))
+    if (!strcmp(argv[0], "wheelcalib"))
+    {
+        unsigned int count = 5;
+        chprintf(outputStream, "Wheel Calibration start\r\n");
+
+        mainAsserv->limitMotorControllerConsignToPercentage(40);
+
+        auto alignWithWall = []() -> void
+        {
+            mainAsserv->limitMotorControllerConsignToPercentage(15);
+            mainAsserv->disableAngleRegulator();
+            commandManager->addStraightLine(-1000);
+            chThdSleepSeconds(5);
+            mainAsserv->enableAngleRegulator();
+            mainAsserv->reset();
+            mainAsserv->limitMotorControllerConsignToPercentage(40);
+        };
+
+        auto waitEndOFCommand = []() -> void
+        {
+            do
+            {
+                chThdSleepMilliseconds(50);
+            }
+            while( commandManager->getCommandStatus() != CommandManager::STATUS_IDLE );
+            chThdSleepMilliseconds(500);
+        };
+
+
+        alignWithWall();
+
+        int32_t encoderRightStart = encoders->getRightEncoderTotalCount();
+        int32_t encoderLeftStart =  encoders->getLeftEncoderTotalCount();
+        int32_t startDistance = (encoderRightStart+encoderLeftStart)/2.0;
+        int32_t startAngle = (encoderRightStart-encoderLeftStart);
+
+
+        commandManager->addStraightLine(200);
+        waitEndOFCommand();
+
+        for(unsigned int i=0; i<count; i++)
+        {
+            commandManager->addStraightLine(800);
+            waitEndOFCommand();
+            commandManager->addTurn(M_PI);
+            waitEndOFCommand();
+            commandManager->addStraightLine(800);
+            waitEndOFCommand();
+            commandManager->addTurn(-M_PI);
+            waitEndOFCommand();
+        }
+
+        alignWithWall();
+
+        int32_t encoderRightEnd = encoders->getRightEncoderTotalCount();
+        int32_t encoderLeftEnd =  encoders->getLeftEncoderTotalCount();
+        int32_t deltaDistance = startDistance - ((encoderRightEnd+encoderLeftEnd)/2.0);
+        int32_t deltaAngle = startAngle - (encoderRightEnd-encoderLeftEnd);
+
+        float factor = float(deltaAngle) / float(deltaDistance);
+        float leftGain = (1. + factor) * encoders->getLeftEncoderGain();
+        float rightGain = (1. - factor) * encoders->getRightEncoderGain();
+
+        chprintf(outputStream, "Wheel Calibration done with travel dist : %d step, delta %d steps \r\n", deltaDistance, deltaAngle);
+        chprintf(outputStream, "Suggested factors :\n");
+        chprintf(outputStream, "Left : %.8f (old gain was %f)\n", leftGain, encoders->getLeftEncoderGain());
+        chprintf(outputStream, "Right : %.8f (old gain was %f)\n", rightGain, encoders->getRightEncoderGain());
+
+    }
+    else if (!strcmp(argv[0], "wheelspeedstep"))
     {
         char side = *argv[1];
         float speedGoal = atof(argv[2]);
@@ -511,7 +569,7 @@ void asservCommandUSB(BaseSequentialStream *chp, int argc, char **argv)
             speedRight = 0;
         }
 
-        bool ok = commandManager->addWheelsSpeed(speedRight, speedLeft, time);
+        commandManager->addWheelsSpeed(speedRight, speedLeft, time);
     }
     else if (!strcmp(argv[0], "robotfwspeedstep"))
     {
@@ -519,7 +577,7 @@ void asservCommandUSB(BaseSequentialStream *chp, int argc, char **argv)
         int time = atoi(argv[2]);
         chprintf(outputStream, "setting fw robot speed %.2f rad/s for %d ms\r\n", speedGoal, time);
 
-        bool ok = commandManager->addWheelsSpeed(speedGoal, speedGoal, time);
+        commandManager->addWheelsSpeed(speedGoal, speedGoal, time);
     }
     else if (!strcmp(argv[0], "orbital"))
     {
@@ -529,7 +587,7 @@ void asservCommandUSB(BaseSequentialStream *chp, int argc, char **argv)
 
         chprintf(outputStream, "Adding orbital turn of %.2f deg, forward? %d, to the right? %d \r\n", angleInDeg, forward, turnToTheRight);
 
-        bool ok = commandManager->addGOrbitalTurn(angleInDeg*M_PI/180.0, forward, turnToTheRight);
+        commandManager->addGOrbitalTurn(angleInDeg*M_PI/180.0, forward, turnToTheRight);
     }
     else if (!strcmp(argv[0], "coders"))
     {
@@ -546,7 +604,7 @@ void asservCommandUSB(BaseSequentialStream *chp, int argc, char **argv)
     {
         float dist = atof(argv[1]);
 
-        bool ok = commandManager->addStraightLine(dist);
+        commandManager->addStraightLine(dist);
         chprintf(outputStream, "Adding distance %.2fmm argc %d (%s)\r\n", dist,argc,  argv[1] );
 
     }
@@ -578,9 +636,16 @@ void asservCommandUSB(BaseSequentialStream *chp, int argc, char **argv)
     else if (!strcmp(argv[0], "addangle"))
     {
         float angle = atof(argv[1]);
-        chprintf(outputStream, "Adding angle %.2frad \r\n", angle);
+        chprintf(outputStream, "Adding angle %.1fdeg \r\n", angle);
 
-        commandManager->addTurn(angle);
+        commandManager->addTurn(degToRad(angle));
+    }
+    else if (!strcmp(argv[0], "wheelsdist"))
+    {
+        float wheelDistance_mm = atof(argv[1]);
+        chprintf(outputStream, "setting wheels dist to %.2f \r\n", wheelDistance_mm);
+
+		mainAsserv->setEncodersWheelsDistance_mm(wheelDistance_mm);
     }
     else if (!strcmp(argv[0], "addgoto"))
     {

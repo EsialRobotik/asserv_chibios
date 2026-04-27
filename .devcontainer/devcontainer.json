@@ -1,0 +1,37 @@
+// For format details, see https://aka.ms/devcontainer.json. For config options, see the
+// README at: https://github.com/devcontainers/templates/tree/main/src/cpp
+{
+	"name": "Asserv ESIAL Robotik",
+	"build": {
+		"dockerfile": "Dockerfile"
+	},
+
+	// Privileged container in order to access /dev
+	"privileged": true,
+
+	// Mount USB devices (debug probes, UART interfaces, ...)
+	"mounts": [
+		"source=/dev/bus/usb/,target=/dev/bus/usb/,type=bind"
+	],
+
+	// Configure tool-specific properties.
+	"customizations": {
+		// Configure properties specific to VS Code.
+		"vscode": {
+			"settings": {},
+			"extensions": [
+				"streetsidesoftware.code-spell-checker"
+			]
+		}
+	}
+	// "remoteUser": "vscode"
+
+
+	// Use 'forwardPorts' to make a list of ports inside the container available locally.
+	// "forwardPorts": [],
+
+	// Use 'postCreateCommand' to run commands after the container is created.
+	// "postCreateCommand": "gcc -v",
+
+	// Uncomment to connect as root instead. More info: https://aka.ms/dev-containers-non-root.
+}

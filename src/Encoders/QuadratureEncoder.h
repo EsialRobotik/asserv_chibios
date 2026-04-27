@@ -10,12 +10,15 @@ class QuadratureEncoder: public Encoders
 public:
     struct GpioPinInit
     {
+        QEIDriver *chan1Driver;
         stm32_gpio_t* GPIObaseE1ch1;
         uint8_t pinNumberE1ch1;
         uint8_t pinE1ch1Alternate;
         stm32_gpio_t* GPIObaseE1ch2;
         uint8_t pinNumberE1ch2;
         uint8_t pinE1ch2Alternate;
+
+        QEIDriver *chan2Driver;
         stm32_gpio_t* GPIObaseE2ch1;
         uint8_t pinNumberE2ch1;
         uint8_t pinE2ch1Alternate;

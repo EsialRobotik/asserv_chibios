@@ -38,7 +38,7 @@ class CommandManager
          * Commandes ajoutables a la liste des consignes du robot
          */
         bool addStraightLine(float valueInmm, uint32_t index = 0);
-        bool addTurn(float angleInDeg, uint32_t index = 0);
+        bool addTurn(float angleInRad, uint32_t index = 0);
         bool addGoTo(float posXInmm, float posYInmm, uint32_t index = 0);
         bool addGoToWaypoint(float posXInmm, float posYInmm, uint32_t index = 0);
         bool addGoToBack(float posXInmm, float posYInmm, uint32_t index = 0);
@@ -46,7 +46,7 @@ class CommandManager
         bool addGoToNoStopBack(float posXInmm, float posYInmm, uint32_t index = 0);
         bool addGoToAngle(float posXInmm, float posYInmm, uint32_t index = 0);
         bool addGoToAngleBack(float posXInmm, float posYInmm, uint32_t index = 0);
-        bool addGOrbitalTurn(float angleInDeg, bool forward, bool turnToTheRight, uint32_t index = 0);
+        bool addGOrbitalTurn(float angleInRad, bool forward, bool turnToTheRight, uint32_t index = 0);
         bool addWheelsSpeed(float rightWheelSpeedInmmpersec, float leftWheelSpeedInmmpersec, uint32_t stepDurationInms, uint32_t index = 0);
 
         /*
@@ -107,6 +107,8 @@ class CommandManager
         BlockingDetector *m_blockingDetector;
 
         Command::consign_t m_consign;
+
+        uint32_t m_current_index;
 };
 
 #endif
