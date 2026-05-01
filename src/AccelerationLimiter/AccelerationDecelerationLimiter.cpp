@@ -27,7 +27,15 @@ AccelerationDecelerationLimiter::AccelerationDecelerationLimiter(
     m_damplingFactor = dampling;
     m_timeToVmax = 0;
     m_timeFromVmaxToZero = 0;
+    m_speedScale = 1.0f;     // 100% nominal au boot
     reset();
+}
+
+void AccelerationDecelerationLimiter::setSpeedPercent(float percent)
+{
+    if (percent < 1.0f)   percent = 1.0f;
+    if (percent > 100.0f) percent = 100.0f;
+    m_speedScale = percent / 100.0f;
 }
 
 void AccelerationDecelerationLimiter::reset()
@@ -59,6 +67,11 @@ float AccelerationDecelerationLimiter::limitAcceleration(float dt, float targetS
         way = -1.0f;
         forward = false;
     }
+
+    // Applique le scaling 0..1 (set_speed_percent). Compose avec les presets
+    // binaires (NORMAL/SLOW_SPEED_ACC) qui modifient m_maxAcceleration*Forward etc.
+    maxAcceleration *= m_speedScale;
+    maxDeceleration *= m_speedScale;
 
 
     if( m_previousPositionGoal != positionGoal   )

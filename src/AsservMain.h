@@ -57,6 +57,14 @@ public:
     void setPosition(float X_mm, float Y_mm, float theta_rad);
     void limitMotorControllerConsignToPercentage(float percentage);
 
+    /*!
+     * \brief Notifie les limiters acc/dec d'une consigne de vitesse 0..100%.
+     *        Polymorphique : seuls les limiters qui implementent
+     *        AccelerationDecelerationLimiterInterface::setSpeedPercent
+     *        reagissent (ex: AdvancedAccelerationLimiter sur PMX).
+     */
+    void setSpeedPercent(float percent);
+
     void setEncodersWheelsDistance_mm(float wheelsDistance_mm);
 private:
 

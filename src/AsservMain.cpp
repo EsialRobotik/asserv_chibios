@@ -319,6 +319,15 @@ void AsservMain::limitMotorControllerConsignToPercentage(float percentage)
     chSysUnlock();
 }
 
+void AsservMain::setSpeedPercent(float percent)
+{
+    // Notifie les 2 limiters via l'interface (no-op par defaut, override
+    // dans AdvancedAccelerationLimiter). Pas en section critique : les
+    // setters internes sont des affectations atomiques de float.
+    m_angleRegulatorAccelerationLimiter.setSpeedPercent(percent);
+    m_distanceRegulatorAccelerationLimiter.setSpeedPercent(percent);
+}
+
 
 void AsservMain::reset()
 {

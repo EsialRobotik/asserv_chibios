@@ -20,8 +20,9 @@ public:
         emergency_stop_reset=11,
         normal_speed_acc_mode=15,
         slow_speed_acc_mode=16,
-    //Two param messages   
+    //Two param messages
         max_motor_speed=17, // One dummy ID is added in this message to make the decoding part easier
+        set_speed_percent=18, // Scale acc/dec 0-100% en amont du PID (pas de cap PWM)
         turn=20,
         straight=21,
     //Three param messages

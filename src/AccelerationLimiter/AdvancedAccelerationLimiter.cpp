@@ -8,6 +8,7 @@ AbstractAccelerationLimiter()
     m_maxAcceleration = maxAcceleration;
     m_minAcceleration = minAcceleration;
     m_HighSpeedThreshold = highSpeedThreshold;
+    m_speedScale = 1.0f;     // 100% nominal au boot
 }
 
 float AdvancedAccelerationLimiter::limitOutput(float dt, float targetSpeed, float previousOutput, float currentSpeed)
@@ -20,7 +21,15 @@ float AdvancedAccelerationLimiter::limitOutput(float dt, float targetSpeed, floa
    else
        maxDelta = dt * (m_minAcceleration + fabs(currentSpeed)*(m_maxAcceleration-m_minAcceleration)/m_HighSpeedThreshold);
 
+    maxDelta *= m_speedScale;    // applique l'echelle 0..1 (set_speed_percent)
     return constrain(change, -maxDelta, maxDelta);
+}
+
+void AdvancedAccelerationLimiter::setSpeedPercent(float percent)
+{
+    if (percent < 1.0f)   percent = 1.0f;     // safety : evite acc=0 qui figerait le robot
+    if (percent > 100.0f) percent = 100.0f;
+    m_speedScale = percent / 100.0f;
 }
 
 void AdvancedAccelerationLimiter::setMaxAcceleration(float maxAcceleration)

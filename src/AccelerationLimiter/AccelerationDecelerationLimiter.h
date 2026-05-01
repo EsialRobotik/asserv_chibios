@@ -33,6 +33,16 @@ public:
     inline void setMaxAccBW(float value)  { m_maxAccelerationBackward = value; };
     inline void setMaxDecBW(float value)  { m_maxDecelerationBackward = value; };
 
+    /*!
+     * \brief Echelle de vitesse 0..100% appliquee dynamiquement sur acc/dec
+     *        FW et BW dans limitAcceleration. Ne modifie PAS les valeurs
+     *        m_maxAccelerationForward/Backward etc., donc compose avec les
+     *        presets binaires (NORMAL/SLOW_SPEED_ACC mode).
+     * \param percent valeur entre 1 et 100
+     */
+    void setSpeedPercent(float percent) override;
+    inline float getSpeedPercent() const { return m_speedScale * 100.0f; };
+
     virtual void getConfiguration(QCBOREncodeContext &EncodeCtx);
 
     virtual void applyConfiguration(QCBORDecodeContext &decodeCtx);
@@ -58,6 +68,7 @@ private:
     float m_timeFromVmaxToZero;
 
     float m_damplingFactor;
+    float m_speedScale;     // facteur 0.0..1.0 applique dans limitAcceleration (1.0 = 100% nominal)
 };
 
 #endif /* SRC_ACCELERATIONDECELERATIONLIMITER_SIMPLEACCELERATIONLIMITER_H_ */

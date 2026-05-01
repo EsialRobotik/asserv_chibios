@@ -20,6 +20,20 @@
 #include "sampleStream/USBStream.h"
 #include "AccelerationLimiter/SimpleAccelerationLimiter.h"
 #include "AccelerationLimiter/AdvancedAccelerationLimiter.h"
+#include "AccelerationLimiter/AccelerationDecelerationLimiter.h"
+
+// =============================================================================
+// Switch entre les 2 limiters de distance
+// =============================================================================
+//   0 = AdvancedAccelerationLimiter (legacy PMX, limite acc selon vitesse)
+//   1 = AccelerationDecelerationLimiter (style esial Princess, gere acc + dec
+//       FW/BW + decel limiter pour s'arreter precisement a la cible)
+//
+// Les 2 modes supportent set_speed_percent (cmd CBOR 18) pour 0-100% continu.
+// En plus, mode 1 supporte le binaire NORMAL/SLOW_SPEED_ACC (cmd 15/16).
+//
+#define USE_ACC_DEC_LIMITER 1
+
 // Protocole CBOR (actif)
 #include "Opos6ulSerialCbor.h"
 #include "Communication/Crc/SoftwareCrcCalculator.h"
@@ -40,13 +54,43 @@
 
 #define MAX_SPEED_MM_PER_SEC (1200)
 
-#define DIST_REGULATOR_KP (3)//2.7 2.5
+#define DIST_REGULATOR_KP (6)//2.7 2.5
 #define DIST_REGULATOR_MAX_ACC (2000)
 #define DIST_REGULATOR_MIN_ACC (1000)
 #define DIST_REGULATOR_HIGH_SPEED_THRESHOLD (200)
 
-#define ANGLE_REGULATOR_KP (400) //480
-#define ANGLE_REGULATOR_MAX_ACC (900)
+#define ANGLE_REGULATOR_KP (900) //480 //400
+#define ANGLE_REGULATOR_MAX_ACC (3500) //900
+
+#if USE_ACC_DEC_LIMITER
+// --- Parametres pour AccelerationDecelerationLimiter (mode 1) ---
+// Valeurs Princess esial (battle-tested) en haut, valeurs PMX historiques
+// en commentaire pour pouvoir revenir en arriere facilement.
+
+// PMX historique : tout a 2000
+// #define DIST_REGULATOR_MAX_ACC_FW (2000)
+// #define DIST_REGULATOR_MAX_DEC_FW (2000)
+// #define DIST_REGULATOR_MAX_ACC_BW (2000)
+// #define DIST_REGULATOR_MAX_DEC_BW (2000)
+// Princess esial (test en cours) :
+#define DIST_REGULATOR_MAX_ACC_FW (3000)
+#define DIST_REGULATOR_MAX_DEC_FW (3000)
+#define DIST_REGULATOR_MAX_ACC_BW (3000)
+#define DIST_REGULATOR_MAX_DEC_BW (2800)   // BW dec un peu plus prudent (Princess)
+#define ACC_DEC_DAMPLING (1.7)             // copie esial Princess
+
+// --- Presets binaires SLOW (cmd CBOR 15/16) ---
+// PMX historique : pas de mode SLOW configure
+// Princess esial (test en cours) :
+#define DIST_REGULATOR_MAX_ACC_FW_SLOW (1000)
+#define DIST_REGULATOR_MAX_DEC_FW_SLOW (800)
+#define DIST_REGULATOR_MAX_ACC_BW_SLOW (1000)
+#define DIST_REGULATOR_MAX_DEC_BW_SLOW (800)
+// PMX historique : ANGLE_REGULATOR_MAX_ACC=900, donc /2 pour slow = 450
+// #define ANGLE_REGULATOR_MAX_ACC_SLOW (450)
+// Princess esial (ANGLE_MAX_ACC=3500, slow=1000) :
+#define ANGLE_REGULATOR_MAX_ACC_SLOW (1000)
+#endif
 
 //float speed_controller_right_Kp[NB_PI_SUBSET] = { 0.3, 0.2, 0.1 };
 //float speed_controller_right_Ki[NB_PI_SUBSET] = { 3.0, 4.2, 1.5 };
@@ -112,7 +156,27 @@ Pll *leftPll;
 OldSchoolBlockingDetector *blockingDetector;
 
 SimpleAccelerationLimiter *angleAccelerationlimiter;
+#if USE_ACC_DEC_LIMITER
+AccelerationDecelerationLimiter *distanceAccelerationLimiter;
+
+// Structs pour le mode binaire NORMAL/SLOW_SPEED_ACC (cmd CBOR 15/16)
+SerialCbor::AccDecConfiguration normalAccDec = {
+    ANGLE_REGULATOR_MAX_ACC,
+    DIST_REGULATOR_MAX_ACC_FW,
+    DIST_REGULATOR_MAX_DEC_FW,
+    DIST_REGULATOR_MAX_ACC_BW,
+    DIST_REGULATOR_MAX_DEC_BW
+};
+SerialCbor::AccDecConfiguration slowAccDec = {
+    ANGLE_REGULATOR_MAX_ACC_SLOW,
+    DIST_REGULATOR_MAX_ACC_FW_SLOW,
+    DIST_REGULATOR_MAX_DEC_FW_SLOW,
+    DIST_REGULATOR_MAX_ACC_BW_SLOW,
+    DIST_REGULATOR_MAX_DEC_BW_SLOW
+};
+#else
 AdvancedAccelerationLimiter *distanceAccelerationLimiter;
+#endif
 
 CommandManager *commandManager;
 AsservMain *mainAsserv;
@@ -156,8 +220,16 @@ static void initAsserv()
             speed_controller_left_SpeedRange, 100, MAX_SPEED_MM_PER_SEC, ASSERV_THREAD_FREQUENCY);
 
     angleAccelerationlimiter = new SimpleAccelerationLimiter(ANGLE_REGULATOR_MAX_ACC);
-    distanceAccelerationLimiter = new AdvancedAccelerationLimiter(DIST_REGULATOR_MAX_ACC, DIST_REGULATOR_MIN_ACC,
+#if USE_ACC_DEC_LIMITER
+    distanceAccelerationLimiter = new AccelerationDecelerationLimiter(
+            DIST_REGULATOR_MAX_ACC_FW, DIST_REGULATOR_MAX_DEC_FW,
+            DIST_REGULATOR_MAX_ACC_BW, DIST_REGULATOR_MAX_DEC_BW,
+            MAX_SPEED_MM_PER_SEC, ACC_DEC_DAMPLING, DIST_REGULATOR_KP);
+#else
+    distanceAccelerationLimiter = new AdvancedAccelerationLimiter(
+            DIST_REGULATOR_MAX_ACC, DIST_REGULATOR_MIN_ACC,
             DIST_REGULATOR_HIGH_SPEED_THRESHOLD);
+#endif
 
     //blockingDetector = new OldSchoolBlockingDetector(ASSERV_THREAD_PERIOD_S, *md22MotorController, *odometry, 0.0018f, 0.4f, 0.25f); //0.0018f, 0.4f, 0.25f
     blockingDetector = new OldSchoolBlockingDetector(ASSERV_THREAD_PERIOD_S, *md22MotorController, *odometry,
@@ -182,8 +254,18 @@ static void initAsserv()
 
 
     // Protocole CBOR (actif)
+#if USE_ACC_DEC_LIMITER
+    // Mode 1 : passe les limiters + presets pour activer cmd 15/16 (binaire)
+    // et cmd 18 (continu via setSpeedPercent override sur AccelerationDecelerationLimiter)
+    serialIo = new Opos6ulSerialCbor(&SD4, &crc32Calculator, *odometry, *commandManager, *md22MotorController, *mainAsserv,
+                                  angleAccelerationlimiter, distanceAccelerationLimiter, &normalAccDec, &slowAccDec);
+#else
+    // Mode 0 : nullptr car AdvancedAccelerationLimiter n'a pas l'API
+    // setMaxAccFW/etc (cmd 15/16 desactivees). cmd 18 (setSpeedPercent)
+    // fonctionne via AsservMain qui appelle l'interface polymorphique.
     serialIo = new Opos6ulSerialCbor(&SD4, &crc32Calculator, *odometry, *commandManager, *md22MotorController, *mainAsserv,
                                   nullptr, nullptr, nullptr, nullptr);
+#endif
     serialIo->setPositionOutputPeriod(50); //TODO a tester 25ms
     // Protocole ASCII (commenté)
     // serialIo = new Opos6ulSerialIO(&SD4, *odometry, *commandManager, *md22MotorController, *mainAsserv);
@@ -531,6 +613,20 @@ void asservCommandUSB(BaseSequentialStream *chp, int argc, char **argv)
 
         angleAccelerationlimiter->setMaxAcceleration(acc);
     } else if (!strcmp(argv[0], "distacc")) {
+#if USE_ACC_DEC_LIMITER
+        // Mode 1 (AccelerationDecelerationLimiter) : argv[1]=acc_fw, argv[2]=dec_fw, argv[3]=acc_bw, argv[4]=dec_bw
+        float acc_fw = atof(argv[1]);
+        float dec_fw = atof(argv[2]);
+        float acc_bw = atof(argv[3]);
+        float dec_bw = atof(argv[4]);
+        chprintf(outputStream, "setting acc/dec limiter FW(acc=%.2f dec=%.2f) BW(acc=%.2f dec=%.2f) \r\n",
+                acc_fw, dec_fw, acc_bw, dec_bw);
+        distanceAccelerationLimiter->setMaxAccFW(acc_fw);
+        distanceAccelerationLimiter->setMaxDecFW(dec_fw);
+        distanceAccelerationLimiter->setMaxAccBW(acc_bw);
+        distanceAccelerationLimiter->setMaxDecBW(dec_bw);
+#else
+        // Mode 0 (AdvancedAccelerationLimiter) : argv[1]=max, argv[2]=min, argv[3]=threshold
         float acc_max = atof(argv[1]);
         float acc_min = atof(argv[2]);
         float acc_threshold = atof(argv[3]);
@@ -540,6 +636,7 @@ void asservCommandUSB(BaseSequentialStream *chp, int argc, char **argv)
         distanceAccelerationLimiter->setMaxAcceleration(acc_max);
         distanceAccelerationLimiter->setMinAcceleration(acc_min);
         distanceAccelerationLimiter->setHighSpeedThreshold(acc_threshold);
+#endif
     } else if (!strcmp(argv[0], "addangle")) {
         float angle = atof(argv[1]);
         chprintf(outputStream, "Adding angle %.2frad \r\n", angle);

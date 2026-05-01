@@ -30,6 +30,16 @@ public:
     void setMinAcceleration(float minAcceleration);
     void setHighSpeedThreshold(float highSpeedThreshold);
 
+    /*!
+     * \brief Echelle de 0 a 100% appliquee dynamiquement sur les deltas
+     *        d'acceleration calcules dans limitOutput. Permet de demander
+     *        au robot de rouler "doucement" sans modifier les valeurs de
+     *        reference m_maxAcceleration / m_minAcceleration.
+     * \param percent valeur entre 1 et 100 (clampe dans la methode)
+     */
+    void setSpeedPercent(float percent) override;
+    inline float getSpeedPercent() const { return m_speedScale * 100.0f; };
+
     inline float getMaxAcceleration() const { return m_maxAcceleration; };
     inline float getMinAcceleration() const { return m_minAcceleration; };
     inline float getHighSpeedThreshold() const{ return m_HighSpeedThreshold; };
@@ -43,6 +53,7 @@ private:
     float m_maxAcceleration;
     float m_minAcceleration;
     float m_HighSpeedThreshold;
+    float m_speedScale;     // facteur 0.0..1.0 applique dans limitOutput (1.0 = 100% nominal)
 };
 
 #endif /* SRC_ACCELERATIONLIMITER_ADVANCEDACCELERATIONLIMITER_H_ */

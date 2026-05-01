@@ -175,7 +175,16 @@ void SerialCbor::decode_cmd(CborStreamStateMachine::cmd_t &cmd)
         break;
 
         case CborStreamStateMachine::max_motor_speed:
+            // Cap PWM moteur seul. 
             m_mainAsserv.limitMotorControllerConsignToPercentage(cmd.arg1);
+        break;
+
+        case CborStreamStateMachine::set_speed_percent:
+            // Scale acc/dec 0-100% (en amont du PID, sans toucher au PWM).
+            // Polymorphique via AccelerationDecelerationLimiterInterface :
+            // no-op pour SimpleAccelerationLimiter et AccelerationDeceleration-
+            // Limiter, scale dans AdvancedAccelerationLimiter (PMX).
+            m_mainAsserv.setSpeedPercent(cmd.arg1);
         break;
 
         case CborStreamStateMachine::normal_speed_acc_mode:
