@@ -49,6 +49,34 @@ void Mp6550::init()
     }
 }
 
+void Mp6550::setMotorSpeed(float motorPercentage, PwmConf_t *pwm1, PwmConf_t *pwm2)
+{
+    uint32_t duty_cycle = 0;
+
+    if( motorPercentage > 0.0 )
+    {
+        // In brake mode, consign are mapped as : (100%-pwm%) , See https://www.pololu.com/product/4733
+        // Map between 0 and 10'000 to comply with PWM_PERCENTAGE_TO_WIDTH()
+        duty_cycle = limit((100.-motorPercentage)*100, 0, 10000);
+        pwmEnableChannel(pwm1->pwmDriver, pwm1->used_channel, PWM_PERCENTAGE_TO_WIDTH(pwm1->pwmDriver, duty_cycle));
+        pwmEnableChannel(pwm2->pwmDriver, pwm2->used_channel, PWM_PERCENTAGE_TO_WIDTH(pwm2->pwmDriver, 10000));
+    }
+    else if( motorPercentage < 0.0)
+    {
+        // In brake mode, consign are mapped as : (100%-pwm%) , See https://www.pololu.com/product/4733
+        // Map between 0 and 10'000 to comply with PWM_PERCENTAGE_TO_WIDTH()
+        duty_cycle = limit((100.-(-1.*motorPercentage))*100, 0, 10000);
+        pwmEnableChannel(pwm1->pwmDriver, pwm1->used_channel, PWM_PERCENTAGE_TO_WIDTH(pwm1->pwmDriver, 10000));
+        pwmEnableChannel(pwm2->pwmDriver, pwm2->used_channel, PWM_PERCENTAGE_TO_WIDTH(pwm2->pwmDriver, duty_cycle));
+    }
+    else
+    {
+        // Set both pwm to 0 to coast ( it's possible to brake, but crossing zero during transient phase may induce problems)
+       pwmEnableChannel(pwm1->pwmDriver, pwm1->used_channel, PWM_PERCENTAGE_TO_WIDTH(pwm1->pwmDriver, 0));
+       pwmEnableChannel(pwm2->pwmDriver, pwm2->used_channel, PWM_PERCENTAGE_TO_WIDTH(pwm2->pwmDriver, 0));
+    }
+}
+
 void Mp6550::setMotorLeftSpeed(float percentage)
 {
     m_leftMotorPercentage = limit(percentage, -100.0, 100.0);
@@ -69,30 +97,7 @@ void Mp6550::setMotorLeftSpeed(float percentage)
         pwm2 = &m_mp6550Conf.confPwm2Motor1;
     }
 
-    uint32_t duty_cycle = 0;
-
-    if( m_leftMotorPercentage > 0.0 )
-    {
-        // In brake mode, consign are mapped as : (100%-pwm%) , See https://www.pololu.com/product/4733
-        // Map between 0 and 10'000 to comply with PWM_PERCENTAGE_TO_WIDTH()
-        duty_cycle = limit((100.-m_leftMotorPercentage)*100, 0, 10000);
-        pwmEnableChannel(pwm1->pwmDriver, pwm1->used_channel, PWM_PERCENTAGE_TO_WIDTH(pwm1->pwmDriver, duty_cycle));
-        pwmEnableChannel(pwm2->pwmDriver, pwm2->used_channel, PWM_PERCENTAGE_TO_WIDTH(pwm2->pwmDriver, 10000));
-    }
-    else if( m_leftMotorPercentage < 0.0)
-    {
-        // In brake mode, consign are mapped as : (100%-pwm%) , See https://www.pololu.com/product/4733
-        // Map between 0 and 10'000 to comply with PWM_PERCENTAGE_TO_WIDTH()
-        duty_cycle = limit((100.-(-1.*m_leftMotorPercentage))*100, 0, 10000);
-        pwmEnableChannel(pwm1->pwmDriver, pwm1->used_channel, PWM_PERCENTAGE_TO_WIDTH(pwm1->pwmDriver, 10000));
-        pwmEnableChannel(pwm2->pwmDriver, pwm2->used_channel, PWM_PERCENTAGE_TO_WIDTH(pwm2->pwmDriver, duty_cycle));
-    }
-    else
-    {
-        // Set both pwm to 0 to coast ( it's possible to brake, but crossing zero during transient phase may induce problems)
-       pwmEnableChannel(pwm1->pwmDriver, pwm1->used_channel, PWM_PERCENTAGE_TO_WIDTH(pwm1->pwmDriver, 0));
-       pwmEnableChannel(pwm2->pwmDriver, pwm2->used_channel, PWM_PERCENTAGE_TO_WIDTH(pwm2->pwmDriver, 0));
-    }
+    setMotorSpeed(m_leftMotorPercentage, pwm1, pwm2);
 }
 
 void Mp6550::setMotorRightSpeed(float percentage)
@@ -115,30 +120,7 @@ void Mp6550::setMotorRightSpeed(float percentage)
        pwm2 = &m_mp6550Conf.confPwm2Motor2;
     }
 
-    uint32_t duty_cycle = 0;
-
-    if( m_rightMotorPercentage > 0.0 )
-    {
-       // In brake mode, consign are mapped as : (100%-pwm%) , See https://www.pololu.com/product/4733
-       // Map between 0 and 10'000 to comply with PWM_PERCENTAGE_TO_WIDTH()
-       duty_cycle = limit((100.-m_rightMotorPercentage)*100, 0, 10000);
-       pwmEnableChannel(pwm1->pwmDriver, pwm1->used_channel, PWM_PERCENTAGE_TO_WIDTH(pwm1->pwmDriver, duty_cycle));
-       pwmEnableChannel(pwm2->pwmDriver, pwm2->used_channel, PWM_PERCENTAGE_TO_WIDTH(pwm2->pwmDriver, 10000));
-    }
-    else if( m_rightMotorPercentage < 0.0)
-    {
-       // In brake mode, consign are mapped as : (100%-pwm%) , See https://www.pololu.com/product/4733
-       // Map between 0 and 10'000 to comply with PWM_PERCENTAGE_TO_WIDTH()
-       duty_cycle = limit((100.-(-1.*m_rightMotorPercentage))*100, 0, 10000);
-       pwmEnableChannel(pwm1->pwmDriver, pwm1->used_channel, PWM_PERCENTAGE_TO_WIDTH(pwm1->pwmDriver, 10000));
-       pwmEnableChannel(pwm2->pwmDriver, pwm2->used_channel, PWM_PERCENTAGE_TO_WIDTH(pwm2->pwmDriver, duty_cycle));
-    }
-    else
-    {
-        // Set both pwm to 0 to coast ( it's possible to brake, but crossing zero during transient phase may induce problems)
-      pwmEnableChannel(pwm1->pwmDriver, pwm1->used_channel, PWM_PERCENTAGE_TO_WIDTH(pwm1->pwmDriver, 0));
-      pwmEnableChannel(pwm2->pwmDriver, pwm2->used_channel, PWM_PERCENTAGE_TO_WIDTH(pwm2->pwmDriver, 0));
-    }
+    setMotorSpeed(m_rightMotorPercentage, pwm1, pwm2);
 }
 
 float Mp6550::getMotorRightSpeedNonInverted() const

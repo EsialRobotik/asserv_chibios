@@ -49,6 +49,7 @@ public:
 
 private:
     void initPwm(PwmConf_t &pwmConf);
+    static void setMotorSpeed(float motorPercentage, PwmConf_t *pwm1, PwmConf_t *pwm2);
 
     Mp6550Conf_t m_mp6550Conf;
     bool m_sleepPin;
